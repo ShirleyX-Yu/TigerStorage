@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Princeton Map</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <style>
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script>
+    // initialize map centered at Princeton
+    var map = L.map('map').setView([40.343, -74.655], 14); 
+
+    // add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const locations = [
+      {
+        name: "Wu Hall",
+        coords: [40.3447, -74.6565],
+        info: "Wu Hall storage in a quad."
+      },
+      {
+        name: "Blair Hall",
+        coords: [40.34737, -74.6615],
+        info: "Blair Hall storage in a double."
+      },
+      {
+        name: "Addy Hall",
+        coords: [40.3425, -74.6552],
+        info: "Addy Hall storage in a quad."
+      }
+    ];
+
+    // loop through and add markers
+    locations.forEach(loc => {
+      L.marker(loc.coords)
+        .addTo(map)
+        .bindPopup(`<b>${loc.name}</b><br>${loc.info}`);
+    });
+  </script>
+</body>
+</html>
