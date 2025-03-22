@@ -1,16 +1,21 @@
 import React from 'react';
-import tiger_storage_logo from './tiger_storage_logo.png'; // Make sure your logo image is in the src folder or adjust the path accordingly
+import { login } from '../utils/auth';
+import tiger_storage_logo from '../assets/tiger_storage_logo.png';
 
 const Home = () => {
+  const handleLogin = (userType) => {
+    login(userType);
+  };
+
   return (
     <div style={styles.container}>
       <img src={tiger_storage_logo} alt="Logo" style={styles.logo} />
       <h1 style={styles.title}>Tiger Storage</h1>
       <div style={styles.buttonContainer}>
-        <button style={styles.button} onClick={() => console.log('Button 1 clicked')}>
+        <button style={styles.button} onClick={() => handleLogin('renter')}>
           I am a space renter.
         </button>
-        <button style={styles.button} onClick={() => console.log('Button 2 clicked')}>
+        <button style={styles.button} onClick={() => handleLogin('lender')}>
           I am a space lender.
         </button>
       </div>
@@ -40,6 +45,11 @@ const styles = {
     padding: '10px 20px',
     fontSize: '1em',
     cursor: 'pointer',
+    backgroundColor: '#f57c00',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    transition: 'background-color 0.3s',
   },
 };
 
