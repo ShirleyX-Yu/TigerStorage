@@ -6,6 +6,7 @@ import LenderDashboard from './components/LenderDashboard';
 import CreateListing from './components/CreateListing';
 import ViewListings from './components/ViewListings';
 import ListingDetails from './components/ListingDetails';
+import PrivacyPolicy from './components/PrivacyPolicy';
 import { checkAuthStatus } from './utils/auth';
 import './App.css';
 
@@ -50,6 +51,7 @@ function App() {
           <Route path="/create-listing" element={<ProtectedRoute><CreateListing /></ProtectedRoute>} />
           <Route path="/view-listings" element={<ProtectedRoute><ViewListings /></ProtectedRoute>} />
           <Route path="/listing/:id" element={<ProtectedRoute><ListingDetails /></ProtectedRoute>} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
         </Routes>
       </div>
     </Router>
