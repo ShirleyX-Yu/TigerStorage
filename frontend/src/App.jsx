@@ -4,6 +4,7 @@ import Home from './components/Home';
 import RenterDashboard from './components/RenterDashboard';
 import LenderDashboard from './components/LenderDashboard';
 import CreateListing from './components/CreateListing';
+import ViewListings from './components/ViewListings';
 import { checkAuthStatus } from './utils/auth';
 import './App.css';
 
@@ -46,6 +47,7 @@ function App() {
           <Route path="/renter" element={<ProtectedRoute><RenterDashboard /></ProtectedRoute>} />
           <Route path="/lender" element={<ProtectedRoute><LenderDashboard /></ProtectedRoute>} />
           <Route path="/create-listing" element={<ProtectedRoute><CreateListing /></ProtectedRoute>} />
+          <Route path="/view-listings" element={<ProtectedRoute><ViewListings /></ProtectedRoute>} />
         </Routes>
       </div>
     </Router>
