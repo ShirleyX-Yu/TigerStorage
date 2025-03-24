@@ -27,8 +27,8 @@ const Welcome = () => {
       <h1>Welcome, {username}!</h1>
       <button style={styles.button} onClick={logout}>
         Logout
-      </button>
-    </div>
+          </button>
+        </div>
   );
 };
 

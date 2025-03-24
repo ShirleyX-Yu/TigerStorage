@@ -1,21 +1,15 @@
 import React from 'react';
-import { logout } from '../utils/auth';
+import Header from './Header';
 
 const LenderDashboard = ({ username }) => {
   return (
     <div style={styles.container}>
-      <div style={styles.header}>
-        <h1>Lender Dashboard</h1>
-        <button style={styles.logoutButton} onClick={logout}>
-          Logout
-        </button>
-      </div>
-      
-      <div style={styles.welcome}>
-        Welcome back, {username}!
-      </div>
-      
+      <Header title="Lender Dashboard" />
       <div style={styles.content}>
+        <div style={styles.welcome}>
+          Welcome back, {username}!
+        </div>
+        
         <div style={styles.section}>
           <h2>My Listed Spaces</h2>
           <div style={styles.placeholder}>
@@ -46,34 +40,37 @@ const LenderDashboard = ({ username }) => {
 
 const styles = {
   container: {
-    padding: '20px',
+    minHeight: '100vh',
+    backgroundColor: 'rgba(245, 124, 0, 0.1)',
+    paddingBottom: '2rem'
+  },
+  content: {
+    padding: '2rem',
     maxWidth: '1200px',
     margin: '0 auto',
-  },
-  header: {
     display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px',
+    flexDirection: 'column',
+    gap: '2rem'
   },
   welcome: {
     fontSize: '1.2em',
-    marginBottom: '30px',
-  },
-  content: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-    gap: '20px',
+    marginBottom: '1rem',
+    fontWeight: 500
   },
   section: {
     backgroundColor: '#fff',
-    padding: '20px',
+    padding: '2rem',
     borderRadius: '8px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    transition: 'transform 0.2s',
+    '&:hover': {
+      transform: 'translateY(-2px)'
+    }
   },
   placeholder: {
     color: '#666',
-    marginBottom: '15px',
+    marginBottom: '1.5rem',
+    fontSize: '1.1em'
   },
   actionButton: {
     backgroundColor: '#f57c00',
@@ -83,15 +80,11 @@ const styles = {
     borderRadius: '4px',
     cursor: 'pointer',
     fontSize: '1em',
-  },
-  logoutButton: {
-    backgroundColor: '#e0e0e0',
-    color: '#333',
-    border: 'none',
-    padding: '8px 16px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
+    transition: 'background-color 0.2s',
+    '&:hover': {
+      backgroundColor: '#006B77'
+    }
+  }
 };
 
 export default LenderDashboard;
