@@ -1,12 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { logout } from '../utils/auth';
 
 const Header = ({ title }) => {
+  const navigate = useNavigate();
+  const userType = sessionStorage.getItem('userType');
+  const [isLogoHovered, setIsLogoHovered] = useState(false);
+
+  const handleLogoClick = () => {
+    navigate(userType === 'renter' ? '/renter' : '/lender');
+  };
+
   return (
     <header style={styles.header}>
       <div style={styles.headerContent}>
         <div style={styles.leftSection}>
-          <img src="/assets/tiger_storage_logo.png" alt="TigerStorage Logo" style={styles.logo} />
+          <img 
+            src="/assets/tiger_storage_logo.png" 
+            alt="TigerStorage Logo" 
+            style={{
+              ...styles.logo,
+              transform: isLogoHovered ? 'scale(1.05)' : 'scale(1)',
+            }}
+            onClick={handleLogoClick}
+            onMouseEnter={() => setIsLogoHovered(true)}
+            onMouseLeave={() => setIsLogoHovered(false)}
+            role="button"
+          />
           <h1 style={styles.title}>{title}</h1>
         </div>
         <button style={styles.logoutButton} onClick={logout}>
@@ -41,7 +61,9 @@ const styles = {
     gap: '1rem'
   },
   logo: {
-    height: '40px'
+    height: '40px',
+    cursor: 'pointer',
+    transition: 'transform 0.2s ease'
   },
   title: {
     margin: 0,
@@ -49,12 +71,13 @@ const styles = {
     color: '#333'
   },
   logoutButton: {
-    padding: '8px 16px',
     backgroundColor: '#f44336',
     color: 'white',
     border: 'none',
+    padding: '0.5rem 1rem',
     borderRadius: '4px',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    fontSize: '1rem'
   }
 };
 

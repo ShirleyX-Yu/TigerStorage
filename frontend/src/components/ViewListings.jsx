@@ -149,8 +149,11 @@ const ViewListings = () => {
                   <p style={styles.listingInfo}>
                     Lender: {listing.lender}
                   </p>
-                  <button style={styles.contactButton}>
-                    Contact Lender
+                  <button 
+                    style={styles.contactButton}
+                    onClick={() => navigate(`/listing/${listing.id}`)}
+                  >
+                    View Details & Contact
                   </button>
                 </div>
               </div>

@@ -1,10 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 
 const RenterDashboard = ({ username }) => {
   const navigate = useNavigate();
   
+  // This will be replaced with actual API data
+  const [interestedSpaces] = useState([
+    {
+      id: 1,
+      location: 'Princeton University Campus',
+      cost: 50,
+      lender: 'John Doe',
+      dateInterested: '2025-03-22',
+      status: 'Interested',
+      nextStep: 'Waiting for lender response'
+    },
+    {
+      id: 2,
+      location: 'Nassau Street',
+      cost: 75,
+      lender: 'Jane Smith',
+      dateInterested: '2025-03-23',
+      status: 'In Discussion',
+      nextStep: 'Schedule viewing'
+    }
+  ]);
+
   return (
     <div style={styles.container}>
       <Header title="Renter Dashboard" />
@@ -21,6 +43,56 @@ const RenterDashboard = ({ username }) => {
           <button style={styles.actionButton} onClick={() => navigate('/view-listings')}>
             View Storage Listings
           </button>
+        </div>
+
+        <div style={styles.section}>
+          <h2>My Interested Spaces</h2>
+          {interestedSpaces.length > 0 ? (
+            <div style={styles.tableContainer}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Location</th>
+                    <th style={styles.th}>Cost/Month</th>
+                    <th style={styles.th}>Lender</th>
+                    <th style={styles.th}>Status</th>
+                    <th style={styles.th}>Next Step</th>
+                    <th style={styles.th}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {interestedSpaces.map(space => (
+                    <tr key={space.id}>
+                      <td style={styles.td}>{space.location}</td>
+                      <td style={styles.td}>${space.cost}</td>
+                      <td style={styles.td}>{space.lender}</td>
+                      <td style={styles.td}>
+                        <span style={{
+                          ...styles.status,
+                          backgroundColor: space.status === 'In Discussion' ? '#4caf50' : '#ff9800'
+                        }}>
+                          {space.status}
+                        </span>
+                      </td>
+                      <td style={styles.td}>{space.nextStep}</td>
+                      <td style={styles.td}>
+                        <button 
+                          style={styles.viewButton}
+                          onClick={() => navigate(`/listing/${space.id}`)}
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div style={styles.placeholder}>
+              You haven't shown interest in any storage spaces yet.
+            </div>
+          )}
         </div>
 
         <div style={styles.section}>
@@ -74,6 +146,45 @@ const styles = {
     borderRadius: '4px',
     cursor: 'pointer',
     fontSize: '1rem',
+    fontWeight: '500',
+  },
+  tableContainer: {
+    overflowX: 'auto',
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    marginTop: '1rem',
+  },
+  th: {
+    textAlign: 'left',
+    padding: '1rem',
+    backgroundColor: '#f5f5f5',
+    borderBottom: '2px solid #eee',
+    fontWeight: '500',
+    color: '#333',
+  },
+  td: {
+    padding: '1rem',
+    borderBottom: '1px solid #eee',
+    color: '#666',
+  },
+  status: {
+    display: 'inline-block',
+    padding: '0.25rem 0.5rem',
+    borderRadius: '4px',
+    color: 'white',
+    fontSize: '0.9rem',
+    fontWeight: '500',
+  },
+  viewButton: {
+    backgroundColor: '#f57c00',
+    color: 'white',
+    border: 'none',
+    padding: '0.5rem 1rem',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '0.9rem',
     fontWeight: '500',
   },
 };
