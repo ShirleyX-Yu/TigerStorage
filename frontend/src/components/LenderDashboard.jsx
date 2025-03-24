@@ -1,7 +1,10 @@
 import React from 'react';
 import Header from './Header';
+import { useNavigate } from 'react-router-dom';
 
 const LenderDashboard = ({ username }) => {
+  const navigate = useNavigate();
+  
   return (
     <div style={styles.container}>
       <Header title="Lender Dashboard" />
@@ -15,7 +18,7 @@ const LenderDashboard = ({ username }) => {
           <div style={styles.placeholder}>
             No spaces listed yet. Start by adding your first storage space!
           </div>
-          <button style={styles.actionButton}>
+          <button style={styles.actionButton} onClick={() => navigate('/create-listing')}>
             Add Storage Space
           </button>
         </div>

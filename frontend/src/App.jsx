@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Home from './components/Home';
 import RenterDashboard from './components/RenterDashboard';
 import LenderDashboard from './components/LenderDashboard';
+import CreateListing from './components/CreateListing';
 import { checkAuthStatus } from './utils/auth';
 import './App.css';
 
@@ -30,24 +31,21 @@ const ProtectedRoute = ({ children }) => {
   return React.cloneElement(children, { username: authData.username });
 };
 
+const RedirectToUserDashboard = () => {
+  const userType = sessionStorage.getItem('userType');
+  return <Navigate to={userType === 'renter' ? '/renter' : '/lender'} replace />;
+};
+
 function App() {
   return (
     <Router>
       <div className="App">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route
-            path="/welcome"
-            element={
-              <ProtectedRoute>
-                {sessionStorage.getItem('userType') === 'renter' ? (
-                  <RenterDashboard />
-                ) : (
-                  <LenderDashboard />
-                )}
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/welcome" element={<ProtectedRoute><RedirectToUserDashboard /></ProtectedRoute>} />
+          <Route path="/renter" element={<ProtectedRoute><RenterDashboard /></ProtectedRoute>} />
+          <Route path="/lender" element={<ProtectedRoute><LenderDashboard /></ProtectedRoute>} />
+          <Route path="/create-listing" element={<ProtectedRoute><CreateListing /></ProtectedRoute>} />
         </Routes>
       </div>
     </Router>
