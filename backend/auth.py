@@ -3,6 +3,7 @@ import urllib.parse
 import re
 import json
 import flask
+import ssl
 
 _CAS_URL = "https://fed.princeton.edu/cas/"
 
@@ -12,6 +13,9 @@ def strip_ticket(url):
     url = re.sub(r"ticket=[^&]*&?", "", url)
     url = re.sub(r"\?&?$|&$", "", url)
     return url
+
+# Create an SSL context that ignores certificate verification (for development only)
+context = ssl._create_unverified_context()
 
 def validate(ticket):
     val_url = (
@@ -23,7 +27,9 @@ def validate(ticket):
         + urllib.parse.quote(ticket)
         + "&format=json"
     )
-    with urllib.request.urlopen(val_url) as flo:
+    
+    # Use SSL context to bypass certificate verification (only for development)
+    with urllib.request.urlopen(val_url, context=context) as flo:
         result = json.loads(flo.read().decode("utf-8"))
 
     if (not result) or ("serviceResponse" not in result):
