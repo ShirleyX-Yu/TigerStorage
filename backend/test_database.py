@@ -7,9 +7,9 @@ def test_insert():
     with get_db_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO storage_listings (listing_id, location, cost, cubic_ft, contract_length) "
-                "VALUES (%s, %s, %s, %s, %s) RETURNING listing_id",
-                (1, "123 Test Str", 100, 500, "3 months")
+                "INSERT INTO storage_listings (location, cost, cubic_ft, contract_length_months) "
+                "VALUES (%s, %s, %s, %s) RETURNING listing_id",
+                ("123 Test Str", 100, 500, 3)
             )
 
             listing_id = cur.fetchone()[0] # correctly inserts storage listing with id 1

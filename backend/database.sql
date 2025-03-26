@@ -27,7 +27,7 @@ CREATE TABLE storage_listings (
     location TEXT,
     cost BIGINT,
     cubic_ft BIGINT,
-    contract_length VARCHAR(255)
+    contract_length_months BIGINT
     -- is_available BOOLEAN DEFAULT TRUE
     -- available_from DATE, maybe add later
     -- available_to DATE, maybe add later

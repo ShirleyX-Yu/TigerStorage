@@ -30,9 +30,35 @@ const CreateListing = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implement API call to create listing
-    console.log('Form submitted:', formData);
-    navigate('/lender'); // Return to lender dashboard after submission
+    console.log('Form submitted with data:', formData);
+
+    // Send as JSON instead of FormData
+    try {
+      const response = await fetch('http://localhost:8000/api/listings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          location: formData.location,
+          cost: formData.cost,
+          cubicFeet: formData.cubicFeet,
+          contractLength: formData.contractLength
+        })
+      });
+
+      const responseData = await response.text();
+      console.log('Response:', response.status, responseData);
+  
+      if (response.ok) {
+        console.log('Listing created successfully');
+        navigate('/lender');
+      } else {
+        console.error('Error creating listing');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
   };
 
   return (
