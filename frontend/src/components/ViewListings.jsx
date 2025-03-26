@@ -9,7 +9,9 @@ const ViewListings = () => {
   const [error, setError] = useState(null);
 
   const openMap = () => {
-    window.open('/ptonMap.html', '_blank');
+    // set cookie with return URL
+    document.cookie = `returnTo=${encodeURIComponent('/view-listings')}; path=/`;
+    window.location.href = '/ptonMap.html';
   };
 
   useEffect(() => {
@@ -22,15 +24,15 @@ const ViewListings = () => {
         const data = await response.json();
         console.log('Fetched listings:', data);
         
-        // Transform the data to match our component's expected format
+        // transform the data to match our component's expected format
         const formattedListings = data.map(listing => ({
           id: listing.id,
           location: listing.location,
           cost: listing.cost,
           cubicFeet: listing.cubic_feet,
           contractLength: listing.contract_length_months,
-          images: ['/assets/placeholder.jpg'], // Default placeholder image
-          lender: 'TigerStorage User' // Default lender name
+          images: ['/assets/placeholder.jpg'], // default placeholder image
+          lender: 'TigerStorage User' // default lender name
         }));
         
         setListings(formattedListings);
@@ -78,7 +80,7 @@ const ViewListings = () => {
       <div className="listings-container">
         <div className="listings-header">
           <h1>Storage Listings</h1>
-          <button onClick={openMap} className="map-button">
+          <button onClick={openMap} style={styles.actionButton}>
             View Map
           </button>
         </div>
@@ -295,6 +297,16 @@ const styles = {
     backgroundColor: '#fff',
     borderRadius: '8px',
     gridColumn: '1 / -1',
+  },
+  actionButton: {
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#f57c00',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    fontWeight: '500',
   },
 };
 

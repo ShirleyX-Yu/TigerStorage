@@ -6,7 +6,9 @@ const RenterDashboard = ({ username }) => {
   const navigate = useNavigate();
   
   const openMap = () => {
-    window.open('/ptonMap.html', '_blank');
+    // Set cookie with return URL
+    document.cookie = `returnTo=${encodeURIComponent('/renter')}; path=/`;
+    window.location.href = '/ptonMap.html';
   };
 
   // This will be replaced with actual API data
@@ -48,7 +50,7 @@ const RenterDashboard = ({ username }) => {
             <button style={styles.actionButton} onClick={() => navigate('/view-listings')}>
               View Storage Listings
             </button>
-            <button style={styles.mapButton} onClick={openMap}>
+            <button style={styles.actionButton} onClick={openMap}>
               View Map
             </button>
           </div>
@@ -155,16 +157,6 @@ const styles = {
   actionButton: {
     padding: '0.75rem 1.5rem',
     backgroundColor: '#f57c00',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '1rem',
-    fontWeight: '500',
-  },
-  mapButton: {
-    padding: '0.75rem 1.5rem',
-    backgroundColor: '#4CAF50',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
