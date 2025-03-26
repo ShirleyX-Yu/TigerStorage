@@ -8,6 +8,10 @@ const ViewListings = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const openMap = () => {
+    window.open('/ptonMap.html', '_blank');
+  };
+
   useEffect(() => {
     const fetchListings = async () => {
       try {
@@ -69,122 +73,130 @@ const ViewListings = () => {
   });
 
   return (
-    <div style={styles.container}>
-      <Header title="Available Storage Spaces" />
-      <div style={styles.content}>
-        {loading ? (
-          <div style={styles.message}>Loading storage listings...</div>
-        ) : error ? (
-          <div style={styles.error}>{error}</div>
-        ) : listings.length === 0 ? (
-          <div style={styles.message}>No storage listings available.</div>
-        ) : (
-          <div style={styles.mainContent}>
-            <div style={styles.filters}>
-              <h2>Filters</h2>
-              <div style={styles.filterGrid}>
-                <div style={styles.filterGroup}>
-                  <label>Price Range ($/month)</label>
-                  <div style={styles.rangeInputs}>
-                    <input
-                      type="number"
-                      name="minPrice"
-                      placeholder="Min"
-                      value={filters.minPrice}
-                      onChange={handleFilterChange}
-                      style={styles.input}
-                    />
-                    <input
-                      type="number"
-                      name="maxPrice"
-                      placeholder="Max"
-                      value={filters.maxPrice}
-                      onChange={handleFilterChange}
-                      style={styles.input}
-                    />
+    <div className="view-listings">
+      <Header />
+      <div className="listings-container">
+        <div className="listings-header">
+          <h1>Storage Listings</h1>
+          <button onClick={openMap} className="map-button">
+            View Map
+          </button>
+        </div>
+        <div style={styles.content}>
+          {loading ? (
+            <div style={styles.message}>Loading storage listings...</div>
+          ) : error ? (
+            <div style={styles.error}>{error}</div>
+          ) : listings.length === 0 ? (
+            <div style={styles.message}>No storage listings available.</div>
+          ) : (
+            <div style={styles.mainContent}>
+              <div style={styles.filters}>
+                <h2>Filters</h2>
+                <div style={styles.filterGrid}>
+                  <div style={styles.filterGroup}>
+                    <label>Price Range ($/month)</label>
+                    <div style={styles.rangeInputs}>
+                      <input
+                        type="number"
+                        name="minPrice"
+                        placeholder="Min"
+                        value={filters.minPrice}
+                        onChange={handleFilterChange}
+                        style={styles.input}
+                      />
+                      <input
+                        type="number"
+                        name="maxPrice"
+                        placeholder="Max"
+                        value={filters.maxPrice}
+                        onChange={handleFilterChange}
+                        style={styles.input}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div style={styles.filterGroup}>
-                  <label>Size Range (cubic feet)</label>
-                  <div style={styles.rangeInputs}>
-                    <input
-                      type="number"
-                      name="minSize"
-                      placeholder="Min"
-                      value={filters.minSize}
-                      onChange={handleFilterChange}
-                      style={styles.input}
-                    />
-                    <input
-                      type="number"
-                      name="maxSize"
-                      placeholder="Max"
-                      value={filters.maxSize}
-                      onChange={handleFilterChange}
-                      style={styles.input}
-                    />
+                  <div style={styles.filterGroup}>
+                    <label>Size Range (cubic feet)</label>
+                    <div style={styles.rangeInputs}>
+                      <input
+                        type="number"
+                        name="minSize"
+                        placeholder="Min"
+                        value={filters.minSize}
+                        onChange={handleFilterChange}
+                        style={styles.input}
+                      />
+                      <input
+                        type="number"
+                        name="maxSize"
+                        placeholder="Max"
+                        value={filters.maxSize}
+                        onChange={handleFilterChange}
+                        style={styles.input}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div style={styles.filterGroup}>
-                  <label>Contract Length (months)</label>
-                  <div style={styles.rangeInputs}>
-                    <input
-                      type="number"
-                      name="minContract"
-                      placeholder="Min"
-                      value={filters.minContract}
-                      onChange={handleFilterChange}
-                      style={styles.input}
-                    />
-                    <input
-                      type="number"
-                      name="maxContract"
-                      placeholder="Max"
-                      value={filters.maxContract}
-                      onChange={handleFilterChange}
-                      style={styles.input}
-                    />
+                  <div style={styles.filterGroup}>
+                    <label>Contract Length (months)</label>
+                    <div style={styles.rangeInputs}>
+                      <input
+                        type="number"
+                        name="minContract"
+                        placeholder="Min"
+                        value={filters.minContract}
+                        onChange={handleFilterChange}
+                        style={styles.input}
+                      />
+                      <input
+                        type="number"
+                        name="maxContract"
+                        placeholder="Max"
+                        value={filters.maxContract}
+                        onChange={handleFilterChange}
+                        style={styles.input}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div style={styles.listings}>
-              {filteredListings.length === 0 ? (
-                <div style={styles.noListings}>
-                  No storage spaces match your criteria
-                </div>
-              ) : (
-                filteredListings.map(listing => (
-                  <div key={listing.id} style={styles.listingCard}>
-                    <img src={listing.images[0]} alt="Storage Space" style={styles.listingImage} />
-                    <div style={styles.listingDetails}>
-                      <h3 style={styles.listingTitle}>{listing.location}</h3>
-                      <p style={styles.listingInfo}>
-                        <strong>${listing.cost}</strong> per month
-                      </p>
-                      <p style={styles.listingInfo}>
-                        Size: {listing.cubicFeet} cubic feet
-                      </p>
-                      <p style={styles.listingInfo}>
-                        Contract: {listing.contractLength} months
-                      </p>
-                      <p style={styles.listingInfo}>
-                        Lender: {listing.lender}
-                      </p>
-                      <button 
-                        style={styles.contactButton}
-                        onClick={() => navigate(`/listing/${listing.id}`)}
-                      >
-                        View Details & Contact
-                      </button>
-                    </div>
+              <div style={styles.listings}>
+                {filteredListings.length === 0 ? (
+                  <div style={styles.noListings}>
+                    No storage spaces match your criteria
                   </div>
-                ))
-              )}
+                ) : (
+                  filteredListings.map(listing => (
+                    <div key={listing.id} style={styles.listingCard}>
+                      <img src={listing.images[0]} alt="Storage Space" style={styles.listingImage} />
+                      <div style={styles.listingDetails}>
+                        <h3 style={styles.listingTitle}>{listing.location}</h3>
+                        <p style={styles.listingInfo}>
+                          <strong>${listing.cost}</strong> per month
+                        </p>
+                        <p style={styles.listingInfo}>
+                          Size: {listing.cubicFeet} cubic feet
+                        </p>
+                        <p style={styles.listingInfo}>
+                          Contract: {listing.contractLength} months
+                        </p>
+                        <p style={styles.listingInfo}>
+                          Lender: {listing.lender}
+                        </p>
+                        <button 
+                          style={styles.contactButton}
+                          onClick={() => navigate(`/listing/${listing.id}`)}
+                        >
+                          View Details & Contact
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

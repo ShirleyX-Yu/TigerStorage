@@ -5,6 +5,10 @@ import { useNavigate } from 'react-router-dom';
 const RenterDashboard = ({ username }) => {
   const navigate = useNavigate();
   
+  const openMap = () => {
+    window.open('/ptonMap.html', '_blank');
+  };
+
   // This will be replaced with actual API data
   const [interestedSpaces] = useState([
     {
@@ -40,9 +44,14 @@ const RenterDashboard = ({ username }) => {
           <div style={styles.placeholder}>
             Browse available storage spaces near you!
           </div>
-          <button style={styles.actionButton} onClick={() => navigate('/view-listings')}>
-            View Storage Listings
-          </button>
+          <div style={styles.buttonContainer}>
+            <button style={styles.actionButton} onClick={() => navigate('/view-listings')}>
+              View Storage Listings
+            </button>
+            <button style={styles.mapButton} onClick={openMap}>
+              View Map
+            </button>
+          </div>
         </div>
 
         <div style={styles.section}>
@@ -138,11 +147,26 @@ const styles = {
     color: '#666',
     marginBottom: '1rem',
   },
+  buttonContainer: {
+    display: 'flex',
+    gap: '1rem',
+    marginTop: '1rem'
+  },
   actionButton: {
+    padding: '0.75rem 1.5rem',
     backgroundColor: '#f57c00',
     color: 'white',
     border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    fontWeight: '500',
+  },
+  mapButton: {
     padding: '0.75rem 1.5rem',
+    backgroundColor: '#4CAF50',
+    color: 'white',
+    border: 'none',
     borderRadius: '4px',
     cursor: 'pointer',
     fontSize: '1rem',
