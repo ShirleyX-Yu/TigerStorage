@@ -1,46 +1,111 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useInterest } from '../context/InterestContext';
 import Header from './Header';
 
 const ListingDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { interestedListings, updateInterest } = useInterest();
 
-  // This will be replaced with actual API data
-  const [listing] = useState({
-    id: id,
-    location: 'Princeton University Campus',
-    cost: 50,
-    cubicFeet: 100,
-    contractLength: 3,
-    images: ['/assets/placeholder.jpg'],
-    lender: {
-      name: 'John Doe',
-      email: 'johndoe@princeton.edu'
-    },
-    interestedRenters: [
-      {
-        name: 'Alice Johnson',
-        email: 'alicej@princeton.edu',
-        dateInterested: '2025-03-22',
-        status: 'Interested'
-      },
-      {
-        name: 'Bob Wilson',
-        email: 'bwilson@princeton.edu',
-        dateInterested: '2025-03-23',
-        status: 'In Discussion'
+  const [listing, setListing] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [interestedRenters, setInterestedRenters] = useState([]);
+
+  useEffect(() => {
+    const fetchListingDetails = async () => {
+      try {
+        // Fetch listing details
+        const listingResponse = await fetch(`http://localhost:8000/api/listings/${id}`, {
+          credentials: 'include'
+        });
+
+        if (!listingResponse.ok) {
+          throw new Error('Failed to fetch listing details');
+        }
+
+        const listingData = await listingResponse.json();
+        setListing(listingData);
+
+        // Check if user is interested
+        const interestResponse = await fetch(`http://localhost:8000/api/listings/${id}/interest`, {
+          credentials: 'include'
+        });
+
+        if (interestResponse.ok) {
+          const interestData = await interestResponse.json();
+          if (interestData.is_interested) {
+            updateInterest(parseInt(id), true);
+          }
+        }
+
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching listing details:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-    ]
-  });
+    };
 
-  const [showInterestButton, setShowInterestButton] = useState(true);
+    fetchListingDetails();
+  }, [id, updateInterest]);
 
-  const handleShowInterest = () => {
-    // TODO: Implement API call to register interest
-    setShowInterestButton(false);
-    // You would typically make an API call here to register the user's interest
+  const handleInterestToggle = async () => {
+    try {
+      const isCurrentlyInterested = interestedListings.has(parseInt(id));
+      const response = await fetch(`http://localhost:8000/api/listings/${id}/interest`, {
+        method: isCurrentlyInterested ? 'DELETE' : 'POST',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update interest');
+      }
+
+      updateInterest(parseInt(id), !isCurrentlyInterested);
+    } catch (err) {
+      console.error('Error updating interest:', err);
+      setError(err.message);
+    }
   };
+
+  if (loading) {
+    return (
+      <div style={styles.container}>
+        <Header title="Storage Space Details" />
+        <div style={styles.content}>
+          <div style={styles.loading}>Loading listing details...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={styles.container}>
+        <Header title="Storage Space Details" />
+        <div style={styles.content}>
+          <div style={styles.error}>{error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!listing) {
+    return (
+      <div style={styles.container}>
+        <Header title="Storage Space Details" />
+        <div style={styles.content}>
+          <div style={styles.error}>Listing not found</div>
+        </div>
+      </div>
+    );
+  }
+
+  const isInterested = interestedListings.has(parseInt(id));
 
   return (
     <div style={styles.container}>
@@ -55,7 +120,7 @@ const ListingDetails = () => {
 
         <div style={styles.detailsContainer}>
           <div style={styles.imageSection}>
-            <img src={listing.images[0]} alt="Storage Space" style={styles.mainImage} />
+            <img src={listing.image_url || '/assets/placeholder.jpg'} alt="Storage Space" style={styles.mainImage} />
           </div>
 
           <div style={styles.infoSection}>
@@ -64,49 +129,41 @@ const ListingDetails = () => {
             <div style={styles.specs}>
               <div style={styles.specItem}>
                 <span style={styles.specLabel}>Cost:</span>
-                <span style={styles.specValue}>${listing.cost}/month</span>
+                <span style={styles.specValue}>${listing.cost_per_month}/month</span>
               </div>
               <div style={styles.specItem}>
                 <span style={styles.specLabel}>Size:</span>
-                <span style={styles.specValue}>{listing.cubicFeet} cubic feet</span>
+                <span style={styles.specValue}>{listing.total_sq_ft} sq ft</span>
               </div>
               <div style={styles.specItem}>
-                <span style={styles.specLabel}>Contract Length:</span>
-                <span style={styles.specValue}>{listing.contractLength} months</span>
+                <span style={styles.specLabel}>Description:</span>
+                <span style={styles.specValue}>{listing.description}</span>
               </div>
             </div>
 
             <div style={styles.lenderInfo}>
-              <h3>Lender Information</h3>
-              <p><strong>Name:</strong> {listing.lender.name}</p>
-              <p><strong>Email:</strong> {listing.lender.email}</p>
-              {showInterestButton && (
-                <button 
-                  style={styles.interestButton}
-                  onClick={handleShowInterest}
-                >
-                  Show Interest
-                </button>
-              )}
-              {!showInterestButton && (
-                <p style={styles.interestedMessage}>
-                  ✓ You've shown interest in this listing
-                </p>
-              )}
+              <h3>Owner Information</h3>
+              <p><strong>Name:</strong> {listing.owner_name}</p>
+              <button 
+                style={{
+                  ...styles.interestButton,
+                  backgroundColor: isInterested ? '#4caf50' : '#f57c00'
+                }}
+                onClick={handleInterestToggle}
+              >
+                {isInterested ? '✓ Interested' : 'Show Interest'}
+              </button>
             </div>
 
             <div style={styles.interestedRenters}>
               <h3>Other Interested Renters</h3>
-              {listing.interestedRenters.length > 0 ? (
+              {interestedRenters.length > 0 ? (
                 <div style={styles.rentersList}>
-                  {listing.interestedRenters.map((renter, index) => (
+                  {interestedRenters.map((renter, index) => (
                     <div key={index} style={styles.renterItem}>
                       <div style={styles.renterHeader}>
                         <strong>{renter.name}</strong>
                         <span style={styles.renterStatus}>{renter.status}</span>
-                      </div>
-                      <div style={styles.renterContact}>
-                        <span style={styles.renterEmail}>{renter.email}</span>
                       </div>
                       <div style={styles.renterDate}>
                         Interested since: {new Date(renter.dateInterested).toLocaleDateString()}
@@ -134,6 +191,18 @@ const styles = {
     padding: '2rem',
     maxWidth: '1200px',
     margin: '0 auto',
+  },
+  loading: {
+    textAlign: 'center',
+    padding: '2rem',
+    fontSize: '1.1rem',
+    color: '#666',
+  },
+  error: {
+    textAlign: 'center',
+    padding: '2rem',
+    color: '#f44336',
+    fontSize: '1.1rem',
   },
   backButton: {
     backgroundColor: '#fff',
@@ -202,14 +271,14 @@ const styles = {
     borderRadius: '4px',
   },
   interestButton: {
+    border: 'none',
     backgroundColor: '#f57c00',
     color: 'white',
-    border: 'none',
     padding: '0.75rem 1.5rem',
     borderRadius: '4px',
+    fontWeight: '500',
     cursor: 'pointer',
     fontSize: '1rem',
-    fontWeight: '500',
     marginTop: '1rem',
   },
   interestedMessage: {
@@ -237,13 +306,6 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-  },
-  renterContact: {
-    fontSize: '0.9rem',
-    color: '#666',
-  },
-  renterEmail: {
-    textDecoration: 'underline',
   },
   renterStatus: {
     padding: '0.25rem 0.5rem',

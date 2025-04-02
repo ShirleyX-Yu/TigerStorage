@@ -207,6 +207,47 @@ def get_listings():
         print(traceback.format_exc())  # Print full stack trace
         return jsonify({"error": f"Failed to fetch listings: {str(e)}"}), 500
 
+@app.route('/api/listings/<int:listing_id>', methods=['GET'])
+def get_listing(listing_id):
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            query = """
+                SELECT 
+                    sl.listing_id,
+                    sl.location,
+                    sl.total_sq_ft,
+                    sl.cost_per_month,
+                    sl.description,
+                    u.name as owner_name,
+                    sl.created_at
+                FROM storage_listings sl
+                JOIN users u ON sl.owner_id = u.user_id
+                WHERE sl.listing_id = %s
+            """
+            cur.execute(query, (listing_id,))
+            listing = cur.fetchone()
+            
+            if not listing:
+                return jsonify({"error": "Listing not found"}), 404
+            
+            formatted_listing = {
+                "id": listing[0],
+                "location": listing[1],
+                "total_sq_ft": listing[2],
+                "cost_per_month": float(listing[3]),
+                "description": listing[4],
+                "owner_name": listing[5],
+                "created_at": listing[6].strftime('%Y-%m-%d')
+            }
+            
+            return jsonify(formatted_listing), 200
+    except Exception as e:
+        print(f"Error in get_listing: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({"error": f"Failed to fetch listing: {str(e)}"}), 500
+
 @app.route('/api/rentals/current', methods=['GET'])
 def get_current_rentals():
     try:
@@ -253,7 +294,7 @@ def get_current_rentals():
     except Exception as e:
         print(f"Error in get_current_rentals: {str(e)}")  # Debug log
         import traceback
-        print(traceback.format_exc())  # Print full stack trace
+        print(traceback.format_exc())
         return jsonify({"error": f"Failed to fetch current rentals: {str(e)}"}), 500
 
 @app.route('/api/rentals/history', methods=['GET'])
@@ -302,8 +343,201 @@ def get_rental_history():
     except Exception as e:
         print(f"Error in get_rental_history: {str(e)}")  # Debug log
         import traceback
-        print(traceback.format_exc())  # Print full stack trace
+        print(traceback.format_exc())
         return jsonify({"error": f"Failed to fetch rental history: {str(e)}"}), 500
+
+@app.route('/api/listings/<int:listing_id>/interest', methods=['POST'])
+def show_interest(listing_id):
+    try:
+        print(f"Showing interest in listing {listing_id}")  # Debug log
+        conn = get_db_connection()
+        
+        # Get the current user's netid
+        netid = session.get('user_info', {}).get('user')
+        if not netid:
+            print("No netid found in session")  # Debug log
+            return jsonify({"error": "User not found in session"}), 401
+            
+        print(f"User netid: {netid}")  # Debug log
+        
+        with conn.cursor() as cur:
+            # First check if the listing exists and is available
+            cur.execute("""
+                SELECT is_available 
+                FROM storage_listings 
+                WHERE listing_id = %s
+            """, (listing_id,))
+            
+            listing = cur.fetchone()
+            if not listing:
+                return jsonify({"error": "Listing not found"}), 404
+            
+            if not listing[0]:  # not available
+                return jsonify({"error": "This storage space is no longer available"}), 400
+            
+            # Get the user's ID
+            cur.execute("SELECT user_id FROM users WHERE netid = %s", (netid,))
+            user = cur.fetchone()
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+            
+            # Try to insert the interest
+            try:
+                cur.execute("""
+                    INSERT INTO storage_interests (listing_id, renter_id)
+                    VALUES (%s, %s)
+                    ON CONFLICT (listing_id, renter_id) DO NOTHING
+                    RETURNING interest_id
+                """, (listing_id, user[0]))
+                
+                interest = cur.fetchone()
+                conn.commit()
+                
+                if interest:
+                    return jsonify({"message": "Interest shown successfully"}), 201
+                else:
+                    return jsonify({"message": "You have already shown interest in this listing"}), 200
+                    
+            except Exception as e:
+                conn.rollback()
+                raise e
+            
+    except Exception as e:
+        print(f"Error in show_interest: {str(e)}")  # Debug log
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({"error": f"Failed to show interest: {str(e)}"}), 500
+
+@app.route('/api/listings/<int:listing_id>/interest', methods=['DELETE'])
+def remove_interest(listing_id):
+    try:
+        print(f"Removing interest from listing {listing_id}")  # Debug log
+        conn = get_db_connection()
+        
+        # Get the current user's netid
+        netid = session.get('user_info', {}).get('user')
+        if not netid:
+            print("No netid found in session")  # Debug log
+            return jsonify({"error": "User not found in session"}), 401
+            
+        print(f"User netid: {netid}")  # Debug log
+        
+        with conn.cursor() as cur:
+            # Get the user's ID
+            cur.execute("SELECT user_id FROM users WHERE netid = %s", (netid,))
+            user = cur.fetchone()
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+            
+            # Delete the interest
+            cur.execute("""
+                DELETE FROM storage_interests
+                WHERE listing_id = %s AND renter_id = %s
+                RETURNING interest_id
+            """, (listing_id, user[0]))
+            
+            interest = cur.fetchone()
+            conn.commit()
+            
+            if interest:
+                return jsonify({"message": "Interest removed successfully"}), 200
+            else:
+                return jsonify({"message": "No interest found for this listing"}), 404
+            
+    except Exception as e:
+        print(f"Error in remove_interest: {str(e)}")  # Debug log
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({"error": f"Failed to remove interest: {str(e)}"}), 500
+
+@app.route('/api/listings/<int:listing_id>/interest', methods=['GET'])
+def check_interest(listing_id):
+    try:
+        print(f"Checking interest in listing {listing_id}")  # Debug log
+        conn = get_db_connection()
+        
+        # Get the current user's netid
+        netid = session.get('user_info', {}).get('user')
+        if not netid:
+            print("No netid found in session")  # Debug log
+            return jsonify({"error": "User not found in session"}), 401
+            
+        print(f"User netid: {netid}")  # Debug log
+        
+        with conn.cursor() as cur:
+            # Get the user's ID
+            cur.execute("""
+                SELECT EXISTS(
+                    SELECT 1 
+                    FROM storage_interests si 
+                    JOIN users u ON si.renter_id = u.user_id 
+                    WHERE u.netid = %s AND si.listing_id = %s
+                )
+            """, (netid, listing_id))
+            
+            is_interested = cur.fetchone()[0]
+            return jsonify({"interested": is_interested}), 200
+            
+    except Exception as e:
+        print(f"Error in check_interest: {str(e)}")  # Debug log
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({"error": f"Failed to check interest: {str(e)}"}), 500
+
+@app.route('/api/rentals/interested', methods=['GET'])
+def get_interested_listings():
+    try:
+        print("Getting interested listings...")  # Debug log
+        conn = get_db_connection()
+        print("Database connection established")  # Debug log
+        
+        # Get the current user's netid
+        netid = session.get('user_info', {}).get('user')
+        if not netid:
+            print("No netid found in session")  # Debug log
+            return jsonify({"error": "User not found in session"}), 401
+            
+        print(f"User netid: {netid}")  # Debug log
+        
+        with conn.cursor() as cur:
+            query = """
+                SELECT 
+                    sl.listing_id,
+                    sl.location,
+                    sl.total_sq_ft,
+                    sl.cost_per_month,
+                    sl.description,
+                    u.name as owner_name,
+                    si.created_at
+                FROM storage_interests si
+                JOIN storage_listings sl ON si.listing_id = sl.listing_id
+                JOIN users u ON sl.owner_id = u.user_id
+                WHERE si.renter_id = (SELECT user_id FROM users WHERE netid = %s)
+                AND sl.is_available = true
+                ORDER BY si.created_at DESC;
+            """
+            print(f"Executing query: {query}")  # Debug log
+            cur.execute(query, (netid,))
+            
+            listings = cur.fetchall()
+            print(f"Found {len(listings)} interested listings")  # Debug log
+            
+            formatted_listings = [{
+                "id": row[0],
+                "location": row[1],
+                "space": row[2],
+                "cost": float(row[3]),
+                "description": row[4],
+                "owner": row[5],
+                "created_at": row[6].strftime('%Y-%m-%d')
+            } for row in listings]
+            
+            return jsonify(formatted_listings), 200
+    except Exception as e:
+        print(f"Error in get_interested_listings: {str(e)}")  # Debug log
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({"error": f"Failed to fetch interested listings: {str(e)}"}), 500
 
 @app.route('/cas-validate')
 def cas_validate():

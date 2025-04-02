@@ -1,5 +1,6 @@
 -- Drop existing tables in reverse order of dependencies
 DROP TABLE IF EXISTS storage_requests;
+DROP TABLE IF EXISTS storage_interests;
 DROP TABLE IF EXISTS storage_listings;
 DROP TABLE IF EXISTS users;
 
@@ -26,6 +27,15 @@ CREATE TABLE IF NOT EXISTS storage_listings (
     CONSTRAINT valid_space CHECK (total_sq_ft > 0)
 );
 
+-- Create storage interests table
+CREATE TABLE IF NOT EXISTS storage_interests (
+    interest_id SERIAL PRIMARY KEY,
+    listing_id INTEGER REFERENCES storage_listings(listing_id),
+    renter_id INTEGER REFERENCES users(user_id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(listing_id, renter_id)
+);
+
 -- Create storage requests table
 CREATE TABLE IF NOT EXISTS storage_requests (
     request_id SERIAL PRIMARY KEY,
@@ -40,42 +50,21 @@ CREATE TABLE IF NOT EXISTS storage_requests (
 -- Insert mock data
 INSERT INTO users (netid, name, user_type) VALUES
     ('dh3163', 'Diya Hundiwala', 'renter'),
-    ('renter1', 'John Smith', 'renter'),
-    ('renter2', 'Jane Doe', 'renter'),
     ('lender1', 'Alice Johnson', 'lender'),
     ('lender2', 'Bob Wilson', 'lender'),
+    ('renter2', 'Jane Doe', 'renter'),
     ('renter3', 'Charlie Brown', 'renter');
 
 -- Insert mock storage listings
 INSERT INTO storage_listings (owner_id, location, total_sq_ft, cost_per_month, description, is_available) VALUES
     ((SELECT user_id FROM users WHERE netid = 'lender1'), 'Princeton University Campus', 200, 75.00, 'Secure storage near campus', true),
-    ((SELECT user_id FROM users WHERE netid = 'lender2'), 'Nassau Street Storage', 150, 60.00, 'Climate controlled storage', false);
+    ((SELECT user_id FROM users WHERE netid = 'lender2'), 'Nassau Street Storage', 150, 60.00, 'Climate controlled storage', true);
 
--- Add some mock active rentals
-INSERT INTO storage_requests (listing_id, renter_id, sq_ft_requested, status, created_at)
-SELECT 
-    sl.listing_id,
-    u.user_id,
-    50,  -- Example square footage
-    'active',
-    CURRENT_TIMESTAMP - INTERVAL '1 day' * (random() * 30)::integer
-FROM storage_listings sl
-CROSS JOIN users u
-WHERE u.user_type = 'renter' AND u.netid != 'dh3163'
-LIMIT 3;
-
--- Add some completed rentals for history
-INSERT INTO storage_requests (listing_id, renter_id, sq_ft_requested, status, created_at)
-SELECT 
-    sl.listing_id,
-    u.user_id,
-    75,  -- Example square footage
-    'completed',
-    CURRENT_TIMESTAMP - INTERVAL '1 day' * (random() * 90)::integer
-FROM storage_listings sl
-CROSS JOIN users u
-WHERE u.user_type = 'renter' AND u.netid != 'dh3163'
-LIMIT 2;
+-- Add some mock interests
+INSERT INTO storage_interests (listing_id, renter_id)
+SELECT listing_id, (SELECT user_id FROM users WHERE netid = 'dh3163')
+FROM storage_listings
+WHERE location = 'Princeton University Campus';
 
 -- Add active rentals for dh3163
 INSERT INTO storage_requests (listing_id, renter_id, sq_ft_requested, status, created_at)

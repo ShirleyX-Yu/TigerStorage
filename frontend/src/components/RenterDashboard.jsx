@@ -6,13 +6,9 @@ const RenterDashboard = ({ username }) => {
   const navigate = useNavigate();
   const [currentRentals, setCurrentRentals] = useState([]);
   const [rentalHistory, setRentalHistory] = useState([]);
+  const [interestedSpaces, setInterestedSpaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  const openMap = () => {
-    document.cookie = `returnTo=${encodeURIComponent('/renter')}; path=/`;
-    window.location.href = '/ptonMap.html';
-  };
 
   useEffect(() => {
     const fetchRentals = async () => {
@@ -55,6 +51,25 @@ const RenterDashboard = ({ username }) => {
           throw new Error('Server returned an invalid response');
         }
 
+        // Finally fetch interested spaces
+        const interestedResponse = await fetch('http://localhost:8000/api/rentals/interested', {
+          credentials: 'include'
+        });
+        console.log('Interested spaces response:', interestedResponse);
+        
+        // Check the content type
+        const interestedContentType = interestedResponse.headers.get('content-type');
+        if (interestedContentType && interestedContentType.includes('application/json')) {
+          const interestedData = await interestedResponse.json();
+          if (!interestedResponse.ok) {
+            throw new Error(interestedData.error || 'Failed to fetch interested spaces');
+          }
+          setInterestedSpaces(interestedData);
+        } else {
+          console.error('Received non-JSON response:', await interestedResponse.text());
+          throw new Error('Server returned an invalid response');
+        }
+
         setError(null);
       } catch (err) {
         console.error('Error fetching rentals:', err);
@@ -66,6 +81,31 @@ const RenterDashboard = ({ username }) => {
 
     fetchRentals();
   }, []);
+
+  const removeInterest = async (listingId) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/listings/${listingId}/interest`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to remove interest');
+      }
+      
+      // Remove the listing from interested spaces
+      setInterestedSpaces(prev => prev.filter(space => space.id !== listingId));
+    } catch (err) {
+      console.error('Error removing interest:', err);
+      setError(err.message);
+    }
+  };
+
+  const openMap = () => {
+    document.cookie = `returnTo=${encodeURIComponent('/renter')}; path=/`;
+    window.location.href = '/ptonMap.html';
+  };
 
   const RentalTable = ({ rentals }) => (
     <div style={styles.tableContainer}>
@@ -145,6 +185,47 @@ const RenterDashboard = ({ username }) => {
             <RentalTable rentals={currentRentals} />
           ) : (
             <div style={styles.placeholder}>No active rentals</div>
+          )}
+        </div>
+
+        <div style={styles.section}>
+          <h2>My Interested Spaces</h2>
+          {loading ? (
+            <div style={styles.placeholder}>Loading interested spaces...</div>
+          ) : error ? (
+            <div style={styles.error}>{error}</div>
+          ) : interestedSpaces.length > 0 ? (
+            <div style={styles.grid}>
+              {interestedSpaces.map(space => (
+                <div key={space.id} style={styles.card}>
+                  <h3 style={styles.cardTitle}>{space.location}</h3>
+                  <p style={styles.cardDescription}>{space.description}</p>
+                  <div style={styles.cardDetails}>
+                    <span>💰 ${space.cost}/month</span>
+                    <span>📏 {space.space} sq ft</span>
+                  </div>
+                  <div style={styles.cardFooter}>
+                    <span>👤 {space.owner}</span>
+                    <div style={styles.buttonGroup}>
+                      <button
+                        onClick={() => removeInterest(space.id)}
+                        style={styles.removeButton}
+                      >
+                        Remove Interest
+                      </button>
+                      <button
+                        onClick={() => navigate(`/listing/${space.id}`)}
+                        style={styles.viewButton}
+                      >
+                        View Details
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={styles.placeholder}>You haven't shown interest in any storage spaces yet.</div>
           )}
         </div>
 
@@ -242,6 +323,55 @@ const styles = {
   },
   viewButton: {
     backgroundColor: '#f57c00',
+    color: 'white',
+    border: 'none',
+    padding: '0.5rem 1rem',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '0.9rem',
+    fontWeight: '500',
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+    gap: '2rem',
+    marginTop: '1rem',
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    padding: '1.5rem',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  },
+  cardTitle: {
+    margin: '0 0 1rem 0',
+    color: '#333',
+  },
+  cardDescription: {
+    margin: '0 0 1rem 0',
+    color: '#666',
+    fontSize: '0.9rem',
+  },
+  cardDetails: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: '1rem',
+    color: '#666',
+    fontSize: '0.9rem',
+  },
+  cardFooter: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    color: '#666',
+    fontSize: '0.9rem',
+  },
+  buttonGroup: {
+    display: 'flex',
+    gap: '0.5rem',
+  },
+  removeButton: {
+    backgroundColor: '#f44336',
     color: 'white',
     border: 'none',
     padding: '0.5rem 1rem',
