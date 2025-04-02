@@ -18,7 +18,6 @@ app = Flask(
     template_folder=os.path.abspath("templates"),
     static_folder=os.path.abspath("static"),
 )
-
 CORS(app)  # Enable CORS for all routes
 
 # Load environment variables and set secret key
@@ -163,6 +162,68 @@ def get_listings():
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"error": "Failed to fetch listings"}), 500
+
+@app.route('/api/rentals/current', methods=['GET'])
+def get_current_rentals():
+    try:
+        # Mock data for current rentals
+        current_rentals = [
+            {
+                "id": 1,
+                "location": "Princeton University Campus",
+                "cost": 75,
+                "cubic_feet": 100,
+                "start_date": "2025-03-01",
+                "end_date": "2025-05-01",
+                "lender": "John Smith",
+                "status": "Active"
+            },
+            {
+                "id": 2,
+                "location": "Nassau Street Storage",
+                "cost": 60,
+                "cubic_feet": 80,
+                "start_date": "2025-02-15",
+                "end_date": "2025-08-15",
+                "lender": "Sarah Johnson",
+                "status": "Active"
+            }
+        ]
+        return jsonify(current_rentals), 200
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": "Failed to fetch current rentals"}), 500
+
+@app.route('/api/rentals/history', methods=['GET'])
+def get_rental_history():
+    try:
+        # Mock data for rental history
+        rental_history = [
+            {
+                "id": 3,
+                "location": "Graduate College",
+                "cost": 50,
+                "cubic_feet": 60,
+                "start_date": "2024-09-01",
+                "end_date": "2024-12-15",
+                "lender": "Mike Wilson",
+                "status": "Completed"
+            },
+            {
+                "id": 4,
+                "location": "Forbes Storage",
+                "cost": 85,
+                "cubic_feet": 120,
+                "start_date": "2024-06-01",
+                "end_date": "2024-08-30",
+                "lender": "Emily Brown",
+                "status": "Completed"
+            }
+        ]
+        return jsonify(rental_history), 200
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": "Failed to fetch rental history"}), 500
 
 if __name__ == "__main__":
     args = parser.parse_args()

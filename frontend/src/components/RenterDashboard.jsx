@@ -1,17 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 
 const RenterDashboard = ({ username }) => {
   const navigate = useNavigate();
-  
-  const openMap = () => {
-    // Set cookie with return URL
-    document.cookie = `returnTo=${encodeURIComponent('/renter')}; path=/`;
-    window.location.href = '/ptonMap.html';
-  };
-
-  // This will be replaced with actual API data
+  const [currentRentals, setCurrentRentals] = useState([]);
+  const [rentalHistory, setRentalHistory] = useState([]);
   const [interestedSpaces] = useState([
     {
       id: 1,
@@ -32,6 +26,88 @@ const RenterDashboard = ({ username }) => {
       nextStep: 'Schedule viewing'
     }
   ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  const openMap = () => {
+    document.cookie = `returnTo=${encodeURIComponent('/renter')}; path=/`;
+    window.location.href = '/ptonMap.html';
+  };
+
+  useEffect(() => {
+    const fetchRentals = async () => {
+      try {
+        const [currentResponse, historyResponse] = await Promise.all([
+          fetch('http://localhost:8000/api/rentals/current'),
+          fetch('http://localhost:8000/api/rentals/history')
+        ]);
+
+        if (!currentResponse.ok || !historyResponse.ok) {
+          throw new Error('Failed to fetch rental data');
+        }
+
+        const currentData = await currentResponse.json();
+        const historyData = await historyResponse.json();
+
+        setCurrentRentals(currentData);
+        setRentalHistory(historyData);
+      } catch (err) {
+        console.error('Error fetching rentals:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRentals();
+  }, []);
+
+  const RentalTable = ({ rentals }) => (
+    <div style={styles.tableContainer}>
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            <th style={styles.th}>Location</th>
+            <th style={styles.th}>Cost/Month</th>
+            <th style={styles.th}>Size</th>
+            <th style={styles.th}>Dates</th>
+            <th style={styles.th}>Lender</th>
+            <th style={styles.th}>Status</th>
+            <th style={styles.th}>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rentals.map(rental => (
+            <tr key={rental.id}>
+              <td style={styles.td}>{rental.location}</td>
+              <td style={styles.td}>${rental.cost}</td>
+              <td style={styles.td}>{rental.cubic_feet} ft³</td>
+              <td style={styles.td}>
+                {rental.start_date} to {rental.end_date}
+              </td>
+              <td style={styles.td}>{rental.lender}</td>
+              <td style={styles.td}>
+                <span style={{
+                  ...styles.status,
+                  backgroundColor: rental.status === 'Active' ? '#4caf50' : '#9e9e9e'
+                }}>
+                  {rental.status}
+                </span>
+              </td>
+              <td style={styles.td}>
+                <button 
+                  style={styles.viewButton}
+                  onClick={() => navigate(`/listing/${rental.id}`)}
+                >
+                  View Details
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 
   return (
     <div style={styles.container}>
@@ -108,16 +184,28 @@ const RenterDashboard = ({ username }) => {
 
         <div style={styles.section}>
           <h2>My Current Rentals</h2>
-          <div style={styles.placeholder}>
-            No active rentals
-          </div>
+          {loading ? (
+            <div style={styles.placeholder}>Loading current rentals...</div>
+          ) : error ? (
+            <div style={styles.error}>{error}</div>
+          ) : currentRentals.length > 0 ? (
+            <RentalTable rentals={currentRentals} />
+          ) : (
+            <div style={styles.placeholder}>No active rentals</div>
+          )}
         </div>
 
         <div style={styles.section}>
           <h2>Rental History</h2>
-          <div style={styles.placeholder}>
-            No rental history
-          </div>
+          {loading ? (
+            <div style={styles.placeholder}>Loading rental history...</div>
+          ) : error ? (
+            <div style={styles.error}>{error}</div>
+          ) : rentalHistory.length > 0 ? (
+            <RentalTable rentals={rentalHistory} />
+          ) : (
+            <div style={styles.placeholder}>No rental history</div>
+          )}
         </div>
       </div>
     </div>
@@ -149,6 +237,10 @@ const styles = {
   },
   placeholder: {
     color: '#666',
+    marginBottom: '1rem',
+  },
+  error: {
+    color: '#f44336',
     marginBottom: '1rem',
   },
   buttonContainer: {
