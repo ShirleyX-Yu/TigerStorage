@@ -228,4 +228,5 @@ def get_rental_history():
 if __name__ == "__main__":
     args = parser.parse_args()
     app.debug = not args.production
-    app.run(host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    app.run(host="0.0.0.0", port=port)
