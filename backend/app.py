@@ -35,6 +35,10 @@ app.add_url_rule(
     view_func=lambda filename: send_from_directory("build", filename),
 )
 
+def get_db_connection():
+    """Get a fresh database connection"""
+    return psycopg2.connect(os.getenv("DATABASE_URL"))
+
 def get_asset_path(entry: str) -> str:
     try:
         with open("build/.vite/manifest.json", "r") as f:
@@ -101,67 +105,60 @@ def auth_status():
         'authenticated': False
     })
 
-
-
-# Database connection
-conn = psycopg2.connect(os.getenv("DATABASE_URL"))
-
-# API to create a new listing
 @app.route('/api/listings', methods=['POST'])
 def create_listing():
     try:
         data = request.get_json()
-        print('Received JSON data:', data)
         
-        location = data.get('location')
-        cost = data.get('cost')
-        cubic_feet = data.get('cubicFeet')
-        contract_length = data.get('contractLength')
-        
-        print('Parsed values:', {
-            'location': location,
-            'cost': cost,
-            'cubic_feet': cubic_feet,
-            'contract_length': contract_length
-        })
+        # Validate required fields
+        required_fields = ['location', 'cost', 'cubic_feet', 'contract_length_months']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
 
-        # Convert data to correct types
-        cost = float(cost) if cost else 0
-        cubic_feet = int(cubic_feet) if cubic_feet else 0
-        contract_length = int(contract_length) if contract_length else 0
-
-        # Insert into database
-        with conn.cursor() as cur:
-            cur.execute("""
-                INSERT INTO storage_listings (location, cost, cubic_ft, contract_length_months)
-                VALUES (%s, %s, %s, %s) RETURNING listing_id;
-            """, (location, cost, cubic_feet, contract_length))
-            listing_id = cur.fetchone()[0]
-            conn.commit()
-
-        return jsonify({"message": "Listing created successfully!", "listing_id": listing_id}), 201
+        # Get a fresh connection
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO storage_listings (location, cost, cubic_ft, contract_length_months)
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING listing_id;
+                """, (data['location'], data['cost'], data['cubic_feet'], data['contract_length_months']))
+                
+                listing_id = cur.fetchone()[0]
+                conn.commit()
+                
+                return jsonify({
+                    "success": True,
+                    "listing_id": listing_id
+                }), 201
+        finally:
+            conn.close()
 
     except Exception as e:
         print("Error creating listing:", str(e))
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to create listing"}), 500
 
-# API to get all listings
 @app.route('/api/listings', methods=['GET'])
 def get_listings():
     try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT listing_id, location, cost, cubic_ft, contract_length_months FROM storage_listings;")
-            listings = cur.fetchall()
+        # Get a fresh connection
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT listing_id, location, cost, cubic_ft, contract_length_months FROM storage_listings;")
+                listings = cur.fetchall()
 
-        # Convert data to JSON-friendly format
-        formatted_listings = [
-            {"id": row[0], "location": row[1], "cost": row[2], "cubic_feet": row[3], "contract_length_months": row[4]}
-            for row in listings
-        ]
+            # Convert data to JSON-friendly format
+            formatted_listings = [
+                {"id": row[0], "location": row[1], "cost": row[2], "cubic_feet": row[3], "contract_length_months": row[4]}
+                for row in listings
+            ]
 
-        return jsonify(formatted_listings), 200
+            return jsonify(formatted_listings), 200
+        finally:
+            conn.close()
 
     except Exception as e:
         print("Error:", str(e))

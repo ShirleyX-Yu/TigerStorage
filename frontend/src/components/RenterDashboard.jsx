@@ -128,11 +128,13 @@ const styles = {
   container: {
     minHeight: '100vh',
     backgroundColor: 'rgba(245, 124, 0, 0.1)',
+    width: '100%'
   },
   content: {
     padding: '2rem',
-    maxWidth: '1200px',
+    maxWidth: '1400px',
     margin: '0 auto',
+    width: '100%'
   },
   welcome: {
     fontSize: '1.5rem',
