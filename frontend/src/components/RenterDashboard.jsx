@@ -6,26 +6,6 @@ const RenterDashboard = ({ username }) => {
   const navigate = useNavigate();
   const [currentRentals, setCurrentRentals] = useState([]);
   const [rentalHistory, setRentalHistory] = useState([]);
-  const [interestedSpaces] = useState([
-    {
-      id: 1,
-      location: 'Princeton University Campus',
-      cost: 50,
-      lender: 'John Doe',
-      dateInterested: '2025-03-22',
-      status: 'Interested',
-      nextStep: 'Waiting for lender response'
-    },
-    {
-      id: 2,
-      location: 'Nassau Street',
-      cost: 75,
-      lender: 'Jane Smith',
-      dateInterested: '2025-03-23',
-      status: 'In Discussion',
-      nextStep: 'Schedule viewing'
-    }
-  ]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -37,20 +17,45 @@ const RenterDashboard = ({ username }) => {
   useEffect(() => {
     const fetchRentals = async () => {
       try {
-        const [currentResponse, historyResponse] = await Promise.all([
-          fetch('http://localhost:8000/api/rentals/current'),
-          fetch('http://localhost:8000/api/rentals/history')
-        ]);
-
-        if (!currentResponse.ok || !historyResponse.ok) {
-          throw new Error('Failed to fetch rental data');
+        // First try to fetch current rentals
+        const currentResponse = await fetch('http://localhost:8000/api/rentals/current', {
+          credentials: 'include'
+        });
+        console.log('Current rentals response:', currentResponse);
+        
+        // Check the content type
+        const contentType = currentResponse.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const currentData = await currentResponse.json();
+          if (!currentResponse.ok) {
+            throw new Error(currentData.error || 'Failed to fetch current rentals');
+          }
+          setCurrentRentals(currentData);
+        } else {
+          console.error('Received non-JSON response:', await currentResponse.text());
+          throw new Error('Server returned an invalid response');
         }
 
-        const currentData = await currentResponse.json();
-        const historyData = await historyResponse.json();
+        // Then fetch rental history
+        const historyResponse = await fetch('http://localhost:8000/api/rentals/history', {
+          credentials: 'include'
+        });
+        console.log('History response:', historyResponse);
+        
+        // Check the content type
+        const historyContentType = historyResponse.headers.get('content-type');
+        if (historyContentType && historyContentType.includes('application/json')) {
+          const historyData = await historyResponse.json();
+          if (!historyResponse.ok) {
+            throw new Error(historyData.error || 'Failed to fetch rental history');
+          }
+          setRentalHistory(historyData);
+        } else {
+          console.error('Received non-JSON response:', await historyResponse.text());
+          throw new Error('Server returned an invalid response');
+        }
 
-        setCurrentRentals(currentData);
-        setRentalHistory(historyData);
+        setError(null);
       } catch (err) {
         console.error('Error fetching rentals:', err);
         setError(err.message);
@@ -69,8 +74,8 @@ const RenterDashboard = ({ username }) => {
           <tr>
             <th style={styles.th}>Location</th>
             <th style={styles.th}>Cost/Month</th>
-            <th style={styles.th}>Size</th>
-            <th style={styles.th}>Dates</th>
+            <th style={styles.th}>Space</th>
+            <th style={styles.th}>Start Date</th>
             <th style={styles.th}>Lender</th>
             <th style={styles.th}>Status</th>
             <th style={styles.th}>Actions</th>
@@ -81,15 +86,13 @@ const RenterDashboard = ({ username }) => {
             <tr key={rental.id}>
               <td style={styles.td}>{rental.location}</td>
               <td style={styles.td}>${rental.cost}</td>
-              <td style={styles.td}>{rental.cubic_feet} ft³</td>
-              <td style={styles.td}>
-                {rental.start_date} to {rental.end_date}
-              </td>
+              <td style={styles.td}>{rental.sq_ft} ft²</td>
+              <td style={styles.td}>{rental.start_date}</td>
               <td style={styles.td}>{rental.lender}</td>
               <td style={styles.td}>
                 <span style={{
                   ...styles.status,
-                  backgroundColor: rental.status === 'Active' ? '#4caf50' : '#9e9e9e'
+                  backgroundColor: rental.status === 'active' ? '#4caf50' : '#9e9e9e'
                 }}>
                   {rental.status}
                 </span>
@@ -116,7 +119,7 @@ const RenterDashboard = ({ username }) => {
         <div style={styles.welcome}>
           Welcome back, {username}!
         </div>
-        
+
         <div style={styles.section}>
           <h2>Available Storage Spaces</h2>
           <div style={styles.placeholder}>
@@ -130,56 +133,6 @@ const RenterDashboard = ({ username }) => {
               View Map
             </button>
           </div>
-        </div>
-
-        <div style={styles.section}>
-          <h2>My Interested Spaces</h2>
-          {interestedSpaces.length > 0 ? (
-            <div style={styles.tableContainer}>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={styles.th}>Location</th>
-                    <th style={styles.th}>Cost/Month</th>
-                    <th style={styles.th}>Lender</th>
-                    <th style={styles.th}>Status</th>
-                    <th style={styles.th}>Next Step</th>
-                    <th style={styles.th}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {interestedSpaces.map(space => (
-                    <tr key={space.id}>
-                      <td style={styles.td}>{space.location}</td>
-                      <td style={styles.td}>${space.cost}</td>
-                      <td style={styles.td}>{space.lender}</td>
-                      <td style={styles.td}>
-                        <span style={{
-                          ...styles.status,
-                          backgroundColor: space.status === 'In Discussion' ? '#4caf50' : '#ff9800'
-                        }}>
-                          {space.status}
-                        </span>
-                      </td>
-                      <td style={styles.td}>{space.nextStep}</td>
-                      <td style={styles.td}>
-                        <button 
-                          style={styles.viewButton}
-                          onClick={() => navigate(`/listing/${space.id}`)}
-                        >
-                          View Details
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div style={styles.placeholder}>
-              You haven't shown interest in any storage spaces yet.
-            </div>
-          )}
         </div>
 
         <div style={styles.section}>
