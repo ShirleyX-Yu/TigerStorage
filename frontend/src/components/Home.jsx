@@ -1,90 +1,101 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { login } from '../utils/auth';
-import tiger_storage_logo from '../assets/tiger_storage_logo.png';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import tigerLogo from '../assets/tiger_storage_logo.png';
 
 const Home = () => {
-  const navigate = useNavigate();
-  
-  const handleLogin = (userType) => {
-    login(userType);
+  const { login } = useAuth();
+
+  const handleRenterClick = () => {
+    login('renter');
+  };
+
+  const handleLenderClick = () => {
+    login('lender');
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.content}>
-        <img src={tiger_storage_logo} alt="Logo" style={styles.logo} />
-        <h1 style={styles.title}>Tiger Storage</h1>
-        <div style={styles.buttonContainer}>
-          <button style={styles.button} onClick={() => handleLogin('renter')}>
-            I am a space renter.
-          </button>
-          <button style={styles.button} onClick={() => handleLogin('lender')}>
-            I am a space lender.
-          </button>
-        </div>
-        <button 
-          style={styles.privacyButton}
-          onClick={() => navigate('/privacy')}
-        >
-          Privacy Policy
-        </button>
-      </div>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      backgroundColor: '#fff1f0',
+      padding: '20px'
+    }}>
+      <img 
+        src={tigerLogo} 
+        alt="Tiger Storage Logo" 
+        style={{ 
+          width: '120px', 
+          marginBottom: '20px' 
+        }} 
+      />
+      
+      <h1 style={{ 
+        fontSize: '2.5rem', 
+        color: '#333',
+        marginBottom: '40px',
+        textAlign: 'center'
+      }}>
+        Tiger Storage
+      </h1>
+
+      <button
+        onClick={handleRenterClick}
+        style={{
+          backgroundColor: '#f57c00',
+          color: 'white',
+          border: 'none',
+          padding: '15px 30px',
+          borderRadius: '8px',
+          fontSize: '1.1rem',
+          cursor: 'pointer',
+          marginBottom: '15px',
+          width: '250px',
+          transition: 'background-color 0.3s'
+        }}
+        onMouseOver={(e) => e.target.style.backgroundColor = '#ff9800'}
+        onMouseOut={(e) => e.target.style.backgroundColor = '#f57c00'}
+      >
+        I am a space renter.
+      </button>
+
+      <button
+        onClick={handleLenderClick}
+        style={{
+          backgroundColor: '#f57c00',
+          color: 'white',
+          border: 'none',
+          padding: '15px 30px',
+          borderRadius: '8px',
+          fontSize: '1.1rem',
+          cursor: 'pointer',
+          width: '250px',
+          marginBottom: '40px',
+          transition: 'background-color 0.3s'
+        }}
+        onMouseOver={(e) => e.target.style.backgroundColor = '#ff9800'}
+        onMouseOut={(e) => e.target.style.backgroundColor = '#f57c00'}
+      >
+        I am a space lender.
+      </button>
+
+      <Link 
+        to="/privacy" 
+        style={{
+          color: '#666',
+          textDecoration: 'none',
+          fontSize: '0.9rem'
+        }}
+        onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+        onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+      >
+        Privacy Policy
+      </Link>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    minHeight: '100vh',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(245, 124, 0, 0.1)',
-  },
-  content: {
-    textAlign: 'center',
-    padding: '2rem',
-    maxWidth: '600px',
-  },
-  logo: {
-    width: '150px',
-    marginBottom: '1.5rem',
-  },
-  title: {
-    fontSize: '2.5rem',
-    color: '#333',
-    marginBottom: '2rem',
-  },
-  buttonContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-    marginBottom: '2rem',
-  },
-  button: {
-    backgroundColor: '#f57c00',
-    color: 'white',
-    border: 'none',
-    padding: '1rem 2rem',
-    fontSize: '1.2rem',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontWeight: '500',
-    transition: 'background-color 0.2s',
-    '&:hover': {
-      backgroundColor: '#f57c00',
-    },
-  },
-  privacyButton: {
-    backgroundColor: 'transparent',
-    color: '#666',
-    border: 'none',
-    padding: '0.5rem 1rem',
-    fontSize: '0.9rem',
-    cursor: 'pointer',
-    textDecoration: 'underline',
-  },
 };
 
 export default Home;
