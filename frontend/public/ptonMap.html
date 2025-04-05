@@ -259,12 +259,12 @@
 
     toggleButton.addEventListener('click', toggleSidebar);
 
-    // initialize map centered at Princeton
+    // Initialize map centered at Princeton
     const map = L.map('map', {
       zoomControl: false  // Disable the default zoom control
     }).setView([40.343, -74.655], 17);
 
-    // add OpenStreetMap tiles
+    // Add OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: ''  // Remove attribution text
     }).addTo(map);
@@ -329,15 +329,31 @@
       
       markers[loc.name] = marker;
 
-      // Add hover interactions
-      card.addEventListener('mouseenter', () => {
+      // Add click handler for marker
+      marker.on('click', () => {
+        map.flyTo(loc.coords, 18, {
+          duration: 0.5,
+          easeLinearity: 0.5
+        });
         marker.openPopup();
+      });
+
+      // Add hover interactions for visual feedback only
+      card.addEventListener('mouseenter', () => {
         card.style.backgroundColor = '#f5f5f5';
       });
       
       card.addEventListener('mouseleave', () => {
-        marker.closePopup();
         card.style.backgroundColor = '';
+      });
+
+      // Add click handler for card
+      card.addEventListener('click', () => {
+        map.flyTo(loc.coords, 18, {
+          duration: 0.5,
+          easeLinearity: 0.5
+        });
+        marker.openPopup();
       });
 
       marker.on('mouseover', () => {
