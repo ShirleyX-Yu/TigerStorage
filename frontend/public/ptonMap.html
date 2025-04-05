@@ -268,6 +268,17 @@
       attribution: ''  // Remove attribution text
     }).addTo(map);
 
+    // Create custom orange marker icon
+    const orangeIcon = L.divIcon({
+      className: 'custom-marker',
+      html: `<svg viewBox="0 0 24 24" width="32" height="32">
+        <path fill="#f57c00" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+      </svg>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32]
+    });
+
     const locations = [
       {
         name: "Wu Hall",
@@ -312,7 +323,7 @@
       sidebar.appendChild(card);
 
       // Create marker
-      const marker = L.marker(loc.coords)
+      const marker = L.marker(loc.coords, { icon: orangeIcon })
         .addTo(map)
         .bindPopup(`<b>${loc.name}</b><br>${loc.info}`);
       
