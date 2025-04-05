@@ -40,6 +40,7 @@ const RedirectToUserDashboard = () => {
   return <Navigate to={userType === 'renter' ? '/renter' : '/lender'} replace />;
 };
 
+
 function App() {
   return (
     <Router>
