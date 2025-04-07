@@ -90,16 +90,21 @@ const ViewListings = () => {
   });
 
   return (
-    <div className="view-listings">
-      <Header />
-      <div className="listings-container">
-        <div className="listings-header">
-          <h1>Storage Listings</h1>
-          <button onClick={openMap} style={styles.actionButton}>
-            View Map
-          </button>
+    <div style={styles.container}>
+      <Header title="Storage Listings" />
+      <div style={styles.content}>
+        <div style={styles.welcome}>
+          Browse available storage spaces
         </div>
-        <div style={styles.content}>
+        
+        <div style={styles.section}>
+          <div style={styles.sectionHeader}>
+            <h2>Storage Listings</h2>
+            <button onClick={openMap} style={styles.actionButton}>
+              View Map
+            </button>
+          </div>
+          
           {loading ? (
             <div style={styles.message}>Loading storage listings...</div>
           ) : error ? (
@@ -107,12 +112,12 @@ const ViewListings = () => {
           ) : listings.length === 0 ? (
             <div style={styles.message}>No storage listings available.</div>
           ) : (
-            <div style={styles.mainContent}>
-              <div style={styles.filters}>
-                <h2>Filters</h2>
+            <div>
+              <div style={styles.filtersSection}>
+                <h3 style={styles.filtersTitle}>Filters</h3>
                 <div style={styles.filterGrid}>
                   <div style={styles.filterGroup}>
-                    <label>Price Range ($/month)</label>
+                    <label style={styles.filterLabel}>Price Range ($/month)</label>
                     <div style={styles.rangeInputs}>
                       <input
                         type="number"
@@ -133,7 +138,7 @@ const ViewListings = () => {
                     </div>
                   </div>
                   <div style={styles.filterGroup}>
-                    <label>Size Range (cubic feet)</label>
+                    <label style={styles.filterLabel}>Size Range (cubic feet)</label>
                     <div style={styles.rangeInputs}>
                       <input
                         type="number"
@@ -154,7 +159,7 @@ const ViewListings = () => {
                     </div>
                   </div>
                   <div style={styles.filterGroup}>
-                    <label>Contract Length (months)</label>
+                    <label style={styles.filterLabel}>Contract Length (months)</label>
                     <div style={styles.rangeInputs}>
                       <input
                         type="number"
@@ -177,34 +182,32 @@ const ViewListings = () => {
                 </div>
               </div>
 
-              <div style={styles.listingsGrid}>
-                {filteredListings.length === 0 ? (
-                  <div style={styles.message}>
-                    No storage spaces match your criteria
-                  </div>
-                ) : (
-                  filteredListings.map(listing => (
+              {filteredListings.length === 0 ? (
+                <div style={styles.message}>
+                  No storage spaces match your criteria
+                </div>
+              ) : (
+                <div style={styles.listingsGrid}>
+                  {filteredListings.map(listing => (
                     <div key={listing.id} style={styles.listingCard}>
                       <img src={listing.images[0]} alt="Storage Space" style={styles.listingImage} />
                       <div style={styles.listingDetails}>
                         <h3 style={styles.listingTitle}>{listing.location}</h3>
                         <p style={styles.listingInfo}>
-                          <strong>${listing.cost}</strong> per month
-                        </p>
-                        <p style={styles.listingInfo}>
-                          Size: {listing.cubicFeet} sq ft
+                          <strong>${listing.cost}</strong> per month · {listing.cubicFeet} cubic feet · {listing.contractLength} months
                         </p>
                         <div style={styles.descriptionBox}>
                           <p style={styles.description}>{listing.description}</p>
                         </div>
-                        <p style={styles.listingInfo}>
-                          <span style={{color: listing.isAvailable ? '#4caf50' : '#f44336'}}>
-                            {listing.isAvailable ? '✓ Available' : '✗ Not Available'}
+                        <div style={styles.listingStatus}>
+                          <span style={{
+                            ...styles.status,
+                            backgroundColor: listing.isAvailable ? '#4caf50' : '#f44336'
+                          }}>
+                            {listing.isAvailable ? 'Available' : 'Not Available'}
                           </span>
-                        </p>
-                        <p style={styles.listingInfo}>
-                          Lender: {listing.lender}
-                        </p>
+                          <span style={styles.lenderInfo}>Lender: {listing.lender}</span>
+                        </div>
                         <button 
                           style={styles.viewButton}
                           onClick={() => navigate(`/listing/${listing.id}`)}
@@ -213,9 +216,9 @@ const ViewListings = () => {
                         </button>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -228,100 +231,122 @@ const styles = {
   container: {
     minHeight: '100vh',
     backgroundColor: 'rgba(245, 124, 0, 0.1)',
-    display: 'flex',
-    flexDirection: 'column',
-    width: '100%'
   },
   content: {
     padding: '2rem',
-    maxWidth: '1400px',
+    maxWidth: '1200px',
     margin: '0 auto',
-    width: '100%'
+  },
+  welcome: {
+    fontSize: '1.5rem',
+    marginBottom: '2rem',
   },
   section: {
     backgroundColor: '#fff',
     padding: '1.5rem',
     borderRadius: '8px',
     marginBottom: '2rem',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
   },
   sectionHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '1.5rem'
+    marginBottom: '1.5rem',
   },
   message: {
     color: '#666',
-    marginBottom: '1rem'
+    marginBottom: '1rem',
   },
   error: {
-    color: '#f44336'
+    color: '#f44336',
+    marginBottom: '1rem',
   },
-  mainContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.5rem'
-  },
-  filters: {
+  filtersSection: {
     backgroundColor: '#f5f5f5',
     padding: '1.5rem',
     borderRadius: '8px',
-    marginBottom: '1.5rem'
+    marginBottom: '1.5rem',
+  },
+  filtersTitle: {
+    margin: '0 0 1rem 0',
+    fontSize: '1.1rem',
+    color: '#333',
+  },
+  filterLabel: {
+    fontWeight: '500',
+    color: '#555',
+    marginBottom: '0.5rem',
   },
   filterGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
     gap: '1rem',
-    marginTop: '1rem'
   },
   filterGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.5rem'
+    gap: '0.5rem',
   },
   rangeInputs: {
     display: 'flex',
-    gap: '0.5rem'
+    gap: '0.5rem',
   },
   input: {
     flex: 1,
     padding: '0.75rem',
     borderRadius: '4px',
     border: '1px solid #ddd',
-    fontSize: '0.9rem'
+    fontSize: '0.9rem',
   },
   listingsGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
-    gap: '1.5rem'
+    gap: '1.5rem',
+    marginTop: '1.5rem',
   },
   listingCard: {
     backgroundColor: '#fff',
     borderRadius: '8px',
     overflow: 'hidden',
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    border: '1px solid #eee',
     transition: 'transform 0.2s',
-    ':hover': {
-      transform: 'translateY(-4px)'
-    }
   },
   listingImage: {
     width: '100%',
     height: '200px',
-    objectFit: 'cover'
+    objectFit: 'cover',
   },
   listingDetails: {
-    padding: '1.5rem'
+    padding: '1.5rem',
   },
   listingTitle: {
-    margin: '0 0 1rem 0',
+    margin: '0 0 0.5rem 0',
     fontSize: '1.2rem',
-    color: '#333'
+    color: '#333',
   },
   listingInfo: {
     margin: '0.5rem 0',
-    color: '#666'
+    color: '#666',
+  },
+  listingStatus: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: '1rem',
+  },
+  lenderInfo: {
+    color: '#666',
+    fontSize: '0.9rem',
+  },
+  status: {
+    display: 'inline-block',
+    padding: '0.25rem 0.5rem',
+    borderRadius: '4px',
+    color: 'white',
+    fontSize: '0.9rem',
+    fontWeight: '500',
   },
   actionButton: {
     padding: '0.75rem 1.5rem',
@@ -331,7 +356,7 @@ const styles = {
     borderRadius: '4px',
     cursor: 'pointer',
     fontSize: '1rem',
-    fontWeight: '500'
+    fontWeight: '500',
   },
   viewButton: {
     backgroundColor: '#f57c00',
@@ -344,24 +369,20 @@ const styles = {
     marginTop: '1rem',
     fontSize: '1rem',
     fontWeight: '500',
-    transition: 'background-color 0.2s',
-    ':hover': {
-      backgroundColor: '#f68b1f'
-    }
   },
   descriptionBox: {
     backgroundColor: '#f9f9f9',
     padding: '0.75rem',
     borderRadius: '4px',
     marginTop: '0.5rem',
-    marginBottom: '0.5rem'
+    marginBottom: '0.5rem',
   },
   description: {
     margin: 0,
     fontSize: '0.9rem',
     color: '#555',
-    lineHeight: '1.4'
-  }
+    lineHeight: '1.4',
+  },
 };
 
 export default ViewListings;
