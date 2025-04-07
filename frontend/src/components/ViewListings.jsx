@@ -17,7 +17,7 @@ const ViewListings = () => {
   useEffect(() => {
     const fetchListings = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/listings');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings`);
         if (!response.ok) {
           throw new Error('Failed to fetch listings');
         }
