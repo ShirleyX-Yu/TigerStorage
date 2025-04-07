@@ -17,53 +17,39 @@ const ViewListings = () => {
   useEffect(() => {
     const fetchListings = async () => {
       try {
-        console.log('Fetching listings from:', `${import.meta.env.VITE_API_URL}/api/listings`);
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings`, {
           credentials: 'include' // Include cookies for authentication
         });
         
-        console.log('Response status:', response.status);
-        
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('Error response:', errorText);
           throw new Error(`Failed to fetch listings: ${response.status} ${errorText}`);
         }
         
         const data = await response.json();
-        console.log('Fetched listings data:', data);
-        console.log('Data type:', typeof data, Array.isArray(data) ? 'is array' : 'not array');
-        console.log('Data length:', Array.isArray(data) ? data.length : 'N/A');
         
         if (!Array.isArray(data)) {
-          console.error('Expected array but got:', data);
           throw new Error('Unexpected data format from API');
         }
         
         if (data.length === 0) {
-          console.log('No listings returned from API');
           setListings([]);
           return;
         }
         
         // transform the data to match our component's expected format
-        const formattedListings = data.map(listing => {
-          console.log('Processing listing:', listing);
-          return {
-            id: listing.id,
-            location: listing.location,
-            cost: listing.cost,
-            cubicFeet: listing.cubic_feet,
-            description: listing.description,
-            isAvailable: listing.is_available,
-            createdAt: listing.created_at,
-            contractLength: listing.contract_length_months || 12, // Use default if not provided
-            images: ['/assets/placeholder.jpg'], // default placeholder image
-            lender: `Owner #${listing.owner_id}` // Use owner ID as reference
-          };
-        });
-        
-        console.log('Formatted listings:', formattedListings);
+        const formattedListings = data.map(listing => ({
+          id: listing.id,
+          location: listing.location,
+          cost: listing.cost,
+          cubicFeet: listing.cubic_feet,
+          description: listing.description,
+          isAvailable: listing.is_available,
+          createdAt: listing.created_at,
+          contractLength: listing.contract_length_months || 12, // Use default if not provided
+          images: ['/assets/placeholder.jpg'], // default placeholder image
+          lender: `Owner #${listing.owner_id}` // Use owner ID as reference
+        }));
         setListings(formattedListings);
       } catch (err) {
         console.error('Error fetching listings:', err);

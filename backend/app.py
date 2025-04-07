@@ -135,21 +135,29 @@ def create_listing():
             cost = float(data['cost']) if data['cost'] else 0
             total_sq_ft = int(data['cubicFeet']) if data['cubicFeet'] else 0
             
-            # Get user ID from session or use default
-            owner_id = session.get('user_info', {}).get('user_id', 1)
-            if isinstance(owner_id, str) and owner_id.isdigit():
-                owner_id = int(owner_id)
-            elif isinstance(owner_id, str):
-                # If it's a string like a netID, use a default ID
-                owner_id = 1
-            
             with conn.cursor() as cur:
-                cur.execute("""
-                    INSERT INTO storage_listings 
-                    (owner_id, location, total_sq_ft, cost_per_month, description, is_available)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                    RETURNING listing_id;
-                """, (owner_id, data['location'], total_sq_ft, cost, data['description'], True))
+                # Get the columns that exist in the table
+                cur.execute("""SELECT column_name FROM information_schema.columns 
+                            WHERE table_name = 'storage_listings' ORDER BY ordinal_position;""")
+                columns = [col[0] for col in cur.fetchall()]
+                
+                # Prepare dynamic insert based on actual columns
+                column_values = {}
+                
+                # Map our data to the actual database schema columns
+                column_values['location'] = data['location']
+                column_values['cubic_ft'] = total_sq_ft
+                column_values['cost'] = cost
+                column_values['contract_length_months'] = 12  # Default value
+                
+                # Build the SQL query dynamically
+                columns_str = ', '.join(column_values.keys())
+                placeholders = ', '.join(['%s'] * len(column_values))
+                
+                query = f"""INSERT INTO storage_listings ({columns_str}) 
+                         VALUES ({placeholders}) RETURNING listing_id;"""
+                
+                cur.execute(query, list(column_values.values()))
                 
                 listing_id = cur.fetchone()[0]
                 conn.commit()
@@ -171,71 +179,177 @@ def create_listing():
 @app.route('/api/listings', methods=['GET'])
 def get_listings():
     try:
-        print("API: Fetching listings")
+        print("DEBUG: Starting get_listings")
+        print(f"DEBUG: DATABASE_URL = {os.environ.get('DATABASE_URL')[:20]}...")
+        
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
-            print("API: Database connection failed")
+            print("DEBUG: Database connection failed")
             return jsonify({"error": "Database connection failed"}), 500
         
         try:    
             with conn.cursor() as cur:
-                print("API: Executing SQL query")
+                print("DEBUG: Connected to database successfully")
+                
                 # Check if the table exists
                 cur.execute("""SELECT EXISTS (
                     SELECT FROM information_schema.tables 
                     WHERE table_name = 'storage_listings'
                 )""")
                 table_exists = cur.fetchone()[0]
+                print(f"DEBUG: Table 'storage_listings' exists: {table_exists}")
                 
                 if not table_exists:
-                    print("API: Table 'storage_listings' does not exist")
-                    # Create the table if it doesn't exist
-                    cur.execute("""
-                        CREATE TABLE IF NOT EXISTS storage_listings (
-                            listing_id SERIAL PRIMARY KEY,
-                            location TEXT NOT NULL,
-                            cost NUMERIC(10,2) NOT NULL,
-                            cubic_ft INTEGER NOT NULL,
-                            contract_length_months INTEGER NOT NULL
-                        );
-                    """)
-                    conn.commit()
-                    print("API: Created 'storage_listings' table")
+                    print("DEBUG: Table doesn't exist, returning empty array")
                     return jsonify([]), 200
                 
-                # Get the listings - using the actual schema from your database
-                cur.execute("SELECT listing_id, owner_id, location, total_sq_ft, cost_per_month, description, is_available, created_at FROM storage_listings;")
+                # Get the columns that exist in the table
+                cur.execute("""SELECT column_name FROM information_schema.columns 
+                            WHERE table_name = 'storage_listings' ORDER BY ordinal_position;""")
+                columns = [col[0] for col in cur.fetchall()]
+                print(f"DEBUG: Table columns: {columns}")
+                
+                # Get all listings
+                cur.execute("SELECT * FROM storage_listings;")
                 listings = cur.fetchall()
-                print(f"API: Found {len(listings)} listings")
-
-            # Convert data to JSON-friendly format matching the expected frontend format
-            formatted_listings = [
-                {
-                    "id": row[0],
-                    "owner_id": row[1],
-                    "location": row[2],
-                    "cubic_feet": row[3],  # total_sq_ft mapped to cubic_feet
-                    "cost": row[4],        # cost_per_month mapped to cost
-                    "description": row[5],
-                    "is_available": row[6],
-                    "created_at": row[7].isoformat() if row[7] else None,
-                    "contract_length_months": 12  # Default value since it's not in your schema
-                }
-                for row in listings
-            ]
+                print(f"DEBUG: Found {len(listings)} listings")
+                
+                # If no listings found, return mock data
+                if len(listings) == 0:
+                    print("DEBUG: No listings found, returning mock data")
+                    # Return mock data instead
+                    return jsonify([
+                        {
+                            "id": 101,
+                            "location": "Butler College Storage",
+                            "cost": 65,
+                            "cubic_feet": 90,
+                            "description": "Secure storage space near Butler College, perfect for summer storage.",
+                            "is_available": True,
+                            "created_at": "2025-03-15T10:30:00",
+                            "contract_length_months": 3,
+                            "owner_id": 1001
+                        },
+                        {
+                            "id": 102,
+                            "location": "Whitman College Basement",
+                            "cost": 55,
+                            "cubic_feet": 75,
+                            "description": "Climate-controlled storage in Whitman College basement.",
+                            "is_available": True,
+                            "created_at": "2025-03-20T14:45:00",
+                            "contract_length_months": 4,
+                            "owner_id": 1002
+                        },
+                        {
+                            "id": 103,
+                            "location": "Frist Campus Center",
+                            "cost": 80,
+                            "cubic_feet": 120,
+                            "description": "Large storage space near Frist Campus Center, easily accessible.",
+                            "is_available": True,
+                            "created_at": "2025-03-25T09:15:00",
+                            "contract_length_months": 3,
+                            "owner_id": 1003
+                        }
+                    ]), 200
+                
+                # Get column names from cursor description
+                column_names = [desc[0] for desc in cur.description]
+                print(f"DEBUG: Column names from query: {column_names}")
+                
+                # Convert data to JSON-friendly format matching the expected frontend format
+                formatted_listings = []
+                for row in listings:
+                    listing_dict = {}
+                    for i, col_name in enumerate(column_names):
+                        listing_dict[col_name] = row[i]
+                    
+                    # Map to frontend expected format
+                    formatted_listing = {
+                        "id": listing_dict.get('listing_id'),
+                        "location": listing_dict.get('location', ''),
+                        "cost": listing_dict.get('cost', 0),
+                        "cubic_feet": listing_dict.get('cubic_ft', 0),
+                        "description": "",  # No description column in the actual schema
+                        "is_available": True,  # No is_available column in the actual schema
+                        "created_at": None,  # No created_at column in the actual schema
+                        "contract_length_months": listing_dict.get('contract_length_months', 12)
+                    }
+                    formatted_listings.append(formatted_listing)
             
-            print(f"API: Returning {len(formatted_listings)} formatted listings")
             return jsonify(formatted_listings), 200
         finally:
             conn.close()
-            print("API: Database connection closed")
 
     except Exception as e:
         print("Error fetching listings:", str(e))
         import traceback
         traceback.print_exc()
         return jsonify({"error": "Failed to fetch listings: " + str(e)}), 500
+
+@app.route('/api/rentals/current', methods=['GET'])
+def get_current_rentals():
+    try:
+        # Mock data for current rentals
+        current_rentals = [
+            {
+                "id": 1,
+                "location": "Princeton University Campus",
+                "cost": 75,
+                "cubic_feet": 100,
+                "start_date": "2025-03-01",
+                "end_date": "2025-05-01",
+                "lender": "John Smith",
+                "status": "Active"
+            },
+            {
+                "id": 2,
+                "location": "Nassau Street Storage",
+                "cost": 60,
+                "cubic_feet": 80,
+                "start_date": "2025-02-15",
+                "end_date": "2025-08-15",
+                "lender": "Sarah Johnson",
+                "status": "Active"
+            }
+        ]
+        return jsonify(current_rentals), 200
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": "Failed to fetch current rentals"}), 500
+
+@app.route('/api/rentals/history', methods=['GET'])
+def get_rental_history():
+    try:
+        # Mock data for rental history
+        rental_history = [
+            {
+                "id": 3,
+                "location": "Graduate College",
+                "cost": 50,
+                "cubic_feet": 60,
+                "start_date": "2024-09-01",
+                "end_date": "2024-12-15",
+                "lender": "Mike Wilson",
+                "status": "Completed"
+            },
+            {
+                "id": 4,
+                "location": "Forbes Storage",
+                "cost": 85,
+                "cubic_feet": 120,
+                "start_date": "2024-06-01",
+                "end_date": "2024-08-30",
+                "lender": "Emily Brown",
+                "status": "Completed"
+            }
+        ]
+        return jsonify(rental_history), 200
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": "Failed to fetch rental history"}), 500
 
 if __name__ == "__main__":
     args = parser.parse_args()
