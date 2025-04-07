@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { InterestProvider } from './context/InterestContext';
 import Home from './components/Home';
 import RenterDashboard from './components/RenterDashboard';
 import LenderDashboard from './components/LenderDashboard';
@@ -40,24 +39,21 @@ const RedirectToUserDashboard = () => {
   return <Navigate to={userType === 'renter' ? '/renter' : '/lender'} replace />;
 };
 
-
 function App() {
   return (
     <Router>
-      <InterestProvider>
-        <div className="App">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/welcome" element={<ProtectedRoute><RedirectToUserDashboard /></ProtectedRoute>} />
-            <Route path="/renter" element={<ProtectedRoute><RenterDashboard /></ProtectedRoute>} />
-            <Route path="/lender" element={<ProtectedRoute><LenderDashboard /></ProtectedRoute>} />
-            <Route path="/create-listing" element={<ProtectedRoute><CreateListing /></ProtectedRoute>} />
-            <Route path="/view-listings" element={<ProtectedRoute><ViewListings /></ProtectedRoute>} />
-            <Route path="/listing/:id" element={<ProtectedRoute><ListingDetails /></ProtectedRoute>} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-          </Routes>
-        </div>
-      </InterestProvider>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/welcome" element={<ProtectedRoute><RedirectToUserDashboard /></ProtectedRoute>} />
+          <Route path="/renter" element={<ProtectedRoute><RenterDashboard /></ProtectedRoute>} />
+          <Route path="/lender" element={<ProtectedRoute><LenderDashboard /></ProtectedRoute>} />
+          <Route path="/create-listing" element={<ProtectedRoute><CreateListing /></ProtectedRoute>} />
+          <Route path="/view-listings" element={<ProtectedRoute><ViewListings /></ProtectedRoute>} />
+          <Route path="/listing/:id" element={<ProtectedRoute><ListingDetails /></ProtectedRoute>} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+        </Routes>
+      </div>
     </Router>
   );
 }
