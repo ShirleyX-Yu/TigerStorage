@@ -208,6 +208,7 @@ const ViewListings = () => {
                           </span>
                           <span style={styles.lenderInfo}>Lender: {listing.lender}</span>
                         </div>
+                        <p style={styles.listingId}>Listing ID: {listing.id}</p>
                         <button 
                           style={styles.viewButton}
                           onClick={() => navigate(`/listing/${listing.id}`)}
@@ -339,6 +340,12 @@ const styles = {
   lenderInfo: {
     color: '#666',
     fontSize: '0.9rem',
+  },
+  listingId: {
+    color: '#666',
+    fontSize: '0.8rem',
+    marginTop: '0.5rem',
+    fontStyle: 'italic',
   },
   status: {
     display: 'inline-block',

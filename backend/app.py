@@ -368,6 +368,103 @@ def get_rental_history():
         print("Error:", str(e))
         return jsonify({"error": "Failed to fetch rental history"}), 500
 
+# API to get a specific listing by ID
+@app.route('/api/listings/<int:listing_id>', methods=['GET'])
+def get_listing_by_id(listing_id):
+    try:
+        # Get a fresh connection
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+            
+        try:
+            with conn.cursor() as cur:
+                # Check if the table exists
+                cur.execute("""SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'storage_listings'
+                )""")
+                table_exists = cur.fetchone()[0]
+                
+                if not table_exists:
+                    # Return mock data instead
+                    if listing_id == 101:
+                        return jsonify({
+                            "id": 101,
+                            "location": "Butler College Storage",
+                            "cost": 65,
+                            "cubic_feet": 90,
+                            "description": "Secure storage space near Butler College, perfect for summer storage.",
+                            "is_available": True,
+                            "created_at": "2025-03-15T10:30:00",
+                            "contract_length_months": 3,
+                            "owner_id": 1001
+                        }), 200
+                    elif listing_id == 102:
+                        return jsonify({
+                            "id": 102,
+                            "location": "Whitman College Basement",
+                            "cost": 55,
+                            "cubic_feet": 75,
+                            "description": "Climate-controlled storage in Whitman College basement.",
+                            "is_available": True,
+                            "created_at": "2025-03-20T14:45:00",
+                            "contract_length_months": 4,
+                            "owner_id": 1002
+                        }), 200
+                    elif listing_id == 103:
+                        return jsonify({
+                            "id": 103,
+                            "location": "Frist Campus Center",
+                            "cost": 80,
+                            "cubic_feet": 120,
+                            "description": "Large storage space near Frist Campus Center, easily accessible.",
+                            "is_available": True,
+                            "created_at": "2025-03-25T09:15:00",
+                            "contract_length_months": 3,
+                            "owner_id": 1003
+                        }), 200
+                    else:
+                        return jsonify({"error": "Listing not found"}), 404
+                
+                # Try to find the listing in the database
+                cur.execute("SELECT * FROM storage_listings WHERE listing_id = %s;", (listing_id,))
+                listing = cur.fetchone()
+                
+                if not listing:
+                    # If no listing found with that ID, return 404
+                    return jsonify({"error": "Listing not found"}), 404
+                
+                # Get column names from cursor description
+                column_names = [desc[0] for desc in cur.description]
+                
+                # Convert data to dictionary
+                listing_dict = {}
+                for i, col_name in enumerate(column_names):
+                    listing_dict[col_name] = listing[i]
+                
+                # Map to frontend expected format
+                formatted_listing = {
+                    "id": listing_dict.get('listing_id'),
+                    "location": listing_dict.get('location', ''),
+                    "cost": listing_dict.get('cost', 0),
+                    "cubic_feet": listing_dict.get('cubic_ft', 0),
+                    "description": "Storage space available at " + listing_dict.get('location', ''),  # Default description
+                    "is_available": True,  # Default to available
+                    "created_at": "2025-04-01",  # Default date
+                    "contract_length_months": listing_dict.get('contract_length_months', 12),
+                    "owner_id": 1000  # Default owner ID
+                }
+                
+                return jsonify(formatted_listing), 200
+        finally:
+            conn.close()
+    except Exception as e:
+        print("Error fetching listing by ID:", str(e))
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Failed to fetch listing: " + str(e)}), 500
+
 if __name__ == "__main__":
     args = parser.parse_args()
     app.debug = not args.production
