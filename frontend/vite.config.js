@@ -6,12 +6,20 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': 'http://localhost:8000',
-      '/build': 'http://localhost:8000'
+      '/api': {
+        target: process.env.VITE_API_URL || 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/build': {
+        target: process.env.VITE_API_URL || 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      }
     }
   },
   build: {
-    outDir: '../backend/build',
+    outDir: './dist',
     emptyOutDir: true,
     manifest: true
   }
