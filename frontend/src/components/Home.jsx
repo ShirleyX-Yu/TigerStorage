@@ -1,10 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../utils/auth';
+// Import the logo with a direct path
 import tiger_storage_logo from '../assets/tiger_storage_logo.png';
+// Fallback image URL if the import fails
+const logoUrl = '/src/assets/tiger_storage_logo.png';
+// Text fallback if both image sources fail
+const logoFallbackText = 'TS';
 
 const Home = () => {
   const navigate = useNavigate();
+  const [logoError, setLogoError] = useState(false);
   
   const handleLogin = (userType) => {
     // Clear any existing user type first
@@ -18,7 +24,25 @@ const Home = () => {
   return (
     <div style={styles.container}>
       <div style={styles.content}>
-        <img src={tiger_storage_logo} alt="Logo" style={styles.logo} />
+        {!logoError ? (
+          <img 
+            src={tiger_storage_logo || logoUrl} 
+            alt="Logo" 
+            style={styles.logo} 
+            onError={(e) => {
+              if (e.target.src === tiger_storage_logo) {
+                e.target.src = logoUrl;
+              } else {
+                // If both sources fail, show text fallback
+                setLogoError(true);
+              }
+            }}
+          />
+        ) : (
+          <div style={styles.logoFallback}>
+            {logoFallbackText}
+          </div>
+        )}
         <h1 style={styles.title}>Tiger Storage</h1>
         <div style={styles.buttonContainer}>
           <button style={styles.button} onClick={() => handleLogin('renter')}>
@@ -54,6 +78,20 @@ const styles = {
   },
   logo: {
     width: '150px',
+    marginBottom: '1.5rem',
+  },
+  logoFallback: {
+    width: '150px',
+    height: '150px',
+    backgroundColor: '#FF8F00',
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '8px',
+    fontWeight: 'bold',
+    fontSize: '3rem',
+    margin: '0 auto',
     marginBottom: '1.5rem',
   },
   title: {
