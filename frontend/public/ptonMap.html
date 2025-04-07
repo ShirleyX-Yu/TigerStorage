@@ -11,16 +11,24 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
   <style>
     #map {
       height: 100vh;
       width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
     }
-    #backButton {
+    #filterColumn.active + #map {
+      left: 0;
+    }
+    #backButton, #searchButton {
       position: fixed;
       top: 20px;
-      left: 70px;
-      z-index: 1000;
+      z-index: 1001;
       padding: 10px 20px;
       background-color: #f57c00;
       color: white;
@@ -31,13 +39,98 @@
       font-weight: 500;
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
-    #backButton:hover {
+    #backButton {
+      left: 20px;
+    }
+    #searchButton {
+      left: 100px;
+    }
+    #backButton:hover, #searchButton:hover {
       background-color: #e65100;
+    }
+    #filterColumn {
+      position: fixed;
+      top: 0;
+      left: -300px;
+      width: 300px;
+      height: 100vh;
+      background-color: white;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+      z-index: 1000;
+      transition: left 0.3s ease;
+      padding: 80px 20px 20px 20px;
+      overflow-y: auto;
+      transform: translateX(-300px);
+    }
+    #filterColumn.active {
+      left: 0;
+      transform: translateX(0);
+    }
+    .filter-section {
+      margin-bottom: 20px;
+    }
+    .filter-section h3 {
+      margin-top: 0;
+      color: #333;
+      font-size: 18px;
+    }
+    .filter-option {
+      margin: 10px 0;
+    }
+    .filter-option label {
+      display: block;
+      margin-bottom: 5px;
+      color: #666;
+    }
+    .filter-option input[type="range"] {
+      width: 100%;
+    }
+    .filter-option select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
   <button id="backButton" onclick="goBack()">Back</button>
+  <button id="searchButton" onclick="toggleFilterColumn()">
+    <i class="fas fa-search"></i> Search
+  </button>
+  <div id="filterColumn">
+    <div class="filter-section">
+      <h3>Price Range</h3>
+      <div class="filter-option">
+        <label for="priceRange">Max Price: $<span id="priceValue">100</span></label>
+        <input type="range" id="priceRange" min="0" max="500" value="100" onchange="updatePriceValue(this.value)">
+      </div>
+    </div>
+    <div class="filter-section">
+      <h3>Storage Size</h3>
+      <div class="filter-option">
+        <label for="sizeSelect">Select Size</label>
+        <select id="sizeSelect" onchange="filterBySize(this.value)">
+          <option value="all">All Sizes</option>
+          <option value="small">Small (0-50 cu ft)</option>
+          <option value="medium">Medium (51-100 cu ft)</option>
+          <option value="large">Large (101+ cu ft)</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-section">
+      <h3>Location</h3>
+      <div class="filter-option">
+        <label for="locationSelect">Select Area</label>
+        <select id="locationSelect" onchange="filterByLocation(this.value)">
+          <option value="all">All Areas</option>
+          <option value="north">North Campus</option>
+          <option value="south">South Campus</option>
+          <option value="central">Central Campus</option>
+        </select>
+      </div>
+    </div>
+  </div>
   <div id="map"></div>
 
   <script>
@@ -56,6 +149,34 @@
       }
     }
 
+    function toggleFilterColumn() {
+      const filterColumn = document.getElementById('filterColumn');
+      filterColumn.classList.toggle('active');
+    }
+
+    function updatePriceValue(value) {
+      document.getElementById('priceValue').textContent = value;
+      filterMarkers();
+    }
+
+    function filterBySize(size) {
+      filterMarkers();
+    }
+
+    function filterByLocation(location) {
+      filterMarkers();
+    }
+
+    function filterMarkers() {
+      const price = parseInt(document.getElementById('priceRange').value);
+      const size = document.getElementById('sizeSelect').value;
+      const location = document.getElementById('locationSelect').value;
+      
+      // Here you would implement the actual filtering logic
+      // For now, we'll just log the filter values
+      console.log('Filtering with:', { price, size, location });
+    }
+
     // initialize map centered at Princeton
     var map = L.map('map', { zoomControl: false }).setView([40.343, -74.655], 16); 
 
@@ -68,25 +189,38 @@
       {
         name: "Wu Hall",
         coords: [40.3447, -74.6565],
-        info: "Wu Hall storage in a quad."
+        info: "Wu Hall storage in a quad.",
+        price: 50,
+        size: "small",
+        area: "central"
       },
       {
         name: "Blair Hall",
         coords: [40.34737, -74.6615],
-        info: "Blair Hall storage in a double."
+        info: "Blair Hall storage in a double.",
+        price: 75,
+        size: "medium",
+        area: "north"
       },
       {
         name: "Addy Hall",
         coords: [40.3425, -74.6552],
-        info: "Addy Hall storage in a quad."
+        info: "Addy Hall storage in a quad.",
+        price: 100,
+        size: "large",
+        area: "south"
       }
     ];
 
+    // Store markers in an array for filtering
+    const markers = [];
+
     // loop through and add markers
     locations.forEach(loc => {
-      L.marker(loc.coords)
+      const marker = L.marker(loc.coords)
         .addTo(map)
-        .bindPopup(`<b>${loc.name}</b><br>${loc.info}`);
+        .bindPopup(`<b>${loc.name}</b><br>${loc.info}<br>Price: $${loc.price}/month<br>Size: ${loc.size}`);
+      markers.push(marker);
     });
   </script>
 </body>
