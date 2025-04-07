@@ -70,16 +70,11 @@ const RedirectToUserDashboard = () => {
       localStorage.setItem('userType', 'lender');
     }
     
-    // Trigger redirect
-    setRedirected(true);
+    // Redirect to the map page using window.location
+    window.location.href = '/public/ptonMap.html';
   }, []);
   
-  if (!redirected) {
-    return <div>Redirecting...</div>;
-  }
-  
-  const finalUserType = sessionStorage.getItem('userType');
-  return <Navigate to={finalUserType === 'renter' ? '/renter' : '/lender'} replace />;
+  return <div>Redirecting to map...</div>;
 };
 
 function App() {
