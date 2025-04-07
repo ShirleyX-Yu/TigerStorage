@@ -8,7 +8,7 @@ const CreateListing = () => {
     location: '',
     cost: '',
     cubicFeet: '',
-    contractLength: '',
+    description: '',
     images: []
   });
 
@@ -43,21 +43,29 @@ const CreateListing = () => {
           location: formData.location,
           cost: formData.cost,
           cubicFeet: formData.cubicFeet,
-          contractLength: formData.contractLength
-        })
+          description: formData.description
+        }),
+        credentials: 'include'
       });
 
-      const responseData = await response.text();
-      console.log('Response:', response.status, responseData);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server responded with ${response.status}: ${errorText}`);
+      }
+
+      const responseData = await response.json();
+      console.log('Response:', responseData);
   
-      if (response.ok) {
-        console.log('Listing created successfully');
+      if (responseData.success) {
+        console.log('Listing created successfully with ID:', responseData.listing_id);
         navigate('/lender');
       } else {
-        console.error('Error creating listing');
+        console.error('Error creating listing:', responseData.error);
+        alert('Failed to create listing. Please try again.');
       }
     } catch (error) {
       console.error('Error:', error);
+      alert(`Error: ${error.message}`);
     }
   };
 
@@ -111,16 +119,14 @@ const CreateListing = () => {
           </div>
 
           <div style={styles.formGroup}>
-            <label htmlFor="contractLength" style={styles.label}>Contract Length (months)</label>
-            <input
-              type="number"
-              id="contractLength"
-              name="contractLength"
-              value={formData.contractLength}
+            <label htmlFor="description" style={styles.label}>Description</label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
               onChange={handleInputChange}
-              placeholder="Enter contract length in months"
-              style={styles.input}
-              min="1"
+              placeholder="Enter a description of the storage space"
+              style={{...styles.input, minHeight: '100px'}}
               required
             />
           </div>

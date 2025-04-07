@@ -54,9 +54,12 @@ const ViewListings = () => {
             location: listing.location,
             cost: listing.cost,
             cubicFeet: listing.cubic_feet,
-            contractLength: listing.contract_length_months,
+            description: listing.description,
+            isAvailable: listing.is_available,
+            createdAt: listing.created_at,
+            contractLength: listing.contract_length_months || 12, // Use default if not provided
             images: ['/assets/placeholder.jpg'], // default placeholder image
-            lender: 'TigerStorage User' // default lender name
+            lender: `Owner #${listing.owner_id}` // Use owner ID as reference
           };
         });
         
@@ -203,10 +206,15 @@ const ViewListings = () => {
                           <strong>${listing.cost}</strong> per month
                         </p>
                         <p style={styles.listingInfo}>
-                          Size: {listing.cubicFeet} cubic feet
+                          Size: {listing.cubicFeet} sq ft
                         </p>
+                        <div style={styles.descriptionBox}>
+                          <p style={styles.description}>{listing.description}</p>
+                        </div>
                         <p style={styles.listingInfo}>
-                          Contract: {listing.contractLength} months
+                          <span style={{color: listing.isAvailable ? '#4caf50' : '#f44336'}}>
+                            {listing.isAvailable ? '✓ Available' : '✗ Not Available'}
+                          </span>
                         </p>
                         <p style={styles.listingInfo}>
                           Lender: {listing.lender}
@@ -354,6 +362,19 @@ const styles = {
     ':hover': {
       backgroundColor: '#f68b1f'
     }
+  },
+  descriptionBox: {
+    backgroundColor: '#f9f9f9',
+    padding: '0.75rem',
+    borderRadius: '4px',
+    marginTop: '0.5rem',
+    marginBottom: '0.5rem'
+  },
+  description: {
+    margin: 0,
+    fontSize: '0.9rem',
+    color: '#555',
+    lineHeight: '1.4'
   }
 };
 

@@ -120,7 +120,7 @@ def create_listing():
         data = request.get_json()
         
         # Validate required fields
-        required_fields = ['location', 'cost', 'cubicFeet', 'contractLength']
+        required_fields = ['location', 'cost', 'cubicFeet', 'description']
         for field in required_fields:
             if field not in data:
                 return jsonify({"error": f"Missing required field: {field}"}), 400
@@ -133,15 +133,23 @@ def create_listing():
         try:
             # Convert data to correct types
             cost = float(data['cost']) if data['cost'] else 0
-            cubic_feet = int(data['cubicFeet']) if data['cubicFeet'] else 0
-            contract_length = int(data['contractLength']) if data['contractLength'] else 0
+            total_sq_ft = int(data['cubicFeet']) if data['cubicFeet'] else 0
+            
+            # Get user ID from session or use default
+            owner_id = session.get('user_info', {}).get('user_id', 1)
+            if isinstance(owner_id, str) and owner_id.isdigit():
+                owner_id = int(owner_id)
+            elif isinstance(owner_id, str):
+                # If it's a string like a netID, use a default ID
+                owner_id = 1
             
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO storage_listings (location, cost, cubic_ft, contract_length_months)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO storage_listings 
+                    (owner_id, location, total_sq_ft, cost_per_month, description, is_available)
+                    VALUES (%s, %s, %s, %s, %s, %s)
                     RETURNING listing_id;
-                """, (data['location'], cost, cubic_feet, contract_length))
+                """, (owner_id, data['location'], total_sq_ft, cost, data['description'], True))
                 
                 listing_id = cur.fetchone()[0]
                 conn.commit()
@@ -196,14 +204,24 @@ def get_listings():
                     print("API: Created 'storage_listings' table")
                     return jsonify([]), 200
                 
-                # Get the listings
-                cur.execute("SELECT listing_id, location, cost, cubic_ft, contract_length_months FROM storage_listings;")
+                # Get the listings - using the actual schema from your database
+                cur.execute("SELECT listing_id, owner_id, location, total_sq_ft, cost_per_month, description, is_available, created_at FROM storage_listings;")
                 listings = cur.fetchall()
                 print(f"API: Found {len(listings)} listings")
 
-            # Convert data to JSON-friendly format
+            # Convert data to JSON-friendly format matching the expected frontend format
             formatted_listings = [
-                {"id": row[0], "location": row[1], "cost": row[2], "cubic_feet": row[3], "contract_length_months": row[4]}
+                {
+                    "id": row[0],
+                    "owner_id": row[1],
+                    "location": row[2],
+                    "cubic_feet": row[3],  # total_sq_ft mapped to cubic_feet
+                    "cost": row[4],        # cost_per_month mapped to cost
+                    "description": row[5],
+                    "is_available": row[6],
+                    "created_at": row[7].isoformat() if row[7] else None,
+                    "contract_length_months": 12  # Default value since it's not in your schema
+                }
                 for row in listings
             ]
             
