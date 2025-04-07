@@ -58,7 +58,7 @@
       box-shadow: 2px 0 5px rgba(0,0,0,0.2);
       z-index: 1000;
       transition: left 0.3s ease;
-      padding: 80px 20px 20px 20px;
+      padding: 70px 15px 15px 15px;
       overflow-y: auto;
       transform: translateX(-300px);
     }
@@ -67,15 +67,16 @@
       transform: translateX(0);
     }
     .filter-section {
-      margin-bottom: 20px;
+      margin-bottom: 12px;
     }
     .filter-section h3 {
       margin-top: 0;
+      margin-bottom: 8px;
       color: #333;
-      font-size: 18px;
+      font-size: 16px;
     }
     .filter-option {
-      margin: 10px 0;
+      margin: 5px 0;
     }
     .filter-option label {
       display: block;
@@ -87,9 +88,24 @@
     }
     .filter-option select {
       width: 100%;
-      padding: 8px;
+      padding: 6px;
       border: 1px solid #ddd;
       border-radius: 4px;
+      font-size: 14px;
+    }
+    .star-rating {
+      display: flex;
+      align-items: center;
+      margin-top: 5px;
+    }
+    .star-rating .stars {
+      color: #ffd700;
+      font-size: 20px;
+      margin-right: 10px;
+    }
+    .star-rating .value {
+      font-size: 16px;
+      color: #666;
     }
   </style>
 </head>
@@ -100,34 +116,69 @@
   </button>
   <div id="filterColumn">
     <div class="filter-section">
-      <h3>Price Range</h3>
+      <h3>Storage Space</h3>
       <div class="filter-option">
-        <label for="priceRange">Max Price: $<span id="priceValue">100</span></label>
-        <input type="range" id="priceRange" min="0" max="500" value="100" onchange="updatePriceValue(this.value)">
-      </div>
-    </div>
-    <div class="filter-section">
-      <h3>Storage Size</h3>
-      <div class="filter-option">
-        <label for="sizeSelect">Select Size</label>
         <select id="sizeSelect" onchange="filterBySize(this.value)">
           <option value="all">All Sizes</option>
-          <option value="small">Small (0-50 cu ft)</option>
-          <option value="medium">Medium (51-100 cu ft)</option>
-          <option value="large">Large (101+ cu ft)</option>
+          <option value="small">&lt;50 sq ft</option>
+          <option value="medium">50-150 sq ft</option>
+          <option value="large">150-250 sq ft</option>
+          <option value="xlarge">&gt;250 sq ft</option>
         </select>
       </div>
     </div>
     <div class="filter-section">
-      <h3>Location</h3>
+      <h3>Cost</h3>
       <div class="filter-option">
-        <label for="locationSelect">Select Area</label>
-        <select id="locationSelect" onchange="filterByLocation(this.value)">
-          <option value="all">All Areas</option>
-          <option value="north">North Campus</option>
-          <option value="south">South Campus</option>
-          <option value="central">Central Campus</option>
+        <select id="costSelect" onchange="filterByCost(this.value)">
+          <option value="all">All Prices</option>
+          <option value="low">&lt;$15 per month</option>
+          <option value="medium-low">$15-30 per month</option>
+          <option value="medium">$30-45 per month</option>
+          <option value="medium-high">$45-60 per month</option>
+          <option value="high">&gt;$60 per month</option>
         </select>
+      </div>
+    </div>
+    <div class="filter-section">
+      <h3>Contract Length</h3>
+      <div class="filter-option">
+        <select id="contractSelect" onchange="filterByContract(this.value)">
+          <option value="all">All Lengths</option>
+          <option value="1">1 month</option>
+          <option value="2">1-2 months</option>
+          <option value="3">2-3 months</option>
+          <option value="4">3-4 months</option>
+          <option value="5">4+ months</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-section">
+      <h3>Distance from Campus</h3>
+      <div class="filter-option">
+        <select id="distanceSelect" onchange="filterByDistance(this.value)">
+          <option value="all">All Distances</option>
+          <option value="close">0-5 miles</option>
+          <option value="medium">5-10 miles</option>
+          <option value="far">10-20 miles</option>
+          <option value="very-far">20+ miles</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-section">
+      <h3>Minimum Rating</h3>
+      <div class="filter-option">
+        <div class="star-rating">
+          <div class="stars">
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+          </div>
+          <div class="value">5 stars</div>
+        </div>
+        <input type="range" id="ratingRange" min="1" max="5" step="1" value="5" onchange="updateRating(this.value)">
       </div>
     </div>
   </div>
@@ -167,14 +218,48 @@
       filterMarkers();
     }
 
+    function updateRating(value) {
+      const stars = document.querySelectorAll('.star-rating .stars i');
+      const valueDisplay = document.querySelector('.star-rating .value');
+      
+      // Update star display
+      stars.forEach((star, index) => {
+        if (index < value) {
+          star.classList.add('fas');
+          star.classList.remove('far');
+        } else {
+          star.classList.add('far');
+          star.classList.remove('fas');
+        }
+      });
+      
+      // Update value display
+      valueDisplay.textContent = value + (value === '1' ? ' star' : ' stars');
+      
+      filterMarkers();
+    }
+
+    function filterByCost(cost) {
+      filterMarkers();
+    }
+
+    function filterByContract(contract) {
+      filterMarkers();
+    }
+
+    function filterByDistance(distance) {
+      filterMarkers();
+    }
+
     function filterMarkers() {
-      const price = parseInt(document.getElementById('priceRange').value);
       const size = document.getElementById('sizeSelect').value;
-      const location = document.getElementById('locationSelect').value;
+      const cost = document.getElementById('costSelect').value;
+      const contract = document.getElementById('contractSelect').value;
+      const distance = document.getElementById('distanceSelect').value;
+      const rating = parseInt(document.getElementById('ratingRange').value);
       
       // Here you would implement the actual filtering logic
-      // For now, we'll just log the filter values
-      console.log('Filtering with:', { price, size, location });
+      console.log('Filtering with:', { size, cost, contract, distance, rating });
     }
 
     // initialize map centered at Princeton
@@ -222,6 +307,9 @@
         .bindPopup(`<b>${loc.name}</b><br>${loc.info}<br>Price: $${loc.price}/month<br>Size: ${loc.size}`);
       markers.push(marker);
     });
+
+    // Initialize rating display
+    updateRating(5);
   </script>
 </body>
 </html>
