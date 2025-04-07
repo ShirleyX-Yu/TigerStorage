@@ -36,6 +36,11 @@ app.add_url_rule(
     view_func=lambda filename: send_from_directory("build", filename),
 )
 
+# Add route to serve static files from frontend public directory
+@app.route('/public/<path:filename>')
+def serve_public(filename):
+    return send_from_directory('../frontend/public', filename)
+
 def get_asset_path(entry: str) -> str:
     try:
         with open("build/.vite/manifest.json", "r") as f:
