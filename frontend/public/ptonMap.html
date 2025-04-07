@@ -57,7 +57,7 @@
     }
 
     // initialize map centered at Princeton
-    var map = L.map('map').setView([40.343, -74.655], 14); 
+    var map = L.map('map', { zoomControl: false }).setView([40.343, -74.655], 16); 
 
     // add OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
