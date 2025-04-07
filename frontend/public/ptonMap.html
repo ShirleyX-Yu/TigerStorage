@@ -61,6 +61,7 @@
       padding: 70px 15px 15px 15px;
       overflow-y: auto;
       transform: translateX(-300px);
+      box-sizing: border-box;
     }
     #filterColumn.active {
       left: 0;
@@ -68,6 +69,8 @@
     }
     .filter-section {
       margin-bottom: 12px;
+      width: 100%;
+      box-sizing: border-box;
     }
     .filter-section h3 {
       margin-top: 0;
@@ -160,19 +163,81 @@
       color: #666;
     }
     .interested-renters {
-      margin-top: 10px;
+      margin-top: 6px;
+      max-height: 50px;
+      overflow-y: auto;
     }
     .interested-renters h4 {
-      margin: 0 0 8px 0;
+      margin: 0 0 2px 0;
       color: #333;
-      font-size: 14px;
+      font-size: 12px;
+      position: sticky;
+      top: 0;
+      background-color: #f5f5f5;
+      padding: 2px 0;
+      z-index: 1;
     }
     .renter-item {
-      padding: 5px 0;
+      padding: 2px 0;
       border-bottom: 1px solid #eee;
+      font-size: 10px;
     }
     .renter-item:last-child {
       border-bottom: none;
+    }
+    .renter-item p {
+      margin: 0;
+      line-height: 1.2;
+    }
+    .renter-item b {
+      font-size: 11px;
+    }
+    .storage-units-list {
+      margin-bottom: 20px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .storage-unit-item {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .storage-unit-item:hover {
+      background-color: #e0e0e0;
+    }
+    .storage-unit-image {
+      width: 60px;
+      height: 60px;
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      margin-right: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-size: 12px;
+    }
+    .storage-unit-info {
+      flex: 1;
+    }
+    .storage-unit-name {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .storage-unit-details {
+      font-size: 12px;
+      color: #666;
+    }
+    .storage-unit-price {
+      color: #f57c00;
+      font-weight: 500;
     }
   </style>
 </head>
@@ -248,6 +313,12 @@
         <input type="range" id="ratingRange" min="1" max="5" step="1" value="5" onchange="updateRating(this.value)">
       </div>
     </div>
+    <div class="storage-units-list">
+      <h3>Storage Units</h3>
+      <div id="storageUnitsList">
+        <!-- Storage units will be added here dynamically -->
+      </div>
+    </div>
   </div>
   <div id="map"></div>
 
@@ -318,6 +389,10 @@
       filterMarkers();
     }
 
+    function filterByRating(rating) {
+      filterMarkers();
+    }
+
     function filterMarkers() {
       const size = document.getElementById('sizeSelect').value;
       const cost = document.getElementById('costSelect').value;
@@ -325,8 +400,52 @@
       const distance = document.getElementById('distanceSelect').value;
       const rating = parseInt(document.getElementById('ratingRange').value);
       
-      // Here you would implement the actual filtering logic
-      console.log('Filtering with:', { size, cost, contract, distance, rating });
+      // Filter locations based on criteria
+      const filteredLocations = locations.filter(loc => {
+        // Size filter
+        if (size !== 'all' && loc.size !== size) return false;
+        
+        // Cost filter
+        if (cost !== 'all') {
+          const price = loc.price;
+          if (cost === 'low' && price >= 15) return false;
+          if (cost === 'medium-low' && (price < 15 || price > 30)) return false;
+          if (cost === 'medium' && (price < 30 || price > 45)) return false;
+          if (cost === 'medium-high' && (price < 45 || price > 60)) return false;
+          if (cost === 'high' && price <= 60) return false;
+        }
+        
+        // Contract filter
+        if (contract !== 'all' && loc.contract !== parseInt(contract)) return false;
+        
+        // Distance filter
+        if (distance !== 'all') {
+          const dist = loc.distance;
+          if (distance === 'close' && dist > 5) return false;
+          if (distance === 'medium' && (dist <= 5 || dist > 10)) return false;
+          if (distance === 'far' && (dist <= 10 || dist > 20)) return false;
+          if (distance === 'very-far' && dist <= 20) return false;
+        }
+        
+        // Rating filter
+        if (loc.rating < rating) return false;
+        
+        return true;
+      });
+      
+      // Update markers visibility
+      markers.forEach(marker => {
+        const locationName = marker.getPopup().getContent().match(/<b style="font-size: 16px;">(.*?)<\/b>/)[1];
+        const isVisible = filteredLocations.some(loc => loc.name === locationName);
+        if (isVisible) {
+          marker.addTo(map);
+        } else {
+          marker.remove();
+        }
+      });
+      
+      // Update storage units list
+      createStorageUnitList(filteredLocations);
     }
 
     // initialize map centered at Princeton
@@ -372,15 +491,15 @@
         contract: 4
       },
       {
-        name: "Forbes College",
+        name: "Campus Storage Solutions",
         coords: [40.3502, -74.6503],
-        info: "Forbes College basement storage.",
-        price: 45,
-        size: "medium",
+        info: "Professional storage facility with climate control and 24/7 access.",
+        price: 85,
+        size: "large",
         area: "north",
-        rating: 4.0,
+        rating: 4.6,
         distance: 0.5,
-        contract: 2
+        contract: 3
       },
       {
         name: "Rockefeller College",
@@ -482,7 +601,7 @@
       "Wu Hall": { email: "wuhall@princeton.edu", phone: "555-0001" },
       "Blair Hall": { email: "blair@princeton.edu", phone: "555-0002" },
       "Addy Hall": { email: "addy@princeton.edu", phone: "555-0003" },
-      "Forbes College": { email: "forbes@princeton.edu", phone: "555-0004" },
+      "Campus Storage Solutions": { email: "info@campusstorage.com", phone: "555-0004" },
       "Rockefeller College": { email: "rockefeller@princeton.edu", phone: "555-0005" },
       "Princeton Storage Solutions": { email: "info@princetonstorage.com", phone: "555-0006" },
       "Nassau Storage": { email: "contact@nassaustorage.com", phone: "555-0007" },
@@ -553,7 +672,14 @@
               </div>
             </div>
           </div>
-        `);
+        `, {
+          maxWidth: 300,
+          autoPan: true,
+          autoPanPadding: [50, 50],
+          closeButton: true,
+          className: 'custom-popup',
+          keepInView: true
+        });
       markers.push(marker);
     });
 
@@ -579,6 +705,44 @@
 
     // Initialize rating display
     updateRating(5);
+
+    // Update the createStorageUnitList function to accept filtered locations
+    function createStorageUnitList(filteredLocations = locations) {
+      const storageUnitsList = document.getElementById('storageUnitsList');
+      storageUnitsList.innerHTML = '';
+      
+      filteredLocations.forEach(loc => {
+        const unitElement = document.createElement('div');
+        unitElement.className = 'storage-unit-item';
+        unitElement.innerHTML = `
+          <div class="storage-unit-image">
+            <span>Image</span>
+          </div>
+          <div class="storage-unit-info">
+            <div class="storage-unit-name">${loc.name}</div>
+            <div class="storage-unit-details">
+              <span class="storage-unit-price">$${loc.price}/month</span>
+              <span> • ${getSizeCategory(loc.size)}</span>
+            </div>
+          </div>
+        `;
+        
+        unitElement.addEventListener('click', () => {
+          // Find the marker for this location
+          const marker = markers.find(m => m.getPopup().getContent().includes(loc.name));
+          if (marker) {
+            // First center the map on the marker
+            map.setView(marker.getLatLng(), 16);
+            // Then open the popup after a short delay to ensure the map has centered
+            setTimeout(() => {
+              marker.openPopup();
+            }, 100);
+          }
+        });
+        
+        storageUnitsList.appendChild(unitElement);
+      });
+    }
   </script>
 </body>
 </html>
