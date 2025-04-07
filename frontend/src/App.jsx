@@ -35,8 +35,51 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const RedirectToUserDashboard = () => {
-  const userType = sessionStorage.getItem('userType');
-  return <Navigate to={userType === 'renter' ? '/renter' : '/lender'} replace />;
+  const [redirected, setRedirected] = React.useState(false);
+  
+  React.useEffect(() => {
+    // Check for userType in URL parameters first
+    const params = new URLSearchParams(window.location.search);
+    const urlUserType = params.get('userType');
+    
+    // Then check sessionStorage
+    let userType = sessionStorage.getItem('userType');
+    
+    // If not in sessionStorage, check localStorage as fallback
+    if (!userType) {
+      userType = localStorage.getItem('userType');
+      if (userType) {
+        sessionStorage.setItem('userType', userType);
+      }
+    }
+    
+    // URL parameter takes precedence if available
+    if (urlUserType) {
+      userType = urlUserType;
+      sessionStorage.setItem('userType', urlUserType);
+      localStorage.setItem('userType', urlUserType);
+      
+      // Clean up the URL by removing the query parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
+    // Default to lender if userType is still not set or invalid
+    if (userType !== 'renter' && userType !== 'lender') {
+      userType = 'lender';
+      sessionStorage.setItem('userType', 'lender');
+      localStorage.setItem('userType', 'lender');
+    }
+    
+    // Trigger redirect
+    setRedirected(true);
+  }, []);
+  
+  if (!redirected) {
+    return <div>Redirecting...</div>;
+  }
+  
+  const finalUserType = sessionStorage.getItem('userType');
+  return <Navigate to={finalUserType === 'renter' ? '/renter' : '/lender'} replace />;
 };
 
 function App() {

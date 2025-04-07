@@ -4,7 +4,17 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <title>TigerStorage - Princeton Storage Marketplace</title>
+    <script>
+      // Check if we need to redirect to a specific path from 404.html
+      (function() {
+        const redirectPath = sessionStorage.getItem('redirectPath');
+        if (redirectPath && redirectPath !== window.location.pathname) {
+          sessionStorage.removeItem('redirectPath');
+          history.replaceState(null, null, redirectPath);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

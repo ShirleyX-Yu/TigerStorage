@@ -7,6 +7,11 @@ const Home = () => {
   const navigate = useNavigate();
   
   const handleLogin = (userType) => {
+    // Clear any existing user type first
+    sessionStorage.removeItem('userType');
+    // Set the new user type
+    sessionStorage.setItem('userType', userType);
+    // Proceed with login
     login(userType);
   };
 

@@ -6,11 +6,17 @@ const API_URL = import.meta.env.VITE_API_URL;
 export const login = async (userType) => {
   // Store the user type in session storage before redirecting
   sessionStorage.setItem('userType', userType);
-  window.location.href = `${API_URL}/api/auth/login`;
+  // Also store in localStorage as a backup since sessionStorage might be lost during redirects
+  localStorage.setItem('userType', userType);
+  
+  // Add the user type as a query parameter to preserve it through redirects
+  window.location.href = `${API_URL}/api/auth/login?userType=${userType}`;
 };
 
 export const logout = async () => {
+  // Clear user type from both storage types
   sessionStorage.removeItem('userType');
+  localStorage.removeItem('userType');
   window.location.href = `${API_URL}/api/auth/logout`;
 };
 

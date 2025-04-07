@@ -75,13 +75,28 @@ def welcome():
 @app.route('/api/auth/login')
 def login():
     try:
+        # Get the user type from the query parameter
+        user_type = request.args.get('userType')
+        
+        # Authenticate the user
         username = auth.authenticate()
-        # Instead of returning JSON, redirect to the welcome page
-        return redirect('/welcome')
+        
+        # Redirect to the welcome page with the user type as a query parameter
+        if user_type:
+            return redirect(f'/welcome?userType={user_type}')
+        else:
+            return redirect('/welcome')
     except Exception as e:
         if hasattr(e, 'response') and e.response.status_code == 302:
             # This is the CAS redirect
-            return redirect(e.response.location)
+            # Preserve the user type in the redirect
+            user_type = request.args.get('userType')
+            redirect_url = e.response.location
+            if user_type and '?' not in redirect_url:
+                redirect_url += f'?userType={user_type}'
+            elif user_type:
+                redirect_url += f'&userType={user_type}'
+            return redirect(redirect_url)
         return jsonify({
             'success': False,
             'error': str(e)
@@ -179,13 +194,11 @@ def create_listing():
 @app.route('/api/listings', methods=['GET'])
 def get_listings():
     try:
-        print("DEBUG: Starting get_listings")
-        print(f"DEBUG: DATABASE_URL = {os.environ.get('DATABASE_URL')[:20]}...")
+        # Get listings from database
         
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
-            print("DEBUG: Database connection failed")
             return jsonify({"error": "Database connection failed"}), 500
         
         try:    
@@ -217,7 +230,6 @@ def get_listings():
                 
                 # If no listings found, return mock data
                 if len(listings) == 0:
-                    print("DEBUG: No listings found, returning mock data")
                     # Return mock data instead
                     return jsonify([
                         {

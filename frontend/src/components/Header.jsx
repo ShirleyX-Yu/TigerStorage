@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../utils/auth';
+import tiger_storage_logo from '../assets/tiger_storage_logo.png';
 
 const Header = ({ title }) => {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ const Header = ({ title }) => {
       <div style={styles.headerContent}>
         <div style={styles.leftSection}>
           <img 
-            src="/assets/tiger_storage_logo.png" 
+            src={tiger_storage_logo} 
             alt="TigerStorage Logo" 
             style={{
               ...styles.logo,
