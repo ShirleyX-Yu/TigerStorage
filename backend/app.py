@@ -106,54 +106,52 @@ def auth_status():
 
 # Database connection function to handle reconnection
 def get_db_connection():
+    """Get a fresh database connection"""
     try:
         return psycopg2.connect(os.environ.get("DATABASE_URL"))
     except Exception as e:
         print(f"Database connection error: {e}")
         return None
 
-# Initialize connection
-conn = get_db_connection()
-
 # API to create a new listing
 @app.route('/api/listings', methods=['POST'])
 def create_listing():
     try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['location', 'cost', 'cubicFeet', 'contractLength']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
+
         # Get a fresh connection
-        connection = get_db_connection()
-        if not connection:
+        conn = get_db_connection()
+        if not conn:
             return jsonify({"error": "Database connection failed"}), 500
             
-        data = request.get_json()
-        print('Received JSON data:', data)
-        
-        location = data.get('location')
-        cost = data.get('cost')
-        cubic_feet = data.get('cubicFeet')
-        contract_length = data.get('contractLength')
-        
-        print('Parsed values:', {
-            'location': location,
-            'cost': cost,
-            'cubic_feet': cubic_feet,
-            'contract_length': contract_length
-        })
-
-        # Convert data to correct types
-        cost = float(cost) if cost else 0
-        cubic_feet = int(cubic_feet) if cubic_feet else 0
-        contract_length = int(contract_length) if contract_length else 0
-
-        # Insert into database
-        with connection.cursor() as cur:
-            cur.execute("""
-                INSERT INTO storage_listings (location, cost, cubic_ft, contract_length_months)
-                VALUES (%s, %s, %s, %s) RETURNING listing_id;
-            """, (location, cost, cubic_feet, contract_length))
-            listing_id = cur.fetchone()[0]
-            connection.commit()
-
-        return jsonify({"message": "Listing created successfully!", "listing_id": listing_id}), 201
+        try:
+            # Convert data to correct types
+            cost = float(data['cost']) if data['cost'] else 0
+            cubic_feet = int(data['cubicFeet']) if data['cubicFeet'] else 0
+            contract_length = int(data['contractLength']) if data['contractLength'] else 0
+            
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO storage_listings (location, cost, cubic_ft, contract_length_months)
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING listing_id;
+                """, (data['location'], cost, cubic_feet, contract_length))
+                
+                listing_id = cur.fetchone()[0]
+                conn.commit()
+                
+                return jsonify({
+                    "success": True,
+                    "listing_id": listing_id
+                }), 201
+        finally:
+            conn.close()
 
     except Exception as e:
         print("Error creating listing:", str(e))
@@ -165,26 +163,61 @@ def create_listing():
 @app.route('/api/listings', methods=['GET'])
 def get_listings():
     try:
+        print("API: Fetching listings")
         # Get a fresh connection
-        connection = get_db_connection()
-        if not connection:
+        conn = get_db_connection()
+        if not conn:
+            print("API: Database connection failed")
             return jsonify({"error": "Database connection failed"}), 500
+        
+        try:    
+            with conn.cursor() as cur:
+                print("API: Executing SQL query")
+                # Check if the table exists
+                cur.execute("""SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'storage_listings'
+                )""")
+                table_exists = cur.fetchone()[0]
+                
+                if not table_exists:
+                    print("API: Table 'storage_listings' does not exist")
+                    # Create the table if it doesn't exist
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS storage_listings (
+                            listing_id SERIAL PRIMARY KEY,
+                            location TEXT NOT NULL,
+                            cost NUMERIC(10,2) NOT NULL,
+                            cubic_ft INTEGER NOT NULL,
+                            contract_length_months INTEGER NOT NULL
+                        );
+                    """)
+                    conn.commit()
+                    print("API: Created 'storage_listings' table")
+                    return jsonify([]), 200
+                
+                # Get the listings
+                cur.execute("SELECT listing_id, location, cost, cubic_ft, contract_length_months FROM storage_listings;")
+                listings = cur.fetchall()
+                print(f"API: Found {len(listings)} listings")
+
+            # Convert data to JSON-friendly format
+            formatted_listings = [
+                {"id": row[0], "location": row[1], "cost": row[2], "cubic_feet": row[3], "contract_length_months": row[4]}
+                for row in listings
+            ]
             
-        with connection.cursor() as cur:
-            cur.execute("SELECT listing_id, location, cost, cubic_ft, contract_length_months FROM storage_listings;")
-            listings = cur.fetchall()
-
-        # Convert data to JSON-friendly format
-        formatted_listings = [
-            {"id": row[0], "location": row[1], "cost": row[2], "cubic_feet": row[3], "contract_length_months": row[4]}
-            for row in listings
-        ]
-
-        return jsonify(formatted_listings), 200
+            print(f"API: Returning {len(formatted_listings)} formatted listings")
+            return jsonify(formatted_listings), 200
+        finally:
+            conn.close()
+            print("API: Database connection closed")
 
     except Exception as e:
-        print("Error:", str(e))
-        return jsonify({"error": "Failed to fetch listings"}), 500
+        print("Error fetching listings:", str(e))
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Failed to fetch listings: " + str(e)}), 500
 
 if __name__ == "__main__":
     args = parser.parse_args()

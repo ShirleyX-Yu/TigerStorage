@@ -17,24 +17,50 @@ const ViewListings = () => {
   useEffect(() => {
     const fetchListings = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings`);
+        console.log('Fetching listings from:', `${import.meta.env.VITE_API_URL}/api/listings`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings`, {
+          credentials: 'include' // Include cookies for authentication
+        });
+        
+        console.log('Response status:', response.status);
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch listings');
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
+          throw new Error(`Failed to fetch listings: ${response.status} ${errorText}`);
         }
+        
         const data = await response.json();
-        console.log('Fetched listings:', data);
+        console.log('Fetched listings data:', data);
+        console.log('Data type:', typeof data, Array.isArray(data) ? 'is array' : 'not array');
+        console.log('Data length:', Array.isArray(data) ? data.length : 'N/A');
+        
+        if (!Array.isArray(data)) {
+          console.error('Expected array but got:', data);
+          throw new Error('Unexpected data format from API');
+        }
+        
+        if (data.length === 0) {
+          console.log('No listings returned from API');
+          setListings([]);
+          return;
+        }
         
         // transform the data to match our component's expected format
-        const formattedListings = data.map(listing => ({
-          id: listing.id,
-          location: listing.location,
-          cost: listing.cost,
-          cubicFeet: listing.cubic_feet,
-          contractLength: listing.contract_length_months,
-          images: ['/assets/placeholder.jpg'], // default placeholder image
-          lender: 'TigerStorage User' // default lender name
-        }));
+        const formattedListings = data.map(listing => {
+          console.log('Processing listing:', listing);
+          return {
+            id: listing.id,
+            location: listing.location,
+            cost: listing.cost,
+            cubicFeet: listing.cubic_feet,
+            contractLength: listing.contract_length_months,
+            images: ['/assets/placeholder.jpg'], // default placeholder image
+            lender: 'TigerStorage User' // default lender name
+          };
+        });
         
+        console.log('Formatted listings:', formattedListings);
         setListings(formattedListings);
       } catch (err) {
         console.error('Error fetching listings:', err);
@@ -162,9 +188,9 @@ const ViewListings = () => {
                 </div>
               </div>
 
-              <div style={styles.listings}>
+              <div style={styles.listingsGrid}>
                 {filteredListings.length === 0 ? (
-                  <div style={styles.noListings}>
+                  <div style={styles.message}>
                     No storage spaces match your criteria
                   </div>
                 ) : (
@@ -186,10 +212,10 @@ const ViewListings = () => {
                           Lender: {listing.lender}
                         </p>
                         <button 
-                          style={styles.contactButton}
+                          style={styles.viewButton}
                           onClick={() => navigate(`/listing/${listing.id}`)}
                         >
-                          View Details & Contact
+                          View Details
                         </button>
                       </div>
                     </div>
@@ -207,50 +233,74 @@ const ViewListings = () => {
 const styles = {
   container: {
     minHeight: '100vh',
-    backgroundColor: 'rgba(245, 124, 0, 0.1)'
+    backgroundColor: 'rgba(245, 124, 0, 0.1)',
+    display: 'flex',
+    flexDirection: 'column',
+    width: '100%'
   },
   content: {
     padding: '2rem',
-    maxWidth: '1200px',
-    margin: '0 auto'
+    maxWidth: '1400px',
+    margin: '0 auto',
+    width: '100%'
   },
-  mainContent: {
-    display: 'flex',
-    gap: '2rem'
-  },
-  filters: {
+  section: {
     backgroundColor: '#fff',
     padding: '1.5rem',
     borderRadius: '8px',
     marginBottom: '2rem',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  },
+  sectionHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1.5rem'
+  },
+  message: {
+    color: '#666',
+    marginBottom: '1rem'
+  },
+  error: {
+    color: '#f44336'
+  },
+  mainContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem'
+  },
+  filters: {
+    backgroundColor: '#f5f5f5',
+    padding: '1.5rem',
+    borderRadius: '8px',
+    marginBottom: '1.5rem'
   },
   filterGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-    gap: '1.5rem',
-    marginTop: '1rem',
+    gap: '1rem',
+    marginTop: '1rem'
   },
   filterGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.5rem',
+    gap: '0.5rem'
   },
   rangeInputs: {
     display: 'flex',
-    gap: '0.5rem',
+    gap: '0.5rem'
   },
   input: {
     flex: 1,
-    padding: '0.5rem',
-    border: '1px solid #ddd',
+    padding: '0.75rem',
     borderRadius: '4px',
-    fontSize: '0.9rem',
+    border: '1px solid #ddd',
+    fontSize: '0.9rem'
   },
-  listings: {
+  listingsGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gap: '2rem',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
+    gap: '1.5rem'
   },
   listingCard: {
     backgroundColor: '#fff',
@@ -259,44 +309,25 @@ const styles = {
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     transition: 'transform 0.2s',
     ':hover': {
-      transform: 'translateY(-4px)',
-    },
+      transform: 'translateY(-4px)'
+    }
   },
   listingImage: {
     width: '100%',
     height: '200px',
-    objectFit: 'cover',
+    objectFit: 'cover'
   },
   listingDetails: {
-    padding: '1.5rem',
+    padding: '1.5rem'
   },
   listingTitle: {
     margin: '0 0 1rem 0',
     fontSize: '1.2rem',
-    color: '#333',
+    color: '#333'
   },
   listingInfo: {
     margin: '0.5rem 0',
-    color: '#666',
-  },
-  contactButton: {
-    width: '100%',
-    padding: '0.75rem',
-    backgroundColor: '#f57c00',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    marginTop: '1rem',
-    fontSize: '1rem',
-    fontWeight: '500',
-  },
-  noListings: {
-    textAlign: 'center',
-    padding: '2rem',
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-    gridColumn: '1 / -1',
+    color: '#666'
   },
   actionButton: {
     padding: '0.75rem 1.5rem',
@@ -306,8 +337,24 @@ const styles = {
     borderRadius: '4px',
     cursor: 'pointer',
     fontSize: '1rem',
-    fontWeight: '500',
+    fontWeight: '500'
   },
+  viewButton: {
+    backgroundColor: '#f57c00',
+    color: 'white',
+    border: 'none',
+    padding: '0.75rem 1rem',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    width: '100%',
+    marginTop: '1rem',
+    fontSize: '1rem',
+    fontWeight: '500',
+    transition: 'background-color 0.2s',
+    ':hover': {
+      backgroundColor: '#f68b1f'
+    }
+  }
 };
 
 export default ViewListings;
