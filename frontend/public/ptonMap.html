@@ -107,6 +107,73 @@
       font-size: 16px;
       color: #666;
     }
+    .popup-image {
+      width: 100%;
+      height: 150px;
+      background-color: #e0e0e0;
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-size: 14px;
+      border-radius: 4px;
+    }
+    .interested-button {
+      width: 100%;
+      padding: 8px 12px;
+      background-color: #f57c00;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 10px;
+      text-align: center;
+      transition: background-color 0.2s;
+    }
+    .interested-button:hover {
+      background-color: #e65100;
+    }
+    .interested-button.interested {
+      background-color: #4caf50;
+    }
+    .interested-button.interested:hover {
+      background-color: #388e3c;
+    }
+    .contact-info {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      display: none;
+    }
+    .contact-info h4 {
+      margin: 0 0 8px 0;
+      color: #333;
+      font-size: 14px;
+    }
+    .contact-info p {
+      margin: 5px 0;
+      font-size: 13px;
+      color: #666;
+    }
+    .interested-renters {
+      margin-top: 10px;
+    }
+    .interested-renters h4 {
+      margin: 0 0 8px 0;
+      color: #333;
+      font-size: 14px;
+    }
+    .renter-item {
+      padding: 5px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .renter-item:last-child {
+      border-bottom: none;
+    }
   </style>
 </head>
 <body>
@@ -396,21 +463,95 @@
 
     // Store markers in an array for filtering
     const markers = [];
+    const interestedLocations = new Set(JSON.parse(localStorage.getItem('interestedLocations') || '[]'));
+
+    // Dummy data for interested renters
+    const interestedRenters = {
+      "Wu Hall": [
+        { name: "John Smith", email: "john@princeton.edu", phone: "555-1234" },
+        { name: "Sarah Johnson", email: "sarah@princeton.edu", phone: "555-5678" }
+      ],
+      "Blair Hall": [
+        { name: "Michael Brown", email: "michael@princeton.edu", phone: "555-9012" }
+      ],
+      // Add more dummy data for other locations as needed
+    };
+
+    // Dummy data for lender contact info
+    const lenderContacts = {
+      "Wu Hall": { email: "wuhall@princeton.edu", phone: "555-0001" },
+      "Blair Hall": { email: "blair@princeton.edu", phone: "555-0002" },
+      "Addy Hall": { email: "addy@princeton.edu", phone: "555-0003" },
+      "Forbes College": { email: "forbes@princeton.edu", phone: "555-0004" },
+      "Rockefeller College": { email: "rockefeller@princeton.edu", phone: "555-0005" },
+      "Princeton Storage Solutions": { email: "info@princetonstorage.com", phone: "555-0006" },
+      "Nassau Storage": { email: "contact@nassaustorage.com", phone: "555-0007" },
+      "Princeton Self Storage": { email: "support@princetonselfstorage.com", phone: "555-0008" },
+      "Alexander Hall": { email: "alexander@princeton.edu", phone: "555-0009" },
+      "Butler College": { email: "butler@princeton.edu", phone: "555-0010" },
+      "Storage Plus": { email: "info@storageplus.com", phone: "555-0011" }
+    };
+
+    function toggleInterest(locationName) {
+      const button = event.target.closest('.interested-button');
+      const contactInfo = button.nextElementSibling;
+      
+      if (interestedLocations.has(locationName)) {
+        interestedLocations.delete(locationName);
+        button.classList.remove('interested');
+        button.innerHTML = '<i class="fas fa-heart"></i> Interested';
+        contactInfo.style.display = 'none';
+      } else {
+        interestedLocations.add(locationName);
+        button.classList.add('interested');
+        button.innerHTML = '<i class="fas fa-check"></i> Interested';
+        contactInfo.style.display = 'block';
+      }
+      
+      // Save to localStorage
+      localStorage.setItem('interestedLocations', JSON.stringify(Array.from(interestedLocations)));
+      
+      // Here you would typically send this to your backend
+      console.log('Interested locations:', Array.from(interestedLocations));
+    }
 
     // loop through and add markers
     locations.forEach(loc => {
       const marker = L.marker(loc.coords)
         .addTo(map)
         .bindPopup(`
-          <div style="font-size: 14px;">
+          <div style="font-size: 14px; width: 250px;">
             <b style="font-size: 16px;">${loc.name}</b><br>
             <i>${loc.info}</i><br><br>
+            <div class="popup-image">
+              <span>Storage Unit Image</span>
+            </div>
             <b>Storage Provider:</b> ${loc.name}<br>
             <b>Price:</b> $${loc.price}/month<br>
             <b>Size:</b> ${getSizeCategory(loc.size)}<br>
             <b>Contract Length:</b> ${getContractLength(loc.contract)}<br>
             <b>Distance from Campus:</b> ${loc.distance} miles<br>
-            <b>Rating:</b> ${loc.rating} stars
+            <b>Rating:</b> ${loc.rating} stars<br>
+            <button class="interested-button ${interestedLocations.has(loc.name) ? 'interested' : ''}" 
+                    onclick="toggleInterest('${loc.name}')">
+              <i class="fas ${interestedLocations.has(loc.name) ? 'fa-check' : 'fa-heart'}"></i> 
+              ${interestedLocations.has(loc.name) ? 'Interested' : 'Interested'}
+            </button>
+            <div class="contact-info" style="display: ${interestedLocations.has(loc.name) ? 'block' : 'none'}">
+              <h4>Lender Contact Information</h4>
+              <p><i class="fas fa-envelope"></i> ${lenderContacts[loc.name].email}</p>
+              <p><i class="fas fa-phone"></i> ${lenderContacts[loc.name].phone}</p>
+              <div class="interested-renters">
+                <h4>Interested Renters</h4>
+                ${(interestedRenters[loc.name] || []).map(renter => `
+                  <div class="renter-item">
+                    <p><b>${renter.name}</b></p>
+                    <p><i class="fas fa-envelope"></i> ${renter.email}</p>
+                    <p><i class="fas fa-phone"></i> ${renter.phone}</p>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
           </div>
         `);
       markers.push(marker);
