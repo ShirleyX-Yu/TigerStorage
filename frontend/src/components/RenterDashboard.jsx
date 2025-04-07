@@ -8,7 +8,7 @@ const RenterDashboard = ({ username }) => {
   const openMap = () => {
     // Set cookie with return URL
     document.cookie = `returnTo=${encodeURIComponent('/renter')}; path=/`;
-    window.location.href = '/ptonMap.html';
+    window.location.href = '/public/ptonMap.html';
   };
 
   // This will be replaced with actual API data

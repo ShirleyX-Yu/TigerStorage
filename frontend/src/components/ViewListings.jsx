@@ -11,7 +11,7 @@ const ViewListings = () => {
   const openMap = () => {
     // set cookie with return URL
     document.cookie = `returnTo=${encodeURIComponent('/view-listings')}; path=/`;
-    window.location.href = '/ptonMap.html';
+    window.location.href = '/public/ptonMap.html';
   };
 
   useEffect(() => {
