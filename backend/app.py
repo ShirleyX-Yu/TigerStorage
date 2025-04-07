@@ -19,11 +19,12 @@ app = Flask(
     static_folder=os.path.abspath("static"),
 )
 
-CORS(app)  # Enable CORS for all routes
+# Configure CORS to allow requests from Render domains
+CORS(app, resources={r"/*": {"origins": ["https://tigerstorage-frontend.onrender.com", "http://localhost:5173", "*"]}}, supports_credentials=True)
 
 # Load environment variables and set secret key
 dotenv.load_dotenv()
-app.secret_key = os.environ["APP_SECRET_KEY"]
+app.secret_key = os.environ.get("APP_SECRET_KEY", "default-dev-key-replace-in-production")
 
 # Initialize CAS authentication
 auth.init_auth(app)
@@ -103,13 +104,26 @@ def auth_status():
 
 
 
-# Database connection
-conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+# Database connection function to handle reconnection
+def get_db_connection():
+    try:
+        return psycopg2.connect(os.environ.get("DATABASE_URL"))
+    except Exception as e:
+        print(f"Database connection error: {e}")
+        return None
+
+# Initialize connection
+conn = get_db_connection()
 
 # API to create a new listing
 @app.route('/api/listings', methods=['POST'])
 def create_listing():
     try:
+        # Get a fresh connection
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({"error": "Database connection failed"}), 500
+            
         data = request.get_json()
         print('Received JSON data:', data)
         
@@ -131,13 +145,13 @@ def create_listing():
         contract_length = int(contract_length) if contract_length else 0
 
         # Insert into database
-        with conn.cursor() as cur:
+        with connection.cursor() as cur:
             cur.execute("""
                 INSERT INTO storage_listings (location, cost, cubic_ft, contract_length_months)
                 VALUES (%s, %s, %s, %s) RETURNING listing_id;
             """, (location, cost, cubic_feet, contract_length))
             listing_id = cur.fetchone()[0]
-            conn.commit()
+            connection.commit()
 
         return jsonify({"message": "Listing created successfully!", "listing_id": listing_id}), 201
 
@@ -151,7 +165,12 @@ def create_listing():
 @app.route('/api/listings', methods=['GET'])
 def get_listings():
     try:
-        with conn.cursor() as cur:
+        # Get a fresh connection
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({"error": "Database connection failed"}), 500
+            
+        with connection.cursor() as cur:
             cur.execute("SELECT listing_id, location, cost, cubic_ft, contract_length_months FROM storage_listings;")
             listings = cur.fetchall()
 
