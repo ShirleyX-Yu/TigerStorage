@@ -239,6 +239,23 @@
       color: #f57c00;
       font-weight: 500;
     }
+    #searchFilterButton {
+      width: 100%;
+      padding: 10px;
+      background-color: #f57c00;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      margin: 15px 0;
+      text-align: center;
+      transition: background-color 0.2s;
+    }
+    #searchFilterButton:hover {
+      background-color: #e65100;
+    }
   </style>
 </head>
 <body>
@@ -250,7 +267,7 @@
     <div class="filter-section">
       <h3>Storage Space</h3>
       <div class="filter-option">
-        <select id="sizeSelect" onchange="filterBySize(this.value)">
+        <select id="sizeSelect" onchange="filterBySize()">
           <option value="all">All Sizes</option>
           <option value="small">&lt;50 sq ft</option>
           <option value="medium">50-150 sq ft</option>
@@ -262,7 +279,7 @@
     <div class="filter-section">
       <h3>Cost</h3>
       <div class="filter-option">
-        <select id="costSelect" onchange="filterByCost(this.value)">
+        <select id="costSelect" onchange="filterByCost()">
           <option value="all">All Prices</option>
           <option value="low">&lt;$15 per month</option>
           <option value="medium-low">$15-30 per month</option>
@@ -275,7 +292,7 @@
     <div class="filter-section">
       <h3>Contract Length</h3>
       <div class="filter-option">
-        <select id="contractSelect" onchange="filterByContract(this.value)">
+        <select id="contractSelect" onchange="filterByContract()">
           <option value="all">All Lengths</option>
           <option value="1">1 month</option>
           <option value="2">1-2 months</option>
@@ -288,7 +305,7 @@
     <div class="filter-section">
       <h3>Distance from Campus</h3>
       <div class="filter-option">
-        <select id="distanceSelect" onchange="filterByDistance(this.value)">
+        <select id="distanceSelect" onchange="filterByDistance()">
           <option value="all">All Distances</option>
           <option value="close">0-5 miles</option>
           <option value="medium">5-10 miles</option>
@@ -303,14 +320,14 @@
         <div class="star-rating">
           <div class="stars">
             <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
+            <i class="far fa-star"></i>
+            <i class="far fa-star"></i>
+            <i class="far fa-star"></i>
+            <i class="far fa-star"></i>
           </div>
-          <div class="value">5 stars</div>
+          <div class="value">1 star</div>
         </div>
-        <input type="range" id="ratingRange" min="1" max="5" step="1" value="5" onchange="updateRating(this.value)">
+        <input type="range" id="ratingRange" min="1" max="5" step="1" value="1" onchange="filterByRating()">
       </div>
     </div>
     <div class="storage-units-list">
@@ -348,8 +365,8 @@
       filterMarkers();
     }
 
-    function filterBySize(size) {
-      filterMarkers();
+    function filterBySize() {
+      applyFilters();
     }
 
     function filterByLocation(location) {
@@ -375,22 +392,25 @@
       valueDisplay.textContent = value + (value === '1' ? ' star' : ' stars');
       
       filterMarkers();
+      createStorageUnitList();
     }
 
-    function filterByCost(cost) {
-      filterMarkers();
+    function filterByCost() {
+      applyFilters();
     }
 
-    function filterByContract(contract) {
-      filterMarkers();
+    function filterByContract() {
+      applyFilters();
     }
 
-    function filterByDistance(distance) {
-      filterMarkers();
+    function filterByDistance() {
+      applyFilters();
     }
 
-    function filterByRating(rating) {
-      filterMarkers();
+    function filterByRating() {
+      const rating = document.getElementById('ratingRange').value;
+      updateRating(rating);
+      applyFilters();
     }
 
     function filterMarkers() {
@@ -400,52 +420,8 @@
       const distance = document.getElementById('distanceSelect').value;
       const rating = parseInt(document.getElementById('ratingRange').value);
       
-      // Filter locations based on criteria
-      const filteredLocations = locations.filter(loc => {
-        // Size filter
-        if (size !== 'all' && loc.size !== size) return false;
-        
-        // Cost filter
-        if (cost !== 'all') {
-          const price = loc.price;
-          if (cost === 'low' && price >= 15) return false;
-          if (cost === 'medium-low' && (price < 15 || price > 30)) return false;
-          if (cost === 'medium' && (price < 30 || price > 45)) return false;
-          if (cost === 'medium-high' && (price < 45 || price > 60)) return false;
-          if (cost === 'high' && price <= 60) return false;
-        }
-        
-        // Contract filter
-        if (contract !== 'all' && loc.contract !== parseInt(contract)) return false;
-        
-        // Distance filter
-        if (distance !== 'all') {
-          const dist = loc.distance;
-          if (distance === 'close' && dist > 5) return false;
-          if (distance === 'medium' && (dist <= 5 || dist > 10)) return false;
-          if (distance === 'far' && (dist <= 10 || dist > 20)) return false;
-          if (distance === 'very-far' && dist <= 20) return false;
-        }
-        
-        // Rating filter
-        if (loc.rating < rating) return false;
-        
-        return true;
-      });
-      
-      // Update markers visibility
-      markers.forEach(marker => {
-        const locationName = marker.getPopup().getContent().match(/<b style="font-size: 16px;">(.*?)<\/b>/)[1];
-        const isVisible = filteredLocations.some(loc => loc.name === locationName);
-        if (isVisible) {
-          marker.addTo(map);
-        } else {
-          marker.remove();
-        }
-      });
-      
-      // Update storage units list
-      createStorageUnitList(filteredLocations);
+      // Here you would implement the actual filtering logic
+      console.log('Filtering with:', { size, cost, contract, distance, rating });
     }
 
     // initialize map centered at Princeton
@@ -704,14 +680,14 @@
     }
 
     // Initialize rating display
-    updateRating(5);
+    updateRating(1);
 
-    // Update the createStorageUnitList function to accept filtered locations
-    function createStorageUnitList(filteredLocations = locations) {
+    // Add this after the locations array
+    function createStorageUnitList() {
       const storageUnitsList = document.getElementById('storageUnitsList');
       storageUnitsList.innerHTML = '';
       
-      filteredLocations.forEach(loc => {
+      locations.forEach(loc => {
         const unitElement = document.createElement('div');
         unitElement.className = 'storage-unit-item';
         unitElement.innerHTML = `
@@ -741,6 +717,159 @@
         });
         
         storageUnitsList.appendChild(unitElement);
+      });
+    }
+
+    // Call this function after creating the map and markers
+    createStorageUnitList();
+
+    function applyFilters() {
+      const size = document.getElementById('sizeSelect').value;
+      const cost = document.getElementById('costSelect').value;
+      const contract = document.getElementById('contractSelect').value;
+      const distance = document.getElementById('distanceSelect').value;
+      const rating = parseInt(document.getElementById('ratingRange').value);
+      
+      // Reset all markers to full opacity first
+      markers.forEach(marker => marker.setOpacity(1));
+      
+      // Only apply opacity changes if any filter is active (not 'all')
+      if (size !== 'all' || cost !== 'all' || contract !== 'all' || distance !== 'all' || rating !== 1) {
+        // Dim markers that don't match filters
+        markers.forEach(marker => {
+          const content = marker.getPopup().getContent();
+          const location = locations.find(loc => content.includes(loc.name));
+          
+          if (location) {
+            let matchesAllFilters = true;
+            
+            // Check size filter
+            if (size !== 'all' && location.size !== size) {
+              matchesAllFilters = false;
+            }
+            
+            // Check cost filter
+            if (cost !== 'all') {
+              const price = location.price;
+              if (!(
+                (cost === 'low' && price < 15) ||
+                (cost === 'medium-low' && price >= 15 && price <= 30) ||
+                (cost === 'medium' && price > 30 && price <= 45) ||
+                (cost === 'medium-high' && price > 45 && price <= 60) ||
+                (cost === 'high' && price > 60)
+              )) {
+                matchesAllFilters = false;
+              }
+            }
+            
+            // Check contract filter
+            if (contract !== 'all' && location.contract !== parseInt(contract)) {
+              matchesAllFilters = false;
+            }
+            
+            // Check distance filter
+            if (distance !== 'all') {
+              const dist = location.distance;
+              if (!(
+                (distance === 'close' && dist <= 5) ||
+                (distance === 'medium' && dist > 5 && dist <= 10) ||
+                (distance === 'far' && dist > 10 && dist <= 20) ||
+                (distance === 'very-far' && dist > 20)
+              )) {
+                matchesAllFilters = false;
+              }
+            }
+            
+            // Check rating filter
+            if (location.rating < rating) {
+              matchesAllFilters = false;
+            }
+            
+            // Only dim the marker if it doesn't match all active filters
+            if (!matchesAllFilters) {
+              marker.setOpacity(0.5);
+            }
+          }
+        });
+      }
+      
+      // Update the storage units list to only show matching units
+      const storageUnitsList = document.getElementById('storageUnitsList');
+      storageUnitsList.innerHTML = '';
+      
+      locations.forEach(loc => {
+        let matchesAllFilters = true;
+        
+        // Check size filter
+        if (size !== 'all' && loc.size !== size) {
+          matchesAllFilters = false;
+        }
+        
+        // Check cost filter
+        if (cost !== 'all') {
+          const price = loc.price;
+          if (!(
+            (cost === 'low' && price < 15) ||
+            (cost === 'medium-low' && price >= 15 && price <= 30) ||
+            (cost === 'medium' && price > 30 && price <= 45) ||
+            (cost === 'medium-high' && price > 45 && price <= 60) ||
+            (cost === 'high' && price > 60)
+          )) {
+            matchesAllFilters = false;
+          }
+        }
+        
+        // Check contract filter
+        if (contract !== 'all' && loc.contract !== parseInt(contract)) {
+          matchesAllFilters = false;
+        }
+        
+        // Check distance filter
+        if (distance !== 'all') {
+          const dist = loc.distance;
+          if (!(
+            (distance === 'close' && dist <= 5) ||
+            (distance === 'medium' && dist > 5 && dist <= 10) ||
+            (distance === 'far' && dist > 10 && dist <= 20) ||
+            (distance === 'very-far' && dist > 20)
+          )) {
+            matchesAllFilters = false;
+          }
+        }
+        
+        // Check rating filter
+        if (loc.rating < rating) {
+          matchesAllFilters = false;
+        }
+        
+        if (matchesAllFilters) {
+          const unitElement = document.createElement('div');
+          unitElement.className = 'storage-unit-item';
+          unitElement.innerHTML = `
+            <div class="storage-unit-image">
+              <span>Image</span>
+            </div>
+            <div class="storage-unit-info">
+              <div class="storage-unit-name">${loc.name}</div>
+              <div class="storage-unit-details">
+                <span class="storage-unit-price">$${loc.price}/month</span>
+                <span> • ${getSizeCategory(loc.size)}</span>
+              </div>
+            </div>
+          `;
+          
+          unitElement.addEventListener('click', () => {
+            const marker = markers.find(m => m.getPopup().getContent().includes(loc.name));
+            if (marker) {
+              map.setView(marker.getLatLng(), 16);
+              setTimeout(() => {
+                marker.openPopup();
+              }, 100);
+            }
+          });
+          
+          storageUnitsList.appendChild(unitElement);
+        }
       });
     }
   </script>
