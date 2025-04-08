@@ -5,7 +5,8 @@ import Header from './Header';
 const CreateListing = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    location: '',
+    location: '', // This will be used as the title field
+    address: '', // New separate address field
     cost: '',
     cubicFeet: '',
     description: '',
@@ -16,7 +17,7 @@ const CreateListing = () => {
   });
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [address, setAddress] = useState('');
+  const [tempAddress, setTempAddress] = useState('');
   const [geocodingStatus, setGeocodingStatus] = useState(''); // For status messages
   const [locationType, setLocationType] = useState('on-campus'); // 'on-campus' or 'off-campus'
 
@@ -29,20 +30,25 @@ const CreateListing = () => {
   };
 
   const handleAddressChange = (e) => {
-    setAddress(e.target.value);
+    setTempAddress(e.target.value);
   };
 
   const handleLocationTypeChange = (e) => {
     setLocationType(e.target.value);
     // Clear address and geocoding status when switching location types
-    setAddress('');
+    setTempAddress('');
     setGeocodingStatus('');
   };
 
   const geocodeAddress = async () => {
-    if (!address.trim()) {
+    if (!tempAddress.trim()) {
       setGeocodingStatus('Please enter an address');
       return;
+    }
+    
+    // Provide guidance based on location type
+    if (locationType === 'on-campus' && !tempAddress.includes('Hall')) {
+      setGeocodingStatus('Tip: For on-campus locations, use format "[Hall Name] Hall"');
     }
 
     setGeocodingStatus('Looking up coordinates...');
@@ -51,11 +57,11 @@ const CreateListing = () => {
       let searchAddress;
       
       if (locationType === 'on-campus') {
-        // For on-campus locations, add Princeton University context
-        searchAddress = `${address}, Princeton University, Princeton, NJ`;
+        // For on-campus locations, use the residential college format
+        searchAddress = tempAddress.includes('Princeton, NJ 08544') ? tempAddress : `${tempAddress}, Princeton, NJ 08544`;
       } else {
         // For off-campus, use the full address as provided
-        searchAddress = address;
+        searchAddress = tempAddress;
       }
       
       // Using the Nominatim OpenStreetMap API (free and doesn't require API key)
@@ -72,9 +78,10 @@ const CreateListing = () => {
       if (data.length > 0) {
         const { lat, lon } = data[0];
         
-        // Update form data with the coordinates
+        // Update form data with the coordinates and address
         setFormData(prev => ({
           ...prev,
+          address: tempAddress,
           latitude: lat,
           longitude: lon
         }));
@@ -123,21 +130,82 @@ const CreateListing = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(formData),
-      });
-      if (response.ok) {
-        navigate('/view-listings');
-      } else {
-        setError('Failed to create listing');
+      setError('');
+      
+      // Show more detailed validation errors
+      if (!formData.location) {
+        setError('Please enter a title for your listing');
+        return;
+      }
+      if (!formData.cost) {
+        setError('Please enter a cost');
+        return;
+      }
+      if (!formData.cubicFeet) {
+        setError('Please enter the cubic feet');
+        return;
+      }
+      if (!formData.address) {
+        setError('Please enter an address');
+        return;
+      }
+      if (!formData.latitude || !formData.longitude) {
+        setError('Please geocode your address to get coordinates');
+        return;
+      }
+      
+      // Create a copy of the form data with both field name formats to ensure compatibility
+      const apiData = {
+        ...formData,
+        cubic_feet: formData.cubicFeet, // Include snake_case version
+        cubicFeet: formData.cubicFeet, // Keep camelCase version too for backward compatibility
+      };
+      
+      console.log('API URL:', import.meta.env.VITE_API_URL);
+      console.log('Submitting listing data:', apiData);
+      
+      try {
+        // Hardcode the URL for testing purposes
+        const apiUrl = 'http://localhost:8000/api/listings';
+        console.log('Using API URL:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+          },
+          credentials: 'include',
+          mode: 'cors', // Explicitly set CORS mode
+          body: JSON.stringify(apiData),
+        });
+        
+        console.log('Response status:', response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Listing created successfully:', data);
+          navigate('/lender'); // Navigate to lender dashboard instead
+        } else {
+          let errorMessage = `HTTP Error: ${response.status} ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            console.error('Error response data:', errorData);
+            errorMessage = errorData.error || errorMessage;
+          } catch (parseError) {
+            console.error('Could not parse error response:', parseError);
+          }
+          
+          setError(`Failed to create listing: ${errorMessage}`);
+        }
+      } catch (fetchError) {
+        console.error('Fetch operation failed:', fetchError);
+        setError(`Network error: ${fetchError.message}. Please check if the backend server is running.`);
       }
     } catch (err) {
-      setError('Error creating listing');
+      console.error('Error in form submission:', err);
+      setError(`Error creating listing: ${err.message}`);
     }
   };
 
@@ -148,22 +216,22 @@ const CreateListing = () => {
       <div style={styles.content}>
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.formGroup}>
-            <label htmlFor="location" style={styles.label}>Location</label>
+            <label htmlFor="location" style={styles.label}>Title</label>
             <input
               type="text"
               id="location"
               name="location"
               value={formData.location}
               onChange={handleInputChange}
-              placeholder="Enter storage location"
+              placeholder="Enter a descriptive title (e.g., 'Butler College Storage')"
               style={styles.input}
               required
             />
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.label}>Location Type</label>
-            <div style={styles.radioContainer}>
+            <label style={styles.label}>Address</label>
+            <div style={styles.locationTypeSelector}>
               <label style={styles.radioLabel}>
                 <input
                   type="radio"
@@ -171,7 +239,6 @@ const CreateListing = () => {
                   value="on-campus"
                   checked={locationType === 'on-campus'}
                   onChange={handleLocationTypeChange}
-                  style={styles.radioInput}
                 />
                 On Campus
               </label>
@@ -182,28 +249,19 @@ const CreateListing = () => {
                   value="off-campus"
                   checked={locationType === 'off-campus'}
                   onChange={handleLocationTypeChange}
-                  style={styles.radioInput}
                 />
                 Off Campus
               </label>
             </div>
-          </div>
 
-          <div style={styles.formGroup}>
-            <label htmlFor="address" style={styles.label}>
-              {locationType === 'on-campus' 
-                ? 'Princeton Building/Hall Name' 
-                : 'Full Street Address'}
-            </label>
             <div style={styles.addressInputContainer}>
               <input
                 type="text"
-                id="address"
-                value={address}
+                placeholder={locationType === 'on-campus' 
+                  ? "[Hall Name] Hall" 
+                  : "Enter full street address (e.g., 123 Main St, Princeton, NJ)"}
+                value={tempAddress}
                 onChange={handleAddressChange}
-                placeholder={locationType === 'on-campus'
-                  ? 'Enter a Princeton hall or building name'
-                  : 'Enter full street address (e.g., 123 Main St, Princeton, NJ)'}
                 style={styles.addressInput}
               />
               <button 

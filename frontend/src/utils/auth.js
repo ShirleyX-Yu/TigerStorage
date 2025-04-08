@@ -22,17 +22,30 @@ export const logout = async () => {
 
 export const checkAuthStatus = async () => {
   try {
+    console.log('Checking auth status with API URL:', API_URL);
     const response = await fetch(`${API_URL}/api/auth/status`, {
-      credentials: 'include'
+      credentials: 'include',
+      headers: {
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache'
+      }
     });
+    
+    console.log('Auth status response:', response.status);
     const data = await response.json();
+    console.log('Auth status data:', data);
+    
     if (data.authenticated) {
       // Add the stored user type to the auth data
+      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'lender';
       return {
         ...data,
-        userType: sessionStorage.getItem('userType')
+        userType
       };
     }
+    
+    // If not authenticated, try to redirect to login
+    console.log('Not authenticated, redirecting to login');
     return { authenticated: false };
   } catch (error) {
     console.error('Error checking auth status:', error);
