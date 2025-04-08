@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Home from './components/Home';
 import RenterDashboard from './components/RenterDashboard';
 import LenderDashboard from './components/LenderDashboard';
@@ -35,7 +35,7 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const RedirectToUserDashboard = () => {
-  const [redirected, setRedirected] = React.useState(false);
+  const navigate = useNavigate();
   
   React.useEffect(() => {
     // Check for userType in URL parameters first
@@ -70,11 +70,15 @@ const RedirectToUserDashboard = () => {
       localStorage.setItem('userType', 'lender');
     }
     
-    // Redirect to the map page using window.location
-    window.location.href = '/public/ptonMap.html';
-  }, []);
+    // Navigate to the appropriate dashboard based on user type
+    if (userType === 'renter') {
+      window.location.href = '/public/ptonMap.html';
+    } else {
+      navigate('/lender');
+    }
+  }, [navigate]);
   
-  return <div>Redirecting to map...</div>;
+  return <div>Redirecting to dashboard...</div>;
 };
 
 function App() {

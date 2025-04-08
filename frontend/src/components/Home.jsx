@@ -17,7 +17,7 @@ const Home = () => {
     sessionStorage.removeItem('userType');
     // Set the new user type
     sessionStorage.setItem('userType', userType);
-    // Proceed with login
+    // Proceed with login for both renters and lenders
     login(userType);
   };
 
