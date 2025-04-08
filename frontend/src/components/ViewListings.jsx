@@ -47,7 +47,7 @@ const ViewListings = () => {
           isAvailable: listing.is_available,
           createdAt: listing.created_at,
           contractLength: listing.contract_length_months || 12, // Use default if not provided
-          images: ['/assets/placeholder.jpg'], // default placeholder image
+          image_url: listing.image_url || '/assets/placeholder.jpg', // Use uploaded image or placeholder
           lender: `Owner #${listing.owner_id}` // Use owner ID as reference
         }));
         setListings(formattedListings);
@@ -190,7 +190,15 @@ const ViewListings = () => {
                 <div style={styles.listingsGrid}>
                   {filteredListings.map(listing => (
                     <div key={listing.id} style={styles.listingCard}>
-                      <img src={listing.images[0]} alt="Storage Space" style={styles.listingImage} />
+                      <img 
+                        src={listing.image_url} 
+                        alt="Storage Space" 
+                        style={styles.listingImage} 
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = '/assets/placeholder.jpg';
+                        }}
+                      />
                       <div style={styles.listingDetails}>
                         <h3 style={styles.listingTitle}>{listing.location}</h3>
                         <p style={styles.listingInfo}>
@@ -318,6 +326,8 @@ const styles = {
     width: '100%',
     height: '200px',
     objectFit: 'cover',
+    borderTopLeftRadius: '8px',
+    borderTopRightRadius: '8px',
   },
   listingDetails: {
     padding: '1.5rem',

@@ -215,14 +215,14 @@
     .storage-unit-image {
       width: 60px;
       height: 60px;
-      background-color: #e0e0e0;
       border-radius: 4px;
       margin-right: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #666;
-      font-size: 12px;
+      overflow: hidden;
+    }
+    .storage-unit-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
     .storage-unit-info {
       flex: 1;
@@ -255,6 +255,63 @@
     }
     #searchFilterButton:hover {
       background-color: #e65100;
+    }
+    .popup-image-container {
+      width: 100%;
+      height: 180px;
+      margin: 10px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: #f5f5f5;
+      position: relative;
+    }
+    .popup-image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .popup-image-container img[src="/assets/placeholder.jpg"] {
+      opacity: 0.5;
+    }
+    .popup-details {
+      margin-top: 10px;
+    }
+    .popup-description {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .popup-specs {
+      font-size: 14px;
+      margin: 10px 0;
+    }
+    .popup-specs div {
+      margin: 5px 0;
+    }
+    .leaflet-popup-content {
+      margin: 0;
+      width: 300px !important;
+    }
+    .leaflet-popup-content-wrapper {
+      padding: 0;
+      border-radius: 8px;
+    }
+    .custom-popup .leaflet-popup-content-wrapper {
+      background: white;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.2);
+    }
+    .custom-popup .leaflet-popup-tip {
+      background: white;
+    }
+    .custom-popup-content {
+      padding: 15px;
+    }
+    .custom-popup-content h2 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -431,7 +488,15 @@
     let markers = [];
     const interestedLocations = new Set(JSON.parse(localStorage.getItem('interestedLocations') || '[]'));
 
-    // Fetch listings from API and create markers
+    // Add this function to help with debugging
+    function debugImageUrl(imageUrl) {
+      console.log('Original image URL:', imageUrl);
+      const fullUrl = getFullImageUrl(imageUrl);
+      console.log('Full image URL:', fullUrl);
+      return fullUrl;
+    }
+
+    // Update the fetchAndCreateMarkers function
     async function fetchAndCreateMarkers() {
       try {
         console.log('DEBUG: Fetching listings from API');
@@ -453,31 +518,45 @@
           try {
             console.log('DEBUG: Processing listing:', listing);
             if (listing.latitude && listing.longitude) {
+              const imageUrl = debugImageUrl(listing.image_url);
+              console.log('DEBUG: Creating marker with image URL:', imageUrl);
+              
               const marker = L.marker([listing.latitude, listing.longitude])
                 .addTo(map)
                 .bindPopup(`
-                  <div style="font-size: 14px; width: 250px;">
-                    <b style="font-size: 16px;">${listing.location}</b><br>
-                    <i>${listing.description || 'No description available'}</i><br><br>
-                    <div class="popup-image">
-                      <span>Storage Unit Image</span>
+                  <div class="custom-popup-content">
+                    <h2>${listing.location}</h2>
+                    <div class="popup-image-container">
+                      <img 
+                        src="${imageUrl}" 
+                        alt="${listing.location}"
+                        onerror="(function(img) {
+                          console.error('Failed to load image:', img.src);
+                          img.src='/assets/placeholder.jpg';
+                          img.onerror=null;
+                        })(this)"
+                      >
                     </div>
-                    <b>Price:</b> $${listing.cost}/month<br>
-                    <b>Size:</b> ${listing.cubic_feet} cubic feet<br>
-                    <b>Contract Length:</b> ${listing.contract_length_months} months<br>
-                    <button class="interested-button ${interestedLocations.has(listing.id) ? 'interested' : ''}" 
-                            onclick="toggleInterest('${listing.id}')">
-                      <i class="fas ${interestedLocations.has(listing.id) ? 'fa-check' : 'fa-heart'}"></i> 
-                      ${interestedLocations.has(listing.id) ? 'Interested' : 'Interested'}
-                    </button>
+                    <div class="popup-details">
+                      <div class="popup-description">${listing.description || 'No description available'}</div>
+                      <div class="popup-specs">
+                        <div><strong>Price:</strong> $${listing.cost}/month</div>
+                        <div><strong>Size:</strong> ${listing.cubic_feet} cubic feet</div>
+                        <div><strong>Contract Length:</strong> ${listing.contract_length_months} months</div>
+                      </div>
+                      <button class="interested-button ${interestedLocations.has(listing.id) ? 'interested' : ''}" 
+                              onclick="toggleInterest('${listing.id}')">
+                        <i class="fas ${interestedLocations.has(listing.id) ? 'fa-check' : 'fa-heart'}"></i> 
+                        ${interestedLocations.has(listing.id) ? 'Interested' : 'Show Interest'}
+                      </button>
+                    </div>
                   </div>
                 `, {
                   maxWidth: 300,
                   autoPan: true,
                   autoPanPadding: [50, 50],
                   closeButton: true,
-                  className: 'custom-popup',
-                  keepInView: true
+                  className: 'custom-popup'
                 });
               markers.push(marker);
               console.log('DEBUG: Created marker for listing:', listing.id);
@@ -497,17 +576,22 @@
       }
     }
 
-    // Update storage unit list with actual listings
+    // Update the createStorageUnitList function
     function createStorageUnitList(listings) {
       const storageUnitsList = document.getElementById('storageUnitsList');
       storageUnitsList.innerHTML = '';
       
       listings.forEach(listing => {
+        const imageUrl = getFullImageUrl(listing.image_url);
         const unitElement = document.createElement('div');
         unitElement.className = 'storage-unit-item';
         unitElement.innerHTML = `
           <div class="storage-unit-image">
-            <span>Image</span>
+            <img 
+              src="${imageUrl}" 
+              alt="${listing.location}"
+              onerror="this.src='/assets/placeholder.jpg'"
+            >
           </div>
           <div class="storage-unit-info">
             <div class="storage-unit-name">${listing.location}</div>
@@ -620,6 +704,20 @@
       
       // Here you would typically send this to your backend
       console.log('Interested locations:', Array.from(interestedLocations));
+    }
+
+    // Update the getFullImageUrl function to be more robust
+    function getFullImageUrl(imageUrl) {
+      if (!imageUrl) return '/assets/placeholder.jpg';
+      if (imageUrl.startsWith('http')) return imageUrl;
+      if (imageUrl.startsWith('/')) {
+        // Get the API URL from the environment or current origin
+        const apiUrl = window.API_URL || window.location.origin;
+        // Remove any duplicate slashes
+        return `${apiUrl}${imageUrl}`.replace(/([^:]\/)\/+/g, "$1");
+      }
+      // If it's a relative path without leading slash, add one
+      return `/${imageUrl}`;
     }
   </script>
 </body>

@@ -6,6 +6,8 @@ import psycopg2
 import argparse
 import auth
 import json
+import uuid
+from werkzeug.utils import secure_filename
 
 # Set up command-line argument parsing
 parser = argparse.ArgumentParser(description="Run Flask app")
@@ -25,6 +27,17 @@ CORS(app, resources={r"/*": {"origins": ["https://tigerstorage-frontend.onrender
 # Load environment variables and set secret key
 dotenv.load_dotenv()
 app.secret_key = os.environ.get("APP_SECRET_KEY", "default-dev-key-replace-in-production")
+
+# Configure upload folder
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Create uploads directory if it doesn't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Initialize CAS authentication
 auth.init_auth(app)
@@ -122,7 +135,26 @@ def auth_status():
         'authenticated': False
     })
 
+@app.route('/api/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        # Generate unique filename to prevent collisions
+        unique_filename = f"{uuid.uuid4()}_{filename}"
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        file.save(file_path)
+        # Return relative URL for the uploaded file
+        return jsonify({'url': f'/uploads/{unique_filename}'}), 200
+    return jsonify({'error': 'Invalid file type'}), 400
 
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # Database connection function to handle reconnection
 def get_db_connection():
@@ -157,6 +189,7 @@ def create_listing():
             latitude = float(data['latitude'])
             longitude = float(data['longitude'])
             contract_length = int(data.get('contract_length_months', 12))
+            image_url = data.get('image_url', '')  # Get image URL if provided
             
             with conn.cursor() as cur:
                 # Get the columns that exist in the table
@@ -175,6 +208,7 @@ def create_listing():
                 column_values['latitude'] = latitude
                 column_values['longitude'] = longitude
                 column_values['description'] = data['description']
+                column_values['image_url'] = image_url
                 
                 # Build the SQL query dynamically
                 columns_str = ', '.join(column_values.keys())
@@ -226,19 +260,18 @@ def get_listings():
                         latitude,
                         longitude,
                         contract_length_months,
+                        image_url,
                         created_at
                     FROM storage_listings
                     ORDER BY created_at DESC;
                 """)
                 
                 listings = cur.fetchall()
-                print(f"DEBUG: Found {len(listings)} listings")
                 
                 # Convert to list of dictionaries
                 formatted_listings = []
                 for listing in listings:
                     try:
-                        print(f"DEBUG: Processing listing: {listing}")
                         formatted_listing = {
                             "id": listing[0],
                             "location": listing[1],
@@ -248,21 +281,18 @@ def get_listings():
                             "latitude": float(listing[5]) if listing[5] is not None else None,
                             "longitude": float(listing[6]) if listing[6] is not None else None,
                             "contract_length_months": listing[7] if listing[7] is not None else 12,
-                            "created_at": listing[8].isoformat() if listing[8] else None
+                            "image_url": listing[8] if listing[8] is not None else "/assets/placeholder.jpg",
+                            "created_at": listing[9].isoformat() if listing[9] else None
                         }
-                        print(f"DEBUG: Formatted listing: {formatted_listing}")
                         formatted_listings.append(formatted_listing)
                     except Exception as e:
                         print(f"DEBUG: Error formatting listing: {e}")
                         print(f"DEBUG: Listing data: {listing}")
                         continue
-                
-                print(f"DEBUG: Returning {len(formatted_listings)} formatted listings")
                 return jsonify(formatted_listings), 200
         finally:
             conn.close()
     except Exception as e:
-        print("DEBUG: Error in get_listings:", str(e))
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500

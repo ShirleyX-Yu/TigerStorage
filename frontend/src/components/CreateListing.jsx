@@ -12,9 +12,10 @@ const CreateListing = () => {
     latitude: '',
     longitude: '',
     contract_length_months: 12,
-    images: []
+    image_url: ''
   });
   const [error, setError] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -24,26 +25,50 @@ const CreateListing = () => {
     }));
   };
 
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, ...files]
-    }));
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/upload`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const data = await response.json();
+      setFormData(prev => ({
+        ...prev,
+        image_url: data.url
+      }));
+    } catch (err) {
+      setError('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/listings', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(formData),
       });
       if (response.ok) {
-        navigate('/lender');
+        navigate('/view-listings');
       } else {
         setError('Failed to create listing');
       }
@@ -160,35 +185,21 @@ const CreateListing = () => {
           </div>
 
           <div style={styles.formGroup}>
-            <label htmlFor="images" style={styles.label}>Upload Images</label>
+            <label htmlFor="image" style={styles.label}>Storage Space Image</label>
             <input
               type="file"
-              id="images"
-              name="images"
+              id="image"
+              name="image"
               onChange={handleImageUpload}
               accept="image/*"
-              multiple
-              style={styles.fileInput}
+              style={styles.input}
             />
-            {formData.images.length > 0 && (
-              <div style={styles.imagePreview}>
-                {formData.images.map((image, index) => (
-                  <div key={index} style={styles.previewItem}>
-                    {image.name}
-                  </div>
-                ))}
-              </div>
-            )}
+            {uploading && <div style={styles.uploading}>Uploading image...</div>}
           </div>
 
-          <div style={styles.buttonGroup}>
-            <button type="button" onClick={() => navigate('/lender')} style={styles.secondaryButton}>
-              Cancel
-            </button>
-            <button type="submit" style={styles.primaryButton}>
-              Create Listing
-            </button>
-          </div>
+          <button type="submit" style={styles.submitButton} disabled={uploading}>
+            Create Listing
+          </button>
         </form>
       </div>
     </div>
@@ -197,16 +208,20 @@ const CreateListing = () => {
 
 const styles = {
   container: {
+    display: 'flex',
+    flexDirection: 'column',
     minHeight: '100vh',
-    backgroundColor: 'rgba(245, 124, 0, 0.1)',
+    backgroundColor: '#f5f5f5',
   },
   content: {
+    flex: 1,
     padding: '2rem',
     maxWidth: '800px',
     margin: '0 auto',
+    width: '100%',
   },
   form: {
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
     padding: '2rem',
     borderRadius: '8px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
@@ -227,29 +242,18 @@ const styles = {
     borderRadius: '4px',
     fontSize: '1rem',
   },
-  fileInput: {
-    width: '100%',
-    padding: '0.75rem',
-    border: '1px solid #ddd',
+  error: {
+    backgroundColor: '#ffebee',
+    color: '#c62828',
+    padding: '1rem',
+    marginBottom: '1rem',
     borderRadius: '4px',
-    backgroundColor: '#fff',
   },
-  imagePreview: {
-    marginTop: '1rem',
+  uploading: {
+    color: '#666',
+    marginTop: '0.5rem',
   },
-  previewItem: {
-    padding: '0.5rem',
-    backgroundColor: '#f5f5f5',
-    borderRadius: '4px',
-    marginBottom: '0.5rem',
-  },
-  buttonGroup: {
-    display: 'flex',
-    gap: '1rem',
-    justifyContent: 'flex-end',
-    marginTop: '2rem',
-  },
-  primaryButton: {
+  submitButton: {
     backgroundColor: '#f57c00',
     color: 'white',
     border: 'none',
@@ -258,20 +262,7 @@ const styles = {
     cursor: 'pointer',
     fontSize: '1rem',
     fontWeight: '500',
-  },
-  secondaryButton: {
-    backgroundColor: '#fff',
-    color: '#333',
-    border: '1px solid #ddd',
-    padding: '0.75rem 1.5rem',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '1rem',
-    fontWeight: '500',
-  },
-  error: {
-    color: 'red',
-    marginBottom: '1rem',
+    width: '100%',
   },
 };
 

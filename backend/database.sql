@@ -30,6 +30,7 @@ CREATE TABLE storage_listings (
     latitude DECIMAL(10, 8),
     longitude DECIMAL(11, 8),
     description TEXT,
+    image_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     -- is_available BOOLEAN DEFAULT TRUE
     -- available_from DATE, maybe add later
