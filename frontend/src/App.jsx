@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Home from './components/Home';
 import RenterDashboard from './components/RenterDashboard';
 import LenderDashboard from './components/LenderDashboard';
@@ -7,6 +7,7 @@ import CreateListing from './components/CreateListing';
 import EditListing from './components/EditListing';
 import ViewListings from './components/ViewListings';
 import ListingDetails from './components/ListingDetails';
+import LenderListingDetails from './components/LenderListingDetails';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import AuthDebug from './components/AuthDebug';
 import { checkAuthStatus } from './utils/auth';
@@ -133,6 +134,13 @@ const RedirectToUserDashboard = () => {
   }}>Redirecting to dashboard...</div>;
 };
 
+// Component to conditionally render the correct listing details view based on user type
+const ListingDetailsRouter = () => {
+  const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'lender';
+  
+  return userType === 'lender' ? <LenderListingDetails /> : <ListingDetails />;
+};
+
 function App() {
   return (
     <Router>
@@ -146,7 +154,7 @@ function App() {
           <Route path="/edit-listing/:id" element={<ProtectedRoute><EditListing /></ProtectedRoute>} />
           <Route path="/view-listings" element={<ProtectedRoute><ViewListings /></ProtectedRoute>} />
           <Route path="/auth-debug" element={<AuthDebug />} />
-          <Route path="/listing/:id" element={<ProtectedRoute><ListingDetails /></ProtectedRoute>} />
+          <Route path="/listing/:id" element={<ProtectedRoute><ListingDetailsRouter /></ProtectedRoute>} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
         </Routes>
       </div>
