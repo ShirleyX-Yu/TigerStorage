@@ -347,12 +347,7 @@
     }
 
     function goBack() {
-      const returnTo = getCookie('returnTo');
-      if (returnTo) {
-        window.location.href = decodeURIComponent(returnTo);
-      } else {
-        window.history.back();
-      }
+      window.location.href = '/';
     }
 
     function toggleFilterColumn() {
