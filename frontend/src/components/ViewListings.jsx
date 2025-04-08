@@ -14,9 +14,17 @@ const ViewListings = () => {
     window.location.href = '/public/ptonMap.html';
   };
 
+  // Function to get the full image URL based on the backend URL
+  const getFullImageUrl = (imageUrl) => {
+    if (!imageUrl) return '/assets/placeholder.jpg';
+    if (imageUrl.startsWith('http')) return imageUrl;
+    return `${import.meta.env.VITE_API_URL}${imageUrl}`;
+  };
+
   useEffect(() => {
     const fetchListings = async () => {
       try {
+        // Use the same API endpoint as the map view
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings`, {
           credentials: 'include' // Include cookies for authentication
         });
@@ -37,20 +45,13 @@ const ViewListings = () => {
           return;
         }
         
-        // transform the data to match our component's expected format
-        const formattedListings = data.map(listing => ({
-          id: listing.id,
-          location: listing.location,
-          cost: listing.cost,
-          cubicFeet: listing.cubic_feet,
-          description: listing.description,
-          isAvailable: listing.is_available,
-          createdAt: listing.created_at,
-          contractLength: listing.contract_length_months || 12, // Use default if not provided
-          image_url: listing.image_url || '/assets/placeholder.jpg', // Use uploaded image or placeholder
-          lender: `Owner #${listing.owner_id}` // Use owner ID as reference
-        }));
-        setListings(formattedListings);
+        // Use the exact same data format as the map view
+        // This ensures consistency between the two views
+        setListings(data);
+
+        // Load interested locations from localStorage (same as map view)
+        const interestedLocations = JSON.parse(localStorage.getItem('interestedLocations') || '[]');
+        console.log('Interested locations:', interestedLocations);
       } catch (err) {
         console.error('Error fetching listings:', err);
         setError(err.message);
@@ -62,13 +63,15 @@ const ViewListings = () => {
     fetchListings();
   }, []);
 
+  // Use the same filter structure as the map view
   const [filters, setFilters] = useState({
     minPrice: '',
     maxPrice: '',
     minSize: '',
     maxSize: '',
     minContract: '',
-    maxContract: ''
+    maxContract: '',
+    rating: 0 // Added to match map view filters
   });
 
   const handleFilterChange = (e) => {
@@ -79,13 +82,15 @@ const ViewListings = () => {
     }));
   };
 
+  // Use the same filtering logic as the map view
   const filteredListings = listings.filter(listing => {
     if (filters.minPrice && listing.cost < Number(filters.minPrice)) return false;
     if (filters.maxPrice && listing.cost > Number(filters.maxPrice)) return false;
-    if (filters.minSize && listing.cubicFeet < Number(filters.minSize)) return false;
-    if (filters.maxSize && listing.cubicFeet > Number(filters.maxSize)) return false;
-    if (filters.minContract && listing.contractLength < Number(filters.minContract)) return false;
-    if (filters.maxContract && listing.contractLength > Number(filters.maxContract)) return false;
+    if (filters.minSize && listing.cubic_feet < Number(filters.minSize)) return false;
+    if (filters.maxSize && listing.cubic_feet > Number(filters.maxSize)) return false;
+    if (filters.minContract && listing.contract_length_months < Number(filters.minContract)) return false;
+    if (filters.maxContract && listing.contract_length_months > Number(filters.maxContract)) return false;
+    // Rating filter would go here if implemented in the backend
     return true;
   });
 
@@ -188,44 +193,74 @@ const ViewListings = () => {
                 </div>
               ) : (
                 <div style={styles.listingsGrid}>
-                  {filteredListings.map(listing => (
-                    <div key={listing.id} style={styles.listingCard}>
-                      <img 
-                        src={listing.image_url} 
-                        alt="Storage Space" 
-                        style={styles.listingImage} 
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = '/assets/placeholder.jpg';
-                        }}
-                      />
-                      <div style={styles.listingDetails}>
-                        <h3 style={styles.listingTitle}>{listing.location}</h3>
-                        <p style={styles.listingInfo}>
-                          <strong>${listing.cost}</strong> per month · {listing.cubicFeet} cubic feet · {listing.contractLength} months
-                        </p>
-                        <div style={styles.descriptionBox}>
-                          <p style={styles.description}>{listing.description}</p>
+                  {filteredListings.map(listing => {
+                    // Get the full image URL using the same logic as the map view
+                    const imageUrl = getFullImageUrl(listing.image_url);
+                    // Check if this listing is in the interested list
+                    const interestedLocations = new Set(JSON.parse(localStorage.getItem('interestedLocations') || '[]'));
+                    const isInterested = interestedLocations.has(listing.id);
+                    
+                    return (
+                      <div key={listing.id} style={styles.listingCard}>
+                        <img 
+                          src={imageUrl} 
+                          alt={`Storage space at ${listing.location}`} 
+                          style={styles.listingImage} 
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/assets/placeholder.jpg';
+                          }}
+                        />
+                        <div style={styles.listingDetails}>
+                          <h3 style={styles.listingTitle}>{listing.location}</h3>
+                          <p style={styles.listingInfo}>
+                            <strong>${listing.cost}</strong> per month · {listing.cubic_feet} cubic feet · {listing.contract_length_months} months
+                          </p>
+                          <div style={styles.descriptionBox}>
+                            <p style={styles.description}>{listing.description || 'No description available'}</p>
+                          </div>
+                          <div style={styles.listingStatus}>
+                            <span style={{
+                              ...styles.status,
+                              backgroundColor: listing.is_available ? '#4caf50' : '#f44336'
+                            }}>
+                              {listing.is_available ? 'Available' : 'Not Available'}
+                            </span>
+                            <span style={styles.lenderInfo}>Lender: Owner #{listing.owner_id}</span>
+                          </div>
+                          <div style={styles.actionButtons}>
+                            <button 
+                              style={{
+                                ...styles.interestButton,
+                                backgroundColor: isInterested ? '#4caf50' : '#FF8F00'
+                              }}
+                              onClick={() => {
+                                // Toggle interest using the same logic as the map view
+                                const newInterestedLocations = new Set(interestedLocations);
+                                if (isInterested) {
+                                  newInterestedLocations.delete(listing.id);
+                                } else {
+                                  newInterestedLocations.add(listing.id);
+                                }
+                                localStorage.setItem('interestedLocations', JSON.stringify([...newInterestedLocations]));
+                                // Force re-render
+                                setListings([...listings]);
+                              }}
+                            >
+                              <i className={`fas ${isInterested ? 'fa-check' : 'fa-heart'}`}></i>
+                              {isInterested ? 'Interested' : 'Show Interest'}
+                            </button>
+                            <button 
+                              style={styles.viewButton}
+                              onClick={() => navigate(`/listing/${listing.id}`)}
+                            >
+                              View Details
+                            </button>
+                          </div>
                         </div>
-                        <div style={styles.listingStatus}>
-                          <span style={{
-                            ...styles.status,
-                            backgroundColor: listing.isAvailable ? '#4caf50' : '#f44336'
-                          }}>
-                            {listing.isAvailable ? 'Available' : 'Not Available'}
-                          </span>
-                          <span style={styles.lenderInfo}>Lender: {listing.lender}</span>
-                        </div>
-                        <p style={styles.listingId}>Listing ID: {listing.id}</p>
-                        <button 
-                          style={styles.viewButton}
-                          onClick={() => navigate(`/listing/${listing.id}`)}
-                        >
-                          View Details
-                        </button>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -237,6 +272,29 @@ const ViewListings = () => {
 };
 
 const styles = {
+  actionButtons: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginTop: '15px',
+    gap: '10px',
+  },
+  interestButton: {
+    flex: 1,
+    padding: '10px 15px',
+    backgroundColor: '#FF8F00',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '5px',
+    minWidth: '120px',
+    height: '40px',
+  },
   container: {
     minHeight: '100vh',
     backgroundColor: 'rgba(245, 124, 0, 0.1)',
