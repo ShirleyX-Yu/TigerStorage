@@ -9,8 +9,12 @@ const CreateListing = () => {
     cost: '',
     cubicFeet: '',
     description: '',
+    latitude: '',
+    longitude: '',
+    contract_length_months: 12,
     images: []
   });
+  const [error, setError] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -30,48 +34,28 @@ const CreateListing = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted with data:', formData);
-
-    // Send as JSON instead of FormData
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings`, {
+      const response = await fetch('/api/listings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          location: formData.location,
-          cost: formData.cost,
-          cubicFeet: formData.cubicFeet,
-          description: formData.description
-        }),
-        credentials: 'include'
+        body: JSON.stringify(formData),
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server responded with ${response.status}: ${errorText}`);
-      }
-
-      const responseData = await response.json();
-      console.log('Response:', responseData);
-  
-      if (responseData.success) {
-        console.log('Listing created successfully with ID:', responseData.listing_id);
+      if (response.ok) {
         navigate('/lender');
       } else {
-        console.error('Error creating listing:', responseData.error);
-        alert('Failed to create listing. Please try again.');
+        setError('Failed to create listing');
       }
-    } catch (error) {
-      console.error('Error:', error);
-      alert(`Error: ${error.message}`);
+    } catch (err) {
+      setError('Error creating listing');
     }
   };
 
   return (
     <div style={styles.container}>
       <Header title="Create Storage Listing" />
+      {error && <div style={styles.error}>{error}</div>}
       <div style={styles.content}>
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.formGroup}>
@@ -83,6 +67,34 @@ const CreateListing = () => {
               value={formData.location}
               onChange={handleInputChange}
               placeholder="Enter storage location"
+              style={styles.input}
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label htmlFor="latitude" style={styles.label}>Latitude</label>
+            <input
+              type="number"
+              id="latitude"
+              name="latitude"
+              value={formData.latitude}
+              onChange={handleInputChange}
+              placeholder="Enter latitude"
+              style={styles.input}
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label htmlFor="longitude" style={styles.label}>Longitude</label>
+            <input
+              type="number"
+              id="longitude"
+              name="longitude"
+              value={formData.longitude}
+              onChange={handleInputChange}
+              placeholder="Enter longitude"
               style={styles.input}
               required
             />
@@ -127,6 +139,22 @@ const CreateListing = () => {
               onChange={handleInputChange}
               placeholder="Enter a description of the storage space"
               style={{...styles.input, minHeight: '100px'}}
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label htmlFor="contract_length_months" style={styles.label}>Contract Length (months)</label>
+            <input
+              type="number"
+              id="contract_length_months"
+              name="contract_length_months"
+              value={formData.contract_length_months}
+              onChange={handleInputChange}
+              placeholder="Enter contract length in months"
+              style={styles.input}
+              min="1"
+              max="60"
               required
             />
           </div>
@@ -240,6 +268,10 @@ const styles = {
     cursor: 'pointer',
     fontSize: '1rem',
     fontWeight: '500',
+  },
+  error: {
+    color: 'red',
+    marginBottom: '1rem',
   },
 };
 

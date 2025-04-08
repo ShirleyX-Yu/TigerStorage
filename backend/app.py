@@ -140,7 +140,7 @@ def create_listing():
         data = request.get_json()
         
         # Validate required fields
-        required_fields = ['location', 'cost', 'cubicFeet', 'description']
+        required_fields = ['location', 'cost', 'cubicFeet', 'description', 'latitude', 'longitude']
         for field in required_fields:
             if field not in data:
                 return jsonify({"error": f"Missing required field: {field}"}), 400
@@ -154,6 +154,9 @@ def create_listing():
             # Convert data to correct types
             cost = float(data['cost']) if data['cost'] else 0
             total_sq_ft = int(data['cubicFeet']) if data['cubicFeet'] else 0
+            latitude = float(data['latitude'])
+            longitude = float(data['longitude'])
+            contract_length = int(data.get('contract_length_months', 12))
             
             with conn.cursor() as cur:
                 # Get the columns that exist in the table
@@ -168,7 +171,10 @@ def create_listing():
                 column_values['location'] = data['location']
                 column_values['cubic_ft'] = total_sq_ft
                 column_values['cost'] = cost
-                column_values['contract_length_months'] = 12  # Default value
+                column_values['contract_length_months'] = contract_length
+                column_values['latitude'] = latitude
+                column_values['longitude'] = longitude
+                column_values['description'] = data['description']
                 
                 # Build the SQL query dynamically
                 columns_str = ', '.join(column_values.keys())
@@ -199,112 +205,67 @@ def create_listing():
 @app.route('/api/listings', methods=['GET'])
 def get_listings():
     try:
-        # Get listings from database
-        
+        print("DEBUG: Starting get_listings endpoint")
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
+            print("DEBUG: Failed to get database connection")
             return jsonify({"error": "Database connection failed"}), 500
-        
-        try:    
+            
+        try:
             with conn.cursor() as cur:
-                print("DEBUG: Connected to database successfully")
-                
-                # Check if the table exists
-                cur.execute("""SELECT EXISTS (
-                    SELECT FROM information_schema.tables 
-                    WHERE table_name = 'storage_listings'
-                )""")
-                table_exists = cur.fetchone()[0]
-                print(f"DEBUG: Table 'storage_listings' exists: {table_exists}")
-                
-                if not table_exists:
-                    print("DEBUG: Table doesn't exist, returning empty array")
-                    return jsonify([]), 200
-                
-                # Get the columns that exist in the table
-                cur.execute("""SELECT column_name FROM information_schema.columns 
-                            WHERE table_name = 'storage_listings' ORDER BY ordinal_position;""")
-                columns = [col[0] for col in cur.fetchall()]
-                print(f"DEBUG: Table columns: {columns}")
-                
+                print("DEBUG: Fetching listings")
                 # Get all listings
-                cur.execute("SELECT * FROM storage_listings;")
+                cur.execute("""
+                    SELECT 
+                        listing_id,
+                        location,
+                        cost,
+                        cubic_ft,
+                        description,
+                        latitude,
+                        longitude,
+                        contract_length_months,
+                        created_at
+                    FROM storage_listings
+                    ORDER BY created_at DESC;
+                """)
+                
                 listings = cur.fetchall()
                 print(f"DEBUG: Found {len(listings)} listings")
                 
-                # If no listings found, return mock data
-                if len(listings) == 0:
-                    # Return mock data instead
-                    return jsonify([
-                        {
-                            "id": 101,
-                            "location": "Butler College Storage",
-                            "cost": 65,
-                            "cubic_feet": 90,
-                            "description": "Secure storage space near Butler College, perfect for summer storage.",
-                            "is_available": True,
-                            "created_at": "2025-03-15T10:30:00",
-                            "contract_length_months": 3,
-                            "owner_id": 1001
-                        },
-                        {
-                            "id": 102,
-                            "location": "Whitman College Basement",
-                            "cost": 55,
-                            "cubic_feet": 75,
-                            "description": "Climate-controlled storage in Whitman College basement.",
-                            "is_available": True,
-                            "created_at": "2025-03-20T14:45:00",
-                            "contract_length_months": 4,
-                            "owner_id": 1002
-                        },
-                        {
-                            "id": 103,
-                            "location": "Frist Campus Center",
-                            "cost": 80,
-                            "cubic_feet": 120,
-                            "description": "Large storage space near Frist Campus Center, easily accessible.",
-                            "is_available": True,
-                            "created_at": "2025-03-25T09:15:00",
-                            "contract_length_months": 3,
-                            "owner_id": 1003
-                        }
-                    ]), 200
-                
-                # Get column names from cursor description
-                column_names = [desc[0] for desc in cur.description]
-                print(f"DEBUG: Column names from query: {column_names}")
-                
-                # Convert data to JSON-friendly format matching the expected frontend format
+                # Convert to list of dictionaries
                 formatted_listings = []
-                for row in listings:
-                    listing_dict = {}
-                    for i, col_name in enumerate(column_names):
-                        listing_dict[col_name] = row[i]
-                    
-                    # Map to frontend expected format
-                    formatted_listing = {
-                        "id": listing_dict.get('listing_id'),
-                        "location": listing_dict.get('location', ''),
-                        "cost": listing_dict.get('cost', 0),
-                        "cubic_feet": listing_dict.get('cubic_ft', 0),
-                        "description": "",  # No description column in the actual schema
-                        "is_available": True,  # No is_available column in the actual schema
-                        "created_at": None,  # No created_at column in the actual schema
-                        "contract_length_months": listing_dict.get('contract_length_months', 12)
-                    }
-                    formatted_listings.append(formatted_listing)
-            
-            return jsonify(formatted_listings), 200
+                for listing in listings:
+                    try:
+                        print(f"DEBUG: Processing listing: {listing}")
+                        formatted_listing = {
+                            "id": listing[0],
+                            "location": listing[1],
+                            "cost": float(listing[2]) if listing[2] is not None else 0,
+                            "cubic_feet": listing[3] if listing[3] is not None else 0,
+                            "description": listing[4] if listing[4] is not None else "",
+                            "latitude": float(listing[5]) if listing[5] is not None else None,
+                            "longitude": float(listing[6]) if listing[6] is not None else None,
+                            "contract_length_months": listing[7] if listing[7] is not None else 12,
+                            "created_at": listing[8].isoformat() if listing[8] else None
+                        }
+                        print(f"DEBUG: Formatted listing: {formatted_listing}")
+                        formatted_listings.append(formatted_listing)
+                    except Exception as e:
+                        print(f"DEBUG: Error formatting listing: {e}")
+                        print(f"DEBUG: Listing data: {listing}")
+                        continue
+                
+                print(f"DEBUG: Returning {len(formatted_listings)} formatted listings")
+                return jsonify(formatted_listings), 200
         finally:
             conn.close()
-
     except Exception as e:
-        print("Error fetching listings:", str(e))
+        print("DEBUG: Error in get_listings:", str(e))
         import traceback
         traceback.print_exc()
-        return jsonify({"error": "Failed to fetch listings: " + str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/rentals/current', methods=['GET'])
 def get_current_rentals():
@@ -453,7 +414,9 @@ def get_listing_by_id(listing_id):
                     "is_available": True,  # Default to available
                     "created_at": "2025-04-01",  # Default date
                     "contract_length_months": listing_dict.get('contract_length_months', 12),
-                    "owner_id": 1000  # Default owner ID
+                    "owner_id": 1000,  # Default owner ID
+                    "latitude": listing_dict.get('latitude'),
+                    "longitude": listing_dict.get('longitude')
                 }
                 
                 return jsonify(formatted_listing), 200

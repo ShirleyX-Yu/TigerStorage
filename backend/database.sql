@@ -23,15 +23,17 @@ CREATE TABLE storage_listings (
     listing_id BIGSERIAL PRIMARY KEY,
     -- seller_id BIGINT REFERENCES sellers(seller_id) ON DELETE CASCADE, add later
     -- title VARCHAR(255) NOT NULL,
-    -- description TEXT,
     location TEXT,
     cost BIGINT,
     cubic_ft BIGINT,
-    contract_length_months BIGINT
+    contract_length_months BIGINT,
+    latitude DECIMAL(10, 8),
+    longitude DECIMAL(11, 8),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     -- is_available BOOLEAN DEFAULT TRUE
     -- available_from DATE, maybe add later
     -- available_to DATE, maybe add later
-    -- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create buyer requests table

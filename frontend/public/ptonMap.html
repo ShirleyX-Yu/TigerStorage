@@ -427,160 +427,177 @@
       attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    const locations = [
-      {
-        name: "Wu Hall",
-        coords: [40.3447, -74.6565],
-        info: "Wu Hall storage in a quad.",
-        price: 50,
-        size: "small",
-        area: "central",
-        rating: 4.5,
-        distance: 0.2,
-        contract: 3
-      },
-      {
-        name: "Blair Hall",
-        coords: [40.34737, -74.6615],
-        info: "Blair Hall storage in a double.",
-        price: 75,
-        size: "medium",
-        area: "north",
-        rating: 4.2,
-        distance: 0.3,
-        contract: 2
-      },
-      {
-        name: "Addy Hall",
-        coords: [40.3425, -74.6552],
-        info: "Addy Hall storage in a quad.",
-        price: 100,
-        size: "large",
-        area: "south",
-        rating: 4.8,
-        distance: 0.4,
-        contract: 4
-      },
-      {
-        name: "Campus Storage Solutions",
-        coords: [40.3502, -74.6503],
-        info: "Professional storage facility with climate control and 24/7 access.",
-        price: 85,
-        size: "large",
-        area: "north",
-        rating: 4.6,
-        distance: 0.5,
-        contract: 3
-      },
-      {
-        name: "Rockefeller College",
-        coords: [40.3465, -74.6582],
-        info: "Rockefeller College attic storage.",
-        price: 65,
-        size: "small",
-        area: "central",
-        rating: 4.7,
-        distance: 0.1,
-        contract: 3
-      },
-      {
-        name: "Princeton Storage Solutions",
-        coords: [40.3350, -74.6700],
-        info: "Professional storage facility near campus.",
-        price: 120,
-        size: "xlarge",
-        area: "south",
-        rating: 4.9,
-        distance: 1.5,
-        contract: 6
-      },
-      {
-        name: "Nassau Storage",
-        coords: [40.3600, -74.6400],
-        info: "Affordable storage units in Nassau.",
-        price: 35,
-        size: "medium",
-        area: "north",
-        rating: 3.8,
-        distance: 2.0,
-        contract: 1
-      },
-      {
-        name: "Princeton Self Storage",
-        coords: [40.3200, -74.6800],
-        info: "Large storage facility with 24/7 access.",
-        price: 90,
-        size: "large",
-        area: "south",
-        rating: 4.3,
-        distance: 2.5,
-        contract: 4
-      },
-      {
-        name: "Alexander Hall",
-        coords: [40.3489, -74.6591],
-        info: "Alexander Hall basement storage.",
-        price: 55,
-        size: "small",
-        area: "central",
-        rating: 4.6,
-        distance: 0.2,
-        contract: 2
-      },
-      {
-        name: "Butler College",
-        coords: [40.3458, -74.6543],
-        info: "Butler College storage room.",
-        price: 60,
-        size: "medium",
-        area: "central",
-        rating: 4.4,
-        distance: 0.3,
-        contract: 3
-      },
-      {
-        name: "Storage Plus",
-        coords: [40.3800, -74.6200],
-        info: "Premium storage with climate control.",
-        price: 150,
-        size: "xlarge",
-        area: "north",
-        rating: 4.7,
-        distance: 4.0,
-        contract: 12
-      }
-    ];
-
     // Store markers in an array for filtering
-    const markers = [];
+    let markers = [];
     const interestedLocations = new Set(JSON.parse(localStorage.getItem('interestedLocations') || '[]'));
 
-    // Dummy data for interested renters
-    const interestedRenters = {
-      "Wu Hall": [
-        { name: "John Smith", email: "john@princeton.edu", phone: "555-1234" },
-        { name: "Sarah Johnson", email: "sarah@princeton.edu", phone: "555-5678" }
-      ],
-      "Blair Hall": [
-        { name: "Michael Brown", email: "michael@princeton.edu", phone: "555-9012" }
-      ],
-      // Add more dummy data for other locations as needed
-    };
+    // Fetch listings from API and create markers
+    async function fetchAndCreateMarkers() {
+      try {
+        console.log('DEBUG: Fetching listings from API');
+        const response = await fetch('/api/listings');
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('DEBUG: API Error:', errorText);
+          throw new Error(`Failed to fetch listings: ${response.status} ${response.statusText}`);
+        }
+        const listings = await response.json();
+        console.log('DEBUG: Fetched listings:', listings);
+        
+        // Clear existing markers
+        markers.forEach(marker => map.removeLayer(marker));
+        markers = [];
+        
+        // Create new markers for each listing
+        listings.forEach(listing => {
+          try {
+            console.log('DEBUG: Processing listing:', listing);
+            if (listing.latitude && listing.longitude) {
+              const marker = L.marker([listing.latitude, listing.longitude])
+                .addTo(map)
+                .bindPopup(`
+                  <div style="font-size: 14px; width: 250px;">
+                    <b style="font-size: 16px;">${listing.location}</b><br>
+                    <i>${listing.description || 'No description available'}</i><br><br>
+                    <div class="popup-image">
+                      <span>Storage Unit Image</span>
+                    </div>
+                    <b>Price:</b> $${listing.cost}/month<br>
+                    <b>Size:</b> ${listing.cubic_feet} cubic feet<br>
+                    <b>Contract Length:</b> ${listing.contract_length_months} months<br>
+                    <button class="interested-button ${interestedLocations.has(listing.id) ? 'interested' : ''}" 
+                            onclick="toggleInterest('${listing.id}')">
+                      <i class="fas ${interestedLocations.has(listing.id) ? 'fa-check' : 'fa-heart'}"></i> 
+                      ${interestedLocations.has(listing.id) ? 'Interested' : 'Interested'}
+                    </button>
+                  </div>
+                `, {
+                  maxWidth: 300,
+                  autoPan: true,
+                  autoPanPadding: [50, 50],
+                  closeButton: true,
+                  className: 'custom-popup',
+                  keepInView: true
+                });
+              markers.push(marker);
+              console.log('DEBUG: Created marker for listing:', listing.id);
+            } else {
+              console.warn('DEBUG: Listing missing coordinates:', listing);
+            }
+          } catch (error) {
+            console.error('DEBUG: Error creating marker:', error);
+            console.error('DEBUG: Listing data:', listing);
+          }
+        });
+        
+        // Update the storage units list
+        createStorageUnitList(listings);
+      } catch (error) {
+        console.error('DEBUG: Error in fetchAndCreateMarkers:', error);
+      }
+    }
 
-    // Dummy data for lender contact info
-    const lenderContacts = {
-      "Wu Hall": { email: "wuhall@princeton.edu", phone: "555-0001" },
-      "Blair Hall": { email: "blair@princeton.edu", phone: "555-0002" },
-      "Addy Hall": { email: "addy@princeton.edu", phone: "555-0003" },
-      "Campus Storage Solutions": { email: "info@campusstorage.com", phone: "555-0004" },
-      "Rockefeller College": { email: "rockefeller@princeton.edu", phone: "555-0005" },
-      "Princeton Storage Solutions": { email: "info@princetonstorage.com", phone: "555-0006" },
-      "Nassau Storage": { email: "contact@nassaustorage.com", phone: "555-0007" },
-      "Princeton Self Storage": { email: "support@princetonselfstorage.com", phone: "555-0008" },
-      "Alexander Hall": { email: "alexander@princeton.edu", phone: "555-0009" },
-      "Butler College": { email: "butler@princeton.edu", phone: "555-0010" },
-      "Storage Plus": { email: "info@storageplus.com", phone: "555-0011" }
-    };
+    // Update storage unit list with actual listings
+    function createStorageUnitList(listings) {
+      const storageUnitsList = document.getElementById('storageUnitsList');
+      storageUnitsList.innerHTML = '';
+      
+      listings.forEach(listing => {
+        const unitElement = document.createElement('div');
+        unitElement.className = 'storage-unit-item';
+        unitElement.innerHTML = `
+          <div class="storage-unit-image">
+            <span>Image</span>
+          </div>
+          <div class="storage-unit-info">
+            <div class="storage-unit-name">${listing.location}</div>
+            <div class="storage-unit-details">
+              <span class="storage-unit-price">$${listing.cost}/month</span>
+              <span> • ${listing.cubic_feet} cubic feet</span>
+            </div>
+          </div>
+        `;
+        
+        unitElement.addEventListener('click', () => {
+          const marker = markers.find(m => {
+            const content = m.getPopup().getContent();
+            return content.includes(listing.location);
+          });
+          if (marker) {
+            map.setView(marker.getLatLng(), 16);
+            setTimeout(() => {
+              marker.openPopup();
+            }, 100);
+          }
+        });
+        
+        storageUnitsList.appendChild(unitElement);
+      });
+    }
+
+    // Call fetchAndCreateMarkers when the page loads
+    document.addEventListener('DOMContentLoaded', fetchAndCreateMarkers);
+
+    // Update the filtering functions to work with the actual listings
+    function applyFilters() {
+      const size = document.getElementById('sizeSelect').value;
+      const cost = document.getElementById('costSelect').value;
+      const contract = document.getElementById('contractSelect').value;
+      const distance = document.getElementById('distanceSelect').value;
+      const rating = parseInt(document.getElementById('ratingRange').value);
+      
+      // Reset all markers to full opacity first
+      markers.forEach(marker => marker.setOpacity(1));
+      
+      // Fetch listings again to get fresh data
+      fetchAndCreateMarkers().then(() => {
+        // Apply filters to the new markers
+        markers.forEach(marker => {
+          const content = marker.getPopup().getContent();
+          const listing = listings.find(l => content.includes(l.location));
+          
+          if (listing) {
+            let matchesAllFilters = true;
+            
+            // Check size filter
+            if (size !== 'all') {
+              const cubicFeet = listing.cubic_feet;
+              if (!(
+                (size === 'small' && cubicFeet < 50) ||
+                (size === 'medium' && cubicFeet >= 50 && cubicFeet <= 150) ||
+                (size === 'large' && cubicFeet > 150 && cubicFeet <= 250) ||
+                (size === 'xlarge' && cubicFeet > 250)
+              )) {
+                matchesAllFilters = false;
+              }
+            }
+            
+            // Check cost filter
+            if (cost !== 'all') {
+              const price = listing.cost;
+              if (!(
+                (cost === 'low' && price < 15) ||
+                (cost === 'medium-low' && price >= 15 && price <= 30) ||
+                (cost === 'medium' && price > 30 && price <= 45) ||
+                (cost === 'medium-high' && price > 45 && price <= 60) ||
+                (cost === 'high' && price > 60)
+              )) {
+                matchesAllFilters = false;
+              }
+            }
+            
+            // Check contract filter
+            if (contract !== 'all' && listing.contract_length_months !== parseInt(contract)) {
+              matchesAllFilters = false;
+            }
+            
+            if (!matchesAllFilters) {
+              marker.setOpacity(0.5);
+            }
+          }
+        });
+      });
+    }
 
     function toggleInterest(locationName) {
       const button = event.target.closest('.interested-button');
@@ -603,269 +620,6 @@
       
       // Here you would typically send this to your backend
       console.log('Interested locations:', Array.from(interestedLocations));
-    }
-
-    // loop through and add markers
-    locations.forEach(loc => {
-      const marker = L.marker(loc.coords)
-        .addTo(map)
-        .bindPopup(`
-          <div style="font-size: 14px; width: 250px;">
-            <b style="font-size: 16px;">${loc.name}</b><br>
-            <i>${loc.info}</i><br><br>
-            <div class="popup-image">
-              <span>Storage Unit Image</span>
-            </div>
-            <b>Storage Provider:</b> ${loc.name}<br>
-            <b>Price:</b> $${loc.price}/month<br>
-            <b>Size:</b> ${getSizeCategory(loc.size)}<br>
-            <b>Contract Length:</b> ${getContractLength(loc.contract)}<br>
-            <b>Distance from Campus:</b> ${loc.distance} miles<br>
-            <b>Rating:</b> ${loc.rating} stars<br>
-            <button class="interested-button ${interestedLocations.has(loc.name) ? 'interested' : ''}" 
-                    onclick="toggleInterest('${loc.name}')">
-              <i class="fas ${interestedLocations.has(loc.name) ? 'fa-check' : 'fa-heart'}"></i> 
-              ${interestedLocations.has(loc.name) ? 'Interested' : 'Interested'}
-            </button>
-            <div class="contact-info" style="display: ${interestedLocations.has(loc.name) ? 'block' : 'none'}">
-              <h4>Lender Contact Information</h4>
-              <p><i class="fas fa-envelope"></i> ${lenderContacts[loc.name].email}</p>
-              <p><i class="fas fa-phone"></i> ${lenderContacts[loc.name].phone}</p>
-              <div class="interested-renters">
-                <h4>Interested Renters</h4>
-                ${(interestedRenters[loc.name] || []).map(renter => `
-                  <div class="renter-item">
-                    <p><b>${renter.name}</b></p>
-                    <p><i class="fas fa-envelope"></i> ${renter.email}</p>
-                    <p><i class="fas fa-phone"></i> ${renter.phone}</p>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          </div>
-        `, {
-          maxWidth: 300,
-          autoPan: true,
-          autoPanPadding: [50, 50],
-          closeButton: true,
-          className: 'custom-popup',
-          keepInView: true
-        });
-      markers.push(marker);
-    });
-
-    // Helper functions for formatting
-    function getSizeCategory(size) {
-      const sizes = {
-        'small': '<50 sq ft',
-        'medium': '50-150 sq ft',
-        'large': '150-250 sq ft',
-        'xlarge': '>250 sq ft'
-      };
-      return sizes[size] || size;
-    }
-
-    function getContractLength(months) {
-      if (months === 1) return '1 month';
-      if (months === 2) return '1-2 months';
-      if (months === 3) return '2-3 months';
-      if (months === 4) return '3-4 months';
-      if (months >= 5) return '4+ months';
-      return `${months} months`;
-    }
-
-    // Initialize rating display
-    updateRating(1);
-
-    // Add this after the locations array
-    function createStorageUnitList() {
-      const storageUnitsList = document.getElementById('storageUnitsList');
-      storageUnitsList.innerHTML = '';
-      
-      locations.forEach(loc => {
-        const unitElement = document.createElement('div');
-        unitElement.className = 'storage-unit-item';
-        unitElement.innerHTML = `
-          <div class="storage-unit-image">
-            <span>Image</span>
-          </div>
-          <div class="storage-unit-info">
-            <div class="storage-unit-name">${loc.name}</div>
-            <div class="storage-unit-details">
-              <span class="storage-unit-price">$${loc.price}/month</span>
-              <span> • ${getSizeCategory(loc.size)}</span>
-            </div>
-          </div>
-        `;
-        
-        unitElement.addEventListener('click', () => {
-          // Find the marker for this location
-          const marker = markers.find(m => m.getPopup().getContent().includes(loc.name));
-          if (marker) {
-            // First center the map on the marker
-            map.setView(marker.getLatLng(), 16);
-            // Then open the popup after a short delay to ensure the map has centered
-            setTimeout(() => {
-              marker.openPopup();
-            }, 100);
-          }
-        });
-        
-        storageUnitsList.appendChild(unitElement);
-      });
-    }
-
-    // Call this function after creating the map and markers
-    createStorageUnitList();
-
-    function applyFilters() {
-      const size = document.getElementById('sizeSelect').value;
-      const cost = document.getElementById('costSelect').value;
-      const contract = document.getElementById('contractSelect').value;
-      const distance = document.getElementById('distanceSelect').value;
-      const rating = parseInt(document.getElementById('ratingRange').value);
-      
-      // Reset all markers to full opacity first
-      markers.forEach(marker => marker.setOpacity(1));
-      
-      // Only apply opacity changes if any filter is active (not 'all')
-      if (size !== 'all' || cost !== 'all' || contract !== 'all' || distance !== 'all' || rating !== 1) {
-        // Dim markers that don't match filters
-        markers.forEach(marker => {
-          const content = marker.getPopup().getContent();
-          const location = locations.find(loc => content.includes(loc.name));
-          
-          if (location) {
-            let matchesAllFilters = true;
-            
-            // Check size filter
-            if (size !== 'all' && location.size !== size) {
-              matchesAllFilters = false;
-            }
-            
-            // Check cost filter
-            if (cost !== 'all') {
-              const price = location.price;
-              if (!(
-                (cost === 'low' && price < 15) ||
-                (cost === 'medium-low' && price >= 15 && price <= 30) ||
-                (cost === 'medium' && price > 30 && price <= 45) ||
-                (cost === 'medium-high' && price > 45 && price <= 60) ||
-                (cost === 'high' && price > 60)
-              )) {
-                matchesAllFilters = false;
-              }
-            }
-            
-            // Check contract filter
-            if (contract !== 'all' && location.contract !== parseInt(contract)) {
-              matchesAllFilters = false;
-            }
-            
-            // Check distance filter
-            if (distance !== 'all') {
-              const dist = location.distance;
-              if (!(
-                (distance === 'close' && dist <= 5) ||
-                (distance === 'medium' && dist > 5 && dist <= 10) ||
-                (distance === 'far' && dist > 10 && dist <= 20) ||
-                (distance === 'very-far' && dist > 20)
-              )) {
-                matchesAllFilters = false;
-              }
-            }
-            
-            // Check rating filter
-            if (location.rating < rating) {
-              matchesAllFilters = false;
-            }
-            
-            // Only dim the marker if it doesn't match all active filters
-            if (!matchesAllFilters) {
-              marker.setOpacity(0.5);
-            }
-          }
-        });
-      }
-      
-      // Update the storage units list to only show matching units
-      const storageUnitsList = document.getElementById('storageUnitsList');
-      storageUnitsList.innerHTML = '';
-      
-      locations.forEach(loc => {
-        let matchesAllFilters = true;
-        
-        // Check size filter
-        if (size !== 'all' && loc.size !== size) {
-          matchesAllFilters = false;
-        }
-        
-        // Check cost filter
-        if (cost !== 'all') {
-          const price = loc.price;
-          if (!(
-            (cost === 'low' && price < 15) ||
-            (cost === 'medium-low' && price >= 15 && price <= 30) ||
-            (cost === 'medium' && price > 30 && price <= 45) ||
-            (cost === 'medium-high' && price > 45 && price <= 60) ||
-            (cost === 'high' && price > 60)
-          )) {
-            matchesAllFilters = false;
-          }
-        }
-        
-        // Check contract filter
-        if (contract !== 'all' && loc.contract !== parseInt(contract)) {
-          matchesAllFilters = false;
-        }
-        
-        // Check distance filter
-        if (distance !== 'all') {
-          const dist = loc.distance;
-          if (!(
-            (distance === 'close' && dist <= 5) ||
-            (distance === 'medium' && dist > 5 && dist <= 10) ||
-            (distance === 'far' && dist > 10 && dist <= 20) ||
-            (distance === 'very-far' && dist > 20)
-          )) {
-            matchesAllFilters = false;
-          }
-        }
-        
-        // Check rating filter
-        if (loc.rating < rating) {
-          matchesAllFilters = false;
-        }
-        
-        if (matchesAllFilters) {
-          const unitElement = document.createElement('div');
-          unitElement.className = 'storage-unit-item';
-          unitElement.innerHTML = `
-            <div class="storage-unit-image">
-              <span>Image</span>
-            </div>
-            <div class="storage-unit-info">
-              <div class="storage-unit-name">${loc.name}</div>
-              <div class="storage-unit-details">
-                <span class="storage-unit-price">$${loc.price}/month</span>
-                <span> • ${getSizeCategory(loc.size)}</span>
-              </div>
-            </div>
-          `;
-          
-          unitElement.addEventListener('click', () => {
-            const marker = markers.find(m => m.getPopup().getContent().includes(loc.name));
-            if (marker) {
-              map.setView(marker.getLatLng(), 16);
-              setTimeout(() => {
-                marker.openPopup();
-              }, 100);
-            }
-          });
-          
-          storageUnitsList.appendChild(unitElement);
-        }
-      });
     }
   </script>
 </body>
