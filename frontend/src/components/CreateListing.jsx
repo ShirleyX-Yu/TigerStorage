@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 
@@ -16,6 +16,9 @@ const CreateListing = () => {
   });
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [address, setAddress] = useState('');
+  const [geocodingStatus, setGeocodingStatus] = useState(''); // For status messages
+  const [locationType, setLocationType] = useState('on-campus'); // 'on-campus' or 'off-campus'
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -23,6 +26,67 @@ const CreateListing = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleAddressChange = (e) => {
+    setAddress(e.target.value);
+  };
+
+  const handleLocationTypeChange = (e) => {
+    setLocationType(e.target.value);
+    // Clear address and geocoding status when switching location types
+    setAddress('');
+    setGeocodingStatus('');
+  };
+
+  const geocodeAddress = async () => {
+    if (!address.trim()) {
+      setGeocodingStatus('Please enter an address');
+      return;
+    }
+
+    setGeocodingStatus('Looking up coordinates...');
+    
+    try {
+      let searchAddress;
+      
+      if (locationType === 'on-campus') {
+        // For on-campus locations, add Princeton University context
+        searchAddress = `${address}, Princeton University, Princeton, NJ`;
+      } else {
+        // For off-campus, use the full address as provided
+        searchAddress = address;
+      }
+      
+      // Using the Nominatim OpenStreetMap API (free and doesn't require API key)
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch coordinates');
+      }
+      
+      const data = await response.json();
+      
+      if (data.length > 0) {
+        const { lat, lon } = data[0];
+        
+        // Update form data with the coordinates
+        setFormData(prev => ({
+          ...prev,
+          latitude: lat,
+          longitude: lon
+        }));
+        
+        setGeocodingStatus('Address found!');
+      } else {
+        setGeocodingStatus('Address not found. Try being more specific.');
+      }
+    } catch (err) {
+      console.error('Geocoding error:', err);
+      setGeocodingStatus('Error looking up address. Please try again.');
+    }
   };
 
   const handleImageUpload = async (e) => {
@@ -98,31 +162,97 @@ const CreateListing = () => {
           </div>
 
           <div style={styles.formGroup}>
-            <label htmlFor="latitude" style={styles.label}>Latitude</label>
-            <input
-              type="number"
-              id="latitude"
-              name="latitude"
-              value={formData.latitude}
-              onChange={handleInputChange}
-              placeholder="Enter latitude"
-              style={styles.input}
-              required
-            />
+            <label style={styles.label}>Location Type</label>
+            <div style={styles.radioContainer}>
+              <label style={styles.radioLabel}>
+                <input
+                  type="radio"
+                  name="locationType"
+                  value="on-campus"
+                  checked={locationType === 'on-campus'}
+                  onChange={handleLocationTypeChange}
+                  style={styles.radioInput}
+                />
+                On Campus
+              </label>
+              <label style={styles.radioLabel}>
+                <input
+                  type="radio"
+                  name="locationType"
+                  value="off-campus"
+                  checked={locationType === 'off-campus'}
+                  onChange={handleLocationTypeChange}
+                  style={styles.radioInput}
+                />
+                Off Campus
+              </label>
+            </div>
           </div>
 
           <div style={styles.formGroup}>
-            <label htmlFor="longitude" style={styles.label}>Longitude</label>
-            <input
-              type="number"
-              id="longitude"
-              name="longitude"
-              value={formData.longitude}
-              onChange={handleInputChange}
-              placeholder="Enter longitude"
-              style={styles.input}
-              required
-            />
+            <label htmlFor="address" style={styles.label}>
+              {locationType === 'on-campus' 
+                ? 'Princeton Building/Hall Name' 
+                : 'Full Street Address'}
+            </label>
+            <div style={styles.addressInputContainer}>
+              <input
+                type="text"
+                id="address"
+                value={address}
+                onChange={handleAddressChange}
+                placeholder={locationType === 'on-campus'
+                  ? 'Enter a Princeton hall or building name'
+                  : 'Enter full street address (e.g., 123 Main St, Princeton, NJ)'}
+                style={styles.addressInput}
+              />
+              <button 
+                type="button" 
+                onClick={geocodeAddress} 
+                style={styles.geocodeButton}
+              >
+                Find Coordinates
+              </button>
+            </div>
+            {geocodingStatus && (
+              <div style={{
+                ...styles.geocodingStatus,
+                color: geocodingStatus.includes('Error') || geocodingStatus.includes('not found') 
+                  ? '#e65100' : '#4caf50'
+              }}>
+                {geocodingStatus}
+              </div>
+            )}
+          </div>
+
+          <div style={styles.coordinatesContainer}>
+            <div style={styles.formGroup}>
+              <label htmlFor="latitude" style={styles.label}>Latitude</label>
+              <input
+                type="number"
+                id="latitude"
+                name="latitude"
+                value={formData.latitude}
+                onChange={handleInputChange}
+                placeholder="Enter latitude"
+                style={styles.input}
+                required
+              />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label htmlFor="longitude" style={styles.label}>Longitude</label>
+              <input
+                type="number"
+                id="longitude"
+                name="longitude"
+                value={formData.longitude}
+                onChange={handleInputChange}
+                placeholder="Enter longitude"
+                style={styles.input}
+                required
+              />
+            </div>
           </div>
 
           <div style={styles.formGroup}>
@@ -207,6 +337,51 @@ const CreateListing = () => {
 };
 
 const styles = {
+  addressInputContainer: {
+    display: 'flex',
+    gap: '10px',
+    width: '100%',
+  },
+  addressInput: {
+    flex: 1,
+    padding: '10px',
+    border: '1px solid #ddd',
+    borderRadius: '4px',
+    fontSize: '16px',
+  },
+  geocodeButton: {
+    padding: '10px 15px',
+    backgroundColor: '#FF8F00',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: 'bold',
+  },
+  geocodingStatus: {
+    marginTop: '5px',
+    fontSize: '14px',
+  },
+  coordinatesContainer: {
+    display: 'flex',
+    gap: '15px',
+  },
+  radioContainer: {
+    display: 'flex',
+    gap: '20px',
+    marginBottom: '10px',
+  },
+  radioLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+    fontSize: '16px',
+  },
+  radioInput: {
+    marginRight: '8px',
+    cursor: 'pointer',
+  },
   container: {
     display: 'flex',
     flexDirection: 'column',
