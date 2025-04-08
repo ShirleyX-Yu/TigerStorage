@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
+
+console.log('ListingDetails component loaded');
 
 const ListingDetails = () => {
   const navigate = useNavigate();
@@ -8,20 +10,25 @@ const ListingDetails = () => {
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showInterestButton, setShowInterestButton] = useState(true);
 
   useEffect(() => {
+    console.log('ListingDetails component mounted with ID:', id);
+    
     const fetchListingDetails = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
+        if (!id) {
+          throw new Error('Invalid listing ID');
+        }
+        
         console.log(`Fetching details for listing ID: ${id}`);
+        const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/listings/${id}`;
+        console.log('API URL:', apiUrl);
         
-        // Make sure we're using one of the mock IDs (101, 102, 103)
-        // This is a temporary fix until the backend fully supports all IDs
-        const validId = [101, 102, 103].includes(Number(id)) ? id : 101;
-        
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${validId}`, {
-          credentials: 'include' // Include cookies for authentication
+        const response = await fetch(apiUrl, {
+          credentials: 'include'
         });
         
         if (!response.ok) {
@@ -32,25 +39,34 @@ const ListingDetails = () => {
         const data = await response.json();
         console.log('Received listing data:', data);
         
-        // Transform the data to match our component's expected format
+        // Simple formatted listing with fallbacks for all properties
         const formattedListing = {
-          id: data.id,
-          location: data.location,
-          cost: data.cost,
-          cubicFeet: data.cubic_feet,
-          description: data.description,
-          isAvailable: data.is_available,
-          createdAt: data.created_at,
-          contractLength: data.contract_length_months || 12, // Use default if not provided
-          images: ['/assets/placeholder.jpg'], // default placeholder image
+          id: data.id || id,
+          location: data.location || 'Unknown Location',
+          cost: data.cost || 0,
+          cubicFeet: data.cubic_feet || 0,
+          description: data.description || 'No description available',
+          isAvailable: data.is_available !== undefined ? data.is_available : true,
+          contractLength: data.contract_length_months || 12,
+          images: [data.image_url || '/assets/placeholder.jpg'],
           lender: {
-            name: `Owner #${data.owner_id}`, // Use owner ID as reference
-            email: 'contact@tigerstorage.com' // Placeholder email
+            name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
+            email: 'contact@tigerstorage.com'
           },
-          // Placeholder for interested renters - in a real app, this would come from the API
-          interestedRenters: []
+          // Check if this listing is in the interested list
+          isInterested: false
         };
         
+        // Try to get interested status
+        try {
+          const interestedLocations = JSON.parse(localStorage.getItem('interestedLocations') || '[]');
+          formattedListing.isInterested = interestedLocations.includes(String(data.id)) || 
+                                         interestedLocations.includes(Number(id));
+        } catch (e) {
+          console.error('Error checking interest status:', e);
+        }
+        
+        console.log('Formatted listing:', formattedListing);
         setListing(formattedListing);
       } catch (err) {
         console.error('Error fetching listing details:', err);
@@ -61,13 +77,79 @@ const ListingDetails = () => {
     };
 
     fetchListingDetails();
+    
+    return () => {
+      console.log('ListingDetails component unmounted');
+    };
   }, [id]);
 
   const handleShowInterest = () => {
-    // TODO: Implement API call to register interest
-    setShowInterestButton(false);
-    // You would typically make an API call here to register the user's interest
+    try {
+      if (!listing || !listing.id) {
+        console.error('Cannot toggle interest: listing or listing.id is undefined');
+        return;
+      }
+      
+      // Get current interested locations
+      let interestedLocations = [];
+      try {
+        interestedLocations = JSON.parse(localStorage.getItem('interestedLocations') || '[]');
+      } catch (e) {
+        console.error('Error parsing interestedLocations:', e);
+        interestedLocations = [];
+      }
+      
+      // Convert to strings for consistency
+      interestedLocations = interestedLocations.map(String);
+      const listingIdStr = String(listing.id);
+      
+      // Toggle interest
+      if (interestedLocations.includes(listingIdStr)) {
+        interestedLocations = interestedLocations.filter(id => id !== listingIdStr);
+        setListing({...listing, isInterested: false});
+      } else {
+        interestedLocations.push(listingIdStr);
+        setListing({...listing, isInterested: true});
+      }
+      
+      // Save to localStorage
+      localStorage.setItem('interestedLocations', JSON.stringify(interestedLocations));
+      console.log('Updated interested locations:', interestedLocations);
+    } catch (error) {
+      console.error('Error in handleShowInterest:', error);
+    }
   };
+
+  // Simple render function for error state
+  const renderError = () => (
+    <div style={styles.errorContainer}>
+      <h2>Error</h2>
+      <p>{error}</p>
+      <button style={styles.backButton} onClick={() => navigate('/view-listings')}>
+        &larr; Back to Listings
+      </button>
+    </div>
+  );
+
+  // Simple render function for loading state
+  const renderLoading = () => (
+    <div style={styles.loadingContainer}>
+      <p>Loading listing details...</p>
+    </div>
+  );
+
+  // Simple render function for when listing is not found
+  const renderNotFound = () => (
+    <div style={styles.errorContainer}>
+      <h2>Listing Not Found</h2>
+      <p>Sorry, we couldn't find this listing. It may have been removed or is temporarily unavailable.</p>
+      <button style={styles.backButton} onClick={() => navigate('/view-listings')}>
+        &larr; Back to Listings
+      </button>
+    </div>
+  );
+
+  console.log('ListingDetails render state:', { loading, error, listing });
 
   return (
     <div style={styles.container}>
@@ -80,24 +162,18 @@ const ListingDetails = () => {
           ← Back to Listings
         </button>
 
-        {loading ? (
-          <div style={styles.loadingContainer}>
-            <p style={styles.loadingMessage}>Loading listing details...</p>
-          </div>
-        ) : error ? (
-          <div style={styles.errorContainer}>
-            <p style={styles.errorMessage}>{error}</p>
-            <button 
-              style={styles.retryButton}
-              onClick={() => window.location.reload()}
-            >
-              Retry
-            </button>
-          </div>
-        ) : listing ? (
+        {loading ? renderLoading() : error ? renderError() : !listing ? renderNotFound() : (
           <div style={styles.detailsContainer}>
             <div style={styles.imageSection}>
-              <img src={listing.images[0]} alt="Storage Space" style={styles.mainImage} />
+              <img 
+                src={listing.images?.[0] || '/assets/placeholder.jpg'} 
+                alt="Storage Space" 
+                style={styles.mainImage} 
+                onError={(e) => {
+                  console.log('Image failed to load, using placeholder');
+                  e.target.src = '/assets/placeholder.jpg';
+                }}
+              />
             </div>
 
             <div style={styles.infoSection}>
@@ -124,66 +200,28 @@ const ListingDetails = () => {
                 </div>
               </div>
 
-              {listing.description && (
-                <div style={styles.descriptionSection}>
-                  <h3>Description</h3>
-                  <p style={styles.description}>{listing.description}</p>
-                </div>
-              )}
+              <div style={styles.descriptionSection}>
+                <h3>Description</h3>
+                <p style={styles.description}>{listing.description}</p>
+              </div>
 
               <div style={styles.lenderInfo}>
                 <h3>Lender Information</h3>
-                <p><strong>Name:</strong> {listing.lender.name}</p>
-                <p><strong>Email:</strong> {listing.lender.email}</p>
-                {showInterestButton && listing.isAvailable && (
+                <p><strong>Name:</strong> {listing.lender?.name || 'Unknown'}</p>
+                <p><strong>Email:</strong> {listing.lender?.email || 'contact@tigerstorage.com'}</p>
+                <div style={styles.actionSection}>
                   <button 
-                    style={styles.interestButton}
+                    style={{
+                      ...styles.interestButton,
+                      backgroundColor: listing.isInterested ? '#4caf50' : '#f57c00'
+                    }}
                     onClick={handleShowInterest}
                   >
-                    Show Interest
+                    {listing.isInterested ? '✓ Interested' : '+ Show Interest'}
                   </button>
-                )}
-                {!showInterestButton && (
-                  <p style={styles.interestedMessage}>
-                    ✓ You've shown interest in this listing
-                  </p>
-                )}
-              </div>
-
-              <div style={styles.interestedRenters}>
-                <h3>Other Interested Renters</h3>
-                {listing.interestedRenters.length > 0 ? (
-                  <div style={styles.rentersList}>
-                    {listing.interestedRenters.map((renter, index) => (
-                      <div key={index} style={styles.renterItem}>
-                        <div style={styles.renterHeader}>
-                          <strong>{renter.name}</strong>
-                          <span style={styles.renterStatus}>{renter.status}</span>
-                        </div>
-                        <div style={styles.renterContact}>
-                          <span style={styles.renterEmail}>{renter.email}</span>
-                        </div>
-                        <div style={styles.renterDate}>
-                          Interested since: {new Date(renter.dateInterested).toLocaleDateString()}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p>No other renters have shown interest yet.</p>
-                )}
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <div style={styles.errorContainer}>
-            <p style={styles.errorMessage}>Listing not found</p>
-            <button 
-              style={styles.retryButton}
-              onClick={() => navigate('/view-listings')}
-            >
-              Return to Listings
-            </button>
           </div>
         )}
       </div>
@@ -317,21 +355,25 @@ const styles = {
     backgroundColor: '#f8f8f8',
     borderRadius: '4px',
   },
+  actionSection: {
+    display: 'flex',
+    justifyContent: 'center',
+  },
   interestButton: {
     backgroundColor: '#f57c00',
     color: 'white',
     border: 'none',
-    padding: '0.75rem 1.5rem',
+    padding: '10px 15px',
     borderRadius: '4px',
     cursor: 'pointer',
-    fontSize: '1rem',
-    fontWeight: '500',
-    marginTop: '1rem',
-  },
-  interestedMessage: {
-    color: '#4caf50',
-    fontWeight: '500',
-    marginTop: '1rem',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    width: '100%',
+    marginBottom: '1rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '40px',
   },
   interestedRenters: {
     marginTop: '1rem',

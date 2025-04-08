@@ -39,6 +39,56 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# Helper function to get mock listing data
+def get_mock_listing(listing_id):
+    if listing_id == 101:
+        return jsonify({
+            "id": 101,
+            "location": "Butler College Storage",
+            "cost": 65,
+            "cubic_feet": 90,
+            "description": "Secure storage space near Butler College, perfect for summer storage.",
+            "is_available": True,
+            "created_at": "2025-03-15T10:30:00",
+            "contract_length_months": 3,
+            "owner_id": 1001,
+            "latitude": 40.344,
+            "longitude": -74.656,
+            "image_url": "/assets/placeholder.jpg"
+        }), 200
+    elif listing_id == 102:
+        return jsonify({
+            "id": 102,
+            "location": "Whitman College Basement",
+            "cost": 55,
+            "cubic_feet": 75,
+            "description": "Climate-controlled storage in Whitman College basement.",
+            "is_available": True,
+            "created_at": "2025-03-20T14:45:00",
+            "contract_length_months": 4,
+            "owner_id": 1002,
+            "latitude": 40.343,
+            "longitude": -74.657,
+            "image_url": "/assets/placeholder.jpg"
+        }), 200
+    elif listing_id == 103:
+        return jsonify({
+            "id": 103,
+            "location": "Frist Campus Center",
+            "cost": 80,
+            "cubic_feet": 120,
+            "description": "Large storage space near Frist Campus Center, easily accessible.",
+            "is_available": True,
+            "created_at": "2025-03-25T09:15:00",
+            "contract_length_months": 3,
+            "owner_id": 1003,
+            "latitude": 40.347,
+            "longitude": -74.653,
+            "image_url": "/assets/placeholder.jpg"
+        }), 200
+    else:
+        return jsonify({"error": "Listing not found"}), 404
+
 # Initialize CAS authentication
 auth.init_auth(app)
 
@@ -379,52 +429,21 @@ def get_listing_by_id(listing_id):
                 
                 if not table_exists:
                     # Return mock data instead
-                    if listing_id == 101:
-                        return jsonify({
-                            "id": 101,
-                            "location": "Butler College Storage",
-                            "cost": 65,
-                            "cubic_feet": 90,
-                            "description": "Secure storage space near Butler College, perfect for summer storage.",
-                            "is_available": True,
-                            "created_at": "2025-03-15T10:30:00",
-                            "contract_length_months": 3,
-                            "owner_id": 1001
-                        }), 200
-                    elif listing_id == 102:
-                        return jsonify({
-                            "id": 102,
-                            "location": "Whitman College Basement",
-                            "cost": 55,
-                            "cubic_feet": 75,
-                            "description": "Climate-controlled storage in Whitman College basement.",
-                            "is_available": True,
-                            "created_at": "2025-03-20T14:45:00",
-                            "contract_length_months": 4,
-                            "owner_id": 1002
-                        }), 200
-                    elif listing_id == 103:
-                        return jsonify({
-                            "id": 103,
-                            "location": "Frist Campus Center",
-                            "cost": 80,
-                            "cubic_feet": 120,
-                            "description": "Large storage space near Frist Campus Center, easily accessible.",
-                            "is_available": True,
-                            "created_at": "2025-03-25T09:15:00",
-                            "contract_length_months": 3,
-                            "owner_id": 1003
-                        }), 200
-                    else:
-                        return jsonify({"error": "Listing not found"}), 404
+                    return get_mock_listing(listing_id)
                 
                 # Try to find the listing in the database
+                # Only use listing_id as that's the column name in the database
                 cur.execute("SELECT * FROM storage_listings WHERE listing_id = %s;", (listing_id,))
                 listing = cur.fetchone()
                 
                 if not listing:
-                    # If no listing found with that ID, return 404
-                    return jsonify({"error": "Listing not found"}), 404
+                    # If no listing found with that ID, check in the mock data
+                    if listing_id in [101, 102, 103]:
+                        # Return mock data for these IDs
+                        return get_mock_listing(listing_id)
+                    else:
+                        # If no listing found with that ID, return 404
+                        return jsonify({"error": "Listing not found"}), 404
                 
                 # Get column names from cursor description
                 column_names = [desc[0] for desc in cur.description]
@@ -436,17 +455,19 @@ def get_listing_by_id(listing_id):
                 
                 # Map to frontend expected format
                 formatted_listing = {
-                    "id": listing_dict.get('listing_id'),
+                    "id": listing_id,  # Use the requested listing_id for consistency
+                    "listing_id": listing_dict.get('listing_id'),  # Also include the original listing_id
                     "location": listing_dict.get('location', ''),
                     "cost": listing_dict.get('cost', 0),
                     "cubic_feet": listing_dict.get('cubic_ft', 0),
-                    "description": "Storage space available at " + listing_dict.get('location', ''),  # Default description
-                    "is_available": True,  # Default to available
-                    "created_at": "2025-04-01",  # Default date
+                    "description": listing_dict.get('description') or "Storage space available at " + listing_dict.get('location', ''),
+                    "is_available": listing_dict.get('is_available', True),
+                    "created_at": listing_dict.get('created_at', "2025-04-01"),
                     "contract_length_months": listing_dict.get('contract_length_months', 12),
-                    "owner_id": 1000,  # Default owner ID
+                    "owner_id": listing_dict.get('owner_id', 1000),
                     "latitude": listing_dict.get('latitude'),
-                    "longitude": listing_dict.get('longitude')
+                    "longitude": listing_dict.get('longitude'),
+                    "image_url": listing_dict.get('image_url', '/assets/placeholder.jpg')
                 }
                 
                 return jsonify(formatted_listing), 200
