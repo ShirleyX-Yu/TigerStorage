@@ -70,9 +70,16 @@ const RedirectToUserDashboard = () => {
       localStorage.setItem('userType', 'lender');
     }
     
+    // Check if we should skip the map redirect (coming from map view)
+    const skipMapRedirect = sessionStorage.getItem('skipMapRedirect');
+    
     // Navigate to the appropriate dashboard based on user type
-    if (userType === 'renter') {
+    if (userType === 'renter' && !skipMapRedirect) {
       window.location.href = '/public/ptonMap.html';
+    } else if (userType === 'renter' && skipMapRedirect) {
+      // Clear the flag so future navigations work normally
+      sessionStorage.removeItem('skipMapRedirect');
+      navigate('/renter');
     } else {
       navigate('/lender');
     }

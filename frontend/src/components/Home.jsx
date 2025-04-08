@@ -12,6 +12,22 @@ const Home = () => {
   const navigate = useNavigate();
   const [logoError, setLogoError] = useState(false);
   
+  // Check for dashboard redirect flag
+  React.useEffect(() => {
+    const dashboardRedirect = localStorage.getItem('dashboardRedirect');
+    if (dashboardRedirect) {
+      // Clear the flag
+      localStorage.removeItem('dashboardRedirect');
+      
+      // Navigate to the appropriate dashboard
+      if (dashboardRedirect === 'renter') {
+        navigate('/renter');
+      } else if (dashboardRedirect === 'lender') {
+        navigate('/lender');
+      }
+    }
+  }, [navigate]);
+  
   const handleLogin = (userType) => {
     // Clear any existing user type first
     sessionStorage.removeItem('userType');
