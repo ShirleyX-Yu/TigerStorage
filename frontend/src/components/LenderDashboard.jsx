@@ -284,14 +284,6 @@ const LenderDashboard = ({ username }) => {
               </div>
             )}
           </div>
-          
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>Earnings Overview</h2>
-            <div style={styles.placeholder}>
-              <p>No earnings data available yet.</p>
-              <p>When renters book your storage spaces, your earnings will appear here.</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -562,7 +554,24 @@ const styles = {
     color: '#666',
     backgroundColor: '#f5f5f5',
     borderRadius: '4px',
-  }
+  },
+  emptyState: {
+    padding: '20px',
+    textAlign: 'center',
+    color: '#666',
+    backgroundColor: '#f5f5f5',
+    borderRadius: '4px',
+  },
+  createButton: {
+    backgroundColor: '#4caf50',
+    color: 'white',
+    border: 'none',
+    padding: '10px 15px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: 'bold',
+  },
 };
 
 export default LenderDashboard;

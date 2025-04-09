@@ -114,20 +114,6 @@ const RenterDashboard = ({ username }) => {
             </div>
           )}
         </div>
-
-        <div style={styles.section}>
-          <h2>My Current Rentals</h2>
-          <div style={styles.placeholder}>
-            No active rentals
-          </div>
-        </div>
-
-        <div style={styles.section}>
-          <h2>Rental History</h2>
-          <div style={styles.placeholder}>
-            No rental history
-          </div>
-        </div>
       </div>
     </div>
   );
