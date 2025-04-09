@@ -1065,16 +1065,16 @@ def get_interested_renters(listing_id):
                 if listing[0] != owner_id:
                     return jsonify({"error": "You don't have permission to view interested renters for this listing"}), 403
                 
-                # Get interested renters
+                # Get interested renters with their details
                 cur.execute("""
                     SELECT 
-                        interest_id,
-                        renter_username,
-                        created_at,
-                        status
-                    FROM interested_listings
-                    WHERE listing_id = %s
-                    ORDER BY created_at DESC
+                        il.interest_id,
+                        il.renter_username,
+                        il.created_at,
+                        il.status
+                    FROM interested_listings il
+                    WHERE il.listing_id = %s
+                    ORDER BY il.created_at DESC
                 """, (listing_id,))
                 
                 interested_renters = []

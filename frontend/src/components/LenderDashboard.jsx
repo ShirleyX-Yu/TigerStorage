@@ -114,16 +114,35 @@ const LenderDashboard = ({ username }) => {
         console.log('Fetched listings:', data);
         
         // Transform the data to match our component's expected format
-        const formattedListings = data.map(listing => ({
-          id: listing.id,
-          location: listing.location, // This is now the title
-          address: listing.address || '', // Add the address field
-          cost: listing.cost,
-          cubicFeet: listing.cubic_feet,
-          contractLength: listing.contract_length_months || 12,
-          dateCreated: new Date(listing.created_at || Date.now()).toLocaleDateString(),
-          status: 'Active', // Default status
-          interestedRenters: [] // This would be populated from a separate API call in a real app
+        const formattedListings = await Promise.all(data.map(async listing => {
+          // Fetch interested renters for each listing
+          const rentersResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listing.id}/interested-renters`, {
+            credentials: 'include'
+          });
+          
+          let interestedRenters = [];
+          if (rentersResponse.ok) {
+            const rentersData = await rentersResponse.json();
+            interestedRenters = rentersData.map(renter => ({
+              id: renter.id,
+              name: renter.username,
+              email: `${renter.username}@princeton.edu`,
+              dateInterested: renter.dateInterested,
+              status: renter.status
+            }));
+          }
+          
+          return {
+            id: listing.id,
+            location: listing.location,
+            address: listing.address || '',
+            cost: listing.cost,
+            cubicFeet: listing.cubic_feet,
+            contractLength: listing.contract_length_months || 12,
+            dateCreated: new Date(listing.created_at || Date.now()).toLocaleDateString(),
+            status: 'Active',
+            interestedRenters
+          };
         }));
         
         setListedSpaces(formattedListings);

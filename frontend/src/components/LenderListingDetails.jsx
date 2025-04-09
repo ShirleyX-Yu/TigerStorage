@@ -38,28 +38,33 @@ const LenderListingDetails = () => {
         const data = await response.json();
         console.log('Received listing data:', data);
         
-        // Simple formatted listing with fallbacks for all properties
-        const formattedListing = {
-          id: data.id || id,
-          location: data.location || 'Unknown Location',
-          cost: data.cost || 0,
-          cubicFeet: data.cubic_feet || 0,
-          description: data.description || 'No description available',
-          isAvailable: data.is_available !== undefined ? data.is_available : true,
-          contractLength: data.contract_length_months || 12,
+        // Fetch interested renters
+        const rentersResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/listings/${id}/interested-renters`, {
+          credentials: 'include'
+        });
+        
+        if (!rentersResponse.ok) {
+          throw new Error('Failed to fetch interested renters');
+        }
+        
+        const rentersData = await rentersResponse.json();
+        
+        setListing({
+          id: data.id,
+          location: data.location,
+          cost: data.cost,
+          cubicFeet: data.cubic_feet,
+          description: data.description,
+          contractLength: data.contract_length_months,
           images: [data.image_url || '/assets/placeholder.jpg'],
-          lender: {
-            name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
-            email: 'contact@tigerstorage.com'
-          }
-        };
-        
-        console.log('Formatted listing:', formattedListing);
-        setListing(formattedListing);
-        
-        // Fetch interested renters (in a real app, this would be a separate API call)
-        // For now, we'll use mock data
-        fetchInterestedRenters(id);
+          interestedRenters: rentersData.map(renter => ({
+            id: renter.id,
+            name: renter.username,
+            email: `${renter.username}@princeton.edu`,
+            dateInterested: renter.dateInterested,
+            status: renter.status
+          }))
+        });
       } catch (err) {
         console.error('Error fetching listing details:', err);
         setError(err.message);
@@ -187,10 +192,8 @@ const LenderListingDetails = () => {
                   <span style={styles.specValue}>{listing.contractLength} months</span>
                 </div>
                 <div style={styles.specItem}>
-                  <span style={styles.specLabel}>Availability:</span>
-                  <span style={{...styles.specValue, color: listing.isAvailable ? '#4caf50' : '#f44336'}}>
-                    {listing.isAvailable ? 'Available' : 'Not Available'}
-                  </span>
+                  <span style={styles.specLabel}>Interested Renters:</span>
+                  <span style={styles.specValue}>{listing.interestedRenters?.length || 0}</span>
                 </div>
               </div>
 
@@ -199,26 +202,26 @@ const LenderListingDetails = () => {
                 <p style={styles.description}>{listing.description}</p>
               </div>
 
-              <div style={styles.lenderInfo}>
-                <h3>Lender Information</h3>
-                <p><strong>Name:</strong> {listing.lender?.name || 'Unknown'}</p>
-                <p><strong>Email:</strong> {listing.lender?.email || 'contact@tigerstorage.com'}</p>
-              </div>
-              
               <div style={styles.interestedRenters}>
-                <h3>Interested Renters</h3>
-                {interestedRenters.length === 0 ? (
+                <h3>Interested Renters ({listing.interestedRenters?.length || 0})</h3>
+                {listing.interestedRenters?.length === 0 ? (
                   <p>No renters have shown interest in this listing yet.</p>
                 ) : (
                   <div style={styles.rentersList}>
-                    {interestedRenters.map(renter => (
+                    {listing.interestedRenters.map(renter => (
                       <div key={renter.id} style={styles.renterItem}>
                         <div style={styles.renterHeader}>
                           <h4 style={styles.renterName}>{renter.name}</h4>
                           <span style={styles.renterStatus}>{renter.status}</span>
                         </div>
-                        <p style={styles.renterContact}>{renter.email}</p>
-                        <p style={styles.renterDate}>Interested since: {renter.dateInterested}</p>
+                        <p style={styles.renterContact}>
+                          <a href={`mailto:${renter.email}`} style={styles.renterEmail}>
+                            {renter.email}
+                          </a>
+                        </p>
+                        <p style={styles.renterDate}>
+                          Interested since: {new Date(renter.dateInterested).toLocaleDateString()}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -429,7 +432,11 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     height: '40px',
-  }
+  },
+  renterEmail: {
+    color: '#333',
+    textDecoration: 'none',
+  },
 };
 
 export default LenderListingDetails;
