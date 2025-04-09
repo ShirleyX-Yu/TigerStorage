@@ -537,8 +537,12 @@
         return `${window.location.origin}${imageUrl}`;
     }
 
-    // Initialize the map
-    const map = L.map('map').setView([40.344, -74.656], 15);
+    // Initialize the map centered on Princeton University
+    const map = L.map('map', {
+      center: [40.3434, -74.6517],
+      zoom: 15,
+      zoomControl: false  // Disable zoom controls
+    });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
