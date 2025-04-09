@@ -10,6 +10,7 @@ const ListingDetails = () => {
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     console.log('ListingDetails component mounted with ID:', id);
@@ -39,6 +40,17 @@ const ListingDetails = () => {
         const data = await response.json();
         console.log('Received listing data:', data);
         
+        // Fetch interest status from API
+        const interestResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/my-interested-listings`, {
+          credentials: 'include'
+        });
+        
+        let isInterested = false;
+        if (interestResponse.ok) {
+          const interestedListings = await interestResponse.json();
+          isInterested = interestedListings.some(listing => listing.id === data.id);
+        }
+        
         // Simple formatted listing with fallbacks for all properties
         const formattedListing = {
           id: data.id || id,
@@ -53,18 +65,8 @@ const ListingDetails = () => {
             name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
             email: 'contact@tigerstorage.com'
           },
-          // Check if this listing is in the interested list
-          isInterested: false
+          isInterested: isInterested
         };
-        
-        // Try to get interested status
-        try {
-          const interestedLocations = JSON.parse(localStorage.getItem('interestedLocations') || '[]');
-          formattedListing.isInterested = interestedLocations.includes(String(data.id)) || 
-                                         interestedLocations.includes(Number(id));
-        } catch (e) {
-          console.error('Error checking interest status:', e);
-        }
         
         console.log('Formatted listing:', formattedListing);
         setListing(formattedListing);
@@ -83,40 +85,50 @@ const ListingDetails = () => {
     };
   }, [id]);
 
-  const handleShowInterest = () => {
+  // Function to handle showing interest
+  const handleShowInterest = async () => {
     try {
       if (!listing || !listing.id) {
         console.error('Cannot toggle interest: listing or listing.id is undefined');
         return;
       }
       
-      // Get current interested locations
-      let interestedLocations = [];
-      try {
-        interestedLocations = JSON.parse(localStorage.getItem('interestedLocations') || '[]');
-      } catch (e) {
-        console.error('Error parsing interestedLocations:', e);
-        interestedLocations = [];
+      const isInterested = listing.isInterested;
+      const method = isInterested ? 'DELETE' : 'POST';
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listing.id}/interest`, {
+        method,
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to ${isInterested ? 'remove' : 'add'} interest`);
       }
+
+      // Update the listing's interest status immediately
+      setListing(prevListing => ({
+        ...prevListing,
+        isInterested: !isInterested
+      }));
       
-      // Convert to strings for consistency
-      interestedLocations = interestedLocations.map(String);
-      const listingIdStr = String(listing.id);
+      // Show success message
+      setMessage({
+        type: 'success',
+        text: `Successfully ${isInterested ? 'removed' : 'added'} interest in this listing`
+      });
       
-      // Toggle interest
-      if (interestedLocations.includes(listingIdStr)) {
-        interestedLocations = interestedLocations.filter(id => id !== listingIdStr);
-        setListing({...listing, isInterested: false});
-      } else {
-        interestedLocations.push(listingIdStr);
-        setListing({...listing, isInterested: true});
-      }
-      
-      // Save to localStorage
-      localStorage.setItem('interestedLocations', JSON.stringify(interestedLocations));
-      console.log('Updated interested locations:', interestedLocations);
+      // Clear message after 3 seconds
+      setTimeout(() => setMessage(null), 3000);
     } catch (error) {
       console.error('Error in handleShowInterest:', error);
+      setMessage({
+        type: 'error',
+        text: error.message || 'Failed to update interest status'
+      });
     }
   };
 

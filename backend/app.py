@@ -927,8 +927,8 @@ def delete_listing(listing_id):
         return jsonify({"error": str(e)}), 500
 
 # API to handle interest in a listing
-@app.route('/api/listings/<int:listing_id>/interest', methods=['POST'])
-def show_interest(listing_id):
+@app.route('/api/listings/<int:listing_id>/interest', methods=['POST', 'DELETE'])
+def handle_interest(listing_id):
     try:
         print(f"Received interest request for listing {listing_id}")
         # Check if user is logged in
@@ -966,42 +966,69 @@ def show_interest(listing_id):
                     return jsonify({"error": "Listing not found"}), 404
                     
                 lender_username = listing[0]
+                if not lender_username:
+                    print(f"Listing {listing_id} has no owner")
+                    return jsonify({"error": "This listing is not available for interest as it has no owner"}), 400
+                    
                 print(f"Found lender username: {lender_username}")
                 
-                # Check if the user has already shown interest
-                print(f"Checking if user {renter_username} has already shown interest in listing {listing_id}")
-                cur.execute("""
-                    SELECT interest_id FROM interested_listings 
-                    WHERE listing_id = %s AND renter_username = %s
-                """, (listing_id, renter_username))
-                
-                existing_interest = cur.fetchone()
-                if existing_interest:
-                    print(f"User {renter_username} has already shown interest in listing {listing_id}")
-                    return jsonify({"error": "You have already shown interest in this listing"}), 400
-                
-                # Insert the interest
-                print(f"Inserting new interest record for listing {listing_id}, renter {renter_username}, lender {lender_username}")
-                cur.execute("""
-                    INSERT INTO interested_listings 
-                    (listing_id, lender_username, renter_username)
-                    VALUES (%s, %s, %s)
-                    RETURNING interest_id
-                """, (listing_id, lender_username, renter_username))
-                
-                interest_id = cur.fetchone()[0]
-                conn.commit()
-                print(f"Successfully created interest record with ID {interest_id}")
-                
-                return jsonify({
-                    "success": True,
-                    "interest_id": interest_id,
-                    "message": "Interest shown successfully"
-                }), 201
+                if request.method == 'POST':
+                    # Check if the user has already shown interest
+                    print(f"Checking if user {renter_username} has already shown interest in listing {listing_id}")
+                    cur.execute("""
+                        SELECT interest_id FROM interested_listings 
+                        WHERE listing_id = %s AND renter_username = %s
+                    """, (listing_id, renter_username))
+                    
+                    existing_interest = cur.fetchone()
+                    if existing_interest:
+                        print(f"User {renter_username} has already shown interest in listing {listing_id}")
+                        return jsonify({"error": "You have already shown interest in this listing"}), 400
+                    
+                    # Insert the interest
+                    print(f"Inserting new interest record for listing {listing_id}, renter {renter_username}, lender {lender_username}")
+                    cur.execute("""
+                        INSERT INTO interested_listings 
+                        (listing_id, lender_username, renter_username)
+                        VALUES (%s, %s, %s)
+                        RETURNING interest_id
+                    """, (listing_id, lender_username, renter_username))
+                    
+                    interest_id = cur.fetchone()[0]
+                    conn.commit()
+                    print(f"Successfully created interest record with ID {interest_id}")
+                    
+                    return jsonify({
+                        "success": True,
+                        "interest_id": interest_id,
+                        "message": "Interest shown successfully"
+                    }), 201
+                    
+                elif request.method == 'DELETE':
+                    # Remove the interest
+                    print(f"Removing interest for listing {listing_id}, renter {renter_username}")
+                    cur.execute("""
+                        DELETE FROM interested_listings 
+                        WHERE listing_id = %s AND renter_username = %s
+                        RETURNING interest_id
+                    """, (listing_id, renter_username))
+                    
+                    deleted_interest = cur.fetchone()
+                    if not deleted_interest:
+                        print(f"No interest found to remove for listing {listing_id}, renter {renter_username}")
+                        return jsonify({"error": "No interest found to remove"}), 404
+                        
+                    conn.commit()
+                    print(f"Successfully removed interest record with ID {deleted_interest[0]}")
+                    
+                    return jsonify({
+                        "success": True,
+                        "message": "Interest removed successfully"
+                    }), 200
         finally:
             conn.close()
     except Exception as e:
-        print("Error showing interest:", str(e))
+        print("Error handling interest:", str(e))
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500

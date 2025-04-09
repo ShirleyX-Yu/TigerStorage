@@ -7,6 +7,7 @@ const ViewListings = () => {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [interestedListings, setInterestedListings] = useState(new Set());
 
   const openMap = () => {
     // set cookie with return URL
@@ -62,6 +63,60 @@ const ViewListings = () => {
 
     fetchListings();
   }, []);
+
+  // Fetch interested listings when component mounts
+  useEffect(() => {
+    const fetchInterestedListings = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/my-interested-listings`, {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch interested listings');
+        }
+        
+        const data = await response.json();
+        setInterestedListings(new Set(data.map(listing => listing.id)));
+      } catch (err) {
+        console.error('Error fetching interested listings:', err);
+      }
+    };
+
+    fetchInterestedListings();
+  }, []);
+
+  // Function to toggle interest in a listing
+  const toggleInterest = async (listingId) => {
+    try {
+      const isInterested = interestedListings.has(listingId);
+      const method = isInterested ? 'DELETE' : 'POST';
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}/interest`, {
+        method,
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to ${isInterested ? 'remove' : 'add'} interest`);
+      }
+
+      // Update the interested listings state
+      const newInterestedListings = new Set(interestedListings);
+      if (isInterested) {
+        newInterestedListings.delete(listingId);
+      } else {
+        newInterestedListings.add(listingId);
+      }
+      setInterestedListings(newInterestedListings);
+    } catch (err) {
+      console.error('Error toggling interest:', err);
+      setError(err.message);
+    }
+  };
 
   // Use the same filter structure as the map view
   const [filters, setFilters] = useState({
@@ -232,23 +287,12 @@ const ViewListings = () => {
                             <button 
                               style={{
                                 ...styles.interestButton,
-                                backgroundColor: isInterested ? '#4caf50' : '#FF8F00'
+                                backgroundColor: interestedListings.has(listing.id) ? '#4caf50' : '#FF8F00'
                               }}
-                              onClick={() => {
-                                // Toggle interest using the same logic as the map view
-                                const newInterestedLocations = new Set(interestedLocations);
-                                if (isInterested) {
-                                  newInterestedLocations.delete(listing.id);
-                                } else {
-                                  newInterestedLocations.add(listing.id);
-                                }
-                                localStorage.setItem('interestedLocations', JSON.stringify([...newInterestedLocations]));
-                                // Force re-render
-                                setListings([...listings]);
-                              }}
+                              onClick={() => toggleInterest(listing.id)}
                             >
-                              <i className={`fas ${isInterested ? 'fa-check' : 'fa-heart'}`}></i>
-                              {isInterested ? 'Interested' : 'Show Interest'}
+                              <i className={`fas ${interestedListings.has(listing.id) ? 'fa-check' : 'fa-heart'}`}></i>
+                              {interestedListings.has(listing.id) ? 'Interested' : 'Show Interest'}
                             </button>
                             <button 
                               style={styles.viewButton}

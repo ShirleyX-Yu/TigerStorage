@@ -522,147 +522,97 @@
       console.log('Filtering with:', { size, cost, contract, distance, rating });
     }
 
-    // initialize map centered at Princeton
-    var map = L.map('map', { zoomControl: false }).setView([40.343, -74.655], 16); 
-
-    // add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
-    }).addTo(map);
-
     // Store markers in an array for filtering
     let markers = [];
-    const interestedLocations = new Set(JSON.parse(localStorage.getItem('interestedLocations') || '[]'));
+    let listings = [];
+    let interestedLocations = new Set(JSON.parse(localStorage.getItem('interestedLocations') || '[]'));
 
     // Add this function to help with debugging
     function debugImageUrl(imageUrl) {
-      console.log('Original image URL:', imageUrl);
-      const fullUrl = getFullImageUrl(imageUrl);
-      console.log('Full image URL:', fullUrl);
-      return fullUrl;
+        if (!imageUrl) return '/assets/placeholder.jpg';
+        if (imageUrl.startsWith('http')) return imageUrl;
+        if (imageUrl.startsWith('/')) {
+            return imageUrl;
+        }
+        return `${window.location.origin}${imageUrl}`;
     }
 
-    // Update the fetchAndCreateMarkers function
-    async function fetchAndCreateMarkers() {
-      try {
-        console.log('DEBUG: Fetching listings from API');
-        const response = await fetch('/api/listings');
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('DEBUG: API Error:', errorText);
-          throw new Error(`Failed to fetch listings: ${response.status} ${response.statusText}`);
-        }
-        const listings = await response.json();
-        console.log('DEBUG: Fetched listings:', listings);
-        
+    // Initialize the map
+    const map = L.map('map').setView([40.344, -74.656], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Function to create markers from listings
+    function createMarkers(listings) {
         // Clear existing markers
-        markers.forEach(marker => map.removeLayer(marker));
+        markers.forEach(marker => marker.remove());
         markers = [];
         
-        // Create new markers for each listing
         listings.forEach(listing => {
-          try {
-            console.log('DEBUG: Processing listing:', listing);
-            if (listing.latitude && listing.longitude) {
-              const imageUrl = debugImageUrl(listing.image_url);
-              console.log('DEBUG: Creating marker with image URL:', imageUrl);
-              
-              const marker = L.marker([listing.latitude, listing.longitude])
-                .addTo(map)
-                .bindPopup(`
-                  <div class="custom-popup-content">
-                    <h2>${listing.location}</h2>
-                    <div class="popup-image">
-                      <img 
-                        src="${listing.image_url || '/assets/placeholder.jpg'}" 
-                        alt="Storage space at ${listing.location}"
-                        onerror="this.onerror=null; this.src='/assets/placeholder.jpg';"
-                      >
-                    </div>
-                    <div class="popup-details">
-                      <div class="popup-description">${listing.description || 'No description available'}</div>
-                      <div class="popup-specs">
-                        <div><strong>Price:</strong> $${listing.cost}/month</div>
-                        <div><strong>Size:</strong> ${listing.cubic_feet} cubic feet</div>
-                        <div><strong>Contract Length:</strong> ${listing.contract_length_months} months</div>
-                      </div>
-                      <button class="interested-button ${interestedLocations.has(listing.id) ? 'interested' : ''}" 
-                              onclick="toggleInterest(${listing.id})">
-                        <i class="fas ${interestedLocations.has(listing.id) ? 'fa-check' : 'fa-heart'}"></i> 
-                        ${interestedLocations.has(listing.id) ? 'Interested' : 'Show Interest'}
-                      </button>
-                    </div>
-                  </div>
-                `, {
-                  maxWidth: 300,
-                  autoPan: true,
-                  autoPanPadding: [50, 50],
-                  closeButton: true,
-                  className: 'custom-popup'
-                });
-              markers.push(marker);
-              console.log('DEBUG: Created marker for listing:', listing.id);
-            } else {
-              console.warn('DEBUG: Listing missing coordinates:', listing);
+            try {
+                console.log('DEBUG: Processing listing:', listing);
+                if (listing.latitude && listing.longitude) {
+                    const imageUrl = debugImageUrl(listing.image_url);
+                    console.log('DEBUG: Creating marker with image URL:', imageUrl);
+                    
+                    const marker = L.marker([listing.latitude, listing.longitude])
+                        .addTo(map)
+                        .bindPopup(`
+                            <div class="custom-popup-content">
+                                <h2>${listing.location}</h2>
+                                <div class="popup-image">
+                                    <img 
+                                        src="${listing.image_url || '/assets/placeholder.jpg'}" 
+                                        alt="Storage space at ${listing.location}"
+                                        onerror="this.onerror=null; this.src='/assets/placeholder.jpg';"
+                                    >
+                                </div>
+                                <div class="popup-details">
+                                    <div class="popup-description">${listing.description || 'No description available'}</div>
+                                    <div class="popup-specs">
+                                        <div><strong>Price:</strong> $${listing.cost}/month</div>
+                                        <div><strong>Size:</strong> ${listing.cubic_feet} cubic feet</div>
+                                        <div><strong>Contract Length:</strong> ${listing.contract_length_months} months</div>
+                                    </div>
+                                    <button class="interested-button ${interestedLocations.has(listing.id) ? 'interested' : ''}" 
+                                            onclick="toggleInterest(${listing.id})">
+                                        <i class="fas ${interestedLocations.has(listing.id) ? 'fa-check' : 'fa-heart'}"></i> 
+                                        ${interestedLocations.has(listing.id) ? 'Interested' : 'Show Interest'}
+                                    </button>
+                                </div>
+                            </div>
+                        `);
+                    marker.listingId = listing.id;
+                    markers.push(marker);
+                }
+            } catch (err) {
+                console.error('Error creating marker:', err);
             }
-          } catch (error) {
-            console.error('DEBUG: Error creating marker:', error);
-            console.error('DEBUG: Listing data:', listing);
-          }
         });
-        
-        // Update the storage units list
-        createStorageUnitList(listings);
-      } catch (error) {
-        console.error('DEBUG: Error in fetchAndCreateMarkers:', error);
-      }
     }
 
-    // Update the createStorageUnitList function
-    function createStorageUnitList(listings) {
-      const storageUnitsList = document.getElementById('storageUnitsList');
-      storageUnitsList.innerHTML = '';
-      
-      listings.forEach(listing => {
-        const imageUrl = getFullImageUrl(listing.image_url);
-        const unitElement = document.createElement('div');
-        unitElement.className = 'storage-unit-item';
-        unitElement.innerHTML = `
-          <div class="storage-unit-image">
-            <img 
-              src="${imageUrl}" 
-              alt="${listing.location}"
-              onerror="this.src='/assets/placeholder.jpg'"
-            >
-          </div>
-          <div class="storage-unit-info">
-            <div class="storage-unit-name">${listing.location}</div>
-            <div class="storage-unit-details">
-              <span class="storage-unit-price">$${listing.cost}/month</span>
-              <span> • ${listing.cubic_feet} cubic feet</span>
-            </div>
-          </div>
-        `;
-        
-        unitElement.addEventListener('click', () => {
-          const marker = markers.find(m => {
-            const content = m.getPopup().getContent();
-            return content.includes(listing.location);
-          });
-          if (marker) {
-            map.setView(marker.getLatLng(), 16);
-            setTimeout(() => {
-              marker.openPopup();
-            }, 100);
-          }
-        });
-        
-        storageUnitsList.appendChild(unitElement);
-      });
+    // Function to fetch listings and create markers
+    async function fetchListings() {
+        try {
+            const response = await fetch(`${window.location.origin}/api/listings`, {
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch listings');
+            }
+            
+            listings = await response.json();
+            createMarkers(listings);
+            createStorageUnitList(listings);
+        } catch (err) {
+            console.error('Error fetching listings:', err);
+        }
     }
 
-    // Call fetchAndCreateMarkers when the page loads
-    document.addEventListener('DOMContentLoaded', fetchAndCreateMarkers);
+    // Call fetchListings when the map loads
+    fetchListings();
 
     // Update the filtering functions to work with the actual listings
     function applyFilters() {
@@ -676,7 +626,7 @@
       markers.forEach(marker => marker.setOpacity(1));
       
       // Fetch listings again to get fresh data
-      fetchAndCreateMarkers().then(() => {
+      fetchListings().then(() => {
         // Apply filters to the new markers
         markers.forEach(marker => {
           const content = marker.getPopup().getContent();
@@ -725,48 +675,179 @@
       });
     }
 
-    function toggleInterest(listingId) {
-      console.log('Toggling interest for listing:', listingId);
-      const button = event.target.closest('.interested-button');
-      
-      if (interestedLocations.has(listingId)) {
-        // Remove interest
-        interestedLocations.delete(listingId);
-        button.classList.remove('interested');
-        button.innerHTML = '<i class="fas fa-heart"></i> Show Interest';
-      } else {
-        // Send interest to backend
-        console.log('Sending interest request for listing:', listingId);
-        fetch(`/api/listings/${listingId}/interest`, {
-          method: 'POST',
+    // Function to toggle interest in a listing
+    async function toggleInterest(listingId) {
+      try {
+        const isInterested = interestedLocations.has(listingId);
+        const method = isInterested ? 'DELETE' : 'POST';
+        
+        console.log('Toggling interest:', { listingId, method, isInterested });
+        
+        const response = await fetch(`${window.location.origin}/api/listings/${listingId}/interest`, {
+          method,
           credentials: 'include',
           headers: {
-              'Content-Type': 'application/json'
+            'Content-Type': 'application/json'
           }
-        })
-        .then(response => {
-            console.log('Interest response status:', response.status);
-            if (!response.ok) {
-                return response.json().then(err => {
-                    throw new Error(err.error || 'Failed to show interest');
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Interest response data:', data);
-            interestedLocations.add(listingId);
-            button.classList.add('interested');
-            button.innerHTML = '<i class="fas fa-check"></i> Interested';
-            
-            // Save to localStorage
-            localStorage.setItem('interestedLocations', JSON.stringify(Array.from(interestedLocations)));
-        })
-        .catch(error => {
-            console.error('Error showing interest:', error);
-            alert(error.message || 'Failed to show interest. Please try again.');
         });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Error response:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorData
+          });
+          throw new Error(errorData.error || `Failed to ${isInterested ? 'remove' : 'add'} interest`);
+        }
+
+        // Update the interested locations set
+        if (isInterested) {
+          interestedLocations.delete(listingId);
+        } else {
+          interestedLocations.add(listingId);
+        }
+
+        // Save to localStorage
+        localStorage.setItem('interestedLocations', JSON.stringify(Array.from(interestedLocations)));
+
+        // Update the marker popup content
+        const marker = markers.find(m => m.listingId === listingId);
+        if (marker) {
+          const listing = listings.find(l => l.id === listingId);
+          if (listing) {
+            const newPopupContent = `
+              <div class="custom-popup-content">
+                <h2>${listing.location}</h2>
+                <div class="popup-image">
+                  <img 
+                    src="${listing.image_url || '/assets/placeholder.jpg'}" 
+                    alt="Storage space at ${listing.location}"
+                    onerror="this.onerror=null; this.src='/assets/placeholder.jpg';"
+                  >
+                </div>
+                <div class="popup-details">
+                  <div class="popup-description">${listing.description || 'No description available'}</div>
+                  <div class="popup-specs">
+                    <div><strong>Price:</strong> $${listing.cost}/month</div>
+                    <div><strong>Size:</strong> ${listing.cubic_feet} cubic feet</div>
+                    <div><strong>Contract Length:</strong> ${listing.contract_length_months} months</div>
+                  </div>
+                  <button class="interested-button ${interestedLocations.has(listingId) ? 'interested' : ''}" 
+                          onclick="toggleInterest(${listingId})">
+                    <i class="fas ${interestedLocations.has(listingId) ? 'fa-check' : 'fa-heart'}"></i> 
+                    ${interestedLocations.has(listingId) ? 'Interested' : 'Show Interest'}
+                  </button>
+                </div>
+              </div>
+            `;
+            marker.setPopupContent(newPopupContent);
+          }
+        }
+
+        // Update the storage units list
+        createStorageUnitList(listings);
+      } catch (err) {
+        console.error('Error toggling interest:', err);
+        alert(err.message || 'Failed to update interest status. Please try again.');
       }
+    }
+
+    // Function to fetch interested listings when the map loads
+    async function fetchInterestedListings() {
+      try {
+        const response = await fetch(`${window.location.origin}/api/my-interested-listings`, {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch interested listings');
+        }
+        
+        const data = await response.json();
+        interestedLocations = new Set(data.map(listing => listing.id));
+        
+        // Update all markers to reflect the correct interest status
+        markers.forEach(marker => {
+          const listing = listings.find(l => l.id === marker.listingId);
+          if (listing) {
+            const newPopupContent = `
+              <div class="custom-popup-content">
+                <h2>${listing.location}</h2>
+                <div class="popup-image">
+                  <img 
+                    src="${listing.image_url || '/assets/placeholder.jpg'}" 
+                    alt="Storage space at ${listing.location}"
+                    onerror="this.onerror=null; this.src='/assets/placeholder.jpg';"
+                  >
+                </div>
+                <div class="popup-details">
+                  <div class="popup-description">${listing.description || 'No description available'}</div>
+                  <div class="popup-specs">
+                    <div><strong>Price:</strong> $${listing.cost}/month</div>
+                    <div><strong>Size:</strong> ${listing.cubic_feet} cubic feet</div>
+                    <div><strong>Contract Length:</strong> ${listing.contract_length_months} months</div>
+                  </div>
+                  <button class="interested-button ${interestedLocations.has(listing.id) ? 'interested' : ''}" 
+                          onclick="toggleInterest(${listing.id})">
+                    <i class="fas ${interestedLocations.has(listing.id) ? 'fa-check' : 'fa-heart'}"></i> 
+                    ${interestedLocations.has(listing.id) ? 'Interested' : 'Show Interest'}
+                  </button>
+                </div>
+              </div>
+            `;
+            marker.setPopupContent(newPopupContent);
+          }
+        });
+      } catch (err) {
+        console.error('Error fetching interested listings:', err);
+      }
+    }
+
+    // Call fetchInterestedListings when the map loads
+    fetchInterestedListings();
+
+    // Update the createStorageUnitList function
+    function createStorageUnitList(listings) {
+      const storageUnitsList = document.getElementById('storageUnitsList');
+      storageUnitsList.innerHTML = '';
+      
+      listings.forEach(listing => {
+        const imageUrl = getFullImageUrl(listing.image_url);
+        const unitElement = document.createElement('div');
+        unitElement.className = 'storage-unit-item';
+        unitElement.innerHTML = `
+          <div class="storage-unit-image">
+            <img 
+              src="${imageUrl}" 
+              alt="${listing.location}"
+              onerror="this.src='/assets/placeholder.jpg'"
+            >
+          </div>
+          <div class="storage-unit-info">
+            <div class="storage-unit-name">${listing.location}</div>
+            <div class="storage-unit-details">
+              <span class="storage-unit-price">$${listing.cost}/month</span>
+              <span> • ${listing.cubic_feet} cubic feet</span>
+            </div>
+          </div>
+        `;
+        
+        unitElement.addEventListener('click', () => {
+          const marker = markers.find(m => {
+            const content = m.getPopup().getContent();
+            return content.includes(listing.location);
+          });
+          if (marker) {
+            map.setView(marker.getLatLng(), 16);
+            setTimeout(() => {
+              marker.openPopup();
+            }, 100);
+          }
+        });
+        
+        storageUnitsList.appendChild(unitElement);
+      });
     }
 
     // Update the getFullImageUrl function to be more robust
