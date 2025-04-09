@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Header from './Header';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const LenderDashboard = ({ username }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [listedSpaces, setListedSpaces] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -142,7 +143,7 @@ const LenderDashboard = ({ username }) => {
     };
 
     fetchListings();
-  }, []);
+  }, [location.key]); // Add location.key as a dependency to trigger refresh when navigating back
 
   return (
     <div style={styles.container}>

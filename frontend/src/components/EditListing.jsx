@@ -239,7 +239,7 @@ const EditListing = () => {
       if (response.ok) {
         setSuccess(true);
         setTimeout(() => {
-          navigate('/lender');
+          navigate('/lender', { state: { refresh: true } });
         }, 1500);
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -447,8 +447,6 @@ const EditListing = () => {
               </div>
             </div>
           </div>
-
-
 
           <div style={styles.buttonContainer}>
             <button 
