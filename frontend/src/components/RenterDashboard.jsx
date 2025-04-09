@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 
 const RenterDashboard = ({ username }) => {
   const navigate = useNavigate();
+  const [interestedSpaces, setInterestedSpaces] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   const openMap = () => {
     // Set cookie with return URL
@@ -11,27 +14,29 @@ const RenterDashboard = ({ username }) => {
     window.location.href = '/public/ptonMap.html';
   };
 
-  // This will be replaced with actual API data
-  const [interestedSpaces] = useState([
-    {
-      id: 1,
-      location: 'Princeton University Campus',
-      cost: 50,
-      lender: 'John Doe',
-      dateInterested: '2025-03-22',
-      status: 'Interested',
-      nextStep: 'Waiting for lender response'
-    },
-    {
-      id: 2,
-      location: 'Nassau Street',
-      cost: 75,
-      lender: 'Jane Smith',
-      dateInterested: '2025-03-23',
-      status: 'In Discussion',
-      nextStep: 'Schedule viewing'
-    }
-  ]);
+  useEffect(() => {
+    const fetchInterestedSpaces = async () => {
+      try {
+        const response = await fetch('/api/my-interested-listings', {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch interested spaces');
+        }
+        
+        const data = await response.json();
+        setInterestedSpaces(data);
+      } catch (err) {
+        console.error('Error fetching interested spaces:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInterestedSpaces();
+  }, []);
 
   return (
     <div style={styles.container}>
@@ -58,7 +63,11 @@ const RenterDashboard = ({ username }) => {
 
         <div style={styles.section}>
           <h2>My Interested Spaces</h2>
-          {interestedSpaces.length > 0 ? (
+          {loading ? (
+            <div style={styles.placeholder}>Loading...</div>
+          ) : error ? (
+            <div style={styles.error}>{error}</div>
+          ) : interestedSpaces.length > 0 ? (
             <div style={styles.tableContainer}>
               <table style={styles.table}>
                 <thead>
@@ -202,6 +211,10 @@ const styles = {
     cursor: 'pointer',
     fontSize: '0.9rem',
     fontWeight: '500',
+  },
+  error: {
+    color: 'red',
+    marginBottom: '1rem',
   },
 };
 

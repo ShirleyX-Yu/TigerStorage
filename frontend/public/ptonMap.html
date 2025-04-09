@@ -569,7 +569,7 @@
                         <div><strong>Contract Length:</strong> ${listing.contract_length_months} months</div>
                       </div>
                       <button class="interested-button ${interestedLocations.has(listing.id) ? 'interested' : ''}" 
-                              onclick="toggleInterest('${listing.id}')">
+                              onclick="toggleInterest(${listing.id})">
                         <i class="fas ${interestedLocations.has(listing.id) ? 'fa-check' : 'fa-heart'}"></i> 
                         ${interestedLocations.has(listing.id) ? 'Interested' : 'Show Interest'}
                       </button>
@@ -707,27 +707,48 @@
       });
     }
 
-    function toggleInterest(locationName) {
+    function toggleInterest(listingId) {
+      console.log('Toggling interest for listing:', listingId);
       const button = event.target.closest('.interested-button');
-      const contactInfo = button.nextElementSibling;
       
-      if (interestedLocations.has(locationName)) {
-        interestedLocations.delete(locationName);
+      if (interestedLocations.has(listingId)) {
+        // Remove interest
+        interestedLocations.delete(listingId);
         button.classList.remove('interested');
-        button.innerHTML = '<i class="fas fa-heart"></i> Interested';
-        contactInfo.style.display = 'none';
+        button.innerHTML = '<i class="fas fa-heart"></i> Show Interest';
       } else {
-        interestedLocations.add(locationName);
-        button.classList.add('interested');
-        button.innerHTML = '<i class="fas fa-check"></i> Interested';
-        contactInfo.style.display = 'block';
+        // Send interest to backend
+        console.log('Sending interest request for listing:', listingId);
+        fetch(`/api/listings/${listingId}/interest`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+              'Content-Type': 'application/json'
+          }
+        })
+        .then(response => {
+            console.log('Interest response status:', response.status);
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.error || 'Failed to show interest');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Interest response data:', data);
+            interestedLocations.add(listingId);
+            button.classList.add('interested');
+            button.innerHTML = '<i class="fas fa-check"></i> Interested';
+            
+            // Save to localStorage
+            localStorage.setItem('interestedLocations', JSON.stringify(Array.from(interestedLocations)));
+        })
+        .catch(error => {
+            console.error('Error showing interest:', error);
+            alert(error.message || 'Failed to show interest. Please try again.');
+        });
       }
-      
-      // Save to localStorage
-      localStorage.setItem('interestedLocations', JSON.stringify(Array.from(interestedLocations)));
-      
-      // Here you would typically send this to your backend
-      console.log('Interested locations:', Array.from(interestedLocations));
     }
 
     // Update the getFullImageUrl function to be more robust

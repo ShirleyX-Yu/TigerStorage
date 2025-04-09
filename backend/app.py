@@ -154,6 +154,33 @@ def init_db():
                     except Exception as column_err:
                         print(f"Error checking or adding address column: {column_err}")
                         conn.rollback()
+
+                # Check if interested_listings table exists
+                cur.execute("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_name = 'interested_listings'
+                    );
+                """)
+                interested_table_exists = cur.fetchone()[0]
+                
+                if not interested_table_exists:
+                    print("Creating interested_listings table")
+                    cur.execute("""
+                        CREATE TABLE interested_listings (
+                            interest_id SERIAL PRIMARY KEY,
+                            listing_id INTEGER REFERENCES storage_listings(listing_id) ON DELETE CASCADE,
+                            lender_username VARCHAR(255) NOT NULL,
+                            renter_username VARCHAR(255) NOT NULL,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            status VARCHAR(50) DEFAULT 'pending',
+                            UNIQUE(listing_id, renter_username)
+                        );
+                    """)
+                    conn.commit()
+                    print("interested_listings table created successfully")
+                else:
+                    print("interested_listings table already exists")
         finally:
             conn.close()
     except Exception as e:
@@ -895,6 +922,207 @@ def delete_listing(listing_id):
             conn.close()
     except Exception as e:
         print("Error deleting listing:", str(e))
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+# API to handle interest in a listing
+@app.route('/api/listings/<int:listing_id>/interest', methods=['POST'])
+def show_interest(listing_id):
+    try:
+        print(f"Received interest request for listing {listing_id}")
+        # Check if user is logged in
+        if not auth.is_authenticated():
+            print("User not authenticated")
+            return jsonify({"error": "Not authenticated"}), 401
+            
+        # Get user info from session
+        user_info = session['user_info']
+        renter_username = user_info.get('user', '')
+        print(f"Renter username: {renter_username}")
+        
+        if not renter_username:
+            print("No renter username found in session")
+            return jsonify({"error": "User not found"}), 400
+            
+        # Get a fresh connection
+        conn = get_db_connection()
+        if not conn:
+            print("Failed to get database connection")
+            return jsonify({"error": "Database connection failed"}), 500
+            
+        try:
+            with conn.cursor() as cur:
+                # First get the listing to get the lender's username
+                print(f"Fetching listing {listing_id} to get lender info")
+                cur.execute("""
+                    SELECT owner_id FROM storage_listings 
+                    WHERE listing_id = %s
+                """, (listing_id,))
+                
+                listing = cur.fetchone()
+                if not listing:
+                    print(f"Listing {listing_id} not found")
+                    return jsonify({"error": "Listing not found"}), 404
+                    
+                lender_username = listing[0]
+                print(f"Found lender username: {lender_username}")
+                
+                # Check if the user has already shown interest
+                print(f"Checking if user {renter_username} has already shown interest in listing {listing_id}")
+                cur.execute("""
+                    SELECT interest_id FROM interested_listings 
+                    WHERE listing_id = %s AND renter_username = %s
+                """, (listing_id, renter_username))
+                
+                existing_interest = cur.fetchone()
+                if existing_interest:
+                    print(f"User {renter_username} has already shown interest in listing {listing_id}")
+                    return jsonify({"error": "You have already shown interest in this listing"}), 400
+                
+                # Insert the interest
+                print(f"Inserting new interest record for listing {listing_id}, renter {renter_username}, lender {lender_username}")
+                cur.execute("""
+                    INSERT INTO interested_listings 
+                    (listing_id, lender_username, renter_username)
+                    VALUES (%s, %s, %s)
+                    RETURNING interest_id
+                """, (listing_id, lender_username, renter_username))
+                
+                interest_id = cur.fetchone()[0]
+                conn.commit()
+                print(f"Successfully created interest record with ID {interest_id}")
+                
+                return jsonify({
+                    "success": True,
+                    "interest_id": interest_id,
+                    "message": "Interest shown successfully"
+                }), 201
+        finally:
+            conn.close()
+    except Exception as e:
+        print("Error showing interest:", str(e))
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+# API to get interested renters for a listing
+@app.route('/api/listings/<int:listing_id>/interested-renters', methods=['GET'])
+def get_interested_renters(listing_id):
+    try:
+        # Check if user is logged in
+        if not auth.is_authenticated():
+            return jsonify({"error": "Not authenticated"}), 401
+            
+        # Get user info from session
+        user_info = session['user_info']
+        owner_id = user_info.get('user', '')
+        
+        # Get a fresh connection
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+            
+        try:
+            with conn.cursor() as cur:
+                # Verify that the listing belongs to the current user
+                cur.execute("""
+                    SELECT owner_id FROM storage_listings 
+                    WHERE listing_id = %s
+                """, (listing_id,))
+                
+                listing = cur.fetchone()
+                if not listing:
+                    return jsonify({"error": "Listing not found"}), 404
+                    
+                if listing[0] != owner_id:
+                    return jsonify({"error": "You don't have permission to view interested renters for this listing"}), 403
+                
+                # Get interested renters
+                cur.execute("""
+                    SELECT 
+                        interest_id,
+                        renter_username,
+                        created_at,
+                        status
+                    FROM interested_listings
+                    WHERE listing_id = %s
+                    ORDER BY created_at DESC
+                """, (listing_id,))
+                
+                interested_renters = []
+                for row in cur.fetchall():
+                    interested_renters.append({
+                        "id": row[0],
+                        "username": row[1],
+                        "dateInterested": row[2].isoformat(),
+                        "status": row[3]
+                    })
+                
+                return jsonify(interested_renters), 200
+        finally:
+            conn.close()
+    except Exception as e:
+        print("Error getting interested renters:", str(e))
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+# API to get a renter's interested listings
+@app.route('/api/my-interested-listings', methods=['GET'])
+def get_my_interested_listings():
+    try:
+        # Check if user is logged in
+        if not auth.is_authenticated():
+            return jsonify({"error": "Not authenticated"}), 401
+            
+        # Get user info from session
+        user_info = session['user_info']
+        renter_username = user_info.get('user', '')
+        
+        if not renter_username:
+            return jsonify({"error": "User not found"}), 400
+            
+        # Get a fresh connection
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+            
+        try:
+            with conn.cursor() as cur:
+                # Get interested listings with their details
+                cur.execute("""
+                    SELECT 
+                        il.interest_id,
+                        sl.listing_id,
+                        sl.location,
+                        sl.cost,
+                        sl.owner_id as lender,
+                        il.created_at,
+                        il.status
+                    FROM interested_listings il
+                    JOIN storage_listings sl ON il.listing_id = sl.listing_id
+                    WHERE il.renter_username = %s
+                    ORDER BY il.created_at DESC
+                """, (renter_username,))
+                
+                interested_listings = []
+                for row in cur.fetchall():
+                    interested_listings.append({
+                        "id": row[1],  # listing_id
+                        "location": row[2],
+                        "cost": row[3],
+                        "lender": row[4],
+                        "dateInterested": row[5].isoformat(),
+                        "status": row[6],
+                        "nextStep": "Waiting for lender response" if row[6] == 'pending' else "In Discussion"
+                    })
+                
+                return jsonify(interested_listings), 200
+        finally:
+            conn.close()
+    except Exception as e:
+        print("Error getting interested listings:", str(e))
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
