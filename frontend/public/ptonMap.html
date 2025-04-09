@@ -38,18 +38,25 @@
       font-size: 16px;
       font-weight: 500;
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     #backButton {
       left: 20px;
+      background-color: #f44336;
     }
     #searchButton {
-      left: 100px;
+      left: 160px;
     }
     #dashboardButton {
-      left: 220px;
+      left: 300px;
     }
     #backButton:hover, #searchButton:hover, #dashboardButton:hover {
       background-color: #e65100;
+    }
+    #backButton:hover {
+      background-color: #d32f2f;
     }
     #filterColumn {
       position: fixed;
@@ -328,7 +335,9 @@
   </style>
 </head>
 <body>
-  <button id="backButton" onclick="goBack()">Exit</button>
+  <button id="backButton" onclick="logout()">
+    <i class="fas fa-sign-out-alt"></i> Logout
+  </button>
   <button id="searchButton" onclick="toggleFilterColumn()">
     <i class="fas fa-search"></i> Search
   </button>
@@ -418,9 +427,18 @@
       if (parts.length === 2) return parts.pop().split(';').shift();
     }
 
-    function goBack() {
-      const returnTo = getCookie('returnTo');
-      window.location.href = returnTo || '/';
+    function logout() {
+      // Clear any stored user data
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Clear cookies
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      });
+      
+      // Redirect to login page
+      window.location.href = '/';
     }
 
     function goToDashboard() {
