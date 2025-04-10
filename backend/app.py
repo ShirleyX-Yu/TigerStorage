@@ -8,6 +8,8 @@ import auth
 import json
 import uuid
 from werkzeug.utils import secure_filename
+from decimal import Decimal
+from psycopg2.extras import RealDictCursor
 
 # Set up command-line argument parsing
 parser = argparse.ArgumentParser(description="Run Flask app")
@@ -122,9 +124,10 @@ def init_db():
                             cost NUMERIC,
                             cubic_ft INTEGER,
                             description TEXT,
-                            latitude NUMERIC,
-                            longitude NUMERIC,
-                            contract_length_months INTEGER,
+                            latitude FLOAT,
+                            longitude FLOAT,
+                            start_date DATE,
+                            end_date DATE,
                             image_url VARCHAR(255),
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             owner_id VARCHAR(255)
@@ -151,8 +154,53 @@ def init_db():
                             print("Address column added successfully")
                         else:
                             print("Address column already exists")
+                            
+                        # Check if we need to convert contract_length_months to start_date and end_date
+                        cur.execute("""
+                            SELECT column_name 
+                            FROM information_schema.columns 
+                            WHERE table_name = 'storage_listings' 
+                            AND column_name = 'contract_length_months';
+                        """)
+                        contract_length_exists = cur.fetchone() is not None
+                        
+                        if contract_length_exists:
+                            print("Converting contract_length_months to start_date and end_date")
+                            # Add new columns
+                            cur.execute("""
+                                ALTER TABLE storage_listings 
+                                ADD COLUMN start_date DATE,
+                                ADD COLUMN end_date DATE;
+                            """)
+                            # Update existing rows to have default dates
+                            cur.execute("""
+                                UPDATE storage_listings 
+                                SET start_date = CURRENT_DATE,
+                                    end_date = CURRENT_DATE + (contract_length_months || ' months')::interval
+                                WHERE start_date IS NULL;
+                            """)
+                            # Drop the old column
+                            cur.execute("ALTER TABLE storage_listings DROP COLUMN contract_length_months;")
+                            conn.commit()
+                            print("Successfully converted contract_length_months to start_date and end_date")
+                            
+                        # Alter latitude and longitude columns to FLOAT if they exist
+                        cur.execute("""
+                            SELECT column_name, data_type 
+                            FROM information_schema.columns 
+                            WHERE table_name = 'storage_listings' 
+                            AND column_name IN ('latitude', 'longitude');
+                        """)
+                        columns = cur.fetchall()
+                        
+                        for column in columns:
+                            if column[1] != 'double precision':  # PostgreSQL's FLOAT type
+                                print(f"Converting {column[0]} from {column[1]} to FLOAT")
+                                cur.execute(f"ALTER TABLE storage_listings ALTER COLUMN {column[0]} TYPE FLOAT;")
+                                conn.commit()
+                                print(f"{column[0]} column converted to FLOAT successfully")
                     except Exception as column_err:
-                        print(f"Error checking or adding address column: {column_err}")
+                        print(f"Error checking or modifying columns: {column_err}")
                         conn.rollback()
 
                 # Check if interested_listings table exists
@@ -322,15 +370,23 @@ def get_db_connection():
         print(f"Database connection error: {e}")
         return None
 
+# Custom JSON encoder to handle Decimal values
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super().default(obj)
+
+app.json_encoder = CustomJSONEncoder
+
 # API to create a new listing
 @app.route('/api/listings', methods=['POST'])
 def create_listing():
     try:
         data = request.get_json()
         
-        # Validate required fields - accept both camelCase and snake_case for cubic feet
-        required_fields = ['location', 'cost', 'description', 'latitude', 'longitude']
-        # Address is optional but recommended
+        # Validate required fields
+        required_fields = ['location', 'cost', 'description', 'latitude', 'longitude', 'start_date', 'end_date']
         for field in required_fields:
             if field not in data:
                 return jsonify({"error": f"Missing required field: {field}"}), 400
@@ -358,85 +414,31 @@ def create_listing():
                 
             latitude = float(data['latitude'])
             longitude = float(data['longitude'])
-            contract_length = int(data.get('contract_length_months', 12))
+            start_date = data['start_date']  # Already in ISO format from frontend
+            end_date = data['end_date']      # Already in ISO format from frontend
             image_url = data.get('image_url', '')  # Get image URL if provided
             
             with conn.cursor() as cur:
-                # Get the columns that exist in the table
-                # First, make sure the owner_id column exists
-                try:
-                    # Start a new transaction
-                    conn.rollback()  # Roll back any failed transaction
-                    
-                    # Check if the table exists first
-                    cur.execute("""
-                        SELECT EXISTS (
-                            SELECT FROM information_schema.tables 
-                            WHERE table_name = 'storage_listings'
-                        );
-                    """)
-                    table_exists = cur.fetchone()[0]
-                    
-                    if not table_exists:
-                        # Create the table if it doesn't exist
-                        print("Creating storage_listings table")
-                        cur.execute("""
-                            CREATE TABLE storage_listings (
-                                listing_id SERIAL PRIMARY KEY,
-                                location VARCHAR(255) NOT NULL,
-                                address VARCHAR(255),
-                                cost NUMERIC,
-                                cubic_ft INTEGER,
-                                description TEXT,
-                                latitude NUMERIC,
-                                longitude NUMERIC,
-                                contract_length_months INTEGER,
-                                image_url VARCHAR(255),
-                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                owner_id VARCHAR(255)
-                            );
-                        """)
-                        conn.commit()
-                    else:
-                        # Check if owner_id column exists
-                        try:
-                            cur.execute("SELECT owner_id FROM storage_listings LIMIT 1")
-                        except psycopg2.errors.UndefinedColumn:
-                            # Add the owner_id column if it doesn't exist
-                            conn.rollback()  # Roll back the failed query
-                            cur.execute("ALTER TABLE storage_listings ADD COLUMN owner_id VARCHAR(255)")
-                            conn.commit()
-                except Exception as e:
-                    print(f"Error checking table structure: {e}")
-                    conn.rollback()
-                    raise
+                # Prepare column values
+                column_values = {
+                    'location': data['location'],
+                    'cubic_ft': total_sq_ft,
+                    'cost': cost,
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'latitude': latitude,
+                    'longitude': longitude,
+                    'description': data['description'],
+                    'image_url': image_url
+                }
                 
-                # Get the columns that exist in the table
-                cur.execute("""SELECT column_name FROM information_schema.columns 
-                            WHERE table_name = 'storage_listings' ORDER BY ordinal_position;""")
-                columns = [col[0] for col in cur.fetchall()]
-                
-                # Prepare dynamic insert based on actual columns
-                column_values = {}
-                
-                # Map our data to the actual database schema columns
-                column_values['location'] = data['location']
                 # Add address if provided
                 if 'address' in data:
                     column_values['address'] = data['address']
-                column_values['cubic_ft'] = total_sq_ft
-                column_values['cost'] = cost
-                column_values['contract_length_months'] = contract_length
-                column_values['latitude'] = latitude
-                column_values['longitude'] = longitude
-                column_values['description'] = data['description']
-                column_values['image_url'] = image_url
                 
                 # Associate the listing with the current user (lender)
-                # Get the user from the session - use the same key as in auth_status
                 if auth.is_authenticated():
                     user_info = session['user_info']
-                    # Use the username as the owner_id
                     column_values['owner_id'] = user_info.get('user', 'unknown')
                     print(f"Setting owner_id to {user_info.get('user', 'unknown')}")
                 
@@ -501,7 +503,8 @@ def get_listings():
                         description,
                         latitude,
                         longitude,
-                        contract_length_months,
+                        start_date,
+                        end_date,
                         image_url,
                         created_at,
                         owner_id
@@ -523,10 +526,11 @@ def get_listings():
                             "description": listing[4] if listing[4] is not None else "",
                             "latitude": float(listing[5]) if listing[5] is not None else None,
                             "longitude": float(listing[6]) if listing[6] is not None else None,
-                            "contract_length_months": listing[7] if listing[7] is not None else 12,
-                            "image_url": listing[8] if listing[8] is not None else "/assets/placeholder.jpg",
-                            "created_at": listing[9].isoformat() if listing[9] else None,
-                            "owner_id": listing[10] if listing[10] is not None else "unknown"
+                            "start_date": listing[7].isoformat() if listing[7] else None,
+                            "end_date": listing[8].isoformat() if listing[8] else None,
+                            "image_url": listing[9] if listing[9] is not None else "/assets/placeholder.jpg",
+                            "created_at": listing[10].isoformat() if listing[10] else None,
+                            "owner_id": listing[11] if listing[11] is not None else "unknown"
                         }
                         formatted_listings.append(formatted_listing)
                     except Exception as e:
@@ -724,7 +728,8 @@ def get_my_listings():
                             description TEXT,
                             latitude NUMERIC,
                             longitude NUMERIC,
-                            contract_length_months INTEGER,
+                            start_date DATE,
+                            end_date DATE,
                             image_url VARCHAR(255),
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             owner_id VARCHAR(255)
@@ -750,7 +755,7 @@ def get_my_listings():
                 
                 # Build the query dynamically based on available columns
                 select_columns = "listing_id, location, cost, cubic_ft, description, latitude, longitude, "
-                select_columns += "contract_length_months, image_url, created_at, owner_id"
+                select_columns += "start_date, end_date, image_url, created_at, owner_id"
                 
                 try:
                     cur.execute(f"""
@@ -779,10 +784,11 @@ def get_my_listings():
                                 "description": listing[4] if listing[4] is not None else "",
                                 "latitude": float(listing[5]) if listing[5] is not None else None,
                                 "longitude": float(listing[6]) if listing[6] is not None else None,
-                                "contract_length_months": listing[7] if listing[7] is not None else 12,
-                                "image_url": listing[8] if listing[8] is not None else "/assets/placeholder.jpg",
-                                "created_at": listing[9].isoformat() if listing[9] else None,
-                                "owner_id": listing[10] if listing[10] is not None else "unknown"
+                                "start_date": listing[7].isoformat() if listing[7] else None,
+                                "end_date": listing[8].isoformat() if listing[8] else None,
+                                "image_url": listing[9] if listing[9] is not None else "/assets/placeholder.jpg",
+                                "created_at": listing[10].isoformat() if listing[10] else None,
+                                "owner_id": listing[11] if listing[11] is not None else "unknown"
                             }
                             formatted_listings.append(formatted_listing)
                         except Exception as e:
@@ -853,8 +859,10 @@ def update_listing(listing_id):
                     update_values['latitude'] = float(data['latitude'])
                 if 'longitude' in data:
                     update_values['longitude'] = float(data['longitude'])
-                if 'contract_length_months' in data:
-                    update_values['contract_length_months'] = int(data['contract_length_months'])
+                if 'start_date' in data:
+                    update_values['start_date'] = data['start_date']
+                if 'end_date' in data:
+                    update_values['end_date'] = data['end_date']
                 if 'image_url' in data:
                     update_values['image_url'] = data['image_url']
                 
