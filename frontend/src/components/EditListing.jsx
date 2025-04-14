@@ -14,6 +14,8 @@ const EditListing = () => {
     latitude: '',
     longitude: '',
     contract_length_months: 12,
+    contract_start_date: '',
+    contract_end_date: '',
     image_url: ''
   });
   const [error, setError] = useState('');
@@ -55,6 +57,8 @@ const EditListing = () => {
           latitude: data.latitude || '',
           longitude: data.longitude || '',
           contract_length_months: data.contract_length_months || 12,
+          contract_start_date: data.contract_start_date || '',
+          contract_end_date: data.contract_end_date || '',
           image_url: data.image_url || ''
         };
         
@@ -407,6 +411,32 @@ const EditListing = () => {
               <option value="9">9 months</option>
               <option value="12">12 months</option>
             </select>
+          </div>
+
+          <div style={styles.formGroup}>
+            <label htmlFor="contract_start_date" style={styles.label}>Contract Start Date</label>
+            <input
+              type="date"
+              id="contract_start_date"
+              name="contract_start_date"
+              value={formData.contract_start_date}
+              onChange={handleInputChange}
+              style={styles.input}
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label htmlFor="contract_end_date" style={styles.label}>Contract End Date</label>
+            <input
+              type="date"
+              id="contract_end_date"
+              name="contract_end_date"
+              value={formData.contract_end_date}
+              onChange={handleInputChange}
+              style={styles.input}
+              required
+            />
           </div>
 
           <div style={styles.formGroup}>

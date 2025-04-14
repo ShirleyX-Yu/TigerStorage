@@ -10,8 +10,10 @@ import ListingDetails from './components/ListingDetails';
 import LenderListingDetails from './components/LenderListingDetails';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import AuthDebug from './components/AuthDebug';
+import Map from './components/Map';
 import { checkAuthStatus } from './utils/auth';
 import './App.css';
+import './index.css';
 
 const ProtectedRoute = ({ children }) => {
   const [authData, setAuthData] = React.useState(null);
@@ -92,36 +94,31 @@ const RedirectToUserDashboard = () => {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
     
-    // Default to lender if userType is still not set or invalid
-    if (userType !== 'renter' && userType !== 'lender') {
-      userType = 'lender';
-      sessionStorage.setItem('userType', 'lender');
-      localStorage.setItem('userType', 'lender');
-    }
-    
-    // Check if we have a return path from previous navigation
-    const returnTo = sessionStorage.getItem('returnTo');
-    
-    if (returnTo) {
-      // Clear the return path
-      sessionStorage.removeItem('returnTo');
-      // Navigate to the saved path
-      navigate(returnTo);
-      return;
-    }
-    
-    // Check if we should skip the map redirect (coming from map view)
-    const skipMapRedirect = sessionStorage.getItem('skipMapRedirect');
-    
-    // Navigate to the appropriate dashboard based on user type
-    if (userType === 'renter' && !skipMapRedirect) {
-      window.location.href = '/public/ptonMap.html';
-    } else if (userType === 'renter' && skipMapRedirect) {
-      // Clear the flag so future navigations work normally
-      sessionStorage.removeItem('skipMapRedirect');
-      navigate('/renter');
+    // Only proceed if we have a valid user type
+    if (userType === 'renter' || userType === 'lender') {
+      // Check if we have a return path from previous navigation
+      const returnTo = sessionStorage.getItem('returnTo');
+      
+      if (returnTo) {
+        // Clear the return path
+        sessionStorage.removeItem('returnTo');
+        // Navigate to the saved path
+        navigate(returnTo);
+        return;
+      }
+      
+      // Check if we should skip the map redirect (coming from map view)
+      const skipMapRedirect = sessionStorage.getItem('skipMapRedirect');
+      
+      // Navigate to the appropriate dashboard based on user type
+      if (userType === 'renter' && !skipMapRedirect) {
+        navigate('/map');
+      } else {
+        navigate('/lender-dashboard');
+      }
     } else {
-      navigate('/lender');
+      // If no valid user type, redirect to home
+      navigate('/');
     }
   }, [navigate]);
   
@@ -136,8 +133,7 @@ const RedirectToUserDashboard = () => {
 
 // Component to conditionally render the correct listing details view based on user type
 const ListingDetailsRouter = () => {
-  const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'lender';
-  
+  const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
   return userType === 'lender' ? <LenderListingDetails /> : <ListingDetails />;
 };
 
@@ -147,15 +143,17 @@ function App() {
       <div className="App">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/welcome" element={<ProtectedRoute><RedirectToUserDashboard /></ProtectedRoute>} />
-          <Route path="/renter" element={<ProtectedRoute><RenterDashboard /></ProtectedRoute>} />
-          <Route path="/lender" element={<ProtectedRoute><LenderDashboard /></ProtectedRoute>} />
+          <Route path="/map" element={<Map />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/auth-debug" element={<AuthDebug />} />
+          <Route path="/dashboard" element={<RedirectToUserDashboard />} />
+          <Route path="/renter-dashboard" element={<ProtectedRoute><RenterDashboard /></ProtectedRoute>} />
+          <Route path="/lender-dashboard" element={<ProtectedRoute><LenderDashboard /></ProtectedRoute>} />
           <Route path="/create-listing" element={<ProtectedRoute><CreateListing /></ProtectedRoute>} />
           <Route path="/edit-listing/:id" element={<ProtectedRoute><EditListing /></ProtectedRoute>} />
           <Route path="/view-listings" element={<ProtectedRoute><ViewListings /></ProtectedRoute>} />
-          <Route path="/auth-debug" element={<AuthDebug />} />
-          <Route path="/listing/:id" element={<ProtectedRoute><ListingDetailsRouter /></ProtectedRoute>} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/listing/:id" element={<ListingDetailsRouter />} />
+          <Route path="/lender-listing/:id" element={<ProtectedRoute><LenderListingDetails /></ProtectedRoute>} />
         </Routes>
       </div>
     </Router>

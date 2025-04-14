@@ -125,6 +125,8 @@ def init_db():
                             latitude NUMERIC,
                             longitude NUMERIC,
                             contract_length_months INTEGER,
+                            contract_start_date DATE,
+                            contract_end_date DATE,
                             image_url VARCHAR(255),
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             owner_id VARCHAR(255)
@@ -135,6 +137,46 @@ def init_db():
                 else:
                     print("storage_listings table already exists")
                     
+                    # Check if contract_start_date column exists and add it if it doesn't
+                    try:
+                        cur.execute("""
+                            SELECT column_name 
+                            FROM information_schema.columns 
+                            WHERE table_name = 'storage_listings' AND column_name = 'contract_start_date';
+                        """)
+                        start_date_exists = cur.fetchone() is not None
+                        
+                        if not start_date_exists:
+                            print("Adding contract_start_date column to storage_listings table")
+                            cur.execute("ALTER TABLE storage_listings ADD COLUMN contract_start_date DATE;")
+                            conn.commit()
+                            print("contract_start_date column added successfully")
+                        else:
+                            print("contract_start_date column already exists")
+                    except Exception as column_err:
+                        print(f"Error checking or adding contract_start_date column: {column_err}")
+                        conn.rollback()
+
+                    # Check if contract_end_date column exists and add it if it doesn't
+                    try:
+                        cur.execute("""
+                            SELECT column_name 
+                            FROM information_schema.columns 
+                            WHERE table_name = 'storage_listings' AND column_name = 'contract_end_date';
+                        """)
+                        end_date_exists = cur.fetchone() is not None
+                        
+                        if not end_date_exists:
+                            print("Adding contract_end_date column to storage_listings table")
+                            cur.execute("ALTER TABLE storage_listings ADD COLUMN contract_end_date DATE;")
+                            conn.commit()
+                            print("contract_end_date column added successfully")
+                        else:
+                            print("contract_end_date column already exists")
+                    except Exception as column_err:
+                        print(f"Error checking or adding contract_end_date column: {column_err}")
+                        conn.rollback()
+
                     # Check if address column exists and add it if it doesn't
                     try:
                         cur.execute("""
@@ -225,6 +267,17 @@ def index():
         auth_status=auth_status
     )
 
+@app.route('/map')
+def map():
+    auth.authenticate()  # This will redirect to CAS if not authenticated
+    asset_path = get_asset_path("main")
+    return render_template(
+        "index.html",
+        app_name="main",
+        debug=app.debug,
+        asset_path=asset_path
+    )
+
 @app.route('/welcome')
 def welcome():
     auth.authenticate()  # This will redirect to CAS if not authenticated
@@ -245,11 +298,13 @@ def login():
         # Authenticate the user
         username = auth.authenticate()
         
-        # Redirect to the welcome page with the user type as a query parameter
-        if user_type:
-            return redirect(f'/welcome?userType={user_type}')
+        # Redirect to the appropriate dashboard based on user type
+        if user_type == 'renter':
+            return redirect('/map')
+        elif user_type == 'lender':
+            return redirect('/lender-dashboard')
         else:
-            return redirect('/welcome')
+            return redirect('/')
     except Exception as e:
         if hasattr(e, 'response') and e.response.status_code == 302:
             # This is the CAS redirect
@@ -391,6 +446,8 @@ def create_listing():
                                 latitude NUMERIC,
                                 longitude NUMERIC,
                                 contract_length_months INTEGER,
+                                contract_start_date DATE,
+                                contract_end_date DATE,
                                 image_url VARCHAR(255),
                                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                 owner_id VARCHAR(255)
@@ -491,20 +548,35 @@ def get_listings():
         try:
             with conn.cursor() as cur:
                 print("DEBUG: Fetching listings")
-                # Get all listings
+                # First check if contract_length_months column exists
                 cur.execute("""
-                        SELECT 
-                        listing_id,
-                        location,
-                        cost,
-                        cubic_ft,
-                        description,
-                        latitude,
-                        longitude,
-                        contract_length_months,
-                        image_url,
-                        created_at,
-                        owner_id
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'storage_listings' 
+                    AND column_name = 'contract_length_months';
+                """)
+                has_contract_length = cur.fetchone() is not None
+                
+                # Build the query based on available columns
+                select_columns = """
+                    listing_id,
+                    location,
+                    cost,
+                    cubic_ft,
+                    description,
+                    latitude,
+                    longitude,
+                    image_url,
+                    created_at,
+                    owner_id
+                """
+                
+                if has_contract_length:
+                    select_columns += ", contract_length_months"
+                
+                # Get all listings
+                cur.execute(f"""
+                    SELECT {select_columns}
                     FROM storage_listings
                     ORDER BY created_at DESC;
                 """)
@@ -523,11 +595,17 @@ def get_listings():
                             "description": listing[4] if listing[4] is not None else "",
                             "latitude": float(listing[5]) if listing[5] is not None else None,
                             "longitude": float(listing[6]) if listing[6] is not None else None,
-                            "contract_length_months": listing[7] if listing[7] is not None else 12,
-                            "image_url": listing[8] if listing[8] is not None else "/assets/placeholder.jpg",
-                            "created_at": listing[9].isoformat() if listing[9] else None,
-                            "owner_id": listing[10] if listing[10] is not None else "unknown"
+                            "image_url": listing[7] if listing[7] is not None else "/assets/placeholder.jpg",
+                            "created_at": listing[8].isoformat() if listing[8] else None,
+                            "owner_id": listing[9] if listing[9] is not None else "unknown"
                         }
+                        
+                        # Add contract_length_months if it exists
+                        if has_contract_length and len(listing) > 10:
+                            formatted_listing["contract_length_months"] = listing[10] if listing[10] is not None else 12
+                        else:
+                            formatted_listing["contract_length_months"] = 12  # Default value
+                            
                         formatted_listings.append(formatted_listing)
                     except Exception as e:
                         print(f"DEBUG: Error formatting listing: {e}")
@@ -725,6 +803,8 @@ def get_my_listings():
                             latitude NUMERIC,
                             longitude NUMERIC,
                             contract_length_months INTEGER,
+                            contract_start_date DATE,
+                            contract_end_date DATE,
                             image_url VARCHAR(255),
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             owner_id VARCHAR(255)

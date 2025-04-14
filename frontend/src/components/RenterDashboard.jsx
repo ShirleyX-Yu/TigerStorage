@@ -9,9 +9,7 @@ const RenterDashboard = ({ username }) => {
   const [error, setError] = useState(null);
   
   const openMap = () => {
-    // Set cookie with return URL
-    document.cookie = `returnTo=${encodeURIComponent('/renter')}; path=/`;
-    window.location.href = '/public/ptonMap.html';
+    navigate('/map');
   };
 
   useEffect(() => {

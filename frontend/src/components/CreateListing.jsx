@@ -13,6 +13,8 @@ const CreateListing = () => {
     latitude: '',
     longitude: '',
     contract_length_months: 12,
+    contract_start_date: '',
+    contract_end_date: '',
     image_url: ''
   });
   const [error, setError] = useState('');
@@ -344,19 +346,6 @@ const CreateListing = () => {
           </div>
 
           <div style={styles.formGroup}>
-            <label htmlFor="description" style={styles.label}>Description</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Enter a description of the storage space"
-              style={{...styles.input, minHeight: '100px'}}
-              required
-            />
-          </div>
-
-          <div style={styles.formGroup}>
             <label htmlFor="contract_length_months" style={styles.label}>Contract Length (months)</label>
             <input
               type="number"
@@ -368,6 +357,45 @@ const CreateListing = () => {
               style={styles.input}
               min="1"
               max="60"
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label htmlFor="contract_start_date" style={styles.label}>Contract Start Date</label>
+            <input
+              type="date"
+              id="contract_start_date"
+              name="contract_start_date"
+              value={formData.contract_start_date}
+              onChange={handleInputChange}
+              style={styles.input}
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label htmlFor="contract_end_date" style={styles.label}>Contract End Date</label>
+            <input
+              type="date"
+              id="contract_end_date"
+              name="contract_end_date"
+              value={formData.contract_end_date}
+              onChange={handleInputChange}
+              style={styles.input}
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label htmlFor="description" style={styles.label}>Description</label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Enter a description of the storage space"
+              style={{...styles.input, minHeight: '100px'}}
               required
             />
           </div>

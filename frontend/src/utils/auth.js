@@ -4,13 +4,18 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const login = async (userType) => {
+  console.log('Login called with userType:', userType); // Debug log
   // Store the user type in session storage before redirecting
   sessionStorage.setItem('userType', userType);
+  console.log('Session storage after setting userType:', sessionStorage.getItem('userType')); // Debug log
   // Also store in localStorage as a backup since sessionStorage might be lost during redirects
   localStorage.setItem('userType', userType);
+  console.log('Local storage after setting userType:', localStorage.getItem('userType')); // Debug log
   
   // Add the user type as a query parameter to preserve it through redirects
-  window.location.href = `${API_URL}/api/auth/login?userType=${userType}`;
+  const redirectPath = userType === 'renter' ? '/map' : '/lender-dashboard';
+  console.log('Redirecting to:', redirectPath); // Debug log
+  window.location.href = `${API_URL}/api/auth/login?userType=${userType}&redirect=${redirectPath}`;
 };
 
 export const logout = async () => {
@@ -22,33 +27,25 @@ export const logout = async () => {
 
 export const checkAuthStatus = async () => {
   try {
-    console.log('Checking auth status with API URL:', API_URL);
     const response = await fetch(`${API_URL}/api/auth/status`, {
-      credentials: 'include',
-      headers: {
-        'Accept': 'application/json',
-        'Cache-Control': 'no-cache'
-      }
+      credentials: 'include'
     });
     
-    console.log('Auth status response:', response.status);
-    const data = await response.json();
-    console.log('Auth status data:', data);
-    
-    if (data.authenticated) {
-      // Add the stored user type to the auth data
-      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'lender';
-      return {
-        ...data,
-        userType
-      };
+    if (!response.ok) {
+      throw new Error('Failed to check auth status');
     }
     
-    // If not authenticated, try to redirect to login
-    console.log('Not authenticated, redirecting to login');
-    return { authenticated: false };
+    const data = await response.json();
+    
+    // Get user type from sessionStorage or localStorage
+    const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+    
+    return {
+      ...data,
+      userType
+    };
   } catch (error) {
     console.error('Error checking auth status:', error);
-    return { authenticated: false };
+    throw error;
   }
 };

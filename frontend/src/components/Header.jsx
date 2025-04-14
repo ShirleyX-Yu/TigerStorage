@@ -8,13 +8,19 @@ const logoFallbackText = 'TS';
 
 const Header = ({ title }) => {
   const navigate = useNavigate();
-  const userType = sessionStorage.getItem('userType');
+  const [userType, setUserType] = useState(sessionStorage.getItem('userType'));
   const [isLogoHovered, setIsLogoHovered] = useState(false);
   const [logoError, setLogoError] = useState(false);
 
-  const handleLogoClick = () => {
-    navigate(userType === 'renter' ? '/renter' : '/lender');
-  };
+  // Update userType when it changes in sessionStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setUserType(sessionStorage.getItem('userType'));
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -44,10 +50,8 @@ const Header = ({ title }) => {
                 ...styles.logo,
                 transform: isLogoHovered ? 'scale(1.05)' : 'scale(1)',
               }}
-              onClick={handleLogoClick}
               onMouseEnter={() => setIsLogoHovered(true)}
               onMouseLeave={() => setIsLogoHovered(false)}
-              role="button"
             />
           ) : (
             <div 
@@ -55,15 +59,15 @@ const Header = ({ title }) => {
                 ...styles.logoFallback,
                 transform: isLogoHovered ? 'scale(1.05)' : 'scale(1)',
               }}
-              onClick={handleLogoClick}
               onMouseEnter={() => setIsLogoHovered(true)}
               onMouseLeave={() => setIsLogoHovered(false)}
-              role="button"
             >
               {logoFallbackText}
             </div>
           )}
-          <h1 style={styles.title}>{title}</h1>
+          <div style={styles.titleSection}>
+            <h1 style={styles.title}>{title}</h1>
+          </div>
         </div>
         <button style={styles.logoutButton} onClick={handleLogout}>
           Logout
@@ -96,6 +100,15 @@ const styles = {
     alignItems: 'center',
     gap: '1rem'
   },
+  titleSection: {
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  title: {
+    margin: 0,
+    fontSize: '1.5rem',
+    color: '#333'
+  },
   logo: {
     height: '40px',
     cursor: 'pointer',
@@ -113,11 +126,6 @@ const styles = {
     fontWeight: 'bold',
     cursor: 'pointer',
     transition: 'transform 0.2s ease'
-  },
-  title: {
-    margin: 0,
-    fontSize: '1.5rem',
-    color: '#333'
   },
   logoutButton: {
     backgroundColor: '#f44336',

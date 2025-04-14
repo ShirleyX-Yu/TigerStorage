@@ -60,6 +60,8 @@ const ListingDetails = () => {
           description: data.description || 'No description available',
           isAvailable: data.is_available !== undefined ? data.is_available : true,
           contractLength: data.contract_length_months || 12,
+          contractStartDate: data.contract_start_date || '',
+          contractEndDate: data.contract_end_date || '',
           images: [data.image_url || '/assets/placeholder.jpg'],
           lender: {
             name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
@@ -191,24 +193,38 @@ const ListingDetails = () => {
             <div style={styles.infoSection}>
               <h2 style={styles.location}>{listing.location}</h2>
               
-              <div style={styles.specs}>
-                <div style={styles.specItem}>
-                  <span style={styles.specLabel}>Cost:</span>
-                  <span style={styles.specValue}>${listing.cost}/month</span>
+              <div style={styles.listingInfo}>
+                <div style={styles.infoRow}>
+                  <span style={styles.infoLabel}>Location:</span>
+                  <span style={styles.infoValue}>{listing.location}</span>
                 </div>
-                <div style={styles.specItem}>
-                  <span style={styles.specLabel}>Size:</span>
-                  <span style={styles.specValue}>{listing.cubicFeet} cubic feet</span>
+                <div style={styles.infoRow}>
+                  <span style={styles.infoLabel}>Cost:</span>
+                  <span style={styles.infoValue}>${listing.cost}/month</span>
                 </div>
-                <div style={styles.specItem}>
-                  <span style={styles.specLabel}>Contract Length:</span>
-                  <span style={styles.specValue}>{listing.contractLength} months</span>
+                <div style={styles.infoRow}>
+                  <span style={styles.infoLabel}>Size:</span>
+                  <span style={styles.infoValue}>{listing.cubicFeet} cubic feet</span>
                 </div>
-                <div style={styles.specItem}>
-                  <span style={styles.specLabel}>Availability:</span>
-                  <span style={{...styles.specValue, color: listing.isAvailable ? '#4caf50' : '#f44336'}}>
-                    {listing.isAvailable ? 'Available' : 'Not Available'}
-                  </span>
+                <div style={styles.infoRow}>
+                  <span style={styles.infoLabel}>Contract Length:</span>
+                  <span style={styles.infoValue}>{listing.contractLength} months</span>
+                </div>
+                {listing.contractStartDate && (
+                  <div style={styles.infoRow}>
+                    <span style={styles.infoLabel}>Start Date:</span>
+                    <span style={styles.infoValue}>{new Date(listing.contractStartDate).toLocaleDateString()}</span>
+                  </div>
+                )}
+                {listing.contractEndDate && (
+                  <div style={styles.infoRow}>
+                    <span style={styles.infoLabel}>End Date:</span>
+                    <span style={styles.infoValue}>{new Date(listing.contractEndDate).toLocaleDateString()}</span>
+                  </div>
+                )}
+                <div style={styles.infoRow}>
+                  <span style={styles.infoLabel}>Lender:</span>
+                  <span style={styles.infoValue}>{listing.lender.name}</span>
                 </div>
               </div>
 
@@ -341,26 +357,21 @@ const styles = {
     fontSize: '1.8rem',
     color: '#333',
   },
-  specs: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '1rem',
-    padding: '1rem',
-    backgroundColor: '#f8f8f8',
-    borderRadius: '4px',
-  },
-  specItem: {
+  listingInfo: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.25rem',
+    gap: '1rem',
   },
-  specLabel: {
+  infoRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  infoLabel: {
+    fontWeight: 'bold',
+  },
+  infoValue: {
     color: '#666',
-    fontSize: '0.9rem',
-  },
-  specValue: {
-    fontSize: '1.1rem',
-    fontWeight: '500',
   },
   lenderInfo: {
     padding: '1rem',

@@ -10,9 +10,7 @@ const ViewListings = () => {
   const [interestedListings, setInterestedListings] = useState(new Set());
 
   const openMap = () => {
-    // set cookie with return URL
-    document.cookie = `returnTo=${encodeURIComponent('/view-listings')}; path=/`;
-    window.location.href = '/public/ptonMap.html';
+    navigate('/map');
   };
 
   // Function to get the full image URL based on the backend URL
