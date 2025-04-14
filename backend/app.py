@@ -556,11 +556,24 @@ def create_listing():
 def get_listings():
     try:
         print("DEBUG: Starting get_listings endpoint")
+        
+        # Add CORS headers
+        response_headers = {
+            'Access-Control-Allow-Origin': request.headers.get('Origin', '*'),
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        }
+        
+        # Handle OPTIONS preflight request
+        if request.method == 'OPTIONS':
+            return ('', 204, response_headers)
+        
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
             print("DEBUG: Failed to get database connection")
-            return jsonify({"error": "Database connection failed"}), 500
+            return jsonify({"error": "Database connection failed"}), 500, response_headers
             
         try:
             with conn.cursor() as cur:
@@ -585,6 +598,7 @@ def get_listings():
                 """)
                 
                 listings = cur.fetchall()
+                print(f"DEBUG: Found {len(listings)} listings")
                 
                 # Convert to list of dictionaries
                 formatted_listings = []
@@ -592,9 +606,11 @@ def get_listings():
                     try:
                         formatted_listing = {
                             "id": listing[0],
+                            "listing_id": listing[0],  # Duplicate for consistency
                             "location": listing[1],
                             "cost": float(listing[2]) if listing[2] is not None else 0,
                             "cubic_feet": listing[3] if listing[3] is not None else 0,
+                            "cubic_ft": listing[3] if listing[3] is not None else 0,  # Include both field names
                             "description": listing[4] if listing[4] is not None else "",
                             "latitude": float(listing[5]) if listing[5] is not None else None,
                             "longitude": float(listing[6]) if listing[6] is not None else None,
@@ -609,7 +625,13 @@ def get_listings():
                         print(f"DEBUG: Error formatting listing: {e}")
                         print(f"DEBUG: Listing data: {listing}")
                         continue
-                return jsonify(formatted_listings), 200
+                
+                response = jsonify(formatted_listings)
+                # Add CORS headers to the response
+                for key, value in response_headers.items():
+                    response.headers[key] = value
+                
+                return response, 200
         finally:
             conn.close()
     except Exception as e:

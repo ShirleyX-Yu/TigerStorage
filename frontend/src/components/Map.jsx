@@ -123,13 +123,44 @@ const Map = () => {
   useEffect(() => {
     const fetchListings = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/listings`, {
-          credentials: 'include'
-        });
-        if (!response.ok) {
-          throw new Error('Failed to fetch listings');
+        // Get base API URL, falling back to the current origin if in production
+        let apiUrl = import.meta.env.VITE_API_URL;
+        if (!apiUrl && typeof window !== 'undefined') {
+          // In production without VITE_API_URL, use the same origin
+          apiUrl = window.location.origin;
+          console.log("Using current origin as API URL:", apiUrl);
+        } else if (!apiUrl) {
+          // Default for local development
+          apiUrl = 'http://localhost:8000';
+          console.log("Using default local API URL:", apiUrl);
         }
+        
+        console.log("Fetching listings from:", `${apiUrl}/api/listings`);
+        
+        const response = await fetch(`${apiUrl}/api/listings`, {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        console.log("Response status:", response.status);
+        
+        if (!response.ok) {
+          let errorText = `Server returned ${response.status}: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            errorText += ` - ${errorData.error || errorData.message || JSON.stringify(errorData)}`;
+          } catch (e) {
+            // Couldn't parse JSON error response
+          }
+          throw new Error(`Failed to fetch listings: ${errorText}`);
+        }
+        
         const data = await response.json();
+        console.log("Fetched listings count:", data?.length || 0);
+        
         // Add distance to each listing
         const listingsWithDistance = data.map(listing => {
           if (listing.latitude && listing.longitude) {
@@ -143,9 +174,11 @@ const Map = () => {
           }
           return listing;
         });
+        
         setListings(listingsWithDistance);
       } catch (err) {
-        setError(err.message);
+        console.error("Error fetching listings:", err);
+        setError(err.message || "Failed to fetch listings. Check console for details.");
       }
     };
 
@@ -203,8 +236,69 @@ const Map = () => {
     return true;
   });
 
+  // No listings message component
+  const NoListingsMessage = () => (
+    <div style={{ 
+      padding: '20px', 
+      textAlign: 'center', 
+      color: '#666',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}>
+      <div style={{ marginBottom: '15px', fontSize: '18px' }}>No listings found</div>
+      <div style={{ fontSize: '14px' }}>Try adjusting your filters or check back later for new listings</div>
+    </div>
+  );
+
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        height: '100vh',
+        padding: '20px',
+        textAlign: 'center'
+      }}>
+        <h2 style={{ color: '#FF6B00', marginBottom: '20px' }}>Unable to Load Map</h2>
+        <p style={{ marginBottom: '20px', maxWidth: '600px' }}>{error}</p>
+        <div>
+          <button 
+            onClick={() => window.location.reload()} 
+            style={{
+              backgroundColor: '#FF6B00',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              marginRight: '10px',
+              fontWeight: 'bold'
+            }}
+          >
+            Retry
+          </button>
+          <button 
+            onClick={() => navigate('/')} 
+            style={{
+              backgroundColor: 'white',
+              color: '#FF6B00',
+              border: '1px solid #FF6B00',
+              padding: '10px 20px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            Return to Home
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const filterColumn = {
@@ -238,36 +332,40 @@ const Map = () => {
           <Typography variant="h6" style={{ padding: '16px', color: '#FF6B00' }}>
             Available Listings
           </Typography>
-          <List style={{ overflowY: 'auto', flex: 1, height: 'calc(100vh - 72px)' }}>
-            {filteredListings && filteredListings.map((listing) => (
-              <React.Fragment key={listing.listing_id || listing.id}>
-                <ListItem 
-                  button 
-                  onClick={() => handleListingClick(listing)}
-                  style={{ 
-                    backgroundColor: selectedListing && selectedListing.listing_id === listing.listing_id ? '#FFF3E6' : 'transparent',
-                    borderLeft: selectedListing && selectedListing.listing_id === listing.listing_id ? '4px solid #FF6B00' : 'none'
-                  }}
-                >
-                  <ListItemText
-                    primary={listing.location}
-                    secondary={
-                      <>
-                        <Typography component="span" variant="body2" color="textPrimary">
-                          ${listing.cost}/month • {listing.cubic_feet || listing.cubic_ft} cubic feet
-                        </Typography>
-                        <br />
-                        <Typography component="span" variant="body2" color="textSecondary">
-                          {listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles from Princeton University
-                        </Typography>
-                      </>
-                    }
-                  />
-                </ListItem>
-                <Divider />
-              </React.Fragment>
-            ))}
-          </List>
+          {filteredListings && filteredListings.length > 0 ? (
+            <List style={{ overflowY: 'auto', flex: 1, height: 'calc(100vh - 72px)' }}>
+              {filteredListings.map((listing) => (
+                <React.Fragment key={listing.listing_id || listing.id}>
+                  <ListItem 
+                    button 
+                    onClick={() => handleListingClick(listing)}
+                    style={{ 
+                      backgroundColor: selectedListing && selectedListing.listing_id === listing.listing_id ? '#FFF3E6' : 'transparent',
+                      borderLeft: selectedListing && selectedListing.listing_id === listing.listing_id ? '4px solid #FF6B00' : 'none'
+                    }}
+                  >
+                    <ListItemText
+                      primary={listing.location}
+                      secondary={
+                        <>
+                          <Typography component="span" variant="body2" color="textPrimary">
+                            ${listing.cost}/month • {listing.cubic_feet || listing.cubic_ft} cubic feet
+                          </Typography>
+                          <br />
+                          <Typography component="span" variant="body2" color="textSecondary">
+                            {listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles from Princeton University
+                          </Typography>
+                        </>
+                      }
+                    />
+                  </ListItem>
+                  <Divider />
+                </React.Fragment>
+              ))}
+            </List>
+          ) : (
+            <NoListingsMessage />
+          )}
         </div>
 
         {/* Map */}

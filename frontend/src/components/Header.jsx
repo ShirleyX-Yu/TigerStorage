@@ -34,6 +34,22 @@ const Header = ({ title }) => {
     }
   };
 
+  const handleGoToDashboard = () => {
+    if (userType === 'renter') {
+      // Set the skipMapRedirect flag to go straight to the dashboard
+      sessionStorage.setItem('skipMapRedirect', 'true');
+      navigate('/renter-dashboard');
+    } else {
+      navigate('/lender-dashboard');
+    }
+  };
+
+  const handleGoToMap = () => {
+    // Clear the skipMapRedirect flag
+    sessionStorage.removeItem('skipMapRedirect');
+    navigate('/map');
+  };
+
   return (
     <header style={styles.header}>
       <div style={styles.headerContent}>
@@ -52,6 +68,7 @@ const Header = ({ title }) => {
               }}
               onMouseEnter={() => setIsLogoHovered(true)}
               onMouseLeave={() => setIsLogoHovered(false)}
+              onClick={() => navigate('/')}
             />
           ) : (
             <div 
@@ -61,6 +78,7 @@ const Header = ({ title }) => {
               }}
               onMouseEnter={() => setIsLogoHovered(true)}
               onMouseLeave={() => setIsLogoHovered(false)}
+              onClick={() => navigate('/')}
             >
               {logoFallbackText}
             </div>
@@ -69,9 +87,28 @@ const Header = ({ title }) => {
             <h1 style={styles.title}>{title}</h1>
           </div>
         </div>
-        <button style={styles.logoutButton} onClick={handleLogout}>
-          Logout
-        </button>
+        
+        <div style={styles.navigationLinks}>
+          {userType === 'renter' && (
+            <>
+              <button 
+                style={window.location.pathname === '/map' ? styles.activeNavLink : styles.navLink} 
+                onClick={handleGoToMap}
+              >
+                Map View
+              </button>
+              <button 
+                style={window.location.pathname === '/renter-dashboard' ? styles.activeNavLink : styles.navLink} 
+                onClick={handleGoToDashboard}
+              >
+                Dashboard
+              </button>
+            </>
+          )}
+          <button style={styles.logoutButton} onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
       </div>
     </header>
   );
@@ -126,6 +163,31 @@ const styles = {
     fontWeight: 'bold',
     cursor: 'pointer',
     transition: 'transform 0.2s ease'
+  },
+  navigationLinks: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem'
+  },
+  navLink: {
+    padding: '0.5rem 1rem',
+    backgroundColor: 'transparent',
+    color: '#333',
+    border: '1px solid #ccc',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    transition: 'all 0.2s ease'
+  },
+  activeNavLink: {
+    padding: '0.5rem 1rem',
+    backgroundColor: '#FF8F00',
+    color: 'white',
+    border: '1px solid #FF8F00',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    transition: 'all 0.2s ease'
   },
   logoutButton: {
     backgroundColor: '#f44336',

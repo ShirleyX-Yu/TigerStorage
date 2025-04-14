@@ -69,18 +69,25 @@ const RedirectToUserDashboard = () => {
   const navigate = useNavigate();
   
   React.useEffect(() => {
+    // Added debug logging
+    console.log('RedirectToUserDashboard - Starting redirection logic');
+    
     // Check for userType in URL parameters first
     const params = new URLSearchParams(window.location.search);
     const urlUserType = params.get('userType');
+    console.log('URL userType:', urlUserType);
     
     // Then check sessionStorage
     let userType = sessionStorage.getItem('userType');
+    console.log('Session storage userType:', userType);
     
     // If not in sessionStorage, check localStorage as fallback
     if (!userType) {
       userType = localStorage.getItem('userType');
+      console.log('Local storage userType:', userType);
       if (userType) {
         sessionStorage.setItem('userType', userType);
+        console.log('Copied userType from localStorage to sessionStorage');
       }
     }
     
@@ -89,6 +96,7 @@ const RedirectToUserDashboard = () => {
       userType = urlUserType;
       sessionStorage.setItem('userType', urlUserType);
       localStorage.setItem('userType', urlUserType);
+      console.log('Set userType from URL parameter:', urlUserType);
       
       // Clean up the URL by removing the query parameter
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -96,28 +104,42 @@ const RedirectToUserDashboard = () => {
     
     // Only proceed if we have a valid user type
     if (userType === 'renter' || userType === 'lender') {
+      console.log('Valid userType found:', userType);
+      
       // Check if we have a return path from previous navigation
       const returnTo = sessionStorage.getItem('returnTo');
+      console.log('Return path:', returnTo);
       
       if (returnTo) {
         // Clear the return path
         sessionStorage.removeItem('returnTo');
         // Navigate to the saved path
+        console.log('Navigating to saved return path:', returnTo);
         navigate(returnTo);
         return;
       }
       
-      // Check if we should skip the map redirect (coming from map view)
-      const skipMapRedirect = sessionStorage.getItem('skipMapRedirect');
-      
-      // Navigate to the appropriate dashboard based on user type
-      if (userType === 'renter' && !skipMapRedirect) {
-        navigate('/map');
+      // Always redirect to the appropriate dashboard based on user type
+      if (userType === 'renter') {
+        // Check if the user wants the map or dashboard view
+        const skipMapRedirect = sessionStorage.getItem('skipMapRedirect');
+        console.log('skipMapRedirect flag for renter:', skipMapRedirect);
+        
+        if (skipMapRedirect) {
+          console.log('Navigating to /renter-dashboard - skipMapRedirect is set');
+          navigate('/renter-dashboard');
+        } else {
+          console.log('Navigating to /map for renter');
+          navigate('/map');
+        }
       } else {
+        // For lenders, always go to lender dashboard
+        console.log('Navigating to /lender-dashboard for lender');
         navigate('/lender-dashboard');
       }
     } else {
       // If no valid user type, redirect to home
+      console.log('No valid userType found, redirecting to home');
       navigate('/');
     }
   }, [navigate]);
@@ -134,6 +156,7 @@ const RedirectToUserDashboard = () => {
 // Component to conditionally render the correct listing details view based on user type
 const ListingDetailsRouter = () => {
   const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+  console.log('ListingDetailsRouter - userType:', userType); // Add debug logging
   return userType === 'lender' ? <LenderListingDetails /> : <ListingDetails />;
 };
 
