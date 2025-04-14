@@ -7,30 +7,53 @@ import './Home.css';
 const Home = () => {
   const navigate = useNavigate();
   const [logoError, setLogoError] = useState(false);
+  const [loading, setLoading] = useState(false);
   
   // Check for dashboard redirect flag
   React.useEffect(() => {
+    console.log("Home component mounted, checking for redirect flag");
     const dashboardRedirect = localStorage.getItem('dashboardRedirect');
     if (dashboardRedirect) {
+      console.log(`Found dashboardRedirect flag: ${dashboardRedirect}`);
       // Clear the flag
       localStorage.removeItem('dashboardRedirect');
       
       // Navigate to the appropriate dashboard
       if (dashboardRedirect === 'renter') {
+        console.log("Redirecting to /map for renter");
         navigate('/map');
       } else if (dashboardRedirect === 'lender') {
+        console.log("Redirecting to /lender-dashboard for lender");
         navigate('/lender-dashboard');
       }
+    } else {
+      console.log("No dashboard redirect flag found");
     }
   }, [navigate]);
   
-  const handleLogin = (userType) => {
-    // Clear any existing user type first
-    sessionStorage.removeItem('userType');
-    // Set the new user type
-    sessionStorage.setItem('userType', userType);
-    // Proceed with login for both renters and lenders
-    login(userType);
+  const handleLogin = async (userType) => {
+    try {
+      console.log(`handleLogin called with userType: ${userType}`);
+      setLoading(true);
+      
+      // Clear any existing user type first
+      sessionStorage.removeItem('userType');
+      localStorage.removeItem('userType');
+      
+      // Set the new user type
+      sessionStorage.setItem('userType', userType);
+      localStorage.setItem('userType', userType);
+      
+      console.log(`userType set in storage, calling login function`);
+      // Proceed with login for both renters and lenders
+      await login(userType);
+      
+      // This code will only run if the login function doesn't redirect
+      console.log("WARNING: Login function returned without redirect");
+    } catch (error) {
+      console.error("Login error:", error);
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,16 +73,25 @@ const Home = () => {
         )}
         <h1 className="home-title">Tiger Storage</h1>
         <div className="home-button-container">
-          <button className="home-button" onClick={() => handleLogin('renter')}>
-            I am a space renter.
+          <button 
+            className="home-button" 
+            onClick={() => handleLogin('renter')}
+            disabled={loading}
+          >
+            {loading ? 'Loading...' : 'I am a space renter.'}
           </button>
-          <button className="home-button" onClick={() => handleLogin('lender')}>
-            I am a space lender.
+          <button 
+            className="home-button" 
+            onClick={() => handleLogin('lender')}
+            disabled={loading}
+          >
+            {loading ? 'Loading...' : 'I am a space lender.'}
           </button>
         </div>
         <button 
           className="home-privacy-button"
           onClick={() => navigate('/privacy')}
+          disabled={loading}
         >
           Privacy Policy
         </button>

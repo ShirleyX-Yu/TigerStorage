@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
+import { checkAuthStatus } from '../utils/auth';
 
 console.log('ListingDetails component loaded');
 
@@ -11,6 +12,22 @@ const ListingDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check authentication status
+    const checkAuth = async () => {
+      try {
+        const status = await checkAuthStatus();
+        console.log('ListingDetails - auth status:', status);
+        setIsAuthenticated(status.authenticated);
+      } catch (error) {
+        console.error('Error checking auth in ListingDetails:', error);
+        setIsAuthenticated(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     console.log('ListingDetails component mounted with ID:', id);
@@ -40,15 +57,22 @@ const ListingDetails = () => {
         const data = await response.json();
         console.log('Received listing data:', data);
         
-        // Fetch interest status from API
-        const interestResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/my-interested-listings`, {
-          credentials: 'include'
-        });
-        
+        // Only fetch interest status if user is authenticated
         let isInterested = false;
-        if (interestResponse.ok) {
-          const interestedListings = await interestResponse.json();
-          isInterested = interestedListings.some(listing => listing.id === data.id);
+        if (isAuthenticated) {
+          try {
+            const interestResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/my-interested-listings`, {
+              credentials: 'include'
+            });
+            
+            if (interestResponse.ok) {
+              const interestedListings = await interestResponse.json();
+              isInterested = interestedListings.some(listing => listing.id === data.id);
+            }
+          } catch (err) {
+            console.error('Error fetching interest status:', err);
+            // Continue with isInterested = false
+          }
         }
         
         // Simple formatted listing with fallbacks for all properties
@@ -85,10 +109,17 @@ const ListingDetails = () => {
     return () => {
       console.log('ListingDetails component unmounted');
     };
-  }, [id]);
+  }, [id, isAuthenticated]);
 
   // Function to handle showing interest
   const handleShowInterest = async () => {
+    // Redirect to login if not authenticated
+    if (!isAuthenticated) {
+      sessionStorage.setItem('returnTo', `/listing/${id}`);
+      navigate('/');
+      return;
+    }
+
     try {
       if (!listing || !listing.id) {
         console.error('Cannot toggle interest: listing or listing.id is undefined');
@@ -163,7 +194,7 @@ const ListingDetails = () => {
     </div>
   );
 
-  console.log('ListingDetails render state:', { loading, error, listing });
+  console.log('ListingDetails render state:', { loading, error, listing, isAuthenticated });
 
   return (
     <div style={styles.container}>
@@ -175,6 +206,22 @@ const ListingDetails = () => {
         >
           ← Back to Listings
         </button>
+
+        {/* Display any success/error messages */}
+        {message && (
+          <div 
+            style={{
+              padding: '10px',
+              marginBottom: '15px',
+              borderRadius: '4px',
+              backgroundColor: message.type === 'success' ? '#d4edda' : '#f8d7da',
+              color: message.type === 'success' ? '#155724' : '#721c24',
+              textAlign: 'center'
+            }}
+          >
+            {message.text}
+          </div>
+        )}
 
         {loading ? renderLoading() : error ? renderError() : !listing ? renderNotFound() : (
           <div style={styles.detailsContainer}>
@@ -245,7 +292,9 @@ const ListingDetails = () => {
                     }}
                     onClick={handleShowInterest}
                   >
-                    {listing.isInterested ? '✓ Interested' : '+ Show Interest'}
+                    {isAuthenticated 
+                      ? (listing.isInterested ? '✓ Interested' : '+ Show Interest')
+                      : 'Login to Show Interest'}
                   </button>
                 </div>
               </div>

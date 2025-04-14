@@ -63,15 +63,25 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
 
     // Add markers for listings
     if (listings && listings.length > 0) {
+      console.log("Adding markers for listings:", listings);
+      
       listings.forEach(listing => {
+        // Debug: log each listing's data
+        console.log("Listing data:", JSON.stringify(listing, null, 2));
+        
         if (listing.latitude && listing.longitude) {
+          // Prioritize the database column names
+          const cost = listing.cost !== undefined ? listing.cost : 0;
+          const size = listing.cubic_ft !== undefined ? listing.cubic_ft : 
+                      (listing.cubic_feet !== undefined ? listing.cubic_feet : 0);
+          
           L.marker([listing.latitude, listing.longitude], { icon: orangeIcon })
             .addTo(map)
             .bindPopup(`
               <div>
                 <h3>${listing.location}</h3>
-                <p>Price: $${listing.cost}/month</p>
-                <p>Size: ${listing.cubic_feet} cubic feet</p>
+                <p>Price: $${cost}/month</p>
+                <p>Size: ${size} cubic feet</p>
                 <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
               </div>
             `);
@@ -148,18 +158,31 @@ const Map = () => {
         console.log("Response status:", response.status);
         
         if (!response.ok) {
+          // Try to read the response body as text first
+          const responseText = await response.text();
+          console.error("Error response body:", responseText);
+          
           let errorText = `Server returned ${response.status}: ${response.statusText}`;
           try {
-            const errorData = await response.json();
+            // Try to parse as JSON if possible
+            const errorData = JSON.parse(responseText);
             errorText += ` - ${errorData.error || errorData.message || JSON.stringify(errorData)}`;
           } catch (e) {
-            // Couldn't parse JSON error response
+            // If not JSON, just append the text
+            if (responseText) {
+              errorText += ` - ${responseText}`;
+            }
           }
           throw new Error(`Failed to fetch listings: ${errorText}`);
         }
         
         const data = await response.json();
         console.log("Fetched listings count:", data?.length || 0);
+        
+        // Debug: Print the first listing to see its structure
+        if (data && data.length > 0) {
+          console.log("First listing structure:", JSON.stringify(data[0], null, 2));
+        }
         
         // Add distance to each listing
         const listingsWithDistance = data.map(listing => {
@@ -222,8 +245,15 @@ const Map = () => {
   // Filter listings based on current filters
   const filteredListings = listings.filter(listing => {
     if (!listing.latitude || !listing.longitude) return false;
-    if (listing.cost < (filters.minCost || 0) || listing.cost > (filters.maxCost || 1000)) return false;
-    if (listing.cubic_feet < (filters.minSize || 0) || listing.cubic_feet > (filters.maxSize || 1000)) return false;
+    
+    // Prioritize the database column names
+    const listingCost = listing.cost !== undefined ? listing.cost : 0;
+    if (listingCost < (filters.minCost || 0) || listingCost > (filters.maxCost || 1000)) return false;
+    
+    // Prioritize cubic_ft which is the actual database column
+    const listingSize = listing.cubic_ft !== undefined ? listing.cubic_ft : 
+                        (listing.cubic_feet !== undefined ? listing.cubic_feet : 0);
+    if (listingSize < (filters.minSize || 0) || listingSize > (filters.maxSize || 1000)) return false;
     
     const distance = calculateDistance(
       PRINCETON_COORDS.lat,
@@ -349,7 +379,7 @@ const Map = () => {
                       secondary={
                         <>
                           <Typography component="span" variant="body2" color="textPrimary">
-                            ${listing.cost}/month • {listing.cubic_feet || listing.cubic_ft} cubic feet
+                            ${listing.cost !== undefined ? listing.cost : 0}/month • {listing.cubic_ft !== undefined ? listing.cubic_ft : (listing.cubic_feet !== undefined ? listing.cubic_feet : 0)} cubic feet
                           </Typography>
                           <br />
                           <Typography component="span" variant="body2" color="textSecondary">

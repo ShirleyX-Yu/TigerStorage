@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
 import Home from './components/Home';
 import RenterDashboard from './components/RenterDashboard';
 import LenderDashboard from './components/LenderDashboard';
@@ -11,7 +11,7 @@ import LenderListingDetails from './components/LenderListingDetails';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import AuthDebug from './components/AuthDebug';
 import Map from './components/Map';
-import { checkAuthStatus } from './utils/auth';
+import { checkAuthStatus, login } from './utils/auth';
 import './App.css';
 import './index.css';
 
@@ -19,6 +19,7 @@ const ProtectedRoute = ({ children }) => {
   const [authData, setAuthData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [redirecting, setRedirecting] = React.useState(false);
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     const verifyAuth = async () => {
@@ -33,20 +34,37 @@ const ProtectedRoute = ({ children }) => {
         if (!status.authenticated) {
           // Set redirecting flag to prevent loops
           setRedirecting(true);
+          
           // Store the current path to return after login
           const currentPath = window.location.pathname;
           sessionStorage.setItem('returnTo', currentPath);
-          console.log('Not authenticated, will redirect to home');
+          console.log('Not authenticated, will redirect to login');
+          
+          // Get userType from sessionStorage or localStorage
+          const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'lender';
+          
+          // Force redirect to login for the user type
+          try {
+            // We're using the login function which will redirect to CAS
+            await login(userType);
+          } catch (error) {
+            console.error('Error during login redirect:', error);
+            // Fallback to home page if login redirect fails
+            navigate('/');
+          }
         }
       } catch (error) {
         console.error('Auth verification error:', error);
-      } finally {
         setLoading(false);
+      } finally {
+        if (!redirecting) {
+          setLoading(false);
+        }
       }
     };
     
     verifyAuth();
-  }, [redirecting]);
+  }, [redirecting, navigate]);
 
   if (loading) {
     return <div style={{
@@ -59,7 +77,14 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!authData?.authenticated) {
-    return <Navigate to="/" />;
+    // Rendering a blank div since we're already redirecting
+    return <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      fontSize: '18px'
+    }}>Redirecting to login...</div>;
   }
 
   return React.cloneElement(children, { username: authData.username });
@@ -156,7 +181,9 @@ const RedirectToUserDashboard = () => {
 // Component to conditionally render the correct listing details view based on user type
 const ListingDetailsRouter = () => {
   const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
-  console.log('ListingDetailsRouter - userType:', userType); // Add debug logging
+  console.log('ListingDetailsRouter - userType:', userType);
+  
+  // For authenticated users, show appropriate view based on user type
   return userType === 'lender' ? <LenderListingDetails /> : <ListingDetails />;
 };
 
@@ -166,7 +193,7 @@ function App() {
       <div className="App">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/map" element={<Map />} />
+          <Route path="/map" element={<ProtectedRoute><Map /></ProtectedRoute>} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/auth-debug" element={<AuthDebug />} />
           <Route path="/dashboard" element={<RedirectToUserDashboard />} />
@@ -175,7 +202,7 @@ function App() {
           <Route path="/create-listing" element={<ProtectedRoute><CreateListing /></ProtectedRoute>} />
           <Route path="/edit-listing/:id" element={<ProtectedRoute><EditListing /></ProtectedRoute>} />
           <Route path="/view-listings" element={<ProtectedRoute><ViewListings /></ProtectedRoute>} />
-          <Route path="/listing/:id" element={<ListingDetailsRouter />} />
+          <Route path="/listing/:id" element={<ProtectedRoute><ListingDetailsRouter /></ProtectedRoute>} />
           <Route path="/lender-listing/:id" element={<ProtectedRoute><LenderListingDetails /></ProtectedRoute>} />
         </Routes>
       </div>
