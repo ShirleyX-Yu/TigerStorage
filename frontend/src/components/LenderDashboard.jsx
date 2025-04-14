@@ -255,6 +255,12 @@ const LenderDashboard = ({ username }) => {
                   >
                     Create New Listing
                   </button>
+                  <button 
+                    style={styles.debugButton}
+                    onClick={() => navigate('/auth-debug')}
+                  >
+                    Debug Auth
+                  </button>
                 </div>
               </div>
             ) : listedSpaces.length > 0 ? (
@@ -625,6 +631,16 @@ const styles = {
     cursor: 'pointer',
     fontSize: '14px',
     fontWeight: 'bold',
+  },
+  debugButton: {
+    backgroundColor: '#2196f3',
+    color: 'white',
+    border: 'none',
+    padding: '8px 12px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    margin: '10px 0 0 5px',
   },
 };
 

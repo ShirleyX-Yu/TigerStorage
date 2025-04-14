@@ -52,15 +52,21 @@ def validate(ticket):
 def authenticate():
     if "user_info" in flask.session:
         user_info = flask.session.get("user_info")
+        print(f"User already authenticated as: {user_info.get('user', 'unknown')}")
+        # Make sure the session is marked as modified so Flask persists it
+        flask.session.modified = True
         return user_info["user"]
 
     ticket = flask.request.args.get("ticket")
     if ticket is None:
+        print("No ticket found, redirecting to CAS login")
         login_url = _CAS_URL + "login?service=" + urllib.parse.quote(flask.request.url)
         flask.abort(flask.redirect(login_url))
 
+    print(f"Validating CAS ticket: {ticket[:10]}...")
     user_info = validate(ticket)
     if user_info is None:
+        print("Ticket validation failed, redirecting to CAS login")
         login_url = (
             _CAS_URL
             + "login?service="
@@ -68,8 +74,20 @@ def authenticate():
         )
         flask.abort(flask.redirect(login_url))
 
+    print(f"Ticket validation successful: {user_info.get('user', 'unknown')}")
+    # Store user info in session and mark as permanent
     flask.session["user_info"] = user_info
+    flask.session.permanent = True  # Make session persistent
+    flask.session.modified = True   # Ensure session is saved
+    
+    # Preserve user type if it was specified in the query parameters
+    user_type = flask.request.args.get("userType")
+    if user_type:
+        print(f"Setting user_type in session: {user_type}")
+        flask.session["user_type"] = user_type
+    
     clean_url = strip_ticket(flask.request.url)
+    print(f"Redirecting to: {clean_url}")
     flask.abort(flask.redirect(clean_url))
 
 def is_authenticated():
