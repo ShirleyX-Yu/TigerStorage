@@ -274,17 +274,22 @@ function App() {
       <div className="App">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/map" element={<ProtectedRoute component={<Map />} allowedUserType="renter" />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/auth-debug" element={<AuthDebug />} />
           <Route path="/dashboard" element={<RedirectToUserDashboard />} />
+          
+          {/* Renter routes */}
+          <Route path="/map" element={<ProtectedRoute component={<Map />} allowedUserType="renter" />} />
           <Route path="/renter-dashboard" element={<ProtectedRoute component={<RenterDashboard />} allowedUserType="renter" />} />
+          <Route path="/listing/:id" element={<ProtectedRoute component={<ListingDetailsRouter />} />} />
+          
+          {/* Lender routes */}
           <Route path="/lender-dashboard" element={<ProtectedRoute component={<LenderDashboard />} allowedUserType="lender" />} />
-          <Route path="/create-listing" element={<ProtectedRoute component={<CreateListing />} allowedUserType="renter" />} />
-          <Route path="/edit-listing/:id" element={<ProtectedRoute component={<EditListing />} allowedUserType="renter" />} />
-          <Route path="/view-listings" element={<ProtectedRoute component={<ViewListings />} allowedUserType="renter" />} />
-          <Route path="/listing/:id" element={<ProtectedRoute component={<ListingDetailsRouter />} allowedUserType="renter" />} />
-          <Route path="/lender-listing/:id" element={<ProtectedRoute component={<LenderListingDetails />} allowedUserType="lender" />} />
+          <Route path="/create-listing" element={<ProtectedRoute component={<CreateListing />} allowedUserType="lender" />} />
+          <Route path="/edit-listing/:id" element={<ProtectedRoute component={<EditListing />} allowedUserType="lender" />} />
+          <Route path="/view-listings" element={<ProtectedRoute component={<ViewListings />} allowedUserType="lender" />} />
+          
+          {/* Public routes */}
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/debug" element={<AuthDebug />} />
         </Routes>
       </div>
     </Router>

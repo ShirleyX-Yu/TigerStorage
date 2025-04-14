@@ -34,8 +34,17 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom', 'react-leaflet', 'leaflet', '@mui/material', '@emotion/react', '@emotion/styled'],
+          axios: ['axios']
         }
-      }
+      },
+      external: []
+    },
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
     }
+  },
+  optimizeDeps: {
+    include: ['axios']
   }
 })

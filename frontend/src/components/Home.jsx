@@ -29,13 +29,19 @@ const Home = () => {
       // Clear the flag
       localStorage.removeItem('dashboardRedirect');
       
+      // Get the user type
+      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+      console.log(`Current userType from storage: ${userType}`);
+      
       // Navigate to the appropriate dashboard
-      if (dashboardRedirect === 'renter') {
+      if (userType === 'renter') {
         console.log("Redirecting to /map for renter");
         navigate('/map');
-      } else if (dashboardRedirect === 'lender') {
+      } else if (userType === 'lender') {
         console.log("Redirecting to /lender-dashboard for lender");
         navigate('/lender-dashboard');
+      } else {
+        console.log("No valid userType found, remaining on home page");
       }
     } else {
       console.log("No dashboard redirect flag found");
@@ -44,6 +50,9 @@ const Home = () => {
   
   const handleLogin = (userType) => {
     console.log('handleLogin called with userType:', userType);
+    
+    // Set loading state
+    setLoading(true);
     
     // Clear any existing user type first
     sessionStorage.removeItem('userType');
@@ -57,12 +66,19 @@ const Home = () => {
     console.log('SessionStorage after setting:', sessionStorage.getItem('userType'));
     console.log('LocalStorage after setting:', localStorage.getItem('userType'));
     
-    // Set dashboard redirect flag in local storage
-    localStorage.setItem('dashboardRedirect', 'true');
-    console.log('Set dashboardRedirect flag in localStorage');
+    // Set dashboard redirect flag in local storage with the user type
+    localStorage.setItem('dashboardRedirect', userType);
+    console.log(`Set dashboardRedirect flag in localStorage with value: ${userType}`);
     
-    login(userType);
-    console.log('Called login function with userType:', userType);
+    // Call login function - this may redirect to CAS in production
+    try {
+      login(userType);
+      console.log('Called login function with userType:', userType);
+    } catch (error) {
+      console.error('Error during login:', error);
+      setErrorMessage('There was an error during login. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (

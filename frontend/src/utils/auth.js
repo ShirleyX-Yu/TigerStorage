@@ -21,6 +21,12 @@ const getApiUrl = () => {
 const API_URL = getApiUrl();
 console.log('Using API URL:', API_URL);
 
+// Check if we're in production environment
+const isProduction = () => {
+  return window.location.hostname !== 'localhost' && 
+         !window.location.hostname.includes('127.0.0.1');
+};
+
 // Check if backend is experiencing issues
 const isBackendUnavailable = () => {
   // Check if we've recently had a backend issue
@@ -52,7 +58,19 @@ export const login = (userType) => {
   console.log(`auth.js - Set userType in storage: ${userType}`);
   console.log(`auth.js - Storage verification - sessionStorage: ${sessionStorage.getItem('userType')}, localStorage: ${localStorage.getItem('userType')}`);
   
-  // Calculate the redirect URL based on the user type
+  // In production, use CAS authentication
+  if (isProduction()) {
+    // Calculate the CAS login URL
+    const backendUrl = getBackendUrl();
+    const redirectUri = encodeURIComponent(`${window.location.origin}/dashboard?userType=${userType}`);
+    const casLoginUrl = `${backendUrl}/api/auth/login?userType=${userType}&redirectUri=${redirectUri}`;
+    
+    console.log(`auth.js - Production environment, redirecting to CAS: ${casLoginUrl}`);
+    window.location.href = casLoginUrl;
+    return;
+  }
+  
+  // For local development, just redirect directly
   let redirectUrl;
   if (userType === 'renter') {
     redirectUrl = "/map";
@@ -78,6 +96,14 @@ export const logout = () => {
   const backendUrl = getBackendUrl();
   const logoutUrl = `${backendUrl}/api/auth/logout`;
   
+  // Add redirect for production
+  if (isProduction()) {
+    const redirectUri = encodeURIComponent(window.location.origin);
+    logoutUrl += `?redirectUri=${redirectUri}`;
+  }
+  
+  console.log(`auth.js - Logging out, redirecting to: ${logoutUrl}`);
+  
   // Perform the redirect
   window.location.href = logoutUrl;
 };
@@ -86,28 +112,38 @@ export const checkAuthStatus = async () => {
   try {
     console.log("Checking authentication status");
     const backendUrl = getBackendUrl();
-    // Try with the /api prefix first
-    try {
-      const response = await axios.get(`${backendUrl}/api/auth/status`, { withCredentials: true });
-      console.log("Auth status response:", response.data);
-      
-      // Get the stored user type
-      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
-      console.log("Stored user type:", userType);
-      
-      return { ...response.data, userType };
-    } catch (prefixError) {
-      if (prefixError.response?.status === 404) {
-        // Try without the /api prefix as fallback
-        console.log("Attempting auth check without /api prefix");
-        const response = await axios.get(`${backendUrl}/auth/status`, { withCredentials: true });
-        console.log("Auth status response (without /api prefix):", response.data);
+    
+    // Define potential auth endpoints to try
+    const authEndpoints = [
+      `${backendUrl}/api/auth/status`,
+      `${backendUrl}/auth/status`
+    ];
+    
+    // Try each endpoint in order
+    let lastError = null;
+    for (const endpoint of authEndpoints) {
+      try {
+        console.log(`Trying auth endpoint: ${endpoint}`);
+        const response = await axios.get(endpoint, { 
+          withCredentials: true,
+          timeout: 5000 // Add timeout to prevent hanging requests
+        });
+        console.log("Auth status response:", response.data);
         
+        // Get the stored user type
         const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+        console.log("Stored user type:", userType);
+        
         return { ...response.data, userType };
+      } catch (error) {
+        console.log(`Error with endpoint ${endpoint}:`, error.message);
+        lastError = error;
+        // Continue to next endpoint
       }
-      throw prefixError;
     }
+    
+    // If we got here, all endpoints failed
+    throw lastError || new Error("All auth endpoints failed");
   } catch (error) {
     console.error("Error checking auth status:", error);
     recordBackendError();
