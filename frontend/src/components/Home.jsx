@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../utils/auth';
 import tiger_storage_logo from '../assets/tiger_storage_logo.png';
@@ -8,10 +8,21 @@ const Home = () => {
   const navigate = useNavigate();
   const [logoError, setLogoError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
   
   // Check for dashboard redirect flag
   React.useEffect(() => {
     console.log("Home component mounted, checking for redirect flag");
+    
+    // Check for auth errors
+    const authError = sessionStorage.getItem('authError');
+    if (authError) {
+      console.log("Auth error detected");
+      setErrorMessage("Authentication service is currently unavailable. Please try again later.");
+      // Clear the error so it doesn't persist
+      sessionStorage.removeItem('authError');
+    }
+    
     const dashboardRedirect = localStorage.getItem('dashboardRedirect');
     if (dashboardRedirect) {
       console.log(`Found dashboardRedirect flag: ${dashboardRedirect}`);
@@ -31,33 +42,27 @@ const Home = () => {
     }
   }, [navigate]);
   
-  const handleLogin = async (userType) => {
-    try {
-      console.log(`handleLogin called with userType: ${userType}`);
-      setLoading(true);
-      
-      // Clear any existing user type first
-      sessionStorage.removeItem('userType');
-      localStorage.removeItem('userType');
-      
-      // Set the new user type
-      sessionStorage.setItem('userType', userType);
-      localStorage.setItem('userType', userType);
-      
-      console.log(`userType set in storage, calling login function`);
-      // Proceed with login for both renters and lenders
-      login(userType);
-      
-      // Set a timeout to reset the loading state in case the redirect doesn't happen
-      // This prevents the UI from being stuck in a loading state
-      setTimeout(() => {
-        console.log("Login redirect timeout reached, resetting loading state");
-        setLoading(false);
-      }, 5000);
-    } catch (error) {
-      console.error("Login error:", error);
-      setLoading(false);
-    }
+  const handleLogin = (userType) => {
+    console.log('handleLogin called with userType:', userType);
+    
+    // Clear any existing user type first
+    sessionStorage.removeItem('userType');
+    localStorage.removeItem('userType');
+    console.log('Cleared existing userType from storage');
+    
+    // Set the new user type and call login
+    sessionStorage.setItem('userType', userType);
+    localStorage.setItem('userType', userType);
+    console.log('Set new userType in storage:', userType);
+    console.log('SessionStorage after setting:', sessionStorage.getItem('userType'));
+    console.log('LocalStorage after setting:', localStorage.getItem('userType'));
+    
+    // Set dashboard redirect flag in local storage
+    localStorage.setItem('dashboardRedirect', 'true');
+    console.log('Set dashboardRedirect flag in localStorage');
+    
+    login(userType);
+    console.log('Called login function with userType:', userType);
   };
 
   return (
@@ -76,6 +81,21 @@ const Home = () => {
           </div>
         )}
         <h1 className="home-title">Tiger Storage</h1>
+        
+        {errorMessage && (
+          <div style={{
+            backgroundColor: '#f8d7da',
+            color: '#721c24',
+            padding: '12px',
+            borderRadius: '4px',
+            marginBottom: '20px',
+            textAlign: 'center',
+            fontSize: '14px'
+          }}>
+            {errorMessage}
+          </div>
+        )}
+        
         <div className="home-button-container">
           <button 
             className="home-button" 

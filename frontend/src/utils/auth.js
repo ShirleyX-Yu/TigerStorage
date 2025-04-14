@@ -1,5 +1,7 @@
 // Authentication utility functions
 
+import axios from 'axios';
+
 // Get the API URL from environment variables with a fallback
 const getApiUrl = () => {
   // Try to get from environment
@@ -19,186 +21,96 @@ const getApiUrl = () => {
 const API_URL = getApiUrl();
 console.log('Using API URL:', API_URL);
 
-// Check if backend is reachable with a simple ping
-const checkBackendAvailability = async (timeoutMs = 3000) => {
-  try {
-    // Create an AbortController to handle timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    
-    // Try to fetch the status endpoint
-    const response = await fetch(`${API_URL}/api/auth/status`, {
-      method: 'HEAD',  // Just check headers, don't need body
-      signal: controller.signal,
-      credentials: 'include'
-    });
-    
-    // Clear the timeout
-    clearTimeout(timeoutId);
-    
-    return response.ok;
-  } catch (error) {
-    console.error('Backend availability check failed:', error);
-    return false;
-  }
+// Check if backend is experiencing issues
+const isBackendUnavailable = () => {
+  // Check if we've recently had a backend issue
+  const lastBackendError = localStorage.getItem('lastBackendError');
+  if (!lastBackendError) return false;
+  
+  // If we've had an error in the last 10 seconds, consider backend unavailable
+  const errorTime = parseInt(lastBackendError, 10);
+  const now = Date.now();
+  return now - errorTime < 10000; // 10 seconds
 };
 
-// Determine if we should use development mode bypassing authentication
-const shouldBypassAuth = () => {
-  // Only use this in development mode or when explicitly set
-  return import.meta.env.DEV || 
-    localStorage.getItem('bypassAuth') === 'true' || 
-    sessionStorage.getItem('bypassAuth') === 'true';
+// Store backend error information
+const recordBackendError = () => {
+  localStorage.setItem('lastBackendError', Date.now().toString());
 };
 
-export const login = async (userType) => {
-  console.log('Login called with userType:', userType); // Debug log
+// Determine backend URL based on environment
+const getBackendUrl = () => {
+  return process.env.NODE_ENV === 'production'
+    ? 'https://tigerstorage-backend.onrender.com'
+    : process.env.REACT_APP_API_URL || 'http://localhost:5000';
+};
+
+export const login = (userType) => {
+  console.log(`auth.js - login called with userType: ${userType}`);
   
-  if (!userType || (userType !== 'renter' && userType !== 'lender')) {
-    console.error('Invalid user type:', userType);
-    throw new Error('Invalid user type');
-  }
-  
-  // Store the user type in session storage before redirecting
+  // Store the user type in both session and local storage
   sessionStorage.setItem('userType', userType);
-  console.log('Session storage after setting userType:', sessionStorage.getItem('userType')); // Debug log
-  
-  // Also store in localStorage as a backup since sessionStorage might be lost during redirects
   localStorage.setItem('userType', userType);
-  console.log('Local storage after setting userType:', localStorage.getItem('userType')); // Debug log
+  console.log(`auth.js - Set userType in storage: ${userType}`);
+  console.log(`auth.js - Storage verification - sessionStorage: ${sessionStorage.getItem('userType')}, localStorage: ${localStorage.getItem('userType')}`);
   
-  // Add the user type as a query parameter to preserve it through redirects
-  const redirectPath = userType === 'renter' ? '/map' : '/lender-dashboard';
-  console.log('Redirecting to:', redirectPath); // Debug log
-  
-  try {
-    // First check if backend is available
-    const isBackendAvailable = await checkBackendAvailability(3000);
-    
-    if (!isBackendAvailable) {
-      console.warn('Backend appears to be unavailable. Bypassing authentication.');
-      
-      // Store a flag to remember we bypassed auth
-      sessionStorage.setItem('bypassAuth', 'true');
-      
-      // Directly redirect to the appropriate dashboard
-      if (userType === 'renter') {
-        window.location.href = '/map';
-      } else {
-        window.location.href = '/lender-dashboard';
-      }
-      return;
-    }
-    
-    // Proceed with normal authentication if backend is available
-    const authUrl = `${API_URL}/api/auth/login?userType=${userType}&redirect=${encodeURIComponent(redirectPath)}`;
-    console.log('Auth URL:', authUrl);
-    
-    // Force a small delay to ensure storage is set before redirect
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Double check storage values right before redirect
-    console.log('Final check - Session storage userType:', sessionStorage.getItem('userType'));
-    console.log('Final check - Local storage userType:', localStorage.getItem('userType'));
-    
-    // Use window.location for a full page reload and redirect
-    window.location.href = authUrl;
-  } catch (error) {
-    console.error('Error during login redirect:', error);
-    throw error;
+  // Calculate the redirect URL based on the user type
+  let redirectUrl;
+  if (userType === 'renter') {
+    redirectUrl = "/map";
+    console.log(`auth.js - User is renter, redirecting to: ${redirectUrl}`);
+  } else if (userType === 'lender') {
+    redirectUrl = "/lender-dashboard";
+    console.log(`auth.js - User is lender, redirecting to: ${redirectUrl}`);
+  } else {
+    redirectUrl = "/";
+    console.log(`auth.js - Invalid userType (${userType}), redirecting to home: ${redirectUrl}`);
   }
+  
+  console.log(`auth.js - Final redirect URL: ${redirectUrl}`);
+  window.location.href = redirectUrl;
 };
 
-export const logout = async () => {
-  // Clear user type from both storage types
+export const logout = () => {
+  // Clear the user type from both session and local storage
   sessionStorage.removeItem('userType');
   localStorage.removeItem('userType');
-  sessionStorage.removeItem('bypassAuth');
-  localStorage.removeItem('bypassAuth');
   
-  // If we're in bypass mode, just redirect to home
-  if (shouldBypassAuth()) {
-    window.location.href = '/';
-    return;
-  }
+  // Get the logout URL
+  const backendUrl = getBackendUrl();
+  const logoutUrl = `${backendUrl}/auth/logout`;
   
-  // Otherwise use normal logout
-  window.location.href = `${API_URL}/api/auth/logout`;
+  // Perform the redirect
+  window.location.href = logoutUrl;
 };
 
 export const checkAuthStatus = async () => {
   try {
-    console.log('checkAuthStatus called'); // Debug log
+    console.log("Checking authentication status");
+    const backendUrl = getBackendUrl();
+    const response = await axios.get(`${backendUrl}/auth/status`, { withCredentials: true });
     
-    // Check if we should bypass auth in development mode
-    if (shouldBypassAuth()) {
-      console.log('Bypassing authentication check in development mode');
-      
-      // Get user type from sessionStorage or localStorage
-      const sessionUserType = sessionStorage.getItem('userType');
-      const localUserType = localStorage.getItem('userType');
-      const userType = sessionUserType || localUserType;
-      
-      // Return mock authenticated status
-      return {
-        authenticated: true,
-        username: 'dev_user',
-        userType: userType || 'lender'
-      };
-    }
+    console.log("Auth status response:", response.data);
     
-    // Try to fetch with a reasonable timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    // Get the stored user type
+    const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+    console.log("Stored user type:", userType);
     
-    const response = await fetch(`${API_URL}/api/auth/status`, {
-      credentials: 'include',
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      throw new Error('Failed to check auth status');
-    }
-    
-    const data = await response.json();
-    console.log('Auth status response:', data); // Debug log
-    
-    // Get user type from sessionStorage or localStorage
-    const sessionUserType = sessionStorage.getItem('userType');
-    const localUserType = localStorage.getItem('userType');
-    console.log('Session userType:', sessionUserType); // Debug log
-    console.log('Local userType:', localUserType); // Debug log
-    
-    const userType = sessionUserType || localUserType;
-    
-    return {
-      ...data,
-      userType
-    };
+    return { ...response.data, userType };
   } catch (error) {
-    console.error('Error checking auth status:', error);
+    console.error("Error checking auth status:", error);
     
-    // If we got an abort error (timeout), enable bypass mode
-    if (error.name === 'AbortError') {
-      console.warn('Auth check timed out. Enabling authentication bypass mode.');
-      sessionStorage.setItem('bypassAuth', 'true');
-      
-      // Get user type from sessionStorage or localStorage
-      const sessionUserType = sessionStorage.getItem('userType');
-      const localUserType = localStorage.getItem('userType');
-      const userType = sessionUserType || localUserType;
-      
-      // Return mock authenticated status
-      return {
-        authenticated: true,
-        username: 'dev_user',
-        bypassMode: true,
-        userType: userType || 'lender'
-      };
+    // Set an auth error flag if the error is network-related
+    if (error.message.includes('Network Error') || 
+        error.response?.status === 502 || 
+        error.response?.status === 503 || 
+        error.response?.status === 504) {
+      console.log("Setting auth error flag due to network issues");
+      sessionStorage.setItem('authError', 'true');
     }
     
-    throw error;
+    // Return unauthenticated if there's an error
+    const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+    return { authenticated: false, userType };
   }
 };
