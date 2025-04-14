@@ -26,12 +26,15 @@ CREATE TABLE storage_listings (
     location TEXT,
     cost BIGINT,
     cubic_ft BIGINT,
-    contract_length_months BIGINT,
-    latitude DECIMAL(10, 8),
-    longitude DECIMAL(11, 8),
     description TEXT,
+    latitude FLOAT,
+    longitude FLOAT,
+    start_date DATE,
+    end_date DATE,
     image_url TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    address VARCHAR(255),
+    owner_id VARCHAR(255)
     -- is_available BOOLEAN DEFAULT TRUE
     -- available_from DATE, maybe add later
     -- available_to DATE, maybe add later
