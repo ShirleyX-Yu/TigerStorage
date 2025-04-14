@@ -288,6 +288,15 @@ app.add_url_rule(
     view_func=lambda filename: send_from_directory("build", filename),
 )
 
+@app.route('/api/debug-session')
+def debug_session():
+    return jsonify({
+        'session': dict(session),
+        'cookies': dict(request.cookies),
+        'is_authenticated': auth.is_authenticated(),
+        'headers': dict(request.headers)
+    })
+
 # Add route to serve static files from frontend public directory
 @app.route('/public/<path:filename>')
 def serve_public(filename):
