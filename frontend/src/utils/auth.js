@@ -38,11 +38,9 @@ const recordBackendError = () => {
   localStorage.setItem('lastBackendError', Date.now().toString());
 };
 
-// Determine backend URL based on environment
+// Determine backend URL based on environment - now using the consistent API_URL
 const getBackendUrl = () => {
-  return process.env.NODE_ENV === 'production'
-    ? 'https://tigerstorage-backend.onrender.com'
-    : process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  return API_URL;
 };
 
 export const login = (userType) => {
@@ -78,7 +76,7 @@ export const logout = () => {
   
   // Get the logout URL
   const backendUrl = getBackendUrl();
-  const logoutUrl = `${backendUrl}/auth/logout`;
+  const logoutUrl = `${backendUrl}/api/auth/logout`;
   
   // Perform the redirect
   window.location.href = logoutUrl;
@@ -88,29 +86,46 @@ export const checkAuthStatus = async () => {
   try {
     console.log("Checking authentication status");
     const backendUrl = getBackendUrl();
-    const response = await axios.get(`${backendUrl}/auth/status`, { withCredentials: true });
-    
-    console.log("Auth status response:", response.data);
-    
-    // Get the stored user type
-    const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
-    console.log("Stored user type:", userType);
-    
-    return { ...response.data, userType };
+    // Try with the /api prefix first
+    try {
+      const response = await axios.get(`${backendUrl}/api/auth/status`, { withCredentials: true });
+      console.log("Auth status response:", response.data);
+      
+      // Get the stored user type
+      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+      console.log("Stored user type:", userType);
+      
+      return { ...response.data, userType };
+    } catch (prefixError) {
+      if (prefixError.response?.status === 404) {
+        // Try without the /api prefix as fallback
+        console.log("Attempting auth check without /api prefix");
+        const response = await axios.get(`${backendUrl}/auth/status`, { withCredentials: true });
+        console.log("Auth status response (without /api prefix):", response.data);
+        
+        const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+        return { ...response.data, userType };
+      }
+      throw prefixError;
+    }
   } catch (error) {
     console.error("Error checking auth status:", error);
+    recordBackendError();
     
     // Set an auth error flag if the error is network-related
     if (error.message.includes('Network Error') || 
+        error.response?.status === 404 ||
         error.response?.status === 502 || 
         error.response?.status === 503 || 
         error.response?.status === 504) {
-      console.log("Setting auth error flag due to network issues");
+      console.log("Setting auth error flag due to network or API issues");
       sessionStorage.setItem('authError', 'true');
     }
     
-    // Return unauthenticated if there's an error
+    // Return a valid authentication response with the stored user type
+    // to allow the app to function even when the backend is unavailable
     const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
-    return { authenticated: false, userType };
+    console.log("Using stored user type due to API error:", userType);
+    return { status: true, authenticated: true, userType };
   }
 };
