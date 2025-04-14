@@ -342,8 +342,23 @@ def login():
         user_type = request.args.get('userType')
         redirect_param = request.args.get('redirect')
         
-        # Frontend URL (default to localhost:5173 if not set in environment)
-        frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+        # Determine the frontend URL based on request origin or environment variable
+        frontend_url = os.environ.get('FRONTEND_URL')
+        
+        # If FRONTEND_URL is not set, try to determine it from the request origin
+        if not frontend_url:
+            # Get the origin (scheme + host + port) from where the request came
+            origin = request.headers.get('Origin')
+            if origin:
+                frontend_url = origin
+            else:
+                # Default to localhost:5173 if we can't determine the origin
+                frontend_url = 'http://localhost:5173'
+        
+        # Remove trailing slash if present
+        frontend_url = frontend_url.rstrip('/')
+        
+        print(f"Redirecting to frontend URL: {frontend_url}")
         
         # Authenticate the user
         username = auth.authenticate()
