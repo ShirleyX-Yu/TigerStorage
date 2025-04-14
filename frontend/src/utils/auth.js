@@ -54,8 +54,8 @@ export const login = async (userType) => {
     // Use window.location for a full page reload and redirect
     window.location.href = authUrl;
     
-    // This will not be reached if the redirect happens
-    return new Promise(() => {}); // Never resolves, as we're redirecting
+    // This function doesn't actually return a resolved promise
+    // since we're redirecting away from the page
   } catch (error) {
     console.error('Error during login redirect:', error);
     throw error;

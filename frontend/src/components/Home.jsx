@@ -46,10 +46,14 @@ const Home = () => {
       
       console.log(`userType set in storage, calling login function`);
       // Proceed with login for both renters and lenders
-      await login(userType);
+      login(userType);
       
-      // This code will only run if the login function doesn't redirect
-      console.log("WARNING: Login function returned without redirect");
+      // Set a timeout to reset the loading state in case the redirect doesn't happen
+      // This prevents the UI from being stuck in a loading state
+      setTimeout(() => {
+        console.log("Login redirect timeout reached, resetting loading state");
+        setLoading(false);
+      }, 5000);
     } catch (error) {
       console.error("Login error:", error);
       setLoading(false);

@@ -25,7 +25,10 @@ const ProtectedRoute = ({ children }) => {
     const verifyAuth = async () => {
       try {
         // Prevent multiple auth checks
-        if (redirecting) return;
+        if (redirecting) {
+          console.log('Already redirecting, skipping auth check');
+          return;
+        }
         
         const status = await checkAuthStatus();
         console.log('Auth status in ProtectedRoute:', status);
@@ -34,6 +37,8 @@ const ProtectedRoute = ({ children }) => {
         if (!status.authenticated) {
           // Set redirecting flag to prevent loops
           setRedirecting(true);
+          // Update loading state immediately to prevent hanging
+          setLoading(false);
           
           // Store the current path to return after login
           const currentPath = window.location.pathname;
@@ -43,27 +48,49 @@ const ProtectedRoute = ({ children }) => {
           // Get userType from sessionStorage or localStorage
           const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'lender';
           
-          // Force redirect to login for the user type
+          // Just immediately navigate to home if we don't have a valid user type
+          if (userType !== 'renter' && userType !== 'lender') {
+            console.error('Invalid user type:', userType);
+            navigate('/');
+            return;
+          }
+          
+          // Redirect to login without await - prevents hanging
+          console.log('Redirecting to login with userType:', userType);
+          
           try {
-            // We're using the login function which will redirect to CAS
-            await login(userType);
+            // Don't await this call since it won't resolve (it redirects)
+            login(userType);
+            
+            // Set a fallback redirect in case login() doesn't redirect
+            setTimeout(() => {
+              console.log('Login redirect timeout reached, falling back to home page');
+              navigate('/');
+            }, 3000);
           } catch (error) {
             console.error('Error during login redirect:', error);
             // Fallback to home page if login redirect fails
             navigate('/');
           }
+        } else {
+          // Only update loading if we're not redirecting
+          setLoading(false);
         }
       } catch (error) {
         console.error('Auth verification error:', error);
+        // Set loading to false on error to prevent hanging
         setLoading(false);
-      } finally {
-        if (!redirecting) {
-          setLoading(false);
-        }
+        // Navigate to home as a fallback
+        navigate('/');
       }
     };
     
     verifyAuth();
+    
+    // Cleanup function to prevent state updates after component unmounts
+    return () => {
+      console.log('ProtectedRoute cleanup');
+    };
   }, [redirecting, navigate]);
 
   if (loading) {
