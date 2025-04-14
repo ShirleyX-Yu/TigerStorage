@@ -30,6 +30,11 @@ CORS(app, resources={r"/*": {"origins": ["https://tigerstorage-frontend.onrender
 dotenv.load_dotenv()
 app.secret_key = os.environ.get("APP_SECRET_KEY", "default-dev-key-replace-in-production")
 
+# Configure session cookie settings
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+
 # Configure upload folder
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -340,8 +345,13 @@ def login():
     try:
         # Get the user type from the query parameter
         user_type = request.args.get('userType')
-        redirect_param = request.args.get('redirect')
+        redirect_uri = request.args.get('redirectUri')
         
+        # Store the user type in the session for later retrieval
+        if user_type:
+            session['user_type'] = user_type
+            print(f"Stored user_type in session: {user_type}")
+            
         # Determine the frontend URL based on request origin or environment variable
         frontend_url = os.environ.get('FRONTEND_URL')
         
@@ -363,8 +373,20 @@ def login():
         # Authenticate the user
         username = auth.authenticate()
         
+        # At this point, the user should be authenticated and have a session
+        # Get the user type from the session if it exists
+        user_type = session.get('user_type', user_type)
+        
+        # Log the session data to help with debugging
+        print(f"Session after auth: {session}")
+        print(f"Authenticated as: {username}")
+        print(f"User type: {user_type}")
+        
         # Redirect to the appropriate dashboard based on user type
-        if user_type == 'renter':
+        if redirect_uri:
+            # Use the provided redirect URI if available
+            return redirect(redirect_uri)
+        elif user_type == 'renter':
             return redirect(f"{frontend_url}/map")
         elif user_type == 'lender':
             return redirect(f"{frontend_url}/lender-dashboard")
@@ -375,6 +397,9 @@ def login():
             # This is the CAS redirect
             # Preserve the user type in the redirect
             user_type = request.args.get('userType')
+            if user_type:
+                session['user_type'] = user_type
+                
             redirect_url = e.response.location
             if user_type and '?' not in redirect_url:
                 redirect_url += f'?userType={user_type}'
@@ -776,14 +801,29 @@ def get_listing_by_id(listing_id):
 def get_my_listings():
     try:
         print("Received request for /api/my-listings")
+        print("Session data:", session)
+        
         # Check if user is logged in
         if not auth.is_authenticated():
-            print("User not authenticated")
-            return jsonify({"error": "Not authenticated"}), 401
+            print("User not authenticated via auth.is_authenticated()")
+            
+            # Additional check - see if user_info exists but isn't being detected
+            if 'user_info' in session:
+                print("user_info found in session but not detected by is_authenticated()")
+                user_info = session['user_info']
+            else:
+                print("No user_info in session")
+                return jsonify({"error": "Not authenticated"}), 401
+        else:
+            print("User authenticated via auth.is_authenticated()")
             
         # Get user info from session using the same key as auth_status
-        user_info = session['user_info']
+        user_info = session.get('user_info')
         print("User info from session:", user_info)
+        
+        if not user_info:
+            print("User info not found in session")
+            return jsonify({"error": "Not authenticated"}), 401
         
         owner_id = user_info.get('user', '')
         print("Owner ID:", owner_id)

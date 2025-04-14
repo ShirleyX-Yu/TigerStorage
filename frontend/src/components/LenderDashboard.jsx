@@ -95,6 +95,14 @@ const LenderDashboard = ({ username }) => {
         
         // Update the API URL to match the format used in Map.jsx
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        console.log(`Fetching listings from: ${apiUrl}/api/my-listings`);
+        
+        // Get user type from storage to help diagnose issues
+        const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+        console.log('Current userType in storage:', userType);
+        
+        // Log cookies for debugging
+        console.log('Cookies available:', document.cookie);
         
         // Fetch listings - we don't need to check auth here since ProtectedRoute already does that
         const response = await fetch(`${apiUrl}/api/my-listings`, {
@@ -105,9 +113,15 @@ const LenderDashboard = ({ username }) => {
           }
         });
 
+        console.log('Listings response status:', response.status);
+        
         if (!response.ok) {
           // If we get a 401, we're not authenticated
           if (response.status === 401) {
+            console.error('Authentication failed, redirecting to login');
+            // Try to read more details from the response
+            const errorText = await response.text();
+            console.error('Error details:', errorText);
             throw new Error('Authentication required. Please log in again.');
           }
           // For other errors, show a generic message
@@ -134,6 +148,8 @@ const LenderDashboard = ({ username }) => {
               dateInterested: renter.dateInterested,
               status: renter.status
             }));
+          } else {
+            console.warn(`Failed to fetch interested renters for listing ${listing.id}:`, rentersResponse.status);
           }
           
           return {
@@ -212,8 +228,22 @@ const LenderDashboard = ({ username }) => {
                       onClick={() => {
                         // Store current location to return after login
                         sessionStorage.setItem('returnTo', '/lender-dashboard');
+                        // Set user type before redirecting to login
+                        sessionStorage.setItem('userType', 'lender');
+                        localStorage.setItem('userType', 'lender');
+                        
+                        // Get the frontend URL for the redirect
+                        const frontendUrl = window.location.origin;
+                        const redirectUri = encodeURIComponent(`${frontendUrl}/lender-dashboard`);
+                        
+                        // Get the API URL
                         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-                        window.location.href = `${apiUrl}/api/auth/login?userType=lender`;
+                        
+                        // Create the login URL with all parameters
+                        const loginUrl = `${apiUrl}/api/auth/login?userType=lender&redirectUri=${redirectUri}`;
+                        console.log('Redirecting to login:', loginUrl);
+                        
+                        window.location.href = loginUrl;
                       }}
                     >
                       Login

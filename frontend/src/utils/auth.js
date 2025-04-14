@@ -73,6 +73,9 @@ export const login = (userType) => {
     
     console.log(`auth.js - Production environment, redirecting to CAS: ${casLoginUrl}`);
     
+    // Clear any existing auth errors before login
+    sessionStorage.removeItem('authError');
+    
     // Here we use window.location.replace instead of href to prevent browser history issues
     window.location.replace(casLoginUrl);
     return;
@@ -127,6 +130,9 @@ export const checkAuthStatus = async () => {
       `${backendUrl}/auth/status`
     ];
     
+    // Log cookies for debugging
+    console.log('Cookies available during auth check:', document.cookie);
+    
     // Try each endpoint in order
     let lastError = null;
     for (const endpoint of authEndpoints) {
@@ -134,7 +140,11 @@ export const checkAuthStatus = async () => {
         console.log(`Trying auth endpoint: ${endpoint}`);
         const response = await axios.get(endpoint, { 
           withCredentials: true,
-          timeout: 5000 // Add timeout to prevent hanging requests
+          timeout: 5000, // Add timeout to prevent hanging requests
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
         });
         console.log("Auth status response:", response.data);
         
