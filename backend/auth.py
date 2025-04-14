@@ -50,23 +50,27 @@ def validate(ticket):
     return None
 
 def authenticate():
+    # First check if user_info is already in session
     if "user_info" in flask.session:
         user_info = flask.session.get("user_info")
         print(f"User already authenticated as: {user_info.get('user', 'unknown')}")
-        # Make sure the session is marked as modified so Flask persists it
-        flask.session.modified = True
+        flask.session.permanent = True  # Make session persistent
+        flask.session.modified = True   # Force the session to be saved
         return user_info["user"]
 
+    # Check for CAS ticket in URL
     ticket = flask.request.args.get("ticket")
     if ticket is None:
-        print("No ticket found, redirecting to CAS login")
+        print("No CAS ticket found, redirecting to CAS login")
+        # If no ticket, redirect to CAS login
         login_url = _CAS_URL + "login?service=" + urllib.parse.quote(flask.request.url)
         flask.abort(flask.redirect(login_url))
 
+    # If we have a ticket, validate it
     print(f"Validating CAS ticket: {ticket[:10]}...")
     user_info = validate(ticket)
     if user_info is None:
-        print("Ticket validation failed, redirecting to CAS login")
+        print("CAS ticket validation failed, redirecting to CAS login")
         login_url = (
             _CAS_URL
             + "login?service="
@@ -74,21 +78,27 @@ def authenticate():
         )
         flask.abort(flask.redirect(login_url))
 
-    print(f"Ticket validation successful: {user_info.get('user', 'unknown')}")
-    # Store user info in session and mark as permanent
+    # Store authentication info in session
+    print(f"CAS authentication successful for user: {user_info.get('user', 'unknown')}")
     flask.session["user_info"] = user_info
     flask.session.permanent = True  # Make session persistent
-    flask.session.modified = True   # Ensure session is saved
+    flask.session.modified = True   # Force the session to be saved
     
-    # Preserve user type if it was specified in the query parameters
+    # Store user type from query parameters if available
     user_type = flask.request.args.get("userType")
     if user_type:
         print(f"Setting user_type in session: {user_type}")
         flask.session["user_type"] = user_type
+        flask.session.modified = True
     
+    # Redirect to clean URL without ticket
     clean_url = strip_ticket(flask.request.url)
     print(f"Redirecting to: {clean_url}")
     flask.abort(flask.redirect(clean_url))
+
+    # This line won't be reached due to the abort above,
+    # but it's here to make the function's intent clear
+    return user_info.get('user', '')
 
 def is_authenticated():
     return "user_info" in flask.session

@@ -30,12 +30,16 @@ CORS(app, resources={r"/*": {"origins": ["https://tigerstorage-frontend.onrender
 dotenv.load_dotenv()
 app.secret_key = os.environ.get("APP_SECRET_KEY", "default-dev-key-replace-in-production")
 
-# Configure session cookie settings - adjusted for better compatibility
-app.config['SESSION_COOKIE_SAMESITE'] = None  # Allow cross-site cookies (default browser behavior)
-app.config['SESSION_COOKIE_SECURE'] = False   # Don't require HTTPS
+# Configure session cookie settings for proper cross-domain support
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # String 'None' not Python None
+app.config['SESSION_COOKIE_SECURE'] = True     # Require HTTPS for SameSite=None
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_DOMAIN'] = None    # Use the default domain behavior
-app.config['PERMANENT_SESSION_LIFETIME'] = 3600 * 24  # 24 hours in seconds
+
+# Determine if this is production based on environment variables
+is_production = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('ENVIRONMENT') == 'production'
+# Set domain to None in dev, but in production set it to the root domain shared by frontend/backend
+app.config['SESSION_COOKIE_DOMAIN'] = '.onrender.com' if is_production else None
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600 * 24 * 7  # 7 days in seconds
 
 # Configure upload folder
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
@@ -441,18 +445,43 @@ def logout():
 
 @app.route('/api/auth/status')
 def auth_status():
+    # Add CORS headers for this critical endpoint
+    response_headers = {
+        'Access-Control-Allow-Origin': request.headers.get('Origin', '*'),
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    }
+    
     if auth.is_authenticated():
         # Add debug information to help troubleshoot
-        print("User is authenticated. Session info:", session['user_info'])
-        return jsonify({
+        print("User is authenticated. Session info:", session.get('user_info', {}))
+        user_info = session.get('user_info', {})
+        user_type = session.get('user_type', 'unknown')
+        
+        response = jsonify({
             'authenticated': True,
-            'username': session['user_info']['user'],
+            'username': user_info.get('user', ''),
+            'userType': user_type,
             'session_id': session.get('_id', 'unknown')
         })
+        
+        # Add CORS headers
+        for key, value in response_headers.items():
+            response.headers[key] = value
+            
+        return response
+    
     print("User is not authenticated")
-    return jsonify({
+    response = jsonify({
         'authenticated': False
     })
+    
+    # Add CORS headers
+    for key, value in response_headers.items():
+        response.headers[key] = value
+        
+    return response
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
@@ -825,41 +854,42 @@ def get_listing_by_id(listing_id):
 def get_my_listings():
     try:
         print("Received request for /api/my-listings")
-        print("Session data:", {k: str(v) for k, v in session.items()})
-        print("Request cookies:", request.cookies)
+        # Check if user is authenticated
+        authenticated = auth.is_authenticated()
         
-        # Get username from the query parameter if provided
-        username_param = request.args.get('username')
+        # Get the owner ID from different possible sources
+        owner_id = None
         
-        # First try normal authentication
-        if auth.is_authenticated():
-            print("User authenticated via auth.is_authenticated()")
+        if authenticated:
+            # Get from session if authenticated
+            print("User authenticated via session")
             user_info = session.get('user_info', {})
             owner_id = user_info.get('user', '')
             print(f"Authenticated username from session: {owner_id}")
-        # Fallback: If not authenticated but username is provided as query param
-        elif username_param:
-            print(f"Using username from query parameter: {username_param}")
-            owner_id = username_param
-            # Temporarily set session for this request
-            session['temp_auth'] = True
-            session.modified = True
-        # If user_type is set in session but not authenticated through normal means
-        elif 'user_type' in session and session['user_type'] == 'lender':
-            print("User type found in session but not fully authenticated")
-            # Check for possible usernames in cookies or headers
-            owner_id = request.cookies.get('username') or request.headers.get('X-Username')
-            if not owner_id:
-                print("No owner ID found in cookies/headers, using 'lender'")
-                owner_id = 'lender'  # Fallback value
         else:
-            print("No authentication found")
-            return jsonify({"error": "Not authenticated"}), 401
+            # If not authenticated via session, check headers
+            print("User not authenticated via session, checking headers")
+            username_header = request.headers.get('X-Username')
+            user_type_header = request.headers.get('X-User-Type')
             
-        print("Using owner_id:", owner_id)
+            if username_header:
+                owner_id = username_header
+                print(f"Using username from X-Username header: {owner_id}")
+            elif user_type_header == 'lender':
+                # If user type header indicates lender, use it as fallback
+                owner_id = 'lender'
+                print(f"Using default owner_id 'lender' from X-User-Type header")
+            else:
+                # No authentication found
+                print("No authentication found in session or headers")
+                # Add CORS headers to error response
+                response = jsonify({"error": "Not authenticated"})
+                response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+                response.headers['Access-Control-Allow-Credentials'] = 'true'
+                return response, 401
         
         if not owner_id:
-            print("Owner ID not found in session")
+            print("Owner ID not found in session or headers")
             return jsonify({"error": "User ID not found"}), 400
         
         # Get a fresh connection
@@ -1346,6 +1376,77 @@ def get_my_interested_listings():
             conn.close()
     except Exception as e:
         print("Error getting interested listings:", str(e))
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+# API to get listings by username (emergency workaround for cross-domain cookie issues)
+@app.route('/api/listings/by-username/<username>', methods=['GET'])
+def get_listings_by_username(username):
+    try:
+        print(f"Received request for listings by username: {username}")
+        
+        # Get a fresh connection
+        conn = get_db_connection()
+        if not conn:
+            print("Database connection failed")
+            return jsonify({"error": "Database connection failed"}), 500
+            
+        try:
+            with conn.cursor() as cur:
+                print(f"Fetching listings for username: {username}")
+                
+                # Get listings by owner_id
+                cur.execute("""
+                    SELECT listing_id, location, cost, cubic_ft, description, latitude, longitude,
+                           start_date, end_date, image_url, created_at, owner_id
+                    FROM storage_listings
+                    WHERE owner_id = %s
+                    ORDER BY created_at DESC;
+                """, (username,))
+                
+                listings = cur.fetchall()
+                print(f"Found {len(listings)} listings for {username}")
+                
+                # Get column names from cursor description
+                column_names = [desc[0] for desc in cur.description]
+                
+                # Convert to list of dictionaries
+                formatted_listings = []
+                for listing in listings:
+                    try:
+                        formatted_listing = {
+                            "id": listing[0],
+                            "location": listing[1],
+                            "cost": float(listing[2]) if listing[2] is not None else 0,
+                            "cubic_feet": listing[3] if listing[3] is not None else 0,
+                            "description": listing[4] if listing[4] is not None else "",
+                            "latitude": float(listing[5]) if listing[5] is not None else None,
+                            "longitude": float(listing[6]) if listing[6] is not None else None,
+                            "start_date": listing[7].isoformat() if listing[7] else None,
+                            "end_date": listing[8].isoformat() if listing[8] else None,
+                            "image_url": listing[9] if listing[9] is not None else "/assets/placeholder.jpg",
+                            "created_at": listing[10].isoformat() if listing[10] else None,
+                            "owner_id": listing[11] if listing[11] is not None else "unknown"
+                        }
+                        formatted_listings.append(formatted_listing)
+                    except Exception as e:
+                        print(f"Error formatting listing: {e}")
+                        continue
+                
+                # If no listings found, return a default empty array
+                if not formatted_listings:
+                    print("No listings found, returning empty array")
+                
+                # Add CORS headers to allow cross-domain access
+                response = jsonify(formatted_listings)
+                response.headers['Access-Control-Allow-Origin'] = '*'
+                response.headers['Access-Control-Allow-Methods'] = 'GET'
+                
+                return response, 200
+        finally:
+            conn.close()
+    except Exception as e:
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500

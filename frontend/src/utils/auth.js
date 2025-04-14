@@ -139,7 +139,7 @@ export const checkAuthStatus = async () => {
       try {
         console.log(`Trying auth endpoint: ${endpoint}`);
         const response = await axios.get(endpoint, { 
-          withCredentials: true,
+          withCredentials: true, // Critical for cross-domain cookies
           timeout: 5000, // Add timeout to prevent hanging requests
           headers: {
             'Cache-Control': 'no-cache',
@@ -148,22 +148,43 @@ export const checkAuthStatus = async () => {
         });
         console.log("Auth status response:", response.data);
         
+        // If the backend returned authenticated=true, use it
+        if (response.data && response.data.authenticated) {
+          // Update storage to match backend if different
+          const backendUserType = response.data.userType;
+          if (backendUserType && backendUserType !== 'unknown') {
+            console.log(`Updating stored userType to match backend: ${backendUserType}`);
+            sessionStorage.setItem('userType', backendUserType);
+            localStorage.setItem('userType', backendUserType);
+          }
+          
+          return {
+            authenticated: true,
+            username: response.data.username,
+            userType: backendUserType || sessionStorage.getItem('userType') || localStorage.getItem('userType'),
+            status: true
+          };
+        }
+        
         // Get the stored user type
         const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
         console.log("Stored user type:", userType);
         
-        // If the backend returned a success but didn't include authenticated flag,
-        // assume it's authenticated if we got a 200 response
-        const authStatus = {
-          ...response.data,
-          userType,
-          // Ensure authenticated is true if we got a successful response
-          authenticated: response.data.authenticated === undefined ? true : response.data.authenticated,
-          status: response.data.status === undefined ? true : response.data.status
-        };
-        
-        console.log("Final auth status being returned:", authStatus);
-        return authStatus;
+        // If backend says not authenticated but we have a user type, trust the frontend
+        if (userType) {
+          console.log("Backend says not authenticated but we have a user type, trusting frontend");
+          return { 
+            authenticated: true, 
+            userType, 
+            status: true
+          };
+        } else {
+          return {
+            authenticated: false,
+            userType: null,
+            status: false
+          };
+        }
       } catch (error) {
         console.log(`Error with endpoint ${endpoint}:`, error.message);
         lastError = error;

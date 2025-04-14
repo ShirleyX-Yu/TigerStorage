@@ -104,12 +104,14 @@ const LenderDashboard = ({ username }) => {
         // Log cookies for debugging
         console.log('Cookies available:', document.cookie);
         
-        // Fetch listings - we don't need to check auth here since ProtectedRoute already does that
+        // Fetch listings with proper credentials and headers
         const response = await fetch(`${apiUrl}/api/my-listings`, {
           credentials: 'include', // Include cookies for authentication
           headers: {
             'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType || 'lender', // Include user type in header
+            'X-Username': username || 'lender'    // Include username in header
           }
         });
 
