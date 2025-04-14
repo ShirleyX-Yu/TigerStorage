@@ -20,29 +20,30 @@ const ProtectedRoute = ({ component: Component, allowedUserType }) => {
   const [authenticated, setAuthenticated] = useState(false);
   const [userType, setUserType] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     let isMounted = true;
     
-    console.log('ProtectedRoute - useEffect running, checking auth status');
+    console.log('ProtectedRoute - useEffect running, checking auth status for path:', location.pathname);
     
     const checkAuth = async () => {
       try {
         const { status, authenticated, userType: currentUserType } = await checkAuthStatus();
-        console.log(`ProtectedRoute - Auth check results: status=${status}, authenticated=${authenticated}, userType=${currentUserType}`);
+        console.log(`ProtectedRoute - Auth check results: status=${status}, authenticated=${authenticated}, userType=${currentUserType}, allowedUserType=${allowedUserType}`);
         
         if (isMounted) {
           // Consider authenticated if either status or authenticated is true
           const isAuthenticated = status === true || authenticated === true;
           setAuthenticated(isAuthenticated);
           setUserType(currentUserType);
-          setLoading(false);
           
           if (!isAuthenticated) {
             console.log('ProtectedRoute - Not authenticated, redirecting to home');
             navigate('/');
           } else if (allowedUserType && currentUserType !== allowedUserType) {
             console.log(`ProtectedRoute - User type mismatch: current=${currentUserType}, allowed=${allowedUserType}, redirecting`);
+            // Only redirect if the user type doesn't match the allowed type
             if (currentUserType === 'renter') {
               navigate('/map');
             } else if (currentUserType === 'lender') {
@@ -51,8 +52,11 @@ const ProtectedRoute = ({ component: Component, allowedUserType }) => {
               navigate('/');
             }
           } else {
-            console.log(`ProtectedRoute - Authentication successful for ${currentUserType}`);
+            console.log(`ProtectedRoute - Authentication successful for ${currentUserType}, staying on current page`);
+            // User is authenticated and allowed, stay on the current page
           }
+          
+          setLoading(false);
         }
       } catch (error) {
         console.error('ProtectedRoute - Auth check error:', error);
@@ -76,6 +80,9 @@ const ProtectedRoute = ({ component: Component, allowedUserType }) => {
               } else if (fallbackUserType === 'lender') {
                 navigate('/lender-dashboard');
               }
+            } else {
+              console.log(`ProtectedRoute - Fallback authentication successful, staying on current page`);
+              // User is authenticated and allowed with fallback, stay on current page
             }
           } else {
             // No valid user type in storage, consider unauthenticated
@@ -95,7 +102,7 @@ const ProtectedRoute = ({ component: Component, allowedUserType }) => {
       isMounted = false;
       console.log('ProtectedRoute - Component unmounted, cleanup performed');
     };
-  }, [navigate, allowedUserType]);
+  }, [navigate, allowedUserType, location.pathname]);
 
   if (loading) {
     return <div style={{
@@ -118,15 +125,18 @@ const ProtectedRoute = ({ component: Component, allowedUserType }) => {
     }}>Redirecting to login...</div>;
   }
 
+  // User is authenticated and allowed, render the component
   return React.cloneElement(Component, { username: userType });
 };
 
 const RedirectToUserDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isRedirecting, setIsRedirecting] = useState(true);
   
   React.useEffect(() => {
-    // Added debug logging
     console.log('RedirectToUserDashboard - Starting redirection logic');
+    console.log('RedirectToUserDashboard - Current URL:', window.location.href);
     
     const redirectToAppropriateView = (userType) => {
       console.log('RedirectToUserDashboard - Redirecting with userType:', userType);
@@ -170,8 +180,25 @@ const RedirectToUserDashboard = () => {
     
     const handleRedirect = async () => {
       try {
-        // First check for userType in URL parameters
+        setIsRedirecting(true);
+        
+        // First check for CAS ticket in URL (from CAS authentication)
         const params = new URLSearchParams(window.location.search);
+        const ticket = params.get('ticket');
+        if (ticket) {
+          console.log('RedirectToUserDashboard - CAS ticket found in URL, checking user type from storage');
+          // After CAS auth, we should have user type in storage already
+          const storedUserType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+          if (storedUserType) {
+            console.log('RedirectToUserDashboard - Using stored userType after CAS auth:', storedUserType);
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            redirectToAppropriateView(storedUserType);
+            return;
+          }
+        }
+        
+        // Then check for userType in URL parameters
         const urlUserType = params.get('userType');
         console.log('RedirectToUserDashboard - URL userType:', urlUserType);
         
@@ -239,19 +266,25 @@ const RedirectToUserDashboard = () => {
       } catch (error) {
         console.error('RedirectToUserDashboard - Unexpected error:', error);
         navigate('/');
+      } finally {
+        setIsRedirecting(false);
       }
     };
     
     handleRedirect();
-  }, [navigate]);
+  }, [navigate, location.search]);
   
-  return <div style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    fontSize: '18px'
-  }}>Redirecting to dashboard...</div>;
+  if (isRedirecting) {
+    return <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      fontSize: '18px'
+    }}>Redirecting to dashboard...</div>;
+  }
+  
+  return null;
 };
 
 // Component to conditionally render the correct listing details view based on user type

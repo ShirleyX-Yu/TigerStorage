@@ -62,11 +62,19 @@ export const login = (userType) => {
   if (isProduction()) {
     // Calculate the CAS login URL
     const backendUrl = getBackendUrl();
-    const redirectUri = encodeURIComponent(`${window.location.origin}/dashboard?userType=${userType}`);
+    
+    // Get the redirect URI from environment, or use default
+    const redirectPath = import.meta.env.VITE_AUTH_REDIRECT_PATH || '/dashboard';
+    const frontendUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+    
+    // Ensure we redirect back to our app after CAS auth with the user type preserved
+    const redirectUri = encodeURIComponent(`${frontendUrl}${redirectPath}?userType=${userType}`);
     const casLoginUrl = `${backendUrl}/api/auth/login?userType=${userType}&redirectUri=${redirectUri}`;
     
     console.log(`auth.js - Production environment, redirecting to CAS: ${casLoginUrl}`);
-    window.location.href = casLoginUrl;
+    
+    // Here we use window.location.replace instead of href to prevent browser history issues
+    window.location.replace(casLoginUrl);
     return;
   }
   
@@ -84,7 +92,7 @@ export const login = (userType) => {
   }
   
   console.log(`auth.js - Final redirect URL: ${redirectUrl}`);
-  window.location.href = redirectUrl;
+  window.location.replace(redirectUrl);
 };
 
 export const logout = () => {
@@ -134,7 +142,18 @@ export const checkAuthStatus = async () => {
         const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
         console.log("Stored user type:", userType);
         
-        return { ...response.data, userType };
+        // If the backend returned a success but didn't include authenticated flag,
+        // assume it's authenticated if we got a 200 response
+        const authStatus = {
+          ...response.data,
+          userType,
+          // Ensure authenticated is true if we got a successful response
+          authenticated: response.data.authenticated === undefined ? true : response.data.authenticated,
+          status: response.data.status === undefined ? true : response.data.status
+        };
+        
+        console.log("Final auth status being returned:", authStatus);
+        return authStatus;
       } catch (error) {
         console.log(`Error with endpoint ${endpoint}:`, error.message);
         lastError = error;
@@ -148,6 +167,20 @@ export const checkAuthStatus = async () => {
     console.error("Error checking auth status:", error);
     recordBackendError();
     
+    // Check if we have a valid user type in storage
+    const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+    
+    // If we have a user type stored, consider the user authenticated
+    // This prevents being kicked back to the home page if API calls fail
+    if (userType === 'renter' || userType === 'lender') {
+      console.log("Using stored userType for authentication:", userType);
+      return { 
+        status: true, 
+        authenticated: true, 
+        userType 
+      };
+    }
+    
     // Set an auth error flag if the error is network-related
     if (error.message.includes('Network Error') || 
         error.response?.status === 404 ||
@@ -158,10 +191,12 @@ export const checkAuthStatus = async () => {
       sessionStorage.setItem('authError', 'true');
     }
     
-    // Return a valid authentication response with the stored user type
-    // to allow the app to function even when the backend is unavailable
-    const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
-    console.log("Using stored user type due to API error:", userType);
-    return { status: true, authenticated: true, userType };
+    // Return unauthenticated if we have no user type
+    console.log("No valid userType in storage, returning unauthenticated");
+    return { 
+      status: false, 
+      authenticated: false, 
+      userType: null 
+    };
   }
 };
