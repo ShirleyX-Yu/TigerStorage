@@ -340,17 +340,21 @@ def login():
     try:
         # Get the user type from the query parameter
         user_type = request.args.get('userType')
+        redirect_param = request.args.get('redirect')
+        
+        # Frontend URL (default to localhost:5173 if not set in environment)
+        frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
         
         # Authenticate the user
         username = auth.authenticate()
         
         # Redirect to the appropriate dashboard based on user type
         if user_type == 'renter':
-            return redirect('/map')
+            return redirect(f"{frontend_url}/map")
         elif user_type == 'lender':
-            return redirect('/lender-dashboard')
+            return redirect(f"{frontend_url}/lender-dashboard")
         else:
-            return redirect('/')
+            return redirect(frontend_url)
     except Exception as e:
         if hasattr(e, 'response') and e.response.status_code == 302:
             # This is the CAS redirect

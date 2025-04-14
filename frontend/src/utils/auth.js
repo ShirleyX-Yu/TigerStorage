@@ -1,7 +1,7 @@
 // Authentication utility functions
 
-// Get the API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL;
+// Get the API URL from environment variables with a fallback
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export const login = async (userType) => {
   console.log('Login called with userType:', userType); // Debug log

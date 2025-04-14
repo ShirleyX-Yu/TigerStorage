@@ -4,6 +4,7 @@ import re
 import json
 import flask
 import ssl
+import os
 
 _CAS_URL = "https://fed.princeton.edu/cas/"
 
@@ -87,4 +88,6 @@ def init_auth(app):
     @app.route("/api/logoutapp", methods=["GET"])
     def logoutapp():
         flask.session.clear()
-        return flask.redirect("/")
+        # Frontend URL (default to localhost:5173 if not set in environment)
+        frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+        return flask.redirect(frontend_url)

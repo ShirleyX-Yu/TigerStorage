@@ -45,7 +45,8 @@ const LenderDashboard = ({ username }) => {
       setDeleteInProgress(true);
       setError(null); // Clear any previous errors
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/listings/${listingId}`, {
         method: 'DELETE',
         credentials: 'include',
         headers: {
@@ -92,8 +93,11 @@ const LenderDashboard = ({ username }) => {
       try {
         setLoading(true);
         
+        // Update the API URL to match the format used in Map.jsx
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        
         // Fetch listings - we don't need to check auth here since ProtectedRoute already does that
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/my-listings`, {
+        const response = await fetch(`${apiUrl}/api/my-listings`, {
           credentials: 'include', // Include cookies for authentication
           headers: {
             'Accept': 'application/json',
@@ -116,7 +120,7 @@ const LenderDashboard = ({ username }) => {
         // Transform the data to match our component's expected format
         const formattedListings = await Promise.all(data.map(async listing => {
           // Fetch interested renters for each listing
-          const rentersResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listing.id}/interested-renters`, {
+          const rentersResponse = await fetch(`${apiUrl}/api/listings/${listing.id}/interested-renters`, {
             credentials: 'include'
           });
           
@@ -207,8 +211,9 @@ const LenderDashboard = ({ username }) => {
                       style={styles.loginButton}
                       onClick={() => {
                         // Store current location to return after login
-                        sessionStorage.setItem('returnTo', '/lender');
-                        window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/login?userType=lender`;
+                        sessionStorage.setItem('returnTo', '/lender-dashboard');
+                        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                        window.location.href = `${apiUrl}/api/auth/login?userType=lender`;
                       }}
                     >
                       Login
