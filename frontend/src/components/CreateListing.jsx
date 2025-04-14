@@ -12,9 +12,8 @@ const CreateListing = () => {
     description: '',
     latitude: '',
     longitude: '',
-    contract_length_months: 12,
-    contract_start_date: '',
-    contract_end_date: '',
+    start_date: '',
+    end_date: '',
     image_url: ''
   });
   const [error, setError] = useState('');
@@ -131,83 +130,44 @@ const CreateListing = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
     try {
-      setError('');
+      // Validate dates
+      if (!formData.start_date || !formData.end_date) {
+        throw new Error('Please select both start and end dates');
+      }
+
+      const startDate = new Date(formData.start_date);
+      const endDate = new Date(formData.end_date);
       
-      // Show more detailed validation errors
-      if (!formData.location) {
-        setError('Please enter a title for your listing');
-        return;
+      if (startDate >= endDate) {
+        throw new Error('End date must be after start date');
       }
-      if (!formData.cost) {
-        setError('Please enter a cost');
-        return;
+
+      // Validate other required fields
+      if (!formData.location || !formData.cost || !formData.cubicFeet) {
+        throw new Error('Please fill in all required fields');
       }
-      if (!formData.cubicFeet) {
-        setError('Please enter the cubic feet');
-        return;
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create listing');
       }
-      if (!formData.address) {
-        setError('Please enter an address');
-        return;
-      }
-      if (!formData.latitude || !formData.longitude) {
-        setError('Please geocode your address to get coordinates');
-        return;
-      }
-      
-      // Create a copy of the form data with both field name formats to ensure compatibility
-      const apiData = {
-        ...formData,
-        cubic_feet: formData.cubicFeet, // Include snake_case version
-        cubicFeet: formData.cubicFeet, // Keep camelCase version too for backward compatibility
-      };
-      
-      console.log('API URL:', import.meta.env.VITE_API_URL);
-      console.log('Submitting listing data:', apiData);
-      
-      try {
-        // Hardcode the URL for testing purposes
-        const apiUrl = 'http://localhost:8000/api/listings';
-        console.log('Using API URL:', apiUrl);
-        
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache',
-          },
-          credentials: 'include',
-          mode: 'cors', // Explicitly set CORS mode
-          body: JSON.stringify(apiData),
-        });
-        
-        console.log('Response status:', response.status);
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Listing created successfully:', data);
-          navigate('/lender'); // Navigate to lender dashboard instead
-        } else {
-          let errorMessage = `HTTP Error: ${response.status} ${response.statusText}`;
-          try {
-            const errorData = await response.json();
-            console.error('Error response data:', errorData);
-            errorMessage = errorData.error || errorMessage;
-          } catch (parseError) {
-            console.error('Could not parse error response:', parseError);
-          }
-          
-          setError(`Failed to create listing: ${errorMessage}`);
-        }
-      } catch (fetchError) {
-        console.error('Fetch operation failed:', fetchError);
-        setError(`Network error: ${fetchError.message}. Please check if the backend server is running.`);
-      }
+
+      const data = await response.json();
+      navigate(`/listing/${data.listing_id}`);
     } catch (err) {
-      console.error('Error in form submission:', err);
-      setError(`Error creating listing: ${err.message}`);
+      setError(err.message);
     }
   };
 
@@ -346,48 +306,6 @@ const CreateListing = () => {
           </div>
 
           <div style={styles.formGroup}>
-            <label htmlFor="contract_length_months" style={styles.label}>Contract Length (months)</label>
-            <input
-              type="number"
-              id="contract_length_months"
-              name="contract_length_months"
-              value={formData.contract_length_months}
-              onChange={handleInputChange}
-              placeholder="Enter contract length in months"
-              style={styles.input}
-              min="1"
-              max="60"
-              required
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label htmlFor="contract_start_date" style={styles.label}>Contract Start Date</label>
-            <input
-              type="date"
-              id="contract_start_date"
-              name="contract_start_date"
-              value={formData.contract_start_date}
-              onChange={handleInputChange}
-              style={styles.input}
-              required
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label htmlFor="contract_end_date" style={styles.label}>Contract End Date</label>
-            <input
-              type="date"
-              id="contract_end_date"
-              name="contract_end_date"
-              value={formData.contract_end_date}
-              onChange={handleInputChange}
-              style={styles.input}
-              required
-            />
-          </div>
-
-          <div style={styles.formGroup}>
             <label htmlFor="description" style={styles.label}>Description</label>
             <textarea
               id="description"
@@ -397,6 +315,34 @@ const CreateListing = () => {
               placeholder="Enter a description of the storage space"
               style={{...styles.input, minHeight: '100px'}}
               required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label htmlFor="start_date" style={styles.label}>Start Date</label>
+            <input
+              type="date"
+              id="start_date"
+              name="start_date"
+              value={formData.start_date}
+              onChange={handleInputChange}
+              style={styles.input}
+              required
+              min={new Date().toISOString().split('T')[0]} // Prevent selecting past dates
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label htmlFor="end_date" style={styles.label}>End Date</label>
+            <input
+              type="date"
+              id="end_date"
+              name="end_date"
+              value={formData.end_date}
+              onChange={handleInputChange}
+              style={styles.input}
+              required
+              min={formData.start_date || new Date().toISOString().split('T')[0]} // Prevent selecting dates before start date
             />
           </div>
 

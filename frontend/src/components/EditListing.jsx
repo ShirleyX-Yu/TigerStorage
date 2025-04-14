@@ -13,9 +13,8 @@ const EditListing = () => {
     description: '',
     latitude: '',
     longitude: '',
-    contract_length_months: 12,
-    contract_start_date: '',
-    contract_end_date: '',
+    start_date: '',
+    end_date: '',
     image_url: ''
   });
   const [error, setError] = useState('');
@@ -52,13 +51,12 @@ const EditListing = () => {
           location: data.location || '',
           address: data.address || '', // Only use the address field, don't fall back to location
           cost: data.cost || '',
-          cubicFeet: data.cubic_feet || '',
+          cubicFeet: data.cubic_feet || data.cubicFeet || '',
           description: data.description || '',
           latitude: data.latitude || '',
           longitude: data.longitude || '',
-          contract_length_months: data.contract_length_months || 12,
-          contract_start_date: data.contract_start_date || '',
-          contract_end_date: data.contract_end_date || '',
+          start_date: data.start_date ? new Date(data.start_date).toISOString().split('T')[0] : '',
+          end_date: data.end_date ? new Date(data.end_date).toISOString().split('T')[0] : '',
           image_url: data.image_url || ''
         };
         
@@ -207,6 +205,18 @@ const EditListing = () => {
       setError('');
       setSuccess(false);
       
+      // Validate dates
+      if (!formData.start_date || !formData.end_date) {
+        throw new Error('Please select both start and end dates');
+      }
+
+      const startDate = new Date(formData.start_date);
+      const endDate = new Date(formData.end_date);
+      
+      if (startDate >= endDate) {
+        throw new Error('End date must be after start date');
+      }
+
       // Show more detailed validation errors
       if (!formData.location) {
         setError('Please enter a title for your listing');
@@ -397,45 +407,30 @@ const EditListing = () => {
           </div>
 
           <div style={styles.formGroup}>
-            <label htmlFor="contract_length_months" style={styles.label}>Contract Length (months)</label>
-            <select
-              id="contract_length_months"
-              name="contract_length_months"
-              value={formData.contract_length_months}
-              onChange={handleInputChange}
-              style={styles.input}
-            >
-              <option value="1">1 month</option>
-              <option value="3">3 months</option>
-              <option value="6">6 months</option>
-              <option value="9">9 months</option>
-              <option value="12">12 months</option>
-            </select>
-          </div>
-
-          <div style={styles.formGroup}>
-            <label htmlFor="contract_start_date" style={styles.label}>Contract Start Date</label>
+            <label htmlFor="start_date" style={styles.label}>Start Date</label>
             <input
               type="date"
-              id="contract_start_date"
-              name="contract_start_date"
-              value={formData.contract_start_date}
+              id="start_date"
+              name="start_date"
+              value={formData.start_date}
               onChange={handleInputChange}
               style={styles.input}
               required
+              min={new Date().toISOString().split('T')[0]}
             />
           </div>
 
           <div style={styles.formGroup}>
-            <label htmlFor="contract_end_date" style={styles.label}>Contract End Date</label>
+            <label htmlFor="end_date" style={styles.label}>End Date</label>
             <input
               type="date"
-              id="contract_end_date"
-              name="contract_end_date"
-              value={formData.contract_end_date}
+              id="end_date"
+              name="end_date"
+              value={formData.end_date}
               onChange={handleInputChange}
               style={styles.input}
               required
+              min={formData.start_date || new Date().toISOString().split('T')[0]}
             />
           </div>
 
