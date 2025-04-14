@@ -235,23 +235,30 @@ def init_db():
                             conn.commit()
                             print("Successfully converted contract_length_months to start_date and end_date")
                             
-                        # Alter latitude and longitude columns to FLOAT if they exist
+                        # Check and add latitude/longitude columns if they don't exist
                         cur.execute("""
-                            SELECT column_name, data_type 
+                            SELECT column_name 
                             FROM information_schema.columns 
                             WHERE table_name = 'storage_listings' 
                             AND column_name IN ('latitude', 'longitude');
                         """)
-                        columns = cur.fetchall()
+                        lat_long_columns = [col[0] for col in cur.fetchall()]
                         
-                        for column in columns:
-                            if column[1] != 'double precision':  # PostgreSQL's FLOAT type
-                                print(f"Converting {column[0]} from {column[1]} to FLOAT")
-                                cur.execute(f"ALTER TABLE storage_listings ALTER COLUMN {column[0]} TYPE FLOAT;")
-                                conn.commit()
-                                print(f"{column[0]} column converted to FLOAT successfully")
-                    except Exception as column_err:
-                        print(f"Error checking or modifying columns: {column_err}")
+                        print(f"Existing lat/long columns: {lat_long_columns}")
+                        
+                        if 'latitude' not in lat_long_columns:
+                            print("Adding latitude column to storage_listings")
+                            cur.execute("ALTER TABLE storage_listings ADD COLUMN latitude FLOAT;")
+                            conn.commit()
+                            print("latitude column added successfully")
+                        
+                        if 'longitude' not in lat_long_columns:
+                            print("Adding longitude column to storage_listings")
+                            cur.execute("ALTER TABLE storage_listings ADD COLUMN longitude FLOAT;")
+                            conn.commit()
+                            print("longitude column added successfully")
+                    except Exception as e:
+                        print(f"Error adding latitude/longitude columns: {e}")
                         conn.rollback()
 
                 # Check if interested_listings table exists
@@ -656,52 +663,81 @@ def get_listings():
         try:
             with conn.cursor() as cur:
                 print("DEBUG: Fetching listings")
-                # First check if contract_length_months column exists
+                
+                # First, get the available columns to build a dynamic query
                 cur.execute("""
-                        SELECT 
-                        listing_id,
-                        location,
-                        cost,
-                        cubic_ft,
-                        description,
-                        latitude,
-                        longitude,
-                        start_date,
-                        end_date,
-                        image_url,
-                        created_at,
-                        owner_id
-                    FROM storage_listings
-                    ORDER BY created_at DESC;
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'storage_listings' 
+                    ORDER BY ordinal_position;
                 """)
                 
+                available_columns = [col[0] for col in cur.fetchall()]
+                print(f"Available columns: {available_columns}")
+                
+                # Build a dynamic SELECT statement based on existing columns
+                select_parts = []
+                essential_columns = ['listing_id', 'location', 'cost', 'cubic_ft', 'description', 
+                                    'created_at', 'owner_id']
+                
+                # Add all essential columns that exist
+                for col in essential_columns:
+                    if col in available_columns:
+                        select_parts.append(col)
+                
+                # Add optional columns if they exist
+                optional_columns = ['latitude', 'longitude', 'start_date', 'end_date', 'image_url', 'address']
+                for col in optional_columns:
+                    if col in available_columns:
+                        select_parts.append(col)
+                
+                # Create the SELECT statement
+                select_clause = ", ".join(select_parts)
+                
+                # Execute the query
+                query = f"""
+                    SELECT {select_clause}
+                    FROM storage_listings
+                    ORDER BY created_at DESC;
+                """
+                
+                print(f"Executing query: {query}")
+                cur.execute(query)
+                
+                # Fetch the results
                 listings = cur.fetchall()
                 print(f"DEBUG: Found {len(listings)} listings")
+                
+                # Get column names from cursor for mapping
+                column_names = [desc[0] for desc in cur.description]
+                print(f"Result columns: {column_names}")
                 
                 # Convert to list of dictionaries
                 formatted_listings = []
                 for listing in listings:
                     try:
+                        # Create a dictionary mapping column names to values
+                        listing_dict = {column_names[i]: listing[i] for i in range(len(column_names))}
+                        
                         formatted_listing = {
-                            "id": listing[0],
-                            "listing_id": listing[0],  # Duplicate for consistency
-                            "location": listing[1],
-                            "cost": float(listing[2]) if listing[2] is not None else 0,
-                            "cubic_feet": listing[3] if listing[3] is not None else 0,
-                            "cubic_ft": listing[3] if listing[3] is not None else 0,  # Include both field names
-                            "description": listing[4] if listing[4] is not None else "",
-                            "latitude": float(listing[5]) if listing[5] is not None else None,
-                            "longitude": float(listing[6]) if listing[6] is not None else None,
-                            "start_date": listing[7].isoformat() if listing[7] else None,
-                            "end_date": listing[8].isoformat() if listing[8] else None,
-                            "image_url": listing[9] if listing[9] is not None else "/assets/placeholder.jpg",
-                            "created_at": listing[10].isoformat() if listing[10] else None,
-                            "owner_id": listing[11] if listing[11] is not None else "unknown"
+                            "id": listing_dict.get('listing_id'),
+                            "listing_id": listing_dict.get('listing_id'),
+                            "location": listing_dict.get('location', ''),
+                            "cost": float(listing_dict.get('cost', 0)) if listing_dict.get('cost') else 0,
+                            "cubic_feet": listing_dict.get('cubic_ft', 0),
+                            "cubic_ft": listing_dict.get('cubic_ft', 0),
+                            "description": listing_dict.get('description', ''),
+                            "latitude": float(listing_dict.get('latitude', 0)) if listing_dict.get('latitude') else None,
+                            "longitude": float(listing_dict.get('longitude', 0)) if listing_dict.get('longitude') else None,
+                            "start_date": listing_dict.get('start_date').isoformat() if listing_dict.get('start_date') else None,
+                            "end_date": listing_dict.get('end_date').isoformat() if listing_dict.get('end_date') else None,
+                            "image_url": listing_dict.get('image_url', "/assets/placeholder.jpg"),
+                            "created_at": listing_dict.get('created_at').isoformat() if listing_dict.get('created_at') else None,
+                            "owner_id": listing_dict.get('owner_id', "unknown")
                         }
                         formatted_listings.append(formatted_listing)
                     except Exception as e:
                         print(f"DEBUG: Error formatting listing: {e}")
-                        print(f"DEBUG: Listing data: {listing}")
                         continue
                 
                 response = jsonify(formatted_listings)
@@ -802,8 +838,21 @@ def get_listing_by_id(listing_id):
                     return get_mock_listing(listing_id)
                 
                 # Try to find the listing in the database
+                # First get the available columns
+                cur.execute("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'storage_listings' 
+                    ORDER BY ordinal_position;
+                """)
+                columns = [col[0] for col in cur.fetchall()]
+                print(f"Available columns: {columns}")
+                
+                # Build a dynamic SELECT statement
+                select_clause = "*"  # Use * since we're fetching a single row
+                
                 # Only use listing_id as that's the column name in the database
-                cur.execute("SELECT * FROM storage_listings WHERE listing_id = %s;", (listing_id,))
+                cur.execute(f"SELECT {select_clause} FROM storage_listings WHERE listing_id = %s;", (listing_id,))
                 listing = cur.fetchone()
                 
                 if not listing:
@@ -972,16 +1021,34 @@ def get_my_listings():
                 print(f"Available columns: {columns}")
                 
                 # Build the query dynamically based on available columns
-                select_columns = "listing_id, location, cost, cubic_ft, description, latitude, longitude, "
-                select_columns += "start_date, end_date, image_url, created_at, owner_id"
+                select_parts = []
+                essential_columns = ['listing_id', 'location', 'cost', 'cubic_ft', 'description', 
+                                    'created_at', 'owner_id']
+                
+                # Add all essential columns that exist
+                for col in essential_columns:
+                    if col in columns:
+                        select_parts.append(col)
+                
+                # Add optional columns if they exist
+                optional_columns = ['latitude', 'longitude', 'start_date', 'end_date', 'image_url', 'address']
+                for col in optional_columns:
+                    if col in columns:
+                        select_parts.append(col)
+                
+                # Create the SELECT statement
+                select_columns = ", ".join(select_parts)
                 
                 try:
-                    cur.execute(f"""
+                    query = f"""
                         SELECT {select_columns}
                         FROM storage_listings
                         WHERE owner_id = %s
                         ORDER BY created_at DESC;
-                    """, (owner_id,))
+                    """
+                    
+                    print(f"Executing query: {query}")
+                    cur.execute(query, (owner_id,))
                     
                     listings = cur.fetchall()
                     print(f"Found {len(listings)} listings for owner_id: {owner_id}")
