@@ -98,11 +98,13 @@ const scrollbarStyles = `
   }
 `;
 
-// Inject scrollbar styles into the document
-const styleSheet = document.createElement("style");
-styleSheet.type = "text/css";
-styleSheet.innerText = scrollbarStyles;
-document.head.appendChild(styleSheet);
+// Only inject styles in browser environment
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement("style");
+  styleSheet.type = "text/css";
+  styleSheet.innerText = scrollbarStyles;
+  document.head.appendChild(styleSheet);
+}
 
 const Map = () => {
   const [listings, setListings] = useState([]);
