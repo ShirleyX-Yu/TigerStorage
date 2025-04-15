@@ -320,7 +320,7 @@ function App() {
           <Route path="/lender-dashboard" element={<ProtectedRoute component={<LenderDashboard />} allowedUserType="lender" />} />
           <Route path="/create-listing" element={<ProtectedRoute component={<CreateListing />} allowedUserType="lender" />} />
           <Route path="/edit-listing/:id" element={<ProtectedRoute component={<EditListing />} allowedUserType="lender" />} />
-          <Route path="/view-listings" element={<ProtectedRoute component={<ViewListings />} allowedUserType="lender" />} />
+          <Route path="/view-listings" element={<ProtectedRoute component={<ViewListings />} allowedUserType="renter" />} />
           
           {/* Public routes */}
           <Route path="/privacy" element={<PrivacyPolicy />} />

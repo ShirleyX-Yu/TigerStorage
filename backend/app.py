@@ -39,6 +39,32 @@ CORS(
                 "Content-Type",
                 "Authorization",
                 "X-Requested-With",
+                "X-User-Type",
+                "X-Username",
+                "Accept",
+                "Cache-Control"
+            ]
+        }
+    }
+)
+
+# --- SESSION COOKIE CONFIGURATION ---
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True
+
+# Utility: Add CORS headers to all responses for cross-origin credentialed requests
+@app.after_request
+def add_cors_headers(response):
+    origin = request.headers.get('Origin')
+    allowed_origins = [
+        "https://tigerstorage-frontend.onrender.com",
+        "http://localhost:5173"
+    ]
+    if origin in allowed_origins:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
+
                 "Pragma",
                 "Cache-Control",
                 "Origin",

@@ -99,9 +99,8 @@ const ListingDetails = () => {
           cubicFeet: data.cubic_feet || 0,
           description: data.description || 'No description available',
           isAvailable: data.is_available !== undefined ? data.is_available : true,
-          contractLength: data.contract_length_months || 12,
-          contractStartDate: data.contract_start_date || '',
-          contractEndDate: data.contract_end_date || '',
+          startDate: data.start_date || '',
+          endDate: data.end_date || '',
           images: [data.image_url || '/assets/placeholder.jpg'],
           lender: {
             name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
