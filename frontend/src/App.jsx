@@ -19,6 +19,7 @@ const ProtectedRoute = ({ component: Component, allowedUserType }) => {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [userType, setUserType] = useState(null);
+  const [username, setUsername] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,14 +30,15 @@ const ProtectedRoute = ({ component: Component, allowedUserType }) => {
     
     const checkAuth = async () => {
       try {
-        const { status, authenticated, userType: currentUserType } = await checkAuthStatus();
-        console.log(`ProtectedRoute - Auth check results: status=${status}, authenticated=${authenticated}, userType=${currentUserType}, allowedUserType=${allowedUserType}`);
+        const { status, authenticated, userType: currentUserType, username: currentUsername } = await checkAuthStatus();
+        console.log(`ProtectedRoute - Auth check results: status=${status}, authenticated=${authenticated}, userType=${currentUserType}, username=${currentUsername}, allowedUserType=${allowedUserType}`);
         
         if (isMounted) {
           // Consider authenticated if either status or authenticated is true
           const isAuthenticated = status === true || authenticated === true;
           setAuthenticated(isAuthenticated);
           setUserType(currentUserType);
+          setUsername(currentUsername || 'Unknown'); // Set username from auth response
           
           if (!isAuthenticated) {
             console.log('ProtectedRoute - Not authenticated, redirecting to home');
@@ -126,7 +128,7 @@ const ProtectedRoute = ({ component: Component, allowedUserType }) => {
   }
 
   // User is authenticated and allowed, render the component
-  return React.cloneElement(Component, { username: userType });
+  return React.cloneElement(Component, { username, userType });
 };
 
 const RedirectToUserDashboard = () => {

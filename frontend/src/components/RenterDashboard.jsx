@@ -41,7 +41,7 @@ const RenterDashboard = ({ username }) => {
       <Header title="Renter Dashboard" />
       <div style={styles.content}>
         <div style={styles.welcome}>
-          Welcome back, {username}!
+          Welcome back, {username && username !== 'Unknown' ? username : 'Renter'}!
         </div>
         
         <div style={styles.section}>

@@ -152,35 +152,48 @@ export const checkAuthStatus = async () => {
         if (response.data && response.data.authenticated) {
           // Update storage to match backend if different
           const backendUserType = response.data.userType;
+          const backendUsername = response.data.username;
+          
           if (backendUserType && backendUserType !== 'unknown') {
             console.log(`Updating stored userType to match backend: ${backendUserType}`);
             sessionStorage.setItem('userType', backendUserType);
             localStorage.setItem('userType', backendUserType);
           }
           
+          // Store the actual username from CAS if available
+          if (backendUsername) {
+            console.log(`Storing actual username from backend: ${backendUsername}`);
+            sessionStorage.setItem('username', backendUsername);
+            localStorage.setItem('username', backendUsername);
+          }
+          
           return {
             authenticated: true,
-            username: response.data.username,
+            username: backendUsername || 'Unknown',
             userType: backendUserType || sessionStorage.getItem('userType') || localStorage.getItem('userType'),
             status: true
           };
         }
         
-        // Get the stored user type
+        // Get the stored user type and username
         const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+        const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
         console.log("Stored user type:", userType);
+        console.log("Stored username:", storedUsername);
         
         // If backend says not authenticated but we have a user type, trust the frontend
         if (userType) {
           console.log("Backend says not authenticated but we have a user type, trusting frontend");
           return { 
-            authenticated: true, 
+            authenticated: true,
+            username: storedUsername || userType, // Use stored username if available, otherwise userType
             userType, 
             status: true
           };
         } else {
           return {
             authenticated: false,
+            username: null,
             userType: null,
             status: false
           };
@@ -200,6 +213,7 @@ export const checkAuthStatus = async () => {
     
     // Check if we have a valid user type in storage
     const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+    const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
     
     // If we have a user type stored, consider the user authenticated
     // This prevents being kicked back to the home page if API calls fail
@@ -207,7 +221,8 @@ export const checkAuthStatus = async () => {
       console.log("Using stored userType for authentication:", userType);
       return { 
         status: true, 
-        authenticated: true, 
+        authenticated: true,
+        username: storedUsername || userType, // Use stored username if available 
         userType 
       };
     }
@@ -227,6 +242,7 @@ export const checkAuthStatus = async () => {
     return { 
       status: false, 
       authenticated: false, 
+      username: null,
       userType: null 
     };
   }

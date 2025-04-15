@@ -197,7 +197,7 @@ const LenderDashboard = ({ username }) => {
       )}
       <div style={styles.content}>
         <div style={styles.welcome}>
-          Welcome back, {username || 'Lender'}!
+          Welcome back, {username && username !== 'Unknown' ? username : 'Lender'}!
         </div>
         
         <div style={styles.dashboardContent}>
