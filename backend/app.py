@@ -529,7 +529,13 @@ def login():
         print(f"Redirecting to frontend URL: {frontend_url}")
         
         # Authenticate the user
-        username = auth.authenticate()
+        user_info = auth.authenticate()
+        
+        # Store the full CAS user_info dict in the session if available
+        if isinstance(user_info, dict):
+            session['user_info'] = user_info
+        elif user_info:
+            session['user_info'] = {'user': user_info}
         
         # At this point, the user should be authenticated and have a session
         # Get the user type from the session if it exists
