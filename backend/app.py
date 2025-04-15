@@ -1098,13 +1098,33 @@ def get_my_listings():
 @app.route('/api/listings/<int:listing_id>', methods=['PUT'])
 def update_listing(listing_id):
     try:
-        # Check if user is logged in
-        if not auth.is_authenticated():
-            return jsonify({"error": "Not authenticated"}), 401
+        # Check authentication from different possible sources
+        authenticated = auth.is_authenticated()
+        owner_id = None
+        
+        if authenticated:
+            # Get from session if authenticated
+            print("User authenticated via session for update")
+            user_info = session.get('user_info', {})
+            owner_id = user_info.get('user', '')
+            print(f"Authenticated username from session: {owner_id}")
+        else:
+            # If not authenticated via session, check headers
+            print("User not authenticated via session, checking headers for update")
+            username_header = request.headers.get('X-Username')
+            user_type_header = request.headers.get('X-User-Type')
             
-        # Get user info from session
-        user_info = session['user_info']
-        owner_id = user_info.get('user', '')
+            if username_header:
+                owner_id = username_header
+                print(f"Using username from X-Username header for listing update: {owner_id}")
+            else:
+                # No authentication found
+                print("No authentication found in session or headers")
+                return jsonify({"error": "Not authenticated"}), 401
+        
+        if not owner_id:
+            print("Owner ID not found in session or headers")
+            return jsonify({"error": "User ID not found"}), 400
         
         # Get the updated data
         data = request.get_json()
@@ -1117,15 +1137,19 @@ def update_listing(listing_id):
         try:
             with conn.cursor() as cur:
                 # First verify that the listing belongs to the current user
+                print(f"Checking if listing {listing_id} belongs to {owner_id} for update")
                 cur.execute("SELECT owner_id FROM storage_listings WHERE listing_id = %s", (listing_id,))
                 listing = cur.fetchone()
                 
                 if not listing:
+                    print(f"Listing {listing_id} not found for update")
                     return jsonify({"error": "Listing not found"}), 404
                     
                 # Check if the current user is the owner
                 db_owner_id = listing[0]
+                print(f"Listing owner is: {db_owner_id}, update request from: {owner_id}")
                 if db_owner_id != owner_id:
+                    print(f"Permission denied: {owner_id} is not owner of listing {listing_id}")
                     return jsonify({"error": "You don't have permission to update this listing"}), 403
                 
                 # Prepare update data
@@ -1161,6 +1185,7 @@ def update_listing(listing_id):
                 # Execute the update
                 cur.execute(query, list(update_values.values()) + [listing_id])
                 conn.commit()
+                print(f"Listing {listing_id} updated successfully")
                 
                 return jsonify({"success": True, "message": "Listing updated successfully"}), 200
         finally:
@@ -1175,13 +1200,33 @@ def update_listing(listing_id):
 @app.route('/api/listings/<int:listing_id>', methods=['DELETE'])
 def delete_listing(listing_id):
     try:
-        # Check if user is logged in
-        if not auth.is_authenticated():
-            return jsonify({"error": "Not authenticated"}), 401
+        # Check authentication from different possible sources
+        authenticated = auth.is_authenticated()
+        owner_id = None
+        
+        if authenticated:
+            # Get from session if authenticated
+            print("User authenticated via session")
+            user_info = session.get('user_info', {})
+            owner_id = user_info.get('user', '')
+            print(f"Authenticated username from session: {owner_id}")
+        else:
+            # If not authenticated via session, check headers
+            print("User not authenticated via session, checking headers")
+            username_header = request.headers.get('X-Username')
+            user_type_header = request.headers.get('X-User-Type')
             
-        # Get user info from session
-        user_info = session['user_info']
-        owner_id = user_info.get('user', '')
+            if username_header:
+                owner_id = username_header
+                print(f"Using username from X-Username header for listing deletion: {owner_id}")
+            else:
+                # No authentication found
+                print("No authentication found in session or headers")
+                return jsonify({"error": "Not authenticated"}), 401
+        
+        if not owner_id:
+            print("Owner ID not found in session or headers")
+            return jsonify({"error": "User ID not found"}), 400
         
         # Get a fresh connection
         conn = get_db_connection()
@@ -1191,20 +1236,26 @@ def delete_listing(listing_id):
         try:
             with conn.cursor() as cur:
                 # First verify that the listing belongs to the current user
+                print(f"Checking if listing {listing_id} belongs to {owner_id}")
                 cur.execute("SELECT owner_id FROM storage_listings WHERE listing_id = %s", (listing_id,))
                 listing = cur.fetchone()
                 
                 if not listing:
+                    print(f"Listing {listing_id} not found")
                     return jsonify({"error": "Listing not found"}), 404
                     
                 # Check if the current user is the owner
                 db_owner_id = listing[0]
+                print(f"Listing owner is: {db_owner_id}, request from: {owner_id}")
                 if db_owner_id != owner_id:
+                    print(f"Permission denied: {owner_id} is not owner of listing {listing_id}")
                     return jsonify({"error": "You don't have permission to delete this listing"}), 403
                 
                 # Delete the listing
+                print(f"Deleting listing {listing_id}")
                 cur.execute("DELETE FROM storage_listings WHERE listing_id = %s", (listing_id,))
                 conn.commit()
+                print(f"Listing {listing_id} deleted successfully")
                 
                 return jsonify({"success": True, "message": "Listing deleted successfully"}), 200
         except Exception as e:

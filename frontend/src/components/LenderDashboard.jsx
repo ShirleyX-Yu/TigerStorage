@@ -45,26 +45,53 @@ const LenderDashboard = ({ username }) => {
       setDeleteInProgress(true);
       setError(null); // Clear any previous errors
       
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      // Get base API URL with the same fallback mechanism
+      let apiUrl = import.meta.env.VITE_API_URL;
+      if (!apiUrl && typeof window !== 'undefined') {
+        // In production without VITE_API_URL, use the same origin
+        apiUrl = window.location.origin;
+        console.log("Using current origin as API URL for delete:", apiUrl);
+      } else if (!apiUrl) {
+        // Default for local development
+        apiUrl = 'http://localhost:8000';
+        console.log("Using default local API URL for delete:", apiUrl);
+      }
+      
+      // Get user information for headers
+      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'lender';
+      const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || username || 'lender';
+      
+      console.log(`Deleting listing ${listingId} as ${storedUsername} (${userType})`);
+      
       const response = await fetch(`${apiUrl}/api/listings/${listingId}`, {
         method: 'DELETE',
         credentials: 'include',
         headers: {
           'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
+          'Cache-Control': 'no-cache',
+          'X-User-Type': userType,
+          'X-Username': storedUsername
         }
       });
       
-      // Parse the response JSON, handling potential parsing errors
+      // Try to parse the response body
+      let responseText = '';
       let errorData = {};
       try {
-        errorData = await response.json();
-      } catch (parseError) {
-        console.warn('Failed to parse response JSON:', parseError);
+        responseText = await response.text();
+        if (responseText) {
+          try {
+            errorData = JSON.parse(responseText);
+          } catch (parseError) {
+            console.warn('Failed to parse response JSON:', parseError);
+          }
+        }
+      } catch (readError) {
+        console.warn('Failed to read response text:', readError);
       }
       
       if (!response.ok) {
-        throw new Error(errorData.error || `Failed to delete listing (${response.status})`);
+        throw new Error(errorData.error || `Failed to delete listing (${response.status}): ${responseText}`);
       }
       
       // Remove the deleted listing from the state
@@ -93,13 +120,26 @@ const LenderDashboard = ({ username }) => {
       try {
         setLoading(true);
         
-        // Update the API URL to match the format used in Map.jsx
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        // Get base API URL, falling back to the current origin if in production
+        let apiUrl = import.meta.env.VITE_API_URL;
+        if (!apiUrl && typeof window !== 'undefined') {
+          // In production without VITE_API_URL, use the same origin
+          apiUrl = window.location.origin;
+          console.log("Using current origin as API URL:", apiUrl);
+        } else if (!apiUrl) {
+          // Default for local development
+          apiUrl = 'http://localhost:8000';
+          console.log("Using default local API URL:", apiUrl);
+        }
+        
         console.log(`Fetching listings from: ${apiUrl}/api/my-listings`);
         
-        // Get user type from storage to help diagnose issues
-        const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
-        console.log('Current userType in storage:', userType);
+        // Get user information for headers
+        const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'lender';
+        const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || username || 'lender';
+        
+        console.log('User type:', userType);
+        console.log('Username:', storedUsername);
         
         // Log cookies for debugging
         console.log('Cookies available:', document.cookie);
@@ -110,24 +150,38 @@ const LenderDashboard = ({ username }) => {
           headers: {
             'Accept': 'application/json',
             'Cache-Control': 'no-cache',
-            'X-User-Type': userType || 'lender', // Include user type in header
-            'X-Username': username || 'lender'    // Include username in header
+            'X-User-Type': userType,
+            'X-Username': storedUsername
           }
         });
 
         console.log('Listings response status:', response.status);
         
         if (!response.ok) {
+          // Try to read the response body as text first
+          const responseText = await response.text();
+          console.error("Error response body:", responseText);
+          
+          let errorText = `Server returned ${response.status}: ${response.statusText}`;
+          try {
+            // Try to parse as JSON if possible
+            const errorData = JSON.parse(responseText);
+            errorText += ` - ${errorData.error || errorData.message || JSON.stringify(errorData)}`;
+          } catch (e) {
+            // If not JSON, just append the text
+            if (responseText) {
+              errorText += ` - ${responseText}`;
+            }
+          }
+          
           // If we get a 401, we're not authenticated
           if (response.status === 401) {
             console.error('Authentication failed, redirecting to login');
-            // Try to read more details from the response
-            const errorText = await response.text();
-            console.error('Error details:', errorText);
             throw new Error('Authentication required. Please log in again.');
           }
-          // For other errors, show a generic message
-          throw new Error(`Unable to load your listings. Please try again later.`);
+          
+          // For other errors, show the detailed message
+          throw new Error(`Unable to load your listings: ${errorText}`);
         }
 
         const data = await response.json();
@@ -137,7 +191,13 @@ const LenderDashboard = ({ username }) => {
         const formattedListings = await Promise.all(data.map(async listing => {
           // Fetch interested renters for each listing
           const rentersResponse = await fetch(`${apiUrl}/api/listings/${listing.id}/interested-renters`, {
-            credentials: 'include'
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache',
+              'X-User-Type': userType,
+              'X-Username': storedUsername
+            }
           });
           
           let interestedRenters = [];
@@ -184,7 +244,7 @@ const LenderDashboard = ({ username }) => {
     };
 
     fetchListings();
-  }, [location.key]); // Add location.key as a dependency to trigger refresh when navigating back
+  }, [location.key, username]); // Add username as dependency
 
   return (
     <div style={styles.container}>
