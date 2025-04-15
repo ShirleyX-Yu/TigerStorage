@@ -308,12 +308,16 @@ const Map = () => {
     
     // Prioritize the database column names
     const listingCost = listing.cost !== undefined ? listing.cost : 0;
-    const costMatches = listingCost >= (filters.minCost || 0) && listingCost <= (filters.maxCost || 1000);
+    const costMatches = (filters.minCost === 0 && filters.maxCost === 0) 
+      ? listingCost === 0 
+      : listingCost >= filters.minCost && listingCost <= filters.maxCost;
     
     // Prioritize cubic_ft which is the actual database column
     const listingSize = listing.cubic_ft !== undefined ? listing.cubic_ft : 
                         (listing.cubic_feet !== undefined ? listing.cubic_feet : 0);
-    const sizeMatches = listingSize >= (filters.minSize || 0) && listingSize <= (filters.maxSize || 1000);
+    const sizeMatches = (filters.minSize === 0 && filters.maxSize === 0)
+      ? listingSize === 0
+      : listingSize >= filters.minSize && listingSize <= filters.maxSize;
     
     const distance = calculateDistance(
       PRINCETON_COORDS.lat,
@@ -321,7 +325,7 @@ const Map = () => {
       listing.latitude,
       listing.longitude
     );
-    const distanceMatches = distance <= (filters.maxDistance || 10);
+    const distanceMatches = distance <= filters.maxDistance;
     
     return {
       ...listing,
@@ -427,7 +431,9 @@ const Map = () => {
           </Typography>
           {filteredListings && filteredListings.length > 0 ? (
             <List style={{ overflowY: 'auto', flex: 1, height: 'calc(100vh - 72px)' }}>
-              {filteredListings.map((listing) => (
+              {filteredListings
+                .filter(listing => listing.matchesFilters)
+                .map((listing) => (
                 <React.Fragment key={listing.listing_id || listing.id}>
                   <ListItem 
                     button 

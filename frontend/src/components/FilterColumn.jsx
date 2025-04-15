@@ -45,7 +45,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           valueLabelDisplay="auto"
           min={0}
           max={1000}
-          step={50}
+          step={1}
           sx={{
             color: '#FF6B00', // Orange color
             '& .MuiSlider-thumb': {
@@ -85,7 +85,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           valueLabelDisplay="auto"
           min={0}
           max={1000}
-          step={50}
+          step={1}
           sx={{
             color: '#FF6B00',
             '& .MuiSlider-thumb': {
@@ -125,7 +125,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           valueLabelDisplay="auto"
           min={0}
           max={10}
-          step={1}
+          step={0.1}
           sx={{
             color: '#FF6B00',
             '& .MuiSlider-thumb': {
