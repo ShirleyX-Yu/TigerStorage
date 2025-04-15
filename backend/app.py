@@ -541,6 +541,11 @@ def login():
         # Get the user type from the session if it exists
         user_type = session.get('user_type', user_type)
         
+        # Determine username for debug logging
+        if isinstance(user_info, dict):
+            username = user_info.get('user', 'unknown')
+        else:
+            username = user_info if user_info else 'unknown'
         # Log the session data to help with debugging
         print(f"Session after auth: {session}")
         print(f"Authenticated as: {username}")
