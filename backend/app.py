@@ -507,6 +507,7 @@ def login():
         # Store the user type in the session for later retrieval
         if user_type:
             session['user_type'] = user_type
+            session.permanent = True  # Ensure session cookie is persistent and sent cross-origin
             print(f"Stored user_type in session: {user_type}")
             
         # Determine the frontend URL based on request origin or environment variable
