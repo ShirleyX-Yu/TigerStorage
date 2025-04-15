@@ -94,6 +94,55 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
 
     // Add markers for listings
     if (listings && listings.length > 0) {
+      listings.forEach((listing) => {
+        if (!listing.latitude || !listing.longitude || isNaN(listing.latitude) || isNaN(listing.longitude)) {
+          return;
+        }
+        try {
+          // Use orange for interested, gray for not
+          const markerIcon = listing.isInterested ? orangeIcon : grayIcon;
+          const marker = L.marker([listing.latitude, listing.longitude], { icon: markerIcon })
+            .addTo(map)
+            .bindPopup(`
+              <div>
+                <h3>${listing.location || 'Unknown Location'}</h3>
+                <p>Price: $${listing.cost ?? 0}/month</p>
+                <p>Size: ${listing.cubic_ft ?? listing.cubic_feet ?? 0} cubic feet</p>
+                <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
+                <button 
+                  style="background-color: #f57c00; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;"
+                  onclick="window.location.href='/listing/${listing.id || listing.listing_id}'"
+                >
+                  View Details
+                </button>
+              </div>
+            `);
+          marker.on('click', () => {
+            onListingClick(listing);
+          });
+        } catch (err) {
+          // Handle marker error
+        }
+      });
+    } else {
+      map.setView([PRINCETON_COORDS.lat, PRINCETON_COORDS.lng], 15);
+    }
+  }, [map, listings, onListingClick]);
+
+  return null;
+};
+  const map = useMap();
+
+  useEffect(() => {
+    // Clear existing markers
+    map.eachLayer((layer) => {
+      if (layer instanceof L.Marker) {
+        map.removeLayer(layer);
+      }
+    });
+
+    // Add markers for listings
+    if (listings && listings.length > 0) {
       console.log("Adding markers for listings:", listings.length);
       
       listings.forEach((listing, index) => {
@@ -181,6 +230,10 @@ if (typeof document !== 'undefined') {
 }
 
 const Map = () => {
+  const [interestLoading, setInterestLoading] = React.useState(false);
+  const [interestSuccess, setInterestSuccess] = React.useState(false);
+  const [interestError, setInterestError] = React.useState(null);
+
   const [listings, setListings] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -193,7 +246,8 @@ const Map = () => {
   });
   const mapRef = useRef(null);
   const navigate = useNavigate();
-  const [selectedListing, setSelectedListing] = useState(null);
+  const [selectedListingId, setSelectedListingId] = useState(null);
+  const selectedListing = listings.find(l => (l.listing_id || l.id) === selectedListingId) || null;
 
   const fetchListings = async () => {
     try {
@@ -296,7 +350,7 @@ const Map = () => {
   };
 
   const handleListingClick = (listing) => {
-    setSelectedListing(listing);
+    setSelectedListingId(listing.listing_id || listing.id);
     if (mapRef.current) {
       mapRef.current.setView([listing.latitude, listing.longitude], 16);
     }
@@ -440,9 +494,14 @@ const Map = () => {
                     onClick={() => handleListingClick(listing)}
                     style={{ 
                       backgroundColor: selectedListing && selectedListing.listing_id === listing.listing_id ? '#FFF3E6' : 'transparent',
-                      borderLeft: selectedListing && selectedListing.listing_id === listing.listing_id ? '4px solid #FF6B00' : 'none'
+                      borderLeft: selectedListing && selectedListing.listing_id === listing.listing_id ? '4px solid #FF6B00' : 'none',
+                      display: 'flex',
+                      alignItems: 'center'
                     }}
                   >
+                    <span style={{ marginRight: 8 }}>
+                      <FontAwesomeIcon icon={listing.isInterested ? ['fas', 'heart'] : ['far', 'heart']} color={listing.isInterested ? '#FF6B00' : '#ccc'} />
+                    </span>
                     <ListItemText
                       primary={listing.location}
                       secondary={
@@ -486,7 +545,7 @@ const Map = () => {
             />
           </MapContainer>
           {/* Popup Modal for Selected Listing */}
-          <Dialog open={!!selectedListing} onClose={() => setSelectedListing(null)}>
+          <Dialog open={!!selectedListing} onClose={() => setSelectedListingId(null)}>
             <DialogTitle>Listing Details</DialogTitle>
             <DialogContent>
               {selectedListing && (
@@ -522,14 +581,60 @@ const Map = () => {
               </Button>
               <Button 
                 onClick={async () => {
-                  // Stub: Show interest API call can go here
-                  alert('Interest shown! (stub)');
+                  if (!selectedListing) return;
+                  setInterestLoading(true);
+                  setInterestError(null);
+                  setInterestSuccess(false);
+                  try {
+                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                    const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+                    const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+                    const method = selectedListing.isInterested ? 'DELETE' : 'POST';
+                    const response = await fetch(`${apiUrl}/api/listings/${selectedListing.listing_id || selectedListing.id}/interest`, {
+                      method,
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'X-User-Type': userType,
+                        'X-Username': username,
+                      },
+                      credentials: 'include',
+                    });
+                    if (!response.ok) {
+                      const errorText = await response.text();
+                      throw new Error(errorText || `Failed to ${selectedListing.isInterested ? 'remove' : 'show'} interest`);
+                    }
+                    setInterestSuccess(true);
+                    // Update main listings array
+                    setListings(prevListings => prevListings.map(l => {
+                      if ((l.listing_id || l.id) === (selectedListing.listing_id || selectedListing.id)) {
+                        return { ...l, isInterested: !l.isInterested };
+                      }
+                      return l;
+                    }));
+                  } catch (err) {
+                    setInterestError(err.message);
+                  } finally {
+                    setInterestLoading(false);
+                  }
                 }} 
-                color="success" 
-                variant="outlined"
+                color={selectedListing && selectedListing.isInterested ? "warning" : "success"}
+                variant={selectedListing && selectedListing.isInterested ? "outlined" : "contained"}
+                disabled={interestLoading}
               >
-                Show Interest
+                {interestLoading
+                  ? "Processing..."
+                  : selectedListing && selectedListing.isInterested
+                    ? "Remove Interest"
+                    : "Show Interest"}
               </Button>
+              {interestError && (
+                <Typography color="error" variant="caption">{interestError}</Typography>
+              )}
+              {interestSuccess && (
+                <Typography color="success.main" variant="caption">
+                  {selectedListing && selectedListing.isInterested ? 'Interest recorded!' : 'Interest removed!'}
+                </Typography>
+              )}
             </DialogActions>
           </Dialog>
         </div>
