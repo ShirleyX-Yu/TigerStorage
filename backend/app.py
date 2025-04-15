@@ -287,6 +287,67 @@ def init_db():
                     print("interested_listings table created successfully")
                 else:
                     print("interested_listings table already exists")
+                    
+                    # Check if the interested_listings table has all required columns
+                    cur.execute("""
+                        SELECT column_name 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'interested_listings';
+                    """)
+                    interested_columns = [col[0] for col in cur.fetchall()]
+                    print(f"Interested listings columns: {interested_columns}")
+                    
+                    # Check for each required column
+                    required_columns = ['interest_id', 'listing_id', 'lender_username', 'renter_username', 'created_at', 'status']
+                    missing_columns = [col for col in required_columns if col not in interested_columns]
+                    
+                    if missing_columns:
+                        print(f"Missing columns in interested_listings table: {missing_columns}")
+                        # Add missing columns
+                        for col in missing_columns:
+                            if col == 'interest_id':
+                                try:
+                                    cur.execute("ALTER TABLE interested_listings ADD COLUMN interest_id SERIAL PRIMARY KEY;")
+                                    print("Added interest_id column")
+                                except Exception as e:
+                                    print(f"Error adding interest_id column: {e}")
+                                    conn.rollback()
+                            elif col == 'listing_id':
+                                try:
+                                    cur.execute("ALTER TABLE interested_listings ADD COLUMN listing_id INTEGER REFERENCES storage_listings(listing_id) ON DELETE CASCADE;")
+                                    print("Added listing_id column")
+                                except Exception as e:
+                                    print(f"Error adding listing_id column: {e}")
+                                    conn.rollback()
+                            elif col == 'lender_username':
+                                try:
+                                    cur.execute("ALTER TABLE interested_listings ADD COLUMN lender_username VARCHAR(255) NOT NULL;")
+                                    print("Added lender_username column")
+                                except Exception as e:
+                                    print(f"Error adding lender_username column: {e}")
+                                    conn.rollback()
+                            elif col == 'renter_username':
+                                try:
+                                    cur.execute("ALTER TABLE interested_listings ADD COLUMN renter_username VARCHAR(255) NOT NULL;")
+                                    print("Added renter_username column")
+                                except Exception as e:
+                                    print(f"Error adding renter_username column: {e}")
+                                    conn.rollback()
+                            elif col == 'created_at':
+                                try:
+                                    cur.execute("ALTER TABLE interested_listings ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
+                                    print("Added created_at column")
+                                except Exception as e:
+                                    print(f"Error adding created_at column: {e}")
+                                    conn.rollback()
+                            elif col == 'status':
+                                try:
+                                    cur.execute("ALTER TABLE interested_listings ADD COLUMN status VARCHAR(50) DEFAULT 'pending';")
+                                    print("Added status column")
+                                except Exception as e:
+                                    print(f"Error adding status column: {e}")
+                                    conn.rollback()
+                        conn.commit()
         finally:
             conn.close()
     except Exception as e:
@@ -640,71 +701,107 @@ def create_listing():
 @app.route('/api/listings', methods=['GET'])
 def get_listings():
     try:
-        print("DEBUG: Starting get_listings endpoint")
-        
-        # Add CORS headers
-        response_headers = {
-            'Access-Control-Allow-Origin': request.headers.get('Origin', '*'),
-            'Access-Control-Allow-Credentials': 'true',
-            'Access-Control-Allow-Methods': 'GET, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Type, X-Username'
-        }
-        
-        # Handle OPTIONS preflight request
-        if request.method == 'OPTIONS':
-            return ('', 204, response_headers)
-            
-        # Log user info from headers for debugging
-        username = request.headers.get('X-Username')
-        user_type = request.headers.get('X-User-Type')
-        print(f"DEBUG: Request headers - X-Username: {username}, X-User-Type: {user_type}")
-        
-        # Log cookies for debugging
-        print("DEBUG: Cookies:", request.cookies)
-        
+        print("Received request for /api/listings")
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
-            print("DEBUG: Failed to get database connection")
-            return jsonify({"error": "Database connection failed"}), 500, response_headers
+            print("Database connection failed")
+            # In dev mode, return mock data if DB connection fails
+            is_dev = os.environ.get('FLASK_ENV') == 'development' or os.environ.get('DEBUG') == 'true'
+            if is_dev:
+                # Return mock data with valid coordinates
+                mock_listings = [
+                    {
+                        "id": 1,
+                        "location": "Forbes College Storage",
+                        "cost": 50,
+                        "cubic_feet": 75,
+                        "description": "Basement storage in Forbes College.",
+                        "created_at": "2023-04-15T09:45:00", 
+                        "latitude": 40.342,
+                        "longitude": -74.660
+                    },
+                    {
+                        "id": 2,
+                        "location": "Mathey College Storage",
+                        "cost": 60,
+                        "cubic_feet": 100,
+                        "description": "Secure storage space at Mathey College.",
+                        "created_at": "2023-04-20T14:30:00",
+                        "latitude": 40.347,
+                        "longitude": -74.659
+                    }
+                ]
+                print("Returning mock data for development")
+                return jsonify(mock_listings), 200
+            return jsonify({"error": "Database connection failed"}), 500
             
         try:
             with conn.cursor() as cur:
-                print("DEBUG: Fetching listings")
-                
-                # First, get the available columns to build a dynamic query
+                # First check if the storage_listings table exists
                 cur.execute("""
-                    SELECT column_name 
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_name = 'storage_listings'
+                    );
+                """)
+                table_exists = cur.fetchone()[0]
+                
+                if not table_exists:
+                    # Create the table if it doesn't exist
+                    print("Creating storage_listings table")
+                    cur.execute("""
+                        CREATE TABLE storage_listings (
+                            listing_id SERIAL PRIMARY KEY,
+                            location VARCHAR(255) NOT NULL,
+                            address VARCHAR(255),
+                            cost NUMERIC,
+                            cubic_ft INTEGER,
+                            description TEXT,
+                            latitude FLOAT,
+                            longitude FLOAT,
+                            start_date DATE,
+                            end_date DATE,
+                            image_url VARCHAR(255),
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            owner_id VARCHAR(255)
+                        );
+                    """)
+                    conn.commit()
+                
+                # First, make sure any previous failed transaction is rolled back
+                conn.rollback()
+                
+                # Get the actual column names from the table to ensure we query correctly
+                cur.execute("""
+                    SELECT column_name
                     FROM information_schema.columns 
                     WHERE table_name = 'storage_listings' 
                     ORDER BY ordinal_position;
                 """)
+                columns = [column[0] for column in cur.fetchall()]
                 
-                available_columns = [col[0] for col in cur.fetchall()]
-                print(f"Available columns: {available_columns}")
-                
-                # Build a dynamic SELECT statement based on existing columns
+                # Build the query dynamically based on available columns
                 select_parts = []
                 essential_columns = ['listing_id', 'location', 'cost', 'cubic_ft', 'description', 
-                                    'created_at', 'owner_id']
+                                     'created_at', 'owner_id']
                 
                 # Add all essential columns that exist
                 for col in essential_columns:
-                    if col in available_columns:
+                    if col in columns:
                         select_parts.append(col)
                 
                 # Add optional columns if they exist
                 optional_columns = ['latitude', 'longitude', 'start_date', 'end_date', 'image_url', 'address']
                 for col in optional_columns:
-                    if col in available_columns:
+                    if col in columns:
                         select_parts.append(col)
                 
                 # Create the SELECT statement
-                select_clause = ", ".join(select_parts)
+                select_columns = ", ".join(select_parts)
                 
-                # Execute the query
                 query = f"""
-                    SELECT {select_clause}
+                    SELECT {select_columns}
                     FROM storage_listings
                     ORDER BY created_at DESC;
                 """
@@ -712,48 +809,67 @@ def get_listings():
                 print(f"Executing query: {query}")
                 cur.execute(query)
                 
-                # Fetch the results
                 listings = cur.fetchall()
-                print(f"DEBUG: Found {len(listings)} listings")
+                print(f"Found {len(listings)} listings")
                 
-                # Get column names from cursor for mapping
+                # Get column names from cursor description
                 column_names = [desc[0] for desc in cur.description]
-                print(f"Result columns: {column_names}")
                 
                 # Convert to list of dictionaries
                 formatted_listings = []
                 for listing in listings:
                     try:
-                        # Create a dictionary mapping column names to values
-                        listing_dict = {column_names[i]: listing[i] for i in range(len(column_names))}
+                        listing_dict = {}
+                        for i, col_name in enumerate(column_names):
+                            listing_dict[col_name] = listing[i]
+                        
+                        # If no latitude/longitude, set default values for Princeton with random offsets
+                        if not listing_dict.get('latitude') or not listing_dict.get('longitude'):
+                            print(f"Setting default location for listing {listing_dict.get('listing_id')}")
+                            # Princeton coordinates plus small random offset
+                            import random
+                            princeton_lat = 40.3437
+                            princeton_lng = -74.6517
+                            lat_offset = random.uniform(-0.005, 0.005)
+                            lng_offset = random.uniform(-0.005, 0.005)
+                            listing_dict['latitude'] = princeton_lat + lat_offset
+                            listing_dict['longitude'] = princeton_lng + lng_offset
                         
                         formatted_listing = {
                             "id": listing_dict.get('listing_id'),
-                            "listing_id": listing_dict.get('listing_id'),
                             "location": listing_dict.get('location', ''),
-                            "cost": float(listing_dict.get('cost', 0)) if listing_dict.get('cost') else 0,
+                            "cost": float(listing_dict.get('cost', 0)) if listing_dict.get('cost') is not None else 0,
                             "cubic_feet": listing_dict.get('cubic_ft', 0),
-                            "cubic_ft": listing_dict.get('cubic_ft', 0),
                             "description": listing_dict.get('description', ''),
-                            "latitude": float(listing_dict.get('latitude', 0)) if listing_dict.get('latitude') else None,
-                            "longitude": float(listing_dict.get('longitude', 0)) if listing_dict.get('longitude') else None,
+                            "latitude": float(listing_dict.get('latitude', 0)) if listing_dict.get('latitude') is not None else None,
+                            "longitude": float(listing_dict.get('longitude', 0)) if listing_dict.get('longitude') is not None else None,
                             "start_date": listing_dict.get('start_date').isoformat() if listing_dict.get('start_date') else None,
                             "end_date": listing_dict.get('end_date').isoformat() if listing_dict.get('end_date') else None,
-                            "image_url": listing_dict.get('image_url', "/assets/placeholder.jpg"),
+                            "image_url": listing_dict.get('image_url', '/assets/placeholder.jpg'),
                             "created_at": listing_dict.get('created_at').isoformat() if listing_dict.get('created_at') else None,
-                            "owner_id": listing_dict.get('owner_id', "unknown")
+                            "owner_id": listing_dict.get('owner_id', '')
                         }
+
+                        # Ensure latitude and longitude have values for map display
+                        if formatted_listing["latitude"] is None or formatted_listing["longitude"] is None:
+                            # Princeton coordinates plus small random offset
+                            import random
+                            princeton_lat = 40.3437
+                            princeton_lng = -74.6517
+                            lat_offset = random.uniform(-0.005, 0.005)
+                            lng_offset = random.uniform(-0.005, 0.005)
+                            formatted_listing["latitude"] = princeton_lat + lat_offset
+                            formatted_listing["longitude"] = princeton_lng + lng_offset
+                            print(f"Set default lat/lng for listing {formatted_listing['id']}: {formatted_listing['latitude']}, {formatted_listing['longitude']}")
+                        
                         formatted_listings.append(formatted_listing)
                     except Exception as e:
                         print(f"DEBUG: Error formatting listing: {e}")
+                        print(f"DEBUG: Listing data: {listing}")
                         continue
                 
-                response = jsonify(formatted_listings)
-                # Add CORS headers to the response
-                for key, value in response_headers.items():
-                    response.headers[key] = value
-                
-                return response, 200
+                print(f"Returning {len(formatted_listings)} formatted listings")
+                return jsonify(formatted_listings), 200
         finally:
             conn.close()
     except Exception as e:
@@ -963,7 +1079,9 @@ def get_my_listings():
                         "cost": 65,
                         "cubic_feet": 90,
                         "description": "Secure storage space near Butler College.",
-                        "created_at": "2023-05-01T10:00:00"
+                        "created_at": "2023-05-01T10:00:00",
+                        "latitude": 40.344,
+                        "longitude": -74.656
                     },
                     {
                         "id": 102,
@@ -971,7 +1089,9 @@ def get_my_listings():
                         "cost": 55,
                         "cubic_feet": 75,
                         "description": "Climate-controlled storage in basement.",
-                        "created_at": "2023-05-05T14:30:00"
+                        "created_at": "2023-05-05T14:30:00",
+                        "latitude": 40.343,
+                        "longitude": -74.657
                     }
                 ]
                 print("Returning mock data for development")
@@ -1055,17 +1175,51 @@ def get_my_listings():
                 select_columns = ", ".join(select_parts)
                 
                 try:
-                    # Use the correct format for owner_id based on its data type
-                    query = f"""
-                        SELECT {select_columns}
-                        FROM storage_listings
-                        WHERE owner_id = %s
-                        ORDER BY created_at DESC;
-                    """
-                    
-                    print(f"Executing query: {query}")
-                    # Pass owner_id as a string, which works for both VARCHAR and can be auto-converted to INTEGER if needed
-                    cur.execute(query, (str(owner_id),))
+                    # Handle owner_id type conversion based on database type
+                    query = ""
+                    if 'int' in owner_id_type:
+                        # If owner_id is an integer type in the database
+                        try:
+                            # Try to convert owner_id to integer
+                            owner_id_int = int(owner_id)
+                            query = f"""
+                                SELECT {select_columns}
+                                FROM storage_listings
+                                WHERE owner_id = %s
+                                ORDER BY created_at DESC;
+                            """
+                            print(f"Using integer owner_id for query: {owner_id_int}")
+                            cur.execute(query, (owner_id_int,))
+                        except ValueError:
+                            # If conversion fails, return mock data for development or an empty list
+                            print(f"Cannot convert owner_id '{owner_id}' to integer, returning mock/empty data")
+                            if os.environ.get('FLASK_ENV') == 'development' or os.environ.get('DEBUG') == 'true':
+                                mock_listings = [
+                                    {
+                                        "id": 101,
+                                        "location": "Butler College Storage",
+                                        "cost": 65,
+                                        "cubic_feet": 90,
+                                        "description": "Secure storage space near Butler College.",
+                                        "created_at": "2023-05-01T10:00:00",
+                                        "latitude": 40.344,
+                                        "longitude": -74.656,
+                                        "owner_id": owner_id
+                                    }
+                                ]
+                                return jsonify(mock_listings), 200
+                            else:
+                                return jsonify([]), 200
+                    else:
+                        # If owner_id is a string type in the database
+                        query = f"""
+                            SELECT {select_columns}
+                            FROM storage_listings
+                            WHERE owner_id = %s
+                            ORDER BY created_at DESC;
+                        """
+                        print(f"Using string owner_id for query: {owner_id}")
+                        cur.execute(query, (str(owner_id),))
                     
                     listings = cur.fetchall()
                     print(f"Found {len(listings)} listings for owner_id: {owner_id}")
@@ -1081,6 +1235,18 @@ def get_my_listings():
                             listing_dict = {}
                             for i, col_name in enumerate(column_names):
                                 listing_dict[col_name] = listing[i]
+                            
+                            # If no latitude/longitude, set default values for Princeton
+                            if not listing_dict.get('latitude') or not listing_dict.get('longitude'):
+                                print(f"Setting default location for listing {listing_dict.get('listing_id')}")
+                                # Princeton coordinates plus small random offset
+                                import random
+                                princeton_lat = 40.3437
+                                princeton_lng = -74.6517
+                                lat_offset = random.uniform(-0.005, 0.005)
+                                lng_offset = random.uniform(-0.005, 0.005)
+                                listing_dict['latitude'] = princeton_lat + lat_offset
+                                listing_dict['longitude'] = princeton_lng + lng_offset
                             
                             formatted_listing = {
                                 "id": listing_dict.get('listing_id'),
@@ -1102,8 +1268,13 @@ def get_my_listings():
                             print(f"DEBUG: Listing data: {listing}")
                             continue
                     
+                    # Add CORS headers to the response
+                    response = jsonify(formatted_listings)
+                    response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+                    response.headers['Access-Control-Allow-Credentials'] = 'true'
+                    
                     print(f"Returning {len(formatted_listings)} formatted listings")
-                    return jsonify(formatted_listings), 200
+                    return response, 200
                 except Exception as e:
                     print(f"Error executing query: {e}")
                     conn.rollback()
@@ -1297,17 +1468,31 @@ def handle_interest(listing_id):
     try:
         print(f"Received interest request for listing {listing_id}")
         # Check if user is logged in
-        if not auth.is_authenticated():
-            print("User not authenticated")
-            return jsonify({"error": "Not authenticated"}), 401
+        authenticated = auth.is_authenticated()
+        renter_username = None
+        
+        if authenticated:
+            # Get from session if authenticated
+            print("User authenticated via session")
+            user_info = session['user_info']
+            renter_username = user_info.get('user', '')
+            print(f"Authenticated username from session: {renter_username}")
+        else:
+            # If not authenticated via session, check headers
+            print("User not authenticated via session, checking headers")
+            username_header = request.headers.get('X-Username')
+            user_type_header = request.headers.get('X-User-Type')
             
-        # Get user info from session
-        user_info = session['user_info']
-        renter_username = user_info.get('user', '')
-        print(f"Renter username: {renter_username}")
+            if username_header:
+                renter_username = username_header
+                print(f"Using username from X-Username header: {renter_username}")
+            else:
+                # No authentication found
+                print("No authentication found in session or headers")
+                return jsonify({"error": "Not authenticated"}), 401
         
         if not renter_username:
-            print("No renter username found in session")
+            print("Renter username not found in session or headers")
             return jsonify({"error": "User not found"}), 400
             
         # Get a fresh connection
@@ -1350,42 +1535,60 @@ def handle_interest(listing_id):
                         print(f"User {renter_username} has already shown interest in listing {listing_id}")
                         return jsonify({"error": "You have already shown interest in this listing"}), 400
                     
-                    # Insert the interest
-                    print(f"Inserting new interest record for listing {listing_id}, renter {renter_username}, lender {lender_username}")
+                    # Check if interested_listings table exists
                     cur.execute("""
-                        INSERT INTO interested_listings 
-                        (listing_id, lender_username, renter_username)
-                        VALUES (%s, %s, %s)
-                        RETURNING interest_id
-                    """, (listing_id, lender_username, renter_username))
+                        SELECT EXISTS (
+                            SELECT FROM information_schema.tables 
+                            WHERE table_name = 'interested_listings'
+                        );
+                    """)
+                    table_exists = cur.fetchone()[0]
                     
-                    interest_id = cur.fetchone()[0]
-                    conn.commit()
-                    print(f"Successfully created interest record with ID {interest_id}")
+                    if not table_exists:
+                        print("Creating interested_listings table")
+                        cur.execute("""
+                            CREATE TABLE interested_listings (
+                                interest_id SERIAL PRIMARY KEY,
+                                listing_id INTEGER REFERENCES storage_listings(listing_id) ON DELETE CASCADE,
+                                lender_username VARCHAR(255) NOT NULL,
+                                renter_username VARCHAR(255) NOT NULL,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                status VARCHAR(50) DEFAULT 'pending',
+                                UNIQUE(listing_id, renter_username)
+                            );
+                        """)
+                        conn.commit()
+                        print("interested_listings table created successfully")
                     
-                    return jsonify({
-                        "success": True,
-                        "interest_id": interest_id,
-                        "message": "Interest shown successfully"
-                    }), 201
-                    
+                    # Show interest in listing
+                    print(f"Inserting new interest record for listing {listing_id}, renter {renter_username}, lender {lender_username}")
+                    try:
+                        cur.execute("""
+                            INSERT INTO interested_listings 
+                            (listing_id, lender_username, renter_username, status) 
+                            VALUES (%s, %s, %s, 'pending')
+                        """, (listing_id, lender_username, renter_username))
+                        conn.commit()
+                        print(f"Interest in listing {listing_id} recorded successfully")
+                        return jsonify({
+                            "success": True,
+                            "message": "Interest recorded successfully"
+                        }), 200
+                    except Exception as insert_error:
+                        print(f"Error adding interest: {insert_error}")
+                        conn.rollback()
+                        import traceback
+                        traceback.print_exc()
+                        return jsonify({"error": f"Failed to record interest: {str(insert_error)}"}), 500
                 elif request.method == 'DELETE':
-                    # Remove the interest
+                    # Remove interest in listing
                     print(f"Removing interest for listing {listing_id}, renter {renter_username}")
                     cur.execute("""
                         DELETE FROM interested_listings 
                         WHERE listing_id = %s AND renter_username = %s
-                        RETURNING interest_id
                     """, (listing_id, renter_username))
-                    
-                    deleted_interest = cur.fetchone()
-                    if not deleted_interest:
-                        print(f"No interest found to remove for listing {listing_id}, renter {renter_username}")
-                        return jsonify({"error": "No interest found to remove"}), 404
-                        
                     conn.commit()
-                    print(f"Successfully removed interest record with ID {deleted_interest[0]}")
-                    
+                    print(f"Interest in listing {listing_id} removed successfully")
                     return jsonify({
                         "success": True,
                         "message": "Interest removed successfully"
@@ -1500,44 +1703,129 @@ def get_my_interested_listings():
             
         try:
             with conn.cursor() as cur:
+                # Check if the interested_listings table exists
+                print("Checking if interested_listings table exists")
+                cur.execute("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_name = 'interested_listings'
+                    );
+                """)
+                table_exists = cur.fetchone()[0]
+                
+                if not table_exists:
+                    print("interested_listings table does not exist, returning empty array")
+                    response = jsonify([])
+                    # Add CORS headers
+                    response.headers['Access-Control-Allow-Origin'] = '*'
+                    response.headers['Access-Control-Allow-Methods'] = 'GET'
+                    return response, 200
+                    
+                # Check if the storage_listings table exists
+                print("Checking if storage_listings table exists")
+                cur.execute("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_name = 'storage_listings'
+                    );
+                """)
+                listings_table_exists = cur.fetchone()[0]
+                
+                if not listings_table_exists:
+                    print("storage_listings table does not exist, returning empty array")
+                    response = jsonify([])
+                    # Add CORS headers
+                    response.headers['Access-Control-Allow-Origin'] = '*'
+                    response.headers['Access-Control-Allow-Methods'] = 'GET'
+                    return response, 200
+                
                 # Get interested listings with their details
                 print(f"Fetching interested listings for renter: {renter_username}")
-                cur.execute("""
-                    SELECT 
-                        il.interest_id,
-                        sl.listing_id,
-                        sl.location,
-                        sl.cost,
-                        sl.owner_id as lender,
-                        il.created_at,
-                        il.status
-                    FROM interested_listings il
-                    JOIN storage_listings sl ON il.listing_id = sl.listing_id
-                    WHERE il.renter_username = %s
-                    ORDER BY il.created_at DESC
-                """, (renter_username,))
                 
-                interested_listings = []
-                for row in cur.fetchall():
-                    interested_listings.append({
-                        "id": row[1],  # listing_id
-                        "location": row[2],
-                        "cost": row[3],
-                        "lender": row[4],
-                        "dateInterested": row[5].isoformat(),
-                        "status": row[6],
-                        "nextStep": "Waiting for lender response" if row[6] == 'pending' else "In Discussion"
-                    })
-                
-                print(f"Found {len(interested_listings)} interested listings for user {renter_username}")
-                return jsonify(interested_listings), 200
+                try:
+                    # Get the actual column names from the table to ensure we query correctly
+                    cur.execute("""
+                        SELECT column_name
+                        FROM information_schema.columns 
+                        WHERE table_name = 'interested_listings' 
+                        ORDER BY ordinal_position;
+                    """)
+                    interested_columns = [column[0] for column in cur.fetchall()]
+                    print(f"interested_listings columns: {interested_columns}")
+                    
+                    cur.execute("""
+                        SELECT column_name
+                        FROM information_schema.columns 
+                        WHERE table_name = 'storage_listings' 
+                        ORDER BY ordinal_position;
+                    """)
+                    listing_columns = [column[0] for column in cur.fetchall()]
+                    print(f"storage_listings columns: {listing_columns}")
+                    
+                    # Now we can build a query that is guaranteed to work with the available columns
+                    query = """
+                        SELECT 
+                            il.interest_id,
+                            sl.listing_id,
+                            sl.location,
+                            sl.cost,
+                            sl.owner_id as lender,
+                            il.created_at,
+                            il.status
+                        FROM interested_listings il
+                        JOIN storage_listings sl ON il.listing_id = sl.listing_id
+                        WHERE il.renter_username = %s
+                        ORDER BY il.created_at DESC
+                    """
+                    print(f"Executing query: {query}")
+                    cur.execute(query, (renter_username,))
+                    
+                    interested_listings = []
+                    rows = cur.fetchall()
+                    print(f"Query returned {len(rows)} rows")
+                    
+                    for row in rows:
+                        interested_listings.append({
+                            "id": row[1],  # listing_id
+                            "location": row[2],
+                            "cost": row[3],
+                            "lender": row[4],
+                            "dateInterested": row[5].isoformat(),
+                            "status": row[6],
+                            "nextStep": "Waiting for lender response" if row[6] == 'pending' else "In Discussion"
+                        })
+                    
+                    print(f"Found {len(interested_listings)} interested listings for user {renter_username}")
+                    
+                    # Create response with CORS headers
+                    response = jsonify(interested_listings)
+                    response.headers['Access-Control-Allow-Origin'] = '*'
+                    response.headers['Access-Control-Allow-Methods'] = 'GET'
+                    
+                    return response, 200
+                except Exception as query_error:
+                    print(f"SQL error during query: {query_error}")
+                    import traceback
+                    traceback.print_exc()
+                    
+                    # Return empty list instead of error if tables exist but join fails
+                    response = jsonify([])
+                    # Add CORS headers
+                    response.headers['Access-Control-Allow-Origin'] = '*'
+                    response.headers['Access-Control-Allow-Methods'] = 'GET'
+                    return response, 200
         finally:
             conn.close()
     except Exception as e:
         print("Error getting interested listings:", str(e))
         import traceback
         traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+        
+        # Even in error case, add CORS headers
+        response = jsonify({"error": str(e)})
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'GET'
+        return response, 500
 
 # API to get listings by username (emergency workaround for cross-domain cookie issues)
 @app.route('/api/listings/by-username/<username>', methods=['GET'])

@@ -21,14 +21,16 @@ const RenterDashboard = ({ username }) => {
         
         // Get user information to include in headers
         const userType = sessionStorage.getItem('userType') || 'renter';
+        console.log('Using username:', username, 'User type:', userType);
         
         const response = await fetch(`${apiUrl}/api/my-interested-listings`, {
+          method: 'GET',
           credentials: 'include',
           headers: {
             'Accept': 'application/json',
             'Cache-Control': 'no-cache',
             'X-User-Type': userType,
-            'X-Username': username || 'renter'
+            'X-Username': username || ''
           }
         });
         
@@ -53,7 +55,7 @@ const RenterDashboard = ({ username }) => {
     };
 
     fetchInterestedSpaces();
-  }, []);
+  }, [username]);
 
   return (
     <div style={styles.container}>

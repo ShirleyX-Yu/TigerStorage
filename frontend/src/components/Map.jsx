@@ -9,6 +9,7 @@ import { faChartBar } from '@fortawesome/free-solid-svg-icons';
 import { Box, Typography, List, ListItem, ListItemText, Divider } from '@mui/material';
 import Header from './Header';
 import { logout } from '../utils/auth';
+import { Link } from 'react-router-dom';
 
 // Fix for Leaflet marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -66,71 +67,49 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
       console.log("Adding markers for listings:", listings.length);
       
       listings.forEach((listing, index) => {
-        // Debug: log each listing's data
-        console.log(`Listing ${index} (ID: ${listing.id || listing.listing_id}):`, {
-          latitude: listing.latitude,
-          longitude: listing.longitude,
-          hasCoords: Boolean(listing.latitude && listing.longitude),
-          validCoords: typeof listing.latitude === 'number' && typeof listing.longitude === 'number',
-          costType: typeof listing.cost,
-          cost: listing.cost,
-          location: listing.location
-        });
+        // Validate coordinates before rendering marker
+        if (!listing.latitude || !listing.longitude || 
+            isNaN(listing.latitude) || isNaN(listing.longitude)) {
+          console.warn('Invalid coordinates for listing:', listing.id, 
+                       'lat:', listing.latitude, 'lng:', listing.longitude);
+          return; // Skip this listing
+        }
         
-        if (listing.latitude && listing.longitude) {
-          // Verify coords are valid numbers
-          const lat = parseFloat(listing.latitude);
-          const lng = parseFloat(listing.longitude);
+        console.log('Rendering marker for listing:', listing.id, 
+                     'at lat:', listing.latitude, 'lng:', listing.longitude);
+        
+        try {
+          // Prioritize the database column names
+          const cost = listing.cost !== undefined ? listing.cost : 0;
+          const size = listing.cubic_ft !== undefined ? listing.cubic_ft : 
+                      (listing.cubic_feet !== undefined ? listing.cubic_feet : 0);
           
-          if (isNaN(lat) || isNaN(lng)) {
-            console.error(`Invalid coordinates for listing ${listing.id || listing.listing_id}: lat=${listing.latitude}, lng=${listing.longitude}`);
-            return; // Skip this listing
-          }
-          
-          // Check if coordinates are within reasonable range
-          if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-            console.error(`Coordinates out of range for listing ${listing.id || listing.listing_id}: lat=${lat}, lng=${lng}`);
-            return; // Skip this listing
-          }
-          
-          try {
-            // Prioritize the database column names
-            const cost = listing.cost !== undefined ? listing.cost : 0;
-            const size = listing.cubic_ft !== undefined ? listing.cubic_ft : 
-                        (listing.cubic_feet !== undefined ? listing.cubic_feet : 0);
+          // Create marker with popup
+          const marker = L.marker([listing.latitude, listing.longitude], { icon: orangeIcon })
+            .addTo(map)
+            .bindPopup(`
+              <div>
+                <h3>${listing.location || 'Unknown Location'}</h3>
+                <p>Price: $${cost}/month</p>
+                <p>Size: ${size} cubic feet</p>
+                <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
+                <button 
+                  style="background-color: #f57c00; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;"
+                  onclick="window.location.href='/listing/${listing.id || listing.listing_id}'"
+                >
+                  View Details
+                </button>
+              </div>
+            `);
             
-            // Create marker with popup
-            const marker = L.marker([lat, lng], { icon: orangeIcon })
-              .addTo(map)
-              .bindPopup(`
-                <div>
-                  <h3>${listing.location || 'Unknown Location'}</h3>
-                  <p>Price: $${cost}/month</p>
-                  <p>Size: ${size} cubic feet</p>
-                  <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
-                  <button 
-                    style="background-color: #f57c00; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;"
-                    onclick="window.location.href='/listing/${listing.id || listing.listing_id}'"
-                  >
-                    View Details
-                  </button>
-                </div>
-              `);
-              
             // Add click handler
             marker.on('click', () => {
               onListingClick(listing);
             });
             
-            console.log(`Successfully added marker for listing ${listing.id || listing.listing_id} at [${lat}, ${lng}]`);
-          } catch (err) {
-            console.error(`Error creating marker for listing ${listing.id || listing.listing_id}:`, err);
-          }
-        } else {
-          console.warn(`Listing ${listing.id || listing.listing_id} is missing coordinates:`, {
-            latitude: listing.latitude,
-            longitude: listing.longitude
-          });
+            console.log(`Successfully added marker for listing ${listing.id || listing.listing_id} at [${listing.latitude}, ${listing.longitude}]`);
+        } catch (err) {
+          console.error(`Error creating marker for listing ${listing.id || listing.listing_id}:`, err);
         }
       });
     } else {
@@ -172,6 +151,7 @@ if (typeof document !== 'undefined') {
 const Map = () => {
   const [listings, setListings] = useState([]);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     minCost: 0,
     maxCost: 1000,
@@ -183,87 +163,76 @@ const Map = () => {
   const navigate = useNavigate();
   const [selectedListing, setSelectedListing] = useState(null);
 
-  useEffect(() => {
-    const fetchListings = async () => {
-      try {
-        // Get base API URL, falling back to the current origin if in production
-        let apiUrl = import.meta.env.VITE_API_URL;
-        if (!apiUrl && typeof window !== 'undefined') {
-          // In production without VITE_API_URL, use the same origin
-          apiUrl = window.location.origin;
-          console.log("Using current origin as API URL:", apiUrl);
-        } else if (!apiUrl) {
-          // Default for local development
-          apiUrl = 'http://localhost:8000';
-          console.log("Using default local API URL:", apiUrl);
-        }
-        
-        console.log("Fetching listings from:", `${apiUrl}/api/listings`);
-        
-        // Get user information for headers
-        const userType = sessionStorage.getItem('userType') || 'renter';
-        const username = sessionStorage.getItem('username') || localStorage.getItem('username') || 'renter';
-        
-        const response = await fetch(`${apiUrl}/api/listings`, {
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache',
-            'X-User-Type': userType,
-            'X-Username': username
-          }
-        });
-        
-        console.log("Response status:", response.status);
-        
-        if (!response.ok) {
-          // Try to read the response body as text first
-          const responseText = await response.text();
-          console.error("Error response body:", responseText);
-          
-          let errorText = `Server returned ${response.status}: ${response.statusText}`;
-          try {
-            // Try to parse as JSON if possible
-            const errorData = JSON.parse(responseText);
-            errorText += ` - ${errorData.error || errorData.message || JSON.stringify(errorData)}`;
-          } catch (e) {
-            // If not JSON, just append the text
-            if (responseText) {
-              errorText += ` - ${responseText}`;
-            }
-          }
-          throw new Error(`Failed to fetch listings: ${errorText}`);
-        }
-        
-        const data = await response.json();
-        console.log("Fetched listings count:", data?.length || 0);
-        
-        // Debug: Print the first listing to see its structure
-        if (data && data.length > 0) {
-          console.log("First listing structure:", JSON.stringify(data[0], null, 2));
-        }
-        
-        // Add distance to each listing
-        const listingsWithDistance = data.map(listing => {
-          if (listing.latitude && listing.longitude) {
-            const distance = calculateDistance(
-              PRINCETON_COORDS.lat,
-              PRINCETON_COORDS.lng,
-              listing.latitude,
-              listing.longitude
-            );
-            return { ...listing, distance };
-          }
-          return listing;
-        });
-        
-        setListings(listingsWithDistance);
-      } catch (err) {
-        console.error("Error fetching listings:", err);
-        setError(err.message || "Failed to fetch listings. Check console for details.");
-      }
-    };
+  const fetchListings = async () => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const fetchUrl = `${apiUrl}/api/listings`;
+      console.log('Fetching listings from:', fetchUrl);
+      
+      // Get user info for headers
+      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+      const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+      
+      console.log('Using auth headers - User type:', userType, 'Username:', username);
+      
+      const response = await fetch(fetchUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-User-Type': userType,
+          'X-Username': username
+        },
+        credentials: 'include'
+      });
 
+      console.log('Listings response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error fetching listings:', errorText);
+        throw new Error(`Failed to fetch listings: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log(`Received ${data.length} listings:`, data);
+      
+      // Validate coordinates
+      const validListings = data.filter(listing => {
+        const hasCoords = listing.latitude && listing.longitude && 
+                          !isNaN(listing.latitude) && !isNaN(listing.longitude);
+        if (!hasCoords) {
+          console.warn('Listing with invalid coordinates:', listing.id);
+        }
+        return hasCoords;
+      });
+      
+      console.log(`${validListings.length} listings have valid coordinates`);
+      
+      // Add distance to each listing
+      const listingsWithDistance = validListings.map(listing => {
+        if (listing.latitude && listing.longitude) {
+          const distance = calculateDistance(
+            PRINCETON_COORDS.lat,
+            PRINCETON_COORDS.lng,
+            listing.latitude,
+            listing.longitude
+          );
+          return { ...listing, distance };
+        }
+        return listing;
+      });
+      
+      setListings(listingsWithDistance);
+    } catch (err) {
+      console.error('Error in fetchListings:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchListings();
   }, []);
 
