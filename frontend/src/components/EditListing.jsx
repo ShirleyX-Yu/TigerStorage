@@ -282,6 +282,12 @@ const EditListing = () => {
       {success && <div style={styles.success}>Listing updated successfully! Redirecting...</div>}
       <div style={styles.content}>
         <form onSubmit={handleSubmit} style={styles.form}>
+        <button 
+          type="button"
+          onClick={() => navigate('/lender')}
+          style={{...styles.cancelButton, marginBottom: 24, alignSelf: 'flex-start'}}>
+          ← Back to Dashboard
+        </button>
           <div style={styles.formGroup}>
             <label htmlFor="location" style={styles.label}>Title</label>
             <input
@@ -474,13 +480,7 @@ const EditListing = () => {
           </div>
 
           <div style={styles.buttonContainer}>
-            <button 
-              type="button" 
-              onClick={() => navigate('/lender')}
-              style={styles.cancelButton}
-            >
-              Cancel
-            </button>
+
             <button type="submit" style={styles.submitButton}>
               Update Listing
             </button>
