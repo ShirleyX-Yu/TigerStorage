@@ -18,6 +18,14 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
     onFilterChange(key, event.target.value);
   };
 
+  const handleReset = () => {
+    onFilterChange('minCost', 0);
+    onFilterChange('maxCost', 1000);
+    onFilterChange('minSize', 0);
+    onFilterChange('maxSize', 1000);
+    onFilterChange('maxDistance', 10);
+  };
+
   return (
     <Box sx={{ 
       width: '100%',
@@ -145,7 +153,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
 
       <Button 
         variant="outlined" 
-        onClick={onReset}
+        onClick={handleReset}
         fullWidth
         sx={{
           borderColor: '#FF6B00',
