@@ -253,7 +253,7 @@ const EditListing = () => {
       if (response.ok) {
         setSuccess(true);
         setTimeout(() => {
-          navigate('/lender', { state: { refresh: true } });
+          navigate('/lender-dashboard', { state: { refresh: true } });
         }, 1500);
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -284,7 +284,7 @@ const EditListing = () => {
         <form onSubmit={handleSubmit} style={styles.form}>
         <button 
           type="button"
-          onClick={() => navigate('/lender')}
+          onClick={() => navigate('/lender-dashboard')}
           style={{...styles.cancelButton, marginBottom: 24, alignSelf: 'flex-start'}}>
           ← Back to Dashboard
         </button>
