@@ -63,32 +63,85 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
 
     // Add markers for listings
     if (listings && listings.length > 0) {
-      console.log("Adding markers for listings:", listings);
+      console.log("Adding markers for listings:", listings.length);
       
-      listings.forEach(listing => {
+      listings.forEach((listing, index) => {
         // Debug: log each listing's data
-        console.log("Listing data:", JSON.stringify(listing, null, 2));
+        console.log(`Listing ${index} (ID: ${listing.id || listing.listing_id}):`, {
+          latitude: listing.latitude,
+          longitude: listing.longitude,
+          hasCoords: Boolean(listing.latitude && listing.longitude),
+          validCoords: typeof listing.latitude === 'number' && typeof listing.longitude === 'number',
+          costType: typeof listing.cost,
+          cost: listing.cost,
+          location: listing.location
+        });
         
         if (listing.latitude && listing.longitude) {
-          // Prioritize the database column names
-          const cost = listing.cost !== undefined ? listing.cost : 0;
-          const size = listing.cubic_ft !== undefined ? listing.cubic_ft : 
-                      (listing.cubic_feet !== undefined ? listing.cubic_feet : 0);
+          // Verify coords are valid numbers
+          const lat = parseFloat(listing.latitude);
+          const lng = parseFloat(listing.longitude);
           
-          L.marker([listing.latitude, listing.longitude], { icon: orangeIcon })
-            .addTo(map)
-            .bindPopup(`
-              <div>
-                <h3>${listing.location}</h3>
-                <p>Price: $${cost}/month</p>
-                <p>Size: ${size} cubic feet</p>
-                <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
-              </div>
-            `);
+          if (isNaN(lat) || isNaN(lng)) {
+            console.error(`Invalid coordinates for listing ${listing.id || listing.listing_id}: lat=${listing.latitude}, lng=${listing.longitude}`);
+            return; // Skip this listing
+          }
+          
+          // Check if coordinates are within reasonable range
+          if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+            console.error(`Coordinates out of range for listing ${listing.id || listing.listing_id}: lat=${lat}, lng=${lng}`);
+            return; // Skip this listing
+          }
+          
+          try {
+            // Prioritize the database column names
+            const cost = listing.cost !== undefined ? listing.cost : 0;
+            const size = listing.cubic_ft !== undefined ? listing.cubic_ft : 
+                        (listing.cubic_feet !== undefined ? listing.cubic_feet : 0);
+            
+            // Create marker with popup
+            const marker = L.marker([lat, lng], { icon: orangeIcon })
+              .addTo(map)
+              .bindPopup(`
+                <div>
+                  <h3>${listing.location || 'Unknown Location'}</h3>
+                  <p>Price: $${cost}/month</p>
+                  <p>Size: ${size} cubic feet</p>
+                  <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
+                  <button 
+                    style="background-color: #f57c00; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;"
+                    onclick="window.location.href='/listing/${listing.id || listing.listing_id}'"
+                  >
+                    View Details
+                  </button>
+                </div>
+              `);
+              
+            // Add click handler
+            marker.on('click', () => {
+              onListingClick(listing);
+            });
+            
+            console.log(`Successfully added marker for listing ${listing.id || listing.listing_id} at [${lat}, ${lng}]`);
+          } catch (err) {
+            console.error(`Error creating marker for listing ${listing.id || listing.listing_id}:`, err);
+          }
+        } else {
+          console.warn(`Listing ${listing.id || listing.listing_id} is missing coordinates:`, {
+            latitude: listing.latitude,
+            longitude: listing.longitude
+          });
         }
       });
+    } else {
+      console.warn("No listings with coordinates to display on map");
     }
-  }, [map, listings]);
+    
+    // Center the map on Princeton if no listings
+    if (!listings || listings.length === 0) {
+      map.setView([PRINCETON_COORDS.lat, PRINCETON_COORDS.lng], 15);
+    }
+  }, [map, listings, onListingClick]);
 
   return null;
 };

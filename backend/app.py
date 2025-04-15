@@ -647,12 +647,20 @@ def get_listings():
             'Access-Control-Allow-Origin': request.headers.get('Origin', '*'),
             'Access-Control-Allow-Credentials': 'true',
             'Access-Control-Allow-Methods': 'GET, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Type, X-Username'
         }
         
         # Handle OPTIONS preflight request
         if request.method == 'OPTIONS':
             return ('', 204, response_headers)
+            
+        # Log user info from headers for debugging
+        username = request.headers.get('X-Username')
+        user_type = request.headers.get('X-User-Type')
+        print(f"DEBUG: Request headers - X-Username: {username}, X-User-Type: {user_type}")
+        
+        # Log cookies for debugging
+        print("DEBUG: Cookies:", request.cookies)
         
         # Get a fresh connection
         conn = get_db_connection()
@@ -1012,13 +1020,20 @@ def get_my_listings():
                 
                 # Get the actual column names from the table to ensure we query correctly
                 cur.execute("""
-                    SELECT column_name 
+                    SELECT column_name, data_type
                     FROM information_schema.columns 
                     WHERE table_name = 'storage_listings' 
                     ORDER BY ordinal_position;
                 """)
-                columns = [col[0] for col in cur.fetchall()]
-                print(f"Available columns: {columns}")
+                column_info = cur.fetchall()
+                columns = [col[0] for col in column_info]
+                data_types = {col[0]: col[1] for col in column_info}
+                
+                print(f"Available columns with data types: {data_types}")
+                
+                # Check owner_id data type to handle possible type mismatch
+                owner_id_type = data_types.get('owner_id', 'varchar').lower()
+                print(f"Owner ID data type: {owner_id_type}")
                 
                 # Build the query dynamically based on available columns
                 select_parts = []
@@ -1040,6 +1055,7 @@ def get_my_listings():
                 select_columns = ", ".join(select_parts)
                 
                 try:
+                    # Use the correct format for owner_id based on its data type
                     query = f"""
                         SELECT {select_columns}
                         FROM storage_listings
@@ -1048,7 +1064,8 @@ def get_my_listings():
                     """
                     
                     print(f"Executing query: {query}")
-                    cur.execute(query, (owner_id,))
+                    # Pass owner_id as a string, which works for both VARCHAR and can be auto-converted to INTEGER if needed
+                    cur.execute(query, (str(owner_id),))
                     
                     listings = cur.fetchall()
                     print(f"Found {len(listings)} listings for owner_id: {owner_id}")
@@ -1061,19 +1078,23 @@ def get_my_listings():
                     formatted_listings = []
                     for listing in listings:
                         try:
+                            listing_dict = {}
+                            for i, col_name in enumerate(column_names):
+                                listing_dict[col_name] = listing[i]
+                            
                             formatted_listing = {
-                                "id": listing[0],
-                                "location": listing[1],
-                                "cost": float(listing[2]) if listing[2] is not None else 0,
-                                "cubic_feet": listing[3] if listing[3] is not None else 0,
-                                "description": listing[4] if listing[4] is not None else "",
-                                "latitude": float(listing[5]) if listing[5] is not None else None,
-                                "longitude": float(listing[6]) if listing[6] is not None else None,
-                                "start_date": listing[7].isoformat() if listing[7] else None,
-                                "end_date": listing[8].isoformat() if listing[8] else None,
-                                "image_url": listing[9] if listing[9] is not None else "/assets/placeholder.jpg",
-                                "created_at": listing[10].isoformat() if listing[10] else None,
-                                "owner_id": listing[11] if listing[11] is not None else "unknown"
+                                "id": listing_dict.get('listing_id'),
+                                "location": listing_dict.get('location', ''),
+                                "cost": float(listing_dict.get('cost', 0)) if listing_dict.get('cost') is not None else 0,
+                                "cubic_feet": listing_dict.get('cubic_ft', 0),
+                                "description": listing_dict.get('description', ''),
+                                "latitude": float(listing_dict.get('latitude', 0)) if listing_dict.get('latitude') is not None else None,
+                                "longitude": float(listing_dict.get('longitude', 0)) if listing_dict.get('longitude') is not None else None, 
+                                "start_date": listing_dict.get('start_date').isoformat() if listing_dict.get('start_date') else None,
+                                "end_date": listing_dict.get('end_date').isoformat() if listing_dict.get('end_date') else None,
+                                "image_url": listing_dict.get('image_url', '/assets/placeholder.jpg'),
+                                "created_at": listing_dict.get('created_at').isoformat() if listing_dict.get('created_at') else None,
+                                "owner_id": listing_dict.get('owner_id', '')
                             }
                             formatted_listings.append(formatted_listing)
                         except Exception as e:
