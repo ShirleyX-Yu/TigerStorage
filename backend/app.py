@@ -24,18 +24,50 @@ app = Flask(
 )
 
 # Configure CORS to allow requests from Render domains
+# --- CORS CONFIGURATION ---
+# Explicitly allow all necessary headers and credentials for frontend integration
 CORS(
-    app, 
+    app,
     resources={
         r"/*": {
             "origins": [
-                "https://tigerstorage-frontend.onrender.com", 
+                "https://tigerstorage-frontend.onrender.com",
                 "http://localhost:5173"
             ],
-            "supports_credentials": True
+            "supports_credentials": True,
+            "allow_headers": [
+                "Content-Type",
+                "Authorization",
+                "X-Requested-With",
+                "Pragma",
+                "Cache-Control",
+                "Origin",
+                "Accept",
+                "X-CSRFToken",
+                "X-Session-Id",
+                "X-Auth-Token",
+                "X-User-Type",
+                "X-Username"
+            ],
+            "expose_headers": [
+                "Content-Type",
+                "Authorization",
+                "X-Requested-With",
+                "Pragma",
+                "Cache-Control",
+                "Origin",
+                "Accept",
+                "X-CSRFToken",
+                "X-Session-Id",
+                "X-Auth-Token",
+                "X-User-Type",
+                "X-Username"
+            ]
         }
     }
 )
+# --- END CORS CONFIGURATION ---
+
 
 # Function to add CORS headers to responses
 def add_cors_headers(response):
@@ -46,7 +78,8 @@ def add_cors_headers(response):
         response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
     response.headers['Access-Control-Allow-Credentials'] = 'true'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-User-Type, X-Username, Accept, Cache-Control'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Pragma, Cache-Control, Origin, Accept, X-CSRFToken, X-Session-Id, X-Auth-Token, X-User-Type, X-Username'
+    response.headers['Access-Control-Expose-Headers'] = 'Content-Type, Authorization, X-Requested-With, Pragma, Cache-Control, Origin, Accept, X-CSRFToken, X-Session-Id, X-Auth-Token, X-User-Type, X-Username'
     return response
 
 # Register the after_request function to add CORS headers to all responses
@@ -546,7 +579,8 @@ def auth_status():
         'Access-Control-Allow-Origin': request.headers.get('Origin', '*'),
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Pragma, Cache-Control, Origin, Accept, X-CSRFToken, X-Session-Id, X-Auth-Token, X-User-Type, X-Username',
+        'Access-Control-Expose-Headers': 'Content-Type, Authorization, X-Requested-With, Pragma, Cache-Control, Origin, Accept, X-CSRFToken, X-Session-Id, X-Auth-Token, X-User-Type, X-Username'
     }
     
     if auth.is_authenticated():

@@ -98,14 +98,19 @@ export const login = (userType) => {
   window.location.replace(redirectUrl);
 };
 
+let isLoggingOut = false;
+
 export const logout = () => {
+  if (isLoggingOut) return; // Prevent double logout
+  isLoggingOut = true;
+
   // Clear the user type from both session and local storage
   sessionStorage.removeItem('userType');
   localStorage.removeItem('userType');
   
   // Get the logout URL
   const backendUrl = getBackendUrl();
-  const logoutUrl = `${backendUrl}/api/auth/logout`;
+  let logoutUrl = `${backendUrl}/api/auth/logout`;
   
   // Add redirect for production
   if (isProduction()) {
