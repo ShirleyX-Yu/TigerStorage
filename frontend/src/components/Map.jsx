@@ -31,6 +31,36 @@ const orangeIcon = new L.Icon({
   className: 'leaflet-orange-icon'
 });
 
+// Custom gray marker icon
+const grayIcon = new L.Icon({
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+  className: 'leaflet-gray-icon'
+});
+
+// Add CSS for marker colors
+const markerStyles = `
+  .leaflet-orange-icon {
+    filter: hue-rotate(0deg) saturate(2) brightness(1);
+  }
+  .leaflet-gray-icon {
+    filter: grayscale(100%) brightness(0.7);
+  }
+`;
+
+// Only inject styles in browser environment
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement("style");
+  styleSheet.type = "text/css";
+  styleSheet.innerText = markerStyles;
+  document.head.appendChild(styleSheet);
+}
+
 // Princeton University coordinates
 const PRINCETON_COORDS = {
   lat: 40.3437,
@@ -85,7 +115,9 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
                       (listing.cubic_feet !== undefined ? listing.cubic_feet : 0);
           
           // Create marker with popup
-          const marker = L.marker([listing.latitude, listing.longitude], { icon: orangeIcon })
+          const marker = L.marker([listing.latitude, listing.longitude], { 
+            icon: listing.matchesFilters ? orangeIcon : grayIcon
+          })
             .addTo(map)
             .bindPopup(`
               <div>
@@ -271,17 +303,17 @@ const Map = () => {
   };
 
   // Filter listings based on current filters
-  const filteredListings = listings.filter(listing => {
-    if (!listing.latitude || !listing.longitude) return false;
+  const filteredListings = listings.map(listing => {
+    if (!listing.latitude || !listing.longitude) return { ...listing, matchesFilters: false };
     
     // Prioritize the database column names
     const listingCost = listing.cost !== undefined ? listing.cost : 0;
-    if (listingCost < (filters.minCost || 0) || listingCost > (filters.maxCost || 1000)) return false;
+    const costMatches = listingCost >= (filters.minCost || 0) && listingCost <= (filters.maxCost || 1000);
     
     // Prioritize cubic_ft which is the actual database column
     const listingSize = listing.cubic_ft !== undefined ? listing.cubic_ft : 
                         (listing.cubic_feet !== undefined ? listing.cubic_feet : 0);
-    if (listingSize < (filters.minSize || 0) || listingSize > (filters.maxSize || 1000)) return false;
+    const sizeMatches = listingSize >= (filters.minSize || 0) && listingSize <= (filters.maxSize || 1000);
     
     const distance = calculateDistance(
       PRINCETON_COORDS.lat,
@@ -289,9 +321,12 @@ const Map = () => {
       listing.latitude,
       listing.longitude
     );
-    if (distance > (filters.maxDistance || 10)) return false;
+    const distanceMatches = distance <= (filters.maxDistance || 10);
     
-    return true;
+    return {
+      ...listing,
+      matchesFilters: costMatches && sizeMatches && distanceMatches
+    };
   });
 
   // No listings message component
