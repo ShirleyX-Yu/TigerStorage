@@ -65,23 +65,6 @@ def add_cors_headers(response):
         response.headers['Access-Control-Allow-Credentials'] = 'true'
     return response
 
-                "Content-Type",
-                "Authorization",
-                "X-Requested-With",
-                "Pragma",
-                "Cache-Control",
-                "Origin",
-                "Accept",
-                "X-CSRFToken",
-                "X-Session-Id",
-                "X-Auth-Token",
-                "X-User-Type",
-                "X-Username"
-            ]
-        }
-    }
-)
-# --- END CORS CONFIGURATION ---
 
 
 # Function to add CORS headers to responses
