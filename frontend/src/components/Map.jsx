@@ -6,7 +6,7 @@ import FilterColumn from './FilterColumn';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartBar } from '@fortawesome/free-solid-svg-icons';
-import { Box, Typography, List, ListItem, ListItemText, Divider } from '@mui/material';
+import { Box, Typography, List, ListItem, ListItemText, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 import Header from './Header';
 import { logout } from '../utils/auth';
 import { Link } from 'react-router-dom';
@@ -485,6 +485,53 @@ const Map = () => {
               selectedListing={selectedListing}
             />
           </MapContainer>
+          {/* Popup Modal for Selected Listing */}
+          <Dialog open={!!selectedListing} onClose={() => setSelectedListing(null)}>
+            <DialogTitle>Listing Details</DialogTitle>
+            <DialogContent>
+              {selectedListing && (
+                <Box>
+                  <Typography variant="h6">{selectedListing.location}</Typography>
+                  <Typography variant="body1">
+                    ${selectedListing.cost ?? 0}/month • {selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} cubic feet
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {selectedListing.distance ? selectedListing.distance.toFixed(1) : 'N/A'} miles from Princeton University
+                  </Typography>
+                  {selectedListing.description && (
+                    <Typography variant="body2" style={{ marginTop: 8 }}>
+                      {selectedListing.description}
+                    </Typography>
+                  )}
+                </Box>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setSelectedListing(null)} color="secondary">
+                Close
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (selectedListing) navigate(`/listing/${selectedListing.listing_id || selectedListing.id}`);
+                  setSelectedListing(null);
+                }} 
+                color="primary" 
+                variant="contained"
+              >
+                View Details
+              </Button>
+              <Button 
+                onClick={async () => {
+                  // Stub: Show interest API call can go here
+                  alert('Interest shown! (stub)');
+                }} 
+                color="success" 
+                variant="outlined"
+              >
+                Show Interest
+              </Button>
+            </DialogActions>
+          </Dialog>
         </div>
 
         {/* Filter Column */}
@@ -550,4 +597,4 @@ const styles = {
   }
 };
 
-export default Map; 
+export default Map;
