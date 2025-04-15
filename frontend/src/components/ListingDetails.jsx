@@ -149,20 +149,24 @@ const ListingDetails = () => {
       const userType = sessionStorage.getItem('userType') || 'renter';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listing.id}/interest`, {
-        method,
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-          'X-User-Type': userType,
-          'X-Username': storedUsername || ''
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+      // Use axios to ensure withCredentials: true for session cookies
+      const axios = (await import('axios')).default;
+      try {
+        const apiUrl = `${import.meta.env.VITE_API_URL}/api/listings/${listing.id}/interest`;
+        await axios({
+          url: apiUrl,
+          method,
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType,
+            'X-Username': storedUsername || ''
+          }
+        });
+      } catch (err) {
+        const errorData = err.response?.data || {};
         throw new Error(errorData.error || `Failed to ${isInterested ? 'remove' : 'add'} interest`);
       }
 
