@@ -24,7 +24,35 @@ app = Flask(
 )
 
 # Configure CORS to allow requests from Render domains
-CORS(app, resources={r"/*": {"origins": ["https://tigerstorage-frontend.onrender.com", "http://localhost:5173", "*"]}}, supports_credentials=True)
+CORS(
+    app, 
+    resources={
+        r"/*": {
+            "origins": [
+                "https://tigerstorage-frontend.onrender.com", 
+                "http://localhost:5173"
+            ],
+            "supports_credentials": True
+        }
+    }
+)
+
+# Function to add CORS headers to responses
+def add_cors_headers(response):
+    origin = request.headers.get('Origin')
+    if origin and (origin == 'https://tigerstorage-frontend.onrender.com' or origin.startswith('http://localhost')):
+        response.headers['Access-Control-Allow-Origin'] = origin
+    else:
+        response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-User-Type, X-Username, Accept, Cache-Control'
+    return response
+
+# Register the after_request function to add CORS headers to all responses
+@app.after_request
+def after_request(response):
+    return add_cors_headers(response)
 
 # Load environment variables and set secret key
 dotenv.load_dotenv()
@@ -1463,8 +1491,22 @@ def delete_listing(listing_id):
         return jsonify({"error": str(e)}), 500
 
 # API to handle interest in a listing
-@app.route('/api/listings/<int:listing_id>/interest', methods=['POST', 'DELETE'])
+@app.route('/api/listings/<int:listing_id>/interest', methods=['POST', 'DELETE', 'OPTIONS'])
 def handle_interest(listing_id):
+    # Handle OPTIONS requests for CORS preflight
+    if request.method == 'OPTIONS':
+        response = jsonify({})
+        origin = request.headers.get('Origin')
+        if origin:
+            response.headers['Access-Control-Allow-Origin'] = origin
+        else:
+            response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
+        response.headers['Access-Control-Allow-Methods'] = 'POST, DELETE, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-User-Type, X-Username, Accept, Cache-Control'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Max-Age'] = '3600'  # Cache preflight request for 1 hour
+        return response, 200
+        
     try:
         print(f"Received interest request for listing {listing_id}")
         # Check if user is logged in
@@ -1570,10 +1612,23 @@ def handle_interest(listing_id):
                         """, (listing_id, lender_username, renter_username))
                         conn.commit()
                         print(f"Interest in listing {listing_id} recorded successfully")
-                        return jsonify({
+                        
+                        # Create response with CORS headers
+                        response = jsonify({
                             "success": True,
                             "message": "Interest recorded successfully"
-                        }), 200
+                        })
+                        
+                        # Add CORS headers with specific origin
+                        origin = request.headers.get('Origin')
+                        if origin:
+                            response.headers['Access-Control-Allow-Origin'] = origin
+                        else:
+                            response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
+                        response.headers['Access-Control-Allow-Methods'] = 'POST, DELETE, OPTIONS'
+                        response.headers['Access-Control-Allow-Credentials'] = 'true'
+                        
+                        return response, 200
                     except Exception as insert_error:
                         print(f"Error adding interest: {insert_error}")
                         conn.rollback()
@@ -1589,10 +1644,23 @@ def handle_interest(listing_id):
                     """, (listing_id, renter_username))
                     conn.commit()
                     print(f"Interest in listing {listing_id} removed successfully")
-                    return jsonify({
+                    
+                    # Create response with CORS headers
+                    response = jsonify({
                         "success": True,
                         "message": "Interest removed successfully"
-                    }), 200
+                    })
+                    
+                    # Add CORS headers with specific origin
+                    origin = request.headers.get('Origin')
+                    if origin:
+                        response.headers['Access-Control-Allow-Origin'] = origin
+                    else:
+                        response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
+                    response.headers['Access-Control-Allow-Methods'] = 'POST, DELETE, OPTIONS'
+                    response.headers['Access-Control-Allow-Credentials'] = 'true'
+                    
+                    return response, 200
         finally:
             conn.close()
     except Exception as e:
@@ -1664,8 +1732,22 @@ def get_interested_renters(listing_id):
         return jsonify({"error": str(e)}), 500
 
 # API to get a renter's interested listings
-@app.route('/api/my-interested-listings', methods=['GET'])
+@app.route('/api/my-interested-listings', methods=['GET', 'OPTIONS'])
 def get_my_interested_listings():
+    # Handle OPTIONS requests for CORS preflight
+    if request.method == 'OPTIONS':
+        response = jsonify({})
+        origin = request.headers.get('Origin')
+        if origin:
+            response.headers['Access-Control-Allow-Origin'] = origin
+        else:
+            response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-User-Type, X-Username, Accept, Cache-Control'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Max-Age'] = '3600'  # Cache preflight request for 1 hour
+        return response, 200
+        
     try:
         # Check if user is logged in
         authenticated = auth.is_authenticated()
@@ -1716,9 +1798,14 @@ def get_my_interested_listings():
                 if not table_exists:
                     print("interested_listings table does not exist, returning empty array")
                     response = jsonify([])
-                    # Add CORS headers
-                    response.headers['Access-Control-Allow-Origin'] = '*'
-                    response.headers['Access-Control-Allow-Methods'] = 'GET'
+                    # Add CORS headers with specific origin
+                    origin = request.headers.get('Origin')
+                    if origin:
+                        response.headers['Access-Control-Allow-Origin'] = origin
+                    else:
+                        response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
+                    response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+                    response.headers['Access-Control-Allow-Credentials'] = 'true'
                     return response, 200
                     
                 # Check if the storage_listings table exists
@@ -1734,9 +1821,14 @@ def get_my_interested_listings():
                 if not listings_table_exists:
                     print("storage_listings table does not exist, returning empty array")
                     response = jsonify([])
-                    # Add CORS headers
-                    response.headers['Access-Control-Allow-Origin'] = '*'
-                    response.headers['Access-Control-Allow-Methods'] = 'GET'
+                    # Add CORS headers with specific origin
+                    origin = request.headers.get('Origin')
+                    if origin:
+                        response.headers['Access-Control-Allow-Origin'] = origin
+                    else:
+                        response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
+                    response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+                    response.headers['Access-Control-Allow-Credentials'] = 'true'
                     return response, 200
                 
                 # Get interested listings with their details
@@ -1799,8 +1891,14 @@ def get_my_interested_listings():
                     
                     # Create response with CORS headers
                     response = jsonify(interested_listings)
-                    response.headers['Access-Control-Allow-Origin'] = '*'
-                    response.headers['Access-Control-Allow-Methods'] = 'GET'
+                    # Add CORS headers with specific origin
+                    origin = request.headers.get('Origin')
+                    if origin:
+                        response.headers['Access-Control-Allow-Origin'] = origin
+                    else:
+                        response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
+                    response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+                    response.headers['Access-Control-Allow-Credentials'] = 'true'
                     
                     return response, 200
                 except Exception as query_error:
@@ -1810,9 +1908,14 @@ def get_my_interested_listings():
                     
                     # Return empty list instead of error if tables exist but join fails
                     response = jsonify([])
-                    # Add CORS headers
-                    response.headers['Access-Control-Allow-Origin'] = '*'
-                    response.headers['Access-Control-Allow-Methods'] = 'GET'
+                    # Add CORS headers with specific origin
+                    origin = request.headers.get('Origin')
+                    if origin:
+                        response.headers['Access-Control-Allow-Origin'] = origin
+                    else:
+                        response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
+                    response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+                    response.headers['Access-Control-Allow-Credentials'] = 'true'
                     return response, 200
         finally:
             conn.close()
@@ -1823,8 +1926,14 @@ def get_my_interested_listings():
         
         # Even in error case, add CORS headers
         response = jsonify({"error": str(e)})
-        response.headers['Access-Control-Allow-Origin'] = '*'
-        response.headers['Access-Control-Allow-Methods'] = 'GET'
+        # Add CORS headers with specific origin
+        origin = request.headers.get('Origin')
+        if origin:
+            response.headers['Access-Control-Allow-Origin'] = origin
+        else:
+            response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
         return response, 500
 
 # API to get listings by username (emergency workaround for cross-domain cookie issues)
