@@ -15,15 +15,34 @@ const RenterDashboard = ({ username }) => {
   useEffect(() => {
     const fetchInterestedSpaces = async () => {
       try {
-        const response = await fetch('/api/my-interested-listings', {
-          credentials: 'include'
+        // Use the API URL from environment variable with a fallback
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        console.log(`Fetching interested spaces from: ${apiUrl}/api/my-interested-listings`);
+        
+        // Get user information to include in headers
+        const userType = sessionStorage.getItem('userType') || 'renter';
+        
+        const response = await fetch(`${apiUrl}/api/my-interested-listings`, {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType,
+            'X-Username': username || 'renter'
+          }
         });
         
+        console.log('Interested spaces response status:', response.status);
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch interested spaces');
+          // Try to read response text for better error message
+          const errorText = await response.text();
+          console.error('Error details:', errorText);
+          throw new Error(`Failed to fetch interested spaces: ${response.status} ${errorText}`);
         }
         
         const data = await response.json();
+        console.log('Fetched interested spaces:', data);
         setInterestedSpaces(data);
       } catch (err) {
         console.error('Error fetching interested spaces:', err);

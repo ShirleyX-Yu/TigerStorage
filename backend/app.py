@@ -1393,24 +1393,43 @@ def get_interested_renters(listing_id):
 def get_my_interested_listings():
     try:
         # Check if user is logged in
-        if not auth.is_authenticated():
-            return jsonify({"error": "Not authenticated"}), 401
+        authenticated = auth.is_authenticated()
+        renter_username = None
+        
+        if authenticated:
+            # Get from session if authenticated
+            print("User authenticated via session")
+            user_info = session.get('user_info', {})
+            renter_username = user_info.get('user', '')
+            print(f"Authenticated username from session: {renter_username}")
+        else:
+            # If not authenticated via session, check headers
+            print("User not authenticated via session, checking headers")
+            username_header = request.headers.get('X-Username')
+            user_type_header = request.headers.get('X-User-Type')
             
-        # Get user info from session
-        user_info = session['user_info']
-        renter_username = user_info.get('user', '')
+            if username_header:
+                renter_username = username_header
+                print(f"Using username from X-Username header: {renter_username}")
+            else:
+                # No authentication found
+                print("No authentication found in session or headers")
+                return jsonify({"error": "Not authenticated"}), 401
         
         if not renter_username:
+            print("Renter username not found in session or headers")
             return jsonify({"error": "User not found"}), 400
             
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
+            print("Database connection failed")
             return jsonify({"error": "Database connection failed"}), 500
             
         try:
             with conn.cursor() as cur:
                 # Get interested listings with their details
+                print(f"Fetching interested listings for renter: {renter_username}")
                 cur.execute("""
                     SELECT 
                         il.interest_id,
@@ -1438,6 +1457,7 @@ def get_my_interested_listings():
                         "nextStep": "Waiting for lender response" if row[6] == 'pending' else "In Discussion"
                     })
                 
+                print(f"Found {len(interested_listings)} interested listings for user {renter_username}")
                 return jsonify(interested_listings), 200
         finally:
             conn.close()

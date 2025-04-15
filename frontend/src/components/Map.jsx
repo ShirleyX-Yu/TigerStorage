@@ -147,11 +147,17 @@ const Map = () => {
         
         console.log("Fetching listings from:", `${apiUrl}/api/listings`);
         
+        // Get user information for headers
+        const userType = sessionStorage.getItem('userType') || 'renter';
+        const username = sessionStorage.getItem('username') || localStorage.getItem('username') || 'renter';
+        
         const response = await fetch(`${apiUrl}/api/listings`, {
           credentials: 'include',
           headers: {
             'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType,
+            'X-Username': username
           }
         });
         

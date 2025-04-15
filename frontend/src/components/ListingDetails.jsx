@@ -45,8 +45,18 @@ const ListingDetails = () => {
         const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/listings/${id}`;
         console.log('API URL:', apiUrl);
         
+        // Get user information for headers
+        const userType = sessionStorage.getItem('userType') || 'renter';
+        const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
+        
         const response = await fetch(apiUrl, {
-          credentials: 'include'
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType,
+            'X-Username': storedUsername || ''
+          }
         });
         
         if (!response.ok) {
@@ -62,7 +72,13 @@ const ListingDetails = () => {
         if (isAuthenticated) {
           try {
             const interestResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/my-interested-listings`, {
-              credentials: 'include'
+              credentials: 'include',
+              headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache',
+                'X-User-Type': userType,
+                'X-Username': storedUsername || ''
+              }
             });
             
             if (interestResponse.ok) {
@@ -129,11 +145,19 @@ const ListingDetails = () => {
       const isInterested = listing.isInterested;
       const method = isInterested ? 'DELETE' : 'POST';
       
+      // Get user information for headers
+      const userType = sessionStorage.getItem('userType') || 'renter';
+      const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listing.id}/interest`, {
         method,
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-User-Type': userType,
+          'X-Username': storedUsername || ''
         }
       });
 
