@@ -32,7 +32,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
       <Box sx={{ mb: 3 }}>
         <Typography gutterBottom>Price Range ($/month)</Typography>
         <Slider
-          value={[filters.minCost || 0, filters.maxCost || 1000]}
+          value={[filters.minCost || 0, filters.maxCost || 0]}
           onChange={handleSliderChange('price')}
           valueLabelDisplay="auto"
           min={0}
@@ -55,14 +55,14 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           <TextField
             label="Min"
             type="number"
-            value={filters.minCost || ''}
+            value={filters.minCost ?? ''}
             onChange={handleInputChange('minCost')}
             size="small"
           />
           <TextField
             label="Max"
             type="number"
-            value={filters.maxCost || ''}
+            value={filters.maxCost ?? ''}
             onChange={handleInputChange('maxCost')}
             size="small"
           />
@@ -72,7 +72,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
       <Box sx={{ mb: 3 }}>
         <Typography gutterBottom>Size Range (cubic feet)</Typography>
         <Slider
-          value={[filters.minSize || 0, filters.maxSize || 1000]}
+          value={[filters.minSize || 0, filters.maxSize || 0]}
           onChange={handleSliderChange('size')}
           valueLabelDisplay="auto"
           min={0}
@@ -95,14 +95,14 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           <TextField
             label="Min"
             type="number"
-            value={filters.minSize || ''}
+            value={filters.minSize ?? ''}
             onChange={handleInputChange('minSize')}
             size="small"
           />
           <TextField
             label="Max"
             type="number"
-            value={filters.maxSize || ''}
+            value={filters.maxSize ?? ''}
             onChange={handleInputChange('maxSize')}
             size="small"
           />
@@ -110,13 +110,13 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
       </Box>
 
       <Box sx={{ mb: 3 }}>
-        <Typography gutterBottom>Distance from Princeton University (miles)</Typography>
+        <Typography gutterBottom>Distance from Campus (miles)</Typography>
         <Slider
-          value={filters.maxDistance || 10}
+          value={filters.maxDistance || 0}
           onChange={handleSliderChange('distance')}
           valueLabelDisplay="auto"
           min={0}
-          max={20}
+          max={10}
           step={1}
           sx={{
             color: '#FF6B00',
@@ -135,7 +135,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           <TextField
             label="Max Distance"
             type="number"
-            value={filters.maxDistance || ''}
+            value={filters.maxDistance ?? ''}
             onChange={handleInputChange('maxDistance')}
             size="small"
             fullWidth
