@@ -318,12 +318,11 @@ const LenderDashboard = ({ username }) => {
     <div key={renter.id} style={styles.renterItem}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={styles.renterName}>{renter.name}</span>
-        <span style={{ ...styles.renterDate, marginLeft: 8 }}>{formattedTime}</span>
+        <span style={{ ...styles.renterDate, marginLeft: 8 }}>{formattedDate} {formattedTime}</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
         <span style={styles.renterEmail}>{renter.email}</span>
         <span style={styles.renterStatusBadge}>{renter.status}</span>
-        <span style={{ ...styles.renterDate, marginLeft: 8 }}>{formattedDate}</span>
       </div>
     </div>
   );
