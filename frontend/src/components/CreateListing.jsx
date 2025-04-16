@@ -267,35 +267,6 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             )}
           </div>
 
-          <div style={styles.coordinatesContainer}>
-            <div style={styles.formGroup}>
-              <label htmlFor="latitude" style={styles.label}>Latitude</label>
-              <input
-                type="number"
-                id="latitude"
-                name="latitude"
-                value={formData.latitude}
-                onChange={handleInputChange}
-                placeholder="Enter latitude"
-                style={styles.input}
-                required
-              />
-            </div>
-
-            <div style={styles.formGroup}>
-              <label htmlFor="longitude" style={styles.label}>Longitude</label>
-              <input
-                type="number"
-                id="longitude"
-                name="longitude"
-                value={formData.longitude}
-                onChange={handleInputChange}
-                placeholder="Enter longitude"
-                style={styles.input}
-                required
-              />
-            </div>
-          </div>
 
           <div style={styles.formGroup}>
             <label htmlFor="cost" style={styles.label}>Cost ($ per month)</label>
@@ -339,6 +310,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
               required
             />
           </div>
+          {/* Latitude and Longitude fields removed from form UI */}
 
           <div style={styles.formGroup}>
             <label htmlFor="start_date" style={styles.label}>Start Date</label>
