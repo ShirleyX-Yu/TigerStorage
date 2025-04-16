@@ -365,6 +365,16 @@ const LenderDashboard = ({ username }) => {
           <span style={{ fontWeight: 600, fontSize: 20 }}>Add Storage Space</span>
           <button onClick={() => setCreateModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#888' }}>&times;</button>
         </div>
+        <div style={{ padding: 24 }}>
+          {createModalOpen && (
+            <CreateListingModal 
+              onClose={() => setCreateModalOpen(false)}
+              onSuccess={() => { setCreateModalOpen(false); fetchListings(); }}
+            />
+          )}
+        </div>
+      </Dialog>
+      <Dialog 
         open={editModalOpen} 
         onClose={handleCloseEditModal} 
         maxWidth="sm" 
@@ -372,7 +382,7 @@ const LenderDashboard = ({ username }) => {
         PaperProps={{
           style: { borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }
         }}
-      
+      >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '18px 24px 10px 24px', background: '#fafbfc', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
           <span style={{ fontWeight: 600, fontSize: 20 }}>Edit Listing</span>
           <button onClick={handleCloseEditModal} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#888' }}>&times;</button>
