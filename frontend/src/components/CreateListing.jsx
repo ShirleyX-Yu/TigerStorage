@@ -411,6 +411,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
               required
             />
           </div>
+          {/* Latitude and Longitude fields removed from form UI */}
 
           <div style={styles.formGroup}>
             <label htmlFor="start_date" style={styles.label}>
