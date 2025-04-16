@@ -299,22 +299,34 @@ const LenderDashboard = ({ username }) => {
                       </div>
                     </div>
                     {space.interestedRenters.length > 0 && (
-                      <div style={styles.rentersList}>
-                        <h4 style={styles.rentersTitle}>Interested Renters</h4>
-                        {space.interestedRenters.map(renter => (
-                          <div key={renter.id} style={styles.renterItem}>
-                            <div style={styles.renterInfo}>
-                              <span style={styles.renterName}>{renter.name}</span>
-                              <span style={styles.renterEmail}>{renter.email}</span>
-                            </div>
-                            <div style={styles.renterStatus}>
-                              <span style={styles.renterDate}>{renter.dateInterested}</span>
-                              <span style={styles.renterStatusBadge}>{renter.status}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+  <div style={styles.rentersList}>
+    <h4 style={styles.rentersTitle}>Interested Renters</h4>
+    <table style={styles.rentersTable}>
+      <thead>
+        <tr>
+          <th style={styles.renterTableHeader}>Name</th>
+          <th style={styles.renterTableHeader}>Email</th>
+          <th style={styles.renterTableHeader}>Date Interested</th>
+          <th style={styles.renterTableHeader}>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {space.interestedRenters.map(renter => (
+          <tr key={renter.id} style={styles.renterTableRow}>
+            <td style={styles.renterTableCell}>{renter.name}</td>
+            <td style={styles.renterTableCell}>{renter.email}</td>
+            <td style={styles.renterTableCell}>{
+              renter.dateInterested ? new Date(renter.dateInterested).toLocaleString(undefined, {
+                year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+              }) : 'N/A'
+            }</td>
+            <td style={styles.renterTableCell}>{renter.status}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
                     <div style={styles.spaceActions}>
                       <button 
                         style={styles.editButton}
@@ -372,7 +384,7 @@ const LenderDashboard = ({ username }) => {
         PaperProps={{
           style: { borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }
         }}
-      >
+      
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '18px 24px 10px 24px', background: '#fafbfc', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
           <span style={{ fontWeight: 600, fontSize: 20 }}>Edit Listing</span>
           <button onClick={handleCloseEditModal} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#888' }}>&times;</button>
@@ -518,23 +530,6 @@ const styles = {
     borderRadius: '8px',
     padding: '20px',
     backgroundColor: '#fff',
-  },
-  spaceHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '15px',
-  },
-  spaceTitle: {
-    fontSize: '18px',
-    fontWeight: 'bold',
-    margin: '0 0 5px 0',
-    color: '#333',
-  },
-  spaceAddress: {
-    fontSize: '14px',
-    margin: '0 0 5px 0',
-    color: '#666',
     fontStyle: 'italic',
   },
   spaceDetails: {
