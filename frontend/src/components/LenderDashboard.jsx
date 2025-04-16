@@ -178,7 +178,150 @@ const LenderDashboard = ({ username }) => {
   return (
     <div style={styles.container}>
       <Header title="Lender Dashboard" />
-      {/* Keep rest of full UI here */}
+      {deleteSuccess && (
+        <div style={styles.successMessage}>
+          <div style={styles.successIcon}>✓</div>
+          <div style={styles.successText}>Listing deleted successfully!</div>
+        </div>
+      )}
+      <div style={styles.content}>
+        <div style={styles.welcome}>
+          Welcome back, {username && username !== 'Unknown' ? username : 'Lender'}!
+        </div>
+        <div style={styles.dashboardContent}>
+          <div style={styles.section}>
+            <div style={styles.sectionHeader}>
+              <h2 style={styles.sectionTitle}>Your Listed Spaces</h2>
+              <button 
+                style={styles.actionButton} 
+                onClick={() => navigate('/create-listing')}
+              >
+                Add Storage Space
+              </button>
+            </div>
+            {loading ? (
+              <div style={styles.loadingMessage}>Loading your listings...</div>
+            ) : error && !(error.includes('Network') || error.includes('sample data')) ? (
+              <div style={styles.errorMessage}>
+                <p>{error}</p>
+                <div style={styles.errorActions}>
+                  <button 
+                    style={styles.retryButton}
+                    onClick={() => window.location.reload()}
+                  >
+                    Retry
+                  </button>
+                  {error.includes('Authentication') && (
+                    <button 
+                      style={styles.loginButton}
+                      onClick={() => {
+                        sessionStorage.setItem('returnTo', '/lender-dashboard');
+                        sessionStorage.setItem('userType', 'lender');
+                        localStorage.setItem('userType', 'lender');
+                        const frontendUrl = window.location.origin;
+                        const redirectUri = encodeURIComponent(`${frontendUrl}/lender-dashboard`);
+                        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                        const loginUrl = `${apiUrl}/api/auth/login?userType=lender&redirectUri=${redirectUri}`;
+                        window.location.href = loginUrl;
+                      }}
+                    >
+                      Login
+                    </button>
+                  )}
+                  <button 
+                    style={styles.createButton}
+                    onClick={() => navigate('/create-listing')}
+                  >
+                    Create New Listing
+                  </button>
+                  <button 
+                    style={styles.debugButton}
+                    onClick={() => navigate('/auth-debug')}
+                  >
+                    Debug Auth
+                  </button>
+                </div>
+              </div>
+            ) : listedSpaces.length > 0 ? (
+              <div style={styles.listingsContainer}>
+                {listedSpaces.map(space => (
+                  <div key={space.id} style={styles.spaceCard}>
+                    <div style={styles.spaceHeader}>
+                      <div>
+                        <h3 style={styles.spaceTitle}>{space.location}</h3>
+                        {space.address && <p style={styles.spaceAddress}>{space.address}</p>}
+                        <p style={styles.spaceDetails}>
+                          ${space.cost}/month · {space.cubicFeet} cubic feet · {space.contractLength} months
+                        </p>
+                      </div>
+                      <div style={styles.spaceBadge}>
+                        {space.status}
+                      </div>
+                    </div>
+                    <div style={styles.spaceStats}>
+                      <div style={styles.statItem}>
+                        <span style={styles.statLabel}>Listed</span>
+                        <span style={styles.statValue}>{space.dateCreated}</span>
+                      </div>
+                      <div style={styles.statItem}>
+                        <span style={styles.statLabel}>Interested Renters</span>
+                        <span style={styles.statValue}>{space.interestedRenters.length}</span>
+                      </div>
+                    </div>
+                    {space.interestedRenters.length > 0 && (
+                      <div style={styles.rentersList}>
+                        <h4 style={styles.rentersTitle}>Interested Renters</h4>
+                        {space.interestedRenters.map(renter => (
+                          <div key={renter.id} style={styles.renterItem}>
+                            <div style={styles.renterInfo}>
+                              <span style={styles.renterName}>{renter.name}</span>
+                              <span style={styles.renterEmail}>{renter.email}</span>
+                            </div>
+                            <div style={styles.renterStatus}>
+                              <span style={styles.renterDate}>{renter.dateInterested}</span>
+                              <span style={styles.renterStatusBadge}>{renter.status}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div style={styles.spaceActions}>
+                      <button 
+                        style={styles.editButton}
+                        onClick={() => handleOpenEditModal(space.id)}
+                      >
+                        Edit Listing
+                      </button>
+                      <button 
+                        style={styles.viewButton}
+                        onClick={() => navigate(`/listing/${space.id}`)}
+                      >
+                        View Details
+                      </button>
+                      <button 
+                        style={styles.deleteButton}
+                        onClick={() => handleDeleteListing(space.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={styles.emptyState}>
+                <p>You haven't listed any storage spaces yet.</p>
+                <button 
+                  style={styles.createButton}
+                  onClick={() => navigate('/create-listing')}
+                >
+                  Create Your First Listing
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
       <Dialog open={editModalOpen} onClose={handleCloseEditModal} maxWidth="md" fullWidth>
         {editListingId && (
           <EditListingForm 
