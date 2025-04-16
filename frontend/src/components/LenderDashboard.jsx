@@ -323,6 +323,7 @@ const LenderDashboard = ({ username }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
         <span style={styles.renterEmail}>{renter.email}</span>
         <span style={styles.renterStatusBadge}>{renter.status}</span>
+        <span style={{ ...styles.renterDate, marginLeft: 8 }}>{formattedDate}</span>
       </div>
     </div>
   );
