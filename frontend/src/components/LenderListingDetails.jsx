@@ -1,8 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
+import Dialog from '@mui/material/Dialog';
+import EditListingForm from './EditListingForm';
 
 const LenderListingDetails = () => {
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const fetchListingDetailsRef = useRef(null);
+
+  const handleOpenEditModal = () => setEditModalOpen(true);
+  const handleCloseEditModal = (shouldRefresh = false) => {
+    setEditModalOpen(false);
+    if (shouldRefresh && fetchListingDetailsRef.current) {
+      fetchListingDetailsRef.current();
+    }
+  };
+
   const navigate = useNavigate();
   const { id } = useParams();
   const [listing, setListing] = useState(null);
@@ -11,44 +24,24 @@ const LenderListingDetails = () => {
   const [interestedRenters, setInterestedRenters] = useState([]);
 
   useEffect(() => {
-    console.log('LenderListingDetails component mounted with ID:', id);
-    
     const fetchListingDetails = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        if (!id) {
-          throw new Error('Invalid listing ID');
-        }
-        
-        console.log(`Fetching details for listing ID: ${id}`);
+
+        if (!id) throw new Error('Invalid listing ID');
+
         const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/listings/${id}`;
-        console.log('API URL:', apiUrl);
-        
-        const response = await fetch(apiUrl, {
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Failed to fetch listing details: ${response.status} ${errorText}`);
-        }
-        
+        const response = await fetch(apiUrl, { credentials: 'include' });
+        if (!response.ok) throw new Error(await response.text());
         const data = await response.json();
-        console.log('Received listing data:', data);
-        
-        // Fetch interested renters
+
         const rentersResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/listings/${id}/interested-renters`, {
           credentials: 'include'
         });
-        
-        if (!rentersResponse.ok) {
-          throw new Error('Failed to fetch interested renters');
-        }
-        
+        if (!rentersResponse.ok) throw new Error('Failed to fetch interested renters');
+
         const rentersData = await rentersResponse.json();
-        
         setListing({
           id: data.id,
           location: data.location,
@@ -57,69 +50,26 @@ const LenderListingDetails = () => {
           description: data.description,
           contractLength: data.contract_length_months,
           images: [data.image_url || '/assets/placeholder.jpg'],
-          interestedRenters: rentersData.map(renter => ({
-            id: renter.id,
-            name: renter.username,
-            email: `${renter.username}@princeton.edu`,
-            dateInterested: renter.dateInterested,
-            status: renter.status
+          interestedRenters: rentersData.map(r => ({
+            id: r.id,
+            name: r.username,
+            email: `${r.username}@princeton.edu`,
+            dateInterested: r.dateInterested,
+            status: r.status
           }))
         });
       } catch (err) {
-        console.error('Error fetching listing details:', err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
+    fetchListingDetailsRef.current = fetchListingDetails;
     fetchListingDetails();
-    
-    return () => {
-      console.log('LenderListingDetails component unmounted');
-    };
+    return () => console.log('Component unmounted');
   }, [id]);
 
-  // Mock function to fetch interested renters
-  // In a real app, this would be a separate API call
-  const fetchInterestedRenters = async (listingId) => {
-    try {
-      // This would be a real API call in production
-      // const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}/interested-renters`, {
-      //   credentials: 'include'
-      // });
-      // const data = await response.json();
-      // setInterestedRenters(data);
-      
-      // For now, we'll use mock data
-      // In a real app, this would come from the backend
-      const mockInterestedRenters = [
-        {
-          id: 1,
-          name: 'John Doe',
-          email: 'jdoe@princeton.edu',
-          dateInterested: '2025-04-05',
-          status: 'New'
-        },
-        {
-          id: 2,
-          name: 'Jane Smith',
-          email: 'jsmith@princeton.edu',
-          dateInterested: '2025-04-06',
-          status: 'New'
-        }
-      ];
-      
-      // Simulate API delay
-      setTimeout(() => {
-        setInterestedRenters(mockInterestedRenters);
-      }, 500);
-    } catch (error) {
-      console.error('Error fetching interested renters:', error);
-    }
-  };
-
-  // Simple render function for error state
   const renderError = () => (
     <div style={styles.errorContainer}>
       <h2>Error</h2>
@@ -130,115 +80,77 @@ const LenderListingDetails = () => {
     </div>
   );
 
-  // Simple render function for loading state
   const renderLoading = () => (
     <div style={styles.loadingContainer}>
       <p>Loading listing details...</p>
     </div>
   );
 
-  // Simple render function for when listing is not found
   const renderNotFound = () => (
     <div style={styles.errorContainer}>
       <h2>Listing Not Found</h2>
-      <p>Sorry, we couldn't find this listing. It may have been removed or is temporarily unavailable.</p>
+      <p>Sorry, we couldn't find this listing.</p>
       <button style={styles.backButton} onClick={() => navigate('/lender')}>
         &larr; Back to Dashboard
       </button>
     </div>
   );
 
-  console.log('LenderListingDetails render state:', { loading, error, listing });
-
   return (
     <div style={styles.container}>
       <Header title="Storage Space Details" />
       <div style={styles.content}>
-        <button 
-          style={styles.backButton} 
-          onClick={() => navigate('/lender')}
-        >
-          ← Back to Dashboard
+        <button style={styles.backButton} onClick={() => navigate('/lender')}>
+          &larr; Back to Dashboard
         </button>
-
         {loading ? renderLoading() : error ? renderError() : !listing ? renderNotFound() : (
           <div style={styles.detailsContainer}>
             <div style={styles.imageSection}>
-              <img 
-                src={listing.images?.[0] || '/assets/placeholder.jpg'} 
-                alt="Storage Space" 
-                style={styles.mainImage} 
-                onError={(e) => {
-                  console.log('Image failed to load, using placeholder');
-                  e.target.src = '/assets/placeholder.jpg';
-                }}
+              <img
+                src={listing.images?.[0] || '/assets/placeholder.jpg'}
+                alt="Storage Space"
+                style={styles.mainImage}
+                onError={(e) => { e.target.src = '/assets/placeholder.jpg'; }}
               />
             </div>
-
             <div style={styles.infoSection}>
               <h2 style={styles.location}>{listing.location}</h2>
-              
               <div style={styles.specs}>
-                <div style={styles.specItem}>
-                  <span style={styles.specLabel}>Cost:</span>
-                  <span style={styles.specValue}>${listing.cost}/month</span>
-                </div>
-                <div style={styles.specItem}>
-                  <span style={styles.specLabel}>Size:</span>
-                  <span style={styles.specValue}>{listing.cubicFeet} cubic feet</span>
-                </div>
-                <div style={styles.specItem}>
-                  <span style={styles.specLabel}>Contract Length:</span>
-                  <span style={styles.specValue}>{listing.contractLength} months</span>
-                </div>
-                <div style={styles.specItem}>
-                  <span style={styles.specLabel}>Interested Renters:</span>
-                  <span style={styles.specValue}>{listing.interestedRenters?.length || 0}</span>
-                </div>
+                <div style={styles.specItem}><span style={styles.specLabel}>Cost:</span><span style={styles.specValue}>${listing.cost}/month</span></div>
+                <div style={styles.specItem}><span style={styles.specLabel}>Size:</span><span style={styles.specValue}>{listing.cubicFeet} cubic feet</span></div>
+                <div style={styles.specItem}><span style={styles.specLabel}>Contract:</span><span style={styles.specValue}>{listing.contractLength} months</span></div>
+                <div style={styles.specItem}><span style={styles.specLabel}>Interested Renters:</span><span style={styles.specValue}>{listing.interestedRenters?.length || 0}</span></div>
               </div>
-
               <div style={styles.descriptionSection}>
                 <h3>Description</h3>
                 <p style={styles.description}>{listing.description}</p>
               </div>
-
               <div style={styles.interestedRenters}>
                 <h3>Interested Renters ({listing.interestedRenters?.length || 0})</h3>
-                {listing.interestedRenters?.length === 0 ? (
-                  <p>No renters have shown interest in this listing yet.</p>
-                ) : (
+                {listing.interestedRenters.length === 0 ? <p>No interest yet.</p> : (
                   <div style={styles.rentersList}>
-                    {listing.interestedRenters.map(renter => (
-                      <div key={renter.id} style={styles.renterItem}>
-                        <div style={styles.renterHeader}>
-                          <h4 style={styles.renterName}>{renter.name}</h4>
-                          <span style={styles.renterStatus}>{renter.status}</span>
-                        </div>
-                        <p style={styles.renterContact}>
-                          <a href={`mailto:${renter.email}`} style={styles.renterEmail}>
-                            {renter.email}
-                          </a>
-                        </p>
-                        <p style={styles.renterDate}>
-                          Interested since: {new Date(renter.dateInterested).toLocaleDateString()}
-                        </p>
+                    {listing.interestedRenters.map(r => (
+                      <div key={r.id} style={styles.renterItem}>
+                        <div style={styles.renterHeader}><h4 style={styles.renterName}>{r.name}</h4></div>
+                        <p style={styles.renterContact}><a href={`mailto:${r.email}`} style={styles.renterEmail}>{r.email}</a></p>
+                        <p style={styles.renterDate}>Interested since: {new Date(r.dateInterested).toLocaleDateString()}</p>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
-              
-              <div style={styles.actionSection}>
-                <button 
-                  style={styles.editButton}
-                  onClick={() => navigate(`/edit-listing/${listing.id}`)}
-                >
-                  Edit Listing
-                </button>
-              </div>
             </div>
           </div>
         )}
+        <Dialog open={editModalOpen} onClose={() => handleCloseEditModal(false)} maxWidth="md" fullWidth>
+          {listing && (
+            <EditListingForm
+              listingId={listing.id}
+              onClose={() => handleCloseEditModal(false)}
+              onSuccess={() => handleCloseEditModal(true)}
+            />
+          )}
+        </Dialog>
       </div>
     </div>
   );
@@ -408,9 +320,9 @@ const styles = {
     margin: 0,
   },
   renterDate: {
-    fontSize: '0.9rem',
-    color: '#666',
-    margin: 0,
+    fontSize: '0.9em',
+    color: '#888',
+    marginBottom: '6px'
   },
   actionSection: {
     display: 'flex',
