@@ -132,6 +132,12 @@ const CreateListing = () => {
     e.preventDefault();
     setError('');
 
+    // Require image upload
+    if (!formData.image_url) {
+      setError('Please upload an image of your storage space.');
+      return;
+    }
+
     try {
       // Validate dates
       if (!formData.start_date || !formData.end_date) {

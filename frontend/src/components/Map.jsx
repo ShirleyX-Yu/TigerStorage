@@ -492,8 +492,8 @@ const Map = () => {
               )}
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setSelectedListing(null)} color="secondary">
-                Close
+              <Button style={{ color: 'purple' }} onClick={() => setSelectedListing(null)}>
+                CLOSE
               </Button>
               <Button 
                 onClick={() => {
