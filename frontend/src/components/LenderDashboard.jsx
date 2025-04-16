@@ -111,6 +111,8 @@ const LenderDashboard = ({ username }) => {
           cubicFeet: listing.cubic_feet,
           contractLength: listing.contract_length_months || 12,
           dateCreated: new Date(listing.created_at || Date.now()).toLocaleDateString(),
+          startDate: listing.start_date ? new Date(listing.start_date).toLocaleDateString() : '',
+          endDate: listing.end_date ? new Date(listing.end_date).toLocaleDateString() : '',
           status: 'Active',
           interestedRenters
         };
@@ -252,6 +254,9 @@ const LenderDashboard = ({ username }) => {
                         {space.address && <p style={styles.spaceAddress}>{space.address}</p>}
                         <p style={styles.spaceDetails}>
                           ${space.cost}/month · {space.cubicFeet} cubic feet · {space.contractLength} months
+                        </p>
+                        <p style={styles.spaceDetails}>
+                          Start: {space.startDate || 'N/A'} | End: {space.endDate || 'N/A'}
                         </p>
                       </div>
                       <div style={styles.spaceBadge}>
