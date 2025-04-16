@@ -3,7 +3,6 @@ import Header from './Header';
 import Dialog from '@mui/material/Dialog';
 import CreateListing from './CreateListing';
 import { useNavigate, useLocation } from 'react-router-dom';
-import Dialog from '@mui/material/Dialog';
 import EditListingForm from './EditListingForm';
 
 // Modal wrapper for CreateListing to allow passing onClose/onSuccess
