@@ -316,12 +316,12 @@ const LenderDashboard = ({ username }) => {
   }
   return (
     <div key={renter.id} style={styles.renterItem}>
-      <div style={styles.renterInfo}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={styles.renterName}>{renter.name}</span>
-        <span style={styles.renterEmail}>{renter.email}</span>
+        <span style={{ ...styles.renterDate, marginLeft: 8 }}>{formattedTime}</span>
       </div>
-      <div style={styles.renterStatus}>
-        <span style={styles.renterDate}>{formattedDate} {formattedTime}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+        <span style={styles.renterEmail}>{renter.email}</span>
         <span style={styles.renterStatusBadge}>{renter.status}</span>
       </div>
     </div>
@@ -536,6 +536,18 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '20px',
+  },
+  renterItem: {
+    border: '1px solid #e6e6e6',
+    borderRadius: '8px',
+    padding: '10px 14px',
+    marginBottom: '10px',
+    background: '#fcfcfc',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
   },
   spaceCard: {
     border: '1px solid #e0e0e0',
