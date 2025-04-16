@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 
-const CreateListing = () => {
+const CreateListing = ({ onClose, onSuccess }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     location: '', // This will be used as the title field
@@ -171,7 +171,11 @@ const CreateListing = () => {
       }
 
       const data = await response.json();
-      navigate(`/listing/${data.listing_id}`);
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate(`/listing/${data.listing_id}`);
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -179,6 +183,14 @@ const CreateListing = () => {
 
   return (
     <div style={styles.container}>
+      <button
+        style={styles.backButton}
+        onClick={() => {
+          if (onClose) { onClose(); } else { navigate('/lender-dashboard'); }
+        }}
+      >
+        &larr; Back
+      </button>
       <Header title="Create Storage Listing" />
       {error && <div style={styles.error}>{error}</div>}
       <div style={styles.content}>

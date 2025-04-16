@@ -1,12 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
+import Dialog from '@mui/material/Dialog';
+import CreateListing from './CreateListing';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Dialog from '@mui/material/Dialog';
 import EditListingForm from './EditListingForm';
 
+// Modal wrapper for CreateListing to allow passing onClose/onSuccess
+const CreateListingModal = ({ onClose, onSuccess }) => {
+  return (
+    <div style={{padding: 0}}>
+      <CreateListing onClose={onClose} onSuccess={onSuccess} />
+    </div>
+  );
+};
+
 const LenderDashboard = ({ username }) => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editListingId, setEditListingId] = useState(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const handleOpenEditModal = (listingId) => {
     setEditListingId(listingId);
@@ -196,7 +208,7 @@ const LenderDashboard = ({ username }) => {
               <h2 style={styles.sectionTitle}>Your Listed Spaces</h2>
               <button 
                 style={styles.actionButton} 
-                onClick={() => navigate('/create-listing')}
+                onClick={() => setCreateModalOpen(true)}
               >
                 Add Storage Space
               </button>
@@ -327,6 +339,11 @@ const LenderDashboard = ({ username }) => {
           </div>
         </div>
       </div>
+      <Dialog open={createModalOpen} onClose={() => setCreateModalOpen(false)} maxWidth="md" fullWidth>
+        {createModalOpen && (
+          <CreateListingModal onClose={() => setCreateModalOpen(false)} onSuccess={() => { setCreateModalOpen(false); fetchListings(); }} />
+        )}
+      </Dialog>
       <Dialog open={editModalOpen} onClose={handleCloseEditModal} maxWidth="md" fullWidth>
         {editListingId && (
           <EditListingForm 
