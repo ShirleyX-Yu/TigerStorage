@@ -84,6 +84,28 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 const MapContent = ({ listings, onListingClick, selectedListing }) => {
   const map = useMap();
 
+  // Helper to group listings by lat/lng
+  function groupListingsByCoords(listings) {
+    const groups = {};
+    listings.forEach(listing => {
+      if (!listing.latitude || !listing.longitude || isNaN(listing.latitude) || isNaN(listing.longitude)) return;
+      const key = `${listing.latitude},${listing.longitude}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(listing);
+    });
+    return groups;
+  }
+
+  // Helper to offset coordinates
+  function getOffsetCoords(lat, lng, count, idx) {
+    // Offset by ~0.0001 degrees per marker, arrange in a circle
+    const angle = (2 * Math.PI * idx) / count;
+    const radius = 0.00018 + 0.00007 * count; // tweak as needed
+    const dLat = Math.cos(angle) * radius;
+    const dLng = Math.sin(angle) * radius;
+    return [lat + dLat, lng + dLng];
+  }
+
   useEffect(() => {
     // Clear existing markers
     map.eachLayer((layer) => {
@@ -92,14 +114,12 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
       }
     });
 
-    // Add markers for listings
     if (listings && listings.length > 0) {
-      listings.forEach((listing) => {
-        if (!listing.latitude || !listing.longitude || isNaN(listing.latitude) || isNaN(listing.longitude)) {
-          return;
-        }
-        try {
-          // Use orange for interested, gray for not
+      const groups = groupListingsByCoords(listings);
+      Object.entries(groups).forEach(([key, group]) => {
+        if (group.length === 1) {
+          // Single marker, no offset
+          const listing = group[0];
           const markerIcon = listing.isInterested ? orangeIcon : grayIcon;
           const marker = L.marker([listing.latitude, listing.longitude], { icon: markerIcon })
             .addTo(map)
@@ -120,8 +140,31 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
           marker.on('click', () => {
             onListingClick(listing);
           });
-        } catch (err) {
-          // Handle marker error
+        } else {
+          // Multiple listings at same coordinates, offset each
+          group.forEach((listing, idx) => {
+            const [lat, lng] = getOffsetCoords(listing.latitude, listing.longitude, group.length, idx);
+            const markerIcon = listing.isInterested ? orangeIcon : grayIcon;
+            const marker = L.marker([lat, lng], { icon: markerIcon })
+              .addTo(map)
+              .bindPopup(`
+                <div>
+                  <h3>${listing.location || 'Unknown Location'}</h3>
+                  <p>Price: $${listing.cost ?? 0}/month</p>
+                  <p>Size: ${listing.cubic_ft ?? listing.cubic_feet ?? 0} cubic feet</p>
+                  <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
+                  <button 
+                    style="background-color: #f57c00; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;"
+                    onclick="window.location.href='/listing/${listing.id || listing.listing_id}'"
+                  >
+                    View Details
+                  </button>
+                </div>
+              `);
+            marker.on('click', () => {
+              onListingClick(listing);
+            });
+          });
         }
       });
     } else {
