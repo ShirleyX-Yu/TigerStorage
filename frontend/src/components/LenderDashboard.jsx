@@ -256,21 +256,27 @@ const LenderDashboard = ({ username }) => {
                 </div>
               </div>
             ) : listedSpaces.length > 0 ? (
-              <div style={styles.listingsContainer}>
+              <div style={{
+  ...styles.listingsContainer,
+  display: 'grid',
+  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+  gap: '24px',
+}}>
+
                 {listedSpaces.map(space => (
                   <div key={space.id} style={styles.spaceCard}>
                     <div style={styles.spaceHeader}>
                       <div>
                         {(space.location || space.address) ? (
-                          <>
-                            <h3 style={styles.spaceTitle}>{space.location || space.address}</h3>
-                            {space.address && space.location && (
-                              <p style={styles.spaceAddress}>{space.address}</p>
-                            )}
-                          </>
-                        ) : (
-                          <h3 style={styles.spaceTitle}>No Location Provided</h3>
-                        )}
+  <>
+    <h3 style={styles.spaceTitle}>{space.location || space.address}</h3>
+    {space.address && (
+      <p style={styles.spaceAddress}>{space.address}</p>
+    )}
+  </>
+) : (
+  <h3 style={styles.spaceTitle}>No Location Provided</h3>
+)}
                         <p style={styles.spaceDetails}>
                           ${space.cost}/month · {space.cubicFeet} cubic feet · {space.contractLength} months
                         </p>
@@ -359,13 +365,6 @@ const LenderDashboard = ({ username }) => {
           <span style={{ fontWeight: 600, fontSize: 20 }}>Add Storage Space</span>
           <button onClick={() => setCreateModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#888' }}>&times;</button>
         </div>
-        <div style={{ padding: 24 }}>
-          {createModalOpen && (
-            <CreateListingModal onClose={() => setCreateModalOpen(false)} onSuccess={() => { setCreateModalOpen(false); fetchListings(); }} />
-          )}
-        </div>
-      </Dialog>
-      <Dialog 
         open={editModalOpen} 
         onClose={handleCloseEditModal} 
         maxWidth="sm" 
@@ -578,19 +577,6 @@ const styles = {
   },
   rentersTitle: {
     fontSize: '16px',
-    fontWeight: 'bold',
-    margin: '0 0 10px 0',
-    color: '#333',
-  },
-  renterItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '10px',
-    borderBottom: '1px solid #eee',
-  },
-  renterInfo: {
-    display: 'flex',
-    flexDirection: 'column',
   },
   renterName: {
     fontWeight: 'bold',

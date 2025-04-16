@@ -259,241 +259,128 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     }
   };
 
-  // Modal version
-  if (modalMode) {
-    return (
-      <div style={styles.container}>
-        <Header />
-        <div style={styles.content}>
-          {error && <div style={styles.error}>{error}</div>}
-          <form onSubmit={handleSubmit} style={styles.form}>
-            {/* all form fields same as full-page below */}
-
-            {/* Location title */}
-            <div style={styles.formGroup}>
-              <label htmlFor="location" style={styles.label}>
-                Location (Title) <span style={{ color: '#b00020' }}>*</span>
-              </label>
+  return (
+    <div style={styles.container}>
+      {error && <div style={styles.error}>{error}</div>}
+      <form onSubmit={handleSubmit} style={{ ...styles.form, gap: 18, padding: 24, width: '100%' }}>
+        <div>
+            <label style={styles.label}>Location (Title) <span style={{color: '#b00020'}}>*</span></label>
               <input
-                id="location"
-                name="location"
+                style={styles.input}
                 type="text"
+                name="location"
                 value={formData.location}
                 onChange={handleInputChange}
-                style={styles.input}
                 required
               />
             </div>
-            {/* Location Type */}
-            <div style={styles.formGroup}>
-              <label style={styles.label}>
-                Location Type <span style={{ color: '#b00020' }}>*</span>
-              </label>
-              <div style={styles.radioContainer}>
-                {['on-campus', 'off-campus'].map(type => (
-                  <label key={type} style={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      name="locationType"
-                      value={type}
-                      checked={locationType === type}
-                      onChange={handleLocationTypeChange}
-                      style={styles.radioInput}
-                    />
-                    {type === 'on-campus' ? 'On Campus' : 'Off Campus'}
-                  </label>
-                ))}
-              </div>
+            <div>
+              <label style={styles.label}>Location Type <span style={{color: '#b00020'}}>*</span></label>
+              <select
+                style={styles.input}
+                value={locationType}
+                onChange={handleLocationTypeChange}
+                required
+              >
+                <option value="on-campus">On Campus</option>
+                <option value="off-campus">Off Campus</option>
+              </select>
             </div>
-            {/* Address & geocode button */}
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Address</label>
+            <div>
+              <label style={styles.label}>Address <span style={{color: '#b00020'}}>*</span></label>
               <div style={styles.addressInputContainer}>
                 <input
+                  style={styles.input}
                   type="text"
                   value={tempAddress}
                   onChange={handleAddressChange}
-                  placeholder={
-                    locationType === 'on-campus'
-                      ? '[Hall Name] Hall'
-                      : 'e.g. 123 Main St, Princeton, NJ'
-                  }
-                  style={styles.addressInput}
+                  placeholder={locationType === 'on-campus' ? 'e.g. Bloomberg Hall' : 'Enter full address'}
                   required
                 />
                 <button
                   type="button"
+                  style={styles.geocodeButton || styles.smallButton}
                   onClick={geocodeAddress}
-                  style={styles.geocodeButton}
                 >
-                  Find Coordinates
+                  Lookup
                 </button>
               </div>
-              {geocodingStatus && (
-                <div style={{
-                  ...styles.geocodingStatus,
-                  color: geocodingStatus.includes('Error') || geocodingStatus.includes('not found')
-                    ? '#e65100'
-                    : '#4caf50',
-                }}>
-                  {geocodingStatus}
-                </div>
-              )}
+              {geocodingStatus && <div style={styles.geocodingStatus || styles.status}>{geocodingStatus}</div>}
             </div>
-            {/* Coordinates */}
-            <div style={{ ...styles.formGroup, ...styles.coordinatesContainer }}>
-              <div style={{ flex: 1 }}>
-                <label htmlFor="latitude" style={styles.label}>Latitude</label>
-                <input
-                  id="latitude"
-                  name="latitude"
-                  type="number"
-                  value={formData.latitude}
-                  onChange={handleInputChange}
-                  style={styles.input}
-                  required
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label htmlFor="longitude" style={styles.label}>Longitude</label>
-                <input
-                  id="longitude"
-                  name="longitude"
-                  type="number"
-                  value={formData.longitude}
-                  onChange={handleInputChange}
-                  style={styles.input}
-                  required
-                />
-              </div>
-            </div>
-            {/* Cost */}
-            <div style={styles.formGroup}>
-              <label htmlFor="cost" style={styles.label}>
-                Cost per Month ($) <span style={{ color: '#b00020' }}>*</span>
-              </label>
+            <div>
+              <label style={styles.label}>Cost per Month ($) <span style={{color: '#b00020'}}>*</span></label>
               <input
-                id="cost"
-                name="cost"
+                style={styles.input}
                 type="number"
+                name="cost"
                 value={formData.cost}
                 onChange={handleInputChange}
-                style={styles.input}
-                min="0"
                 required
               />
             </div>
-            `{/* Cubic Feet */}
-            <div style={styles.formGroup}>
-              <label htmlFor="cubicFeet" style={styles.label}>
-                Cubic Feet <span style={{ color: '#b00020' }}>*</span>
-              </label>
+            <div>
+              <label style={styles.label}>Cubic Feet <span style={{color: '#b00020'}}>*</span></label>
               <input
-                id="cubicFeet"
-                name="cubicFeet"
+                style={styles.input}
                 type="number"
+                name="cubicFeet"
                 value={formData.cubicFeet}
                 onChange={handleInputChange}
-                style={styles.input}
-                min="0"
                 required
               />
             </div>
-            {/* Description */}
-            <div style={styles.formGroup}>
-              <label htmlFor="description" style={styles.label}>
-                Description <span style={{ color: '#b00020' }}>*</span>
-              </label>
+            <div>
+              <label style={styles.label}>Description <span style={{color: '#b00020'}}>*</span></label>
               <textarea
-                id="description"
+                style={styles.textarea}
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 placeholder="Describe your storage space..."
-                style={styles.textarea}
                 required
               />
             </div>
-            {/* Start Date */}
-            <div style={styles.formGroup}>
-              <label htmlFor="start_date" style={styles.label}>
-                Start Date <span style={{ color: '#b00020' }}>*</span>
-              </label>
+            <div>
+              <label style={styles.label}>Start Date <span style={{color: '#b00020'}}>*</span></label>
               <input
-                id="start_date"
-                name="start_date"
+                style={styles.input}
                 type="date"
+                name="start_date"
                 value={formData.start_date}
                 onChange={handleInputChange}
-                style={styles.input}
                 required
-                min={new Date().toISOString().split('T')[0]}
               />
             </div>
-            {/* End Date */}
-            <div style={styles.formGroup}>
-              <label htmlFor="end_date" style={styles.label}>
-                End Date <span style={{ color: '#b00020' }}>*</span>
-              </label>
+            <div>
+              <label style={styles.label}>End Date <span style={{color: '#b00020'}}>*</span></label>
               <input
-                id="end_date"
-                name="end_date"
+                style={styles.input}
                 type="date"
+                name="end_date"
                 value={formData.end_date}
                 onChange={handleInputChange}
-                style={styles.input}
                 required
-                min={formData.start_date || new Date().toISOString().split('T')[0]}
               />
             </div>
-            {/* Image upload */}
-            <div style={styles.formGroup}>
-              <label htmlFor="image" style={styles.label}>
-                Image <span style={{ color: '#b00020' }}>*</span>
-              </label>
+            <div>
+              <label style={styles.label}>Image <span style={{color: '#b00020'}}>*</span></label>
               <input
-                id="image"
-                name="image"
+                style={styles.input}
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
-                style={styles.input}
+                disabled={uploading}
                 required
               />
-              {uploading && <div style={styles.uploading}>Uploading image...</div>}
               {formData.image_url && (
                 <img src={formData.image_url} alt="Preview" style={styles.imagePreview} />
               )}
             </div>
-
             <button type="submit" style={styles.submitButton} disabled={uploading}>
               {uploading ? 'Uploading...' : 'Create Listing'}
             </button>
-          </form>
-        </div>
+        </form>
       </div>
     );
   }
-
-  // Full page version
-  return (
-    <div style={styles.container}>
-      <Header title="Create Listing" />
-      <div style={styles.content}>
-        {error && <div style={styles.error}>{error}</div>}
-        <form onSubmit={handleSubmit} style={styles.form}>
-          {/* all form fields identical to modal version above */}
-
-          {/* Location title */}
-          ... (copy the same fields as above) ...
-
-          <button type="submit" style={styles.submitButton} disabled={uploading}>
-            {uploading ? 'Uploading...' : 'Create Listing'}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
 export default CreateListing;
