@@ -301,18 +301,32 @@ const LenderDashboard = ({ username }) => {
                     {space.interestedRenters.length > 0 && (
                       <div style={styles.rentersList}>
                         <h4 style={styles.rentersTitle}>Interested Renters</h4>
-                        {space.interestedRenters.map(renter => (
-                          <div key={renter.id} style={styles.renterItem}>
-                            <div style={styles.renterInfo}>
-                              <span style={styles.renterName}>{renter.name}</span>
-                              <span style={styles.renterEmail}>{renter.email}</span>
-                            </div>
-                            <div style={styles.renterStatus}>
-                              <span style={styles.renterDate}>{renter.dateInterested}</span>
-                              <span style={styles.renterStatusBadge}>{renter.status}</span>
-                            </div>
-                          </div>
-                        ))}
+                        {space.interestedRenters.map(renter => {
+  let formattedDate = '';
+  let formattedTime = '';
+  if (renter.dateInterested) {
+    const dateObj = new Date(renter.dateInterested);
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    const yy = String(dateObj.getFullYear()).slice(-2);
+    formattedDate = `${mm}/${dd}/${yy}`;
+    const hours = String(dateObj.getHours()).padStart(2, '0');
+    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+    formattedTime = `${hours}:${minutes}`;
+  }
+  return (
+    <div key={renter.id} style={styles.renterItem}>
+      <div style={styles.renterInfo}>
+        <span style={styles.renterName}>{renter.name}</span>
+        <span style={styles.renterEmail}>{renter.email}</span>
+      </div>
+      <div style={styles.renterStatus}>
+        <span style={styles.renterDate}>{formattedDate} {formattedTime}</span>
+        <span style={styles.renterStatusBadge}>{renter.status}</span>
+      </div>
+    </div>
+  );
+})}
                       </div>
                     )}
                     <div style={styles.spaceActions}>
