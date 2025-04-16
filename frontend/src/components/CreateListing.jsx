@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 
-const CreateListing = ({ onClose, onSuccess }) => {
+const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     location: '', // This will be used as the title field
@@ -183,15 +183,19 @@ const CreateListing = ({ onClose, onSuccess }) => {
 
   return (
     <div style={styles.container}>
-      <button
-        style={styles.backButton}
-        onClick={() => {
-          if (onClose) { onClose(); } else { navigate('/lender-dashboard'); }
-        }}
-      >
-        &larr; Back
-      </button>
-      <Header title="Create Storage Listing" />
+      {(!modalMode) && (
+        <>
+          <button
+            style={styles.backButton}
+            onClick={() => {
+              if (onClose) { onClose(); } else { navigate('/lender-dashboard'); }
+            }}
+          >
+            &larr; Back
+          </button>
+          <Header title="Create Storage Listing" />
+        </>
+      )}
       {error && <div style={styles.error}>{error}</div>}
       <div style={styles.content}>
         <form onSubmit={handleSubmit} style={styles.form}>

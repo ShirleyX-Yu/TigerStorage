@@ -1,5 +1,94 @@
 import React, { useState, useEffect } from 'react';
 
+const styles = {
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    width: '100%',
+    minWidth: 320,
+    maxWidth: 520,
+    margin: '0 auto',
+    background: 'none',
+    boxShadow: 'none',
+    borderRadius: 0,
+    padding: 0
+  },
+  content: {
+    width: '100%',
+    marginTop: 0,
+    marginBottom: 0
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 18,
+    width: '100%'
+  },
+  label: {
+    fontWeight: 500,
+    marginBottom: 4
+  },
+  input: {
+    width: '100%',
+    padding: '9px 12px',
+    border: '1px solid #ccc',
+    borderRadius: 6,
+    fontSize: 16
+  },
+  textarea: {
+    width: '100%',
+    padding: '9px 12px',
+    border: '1px solid #ccc',
+    borderRadius: 6,
+    fontSize: 16,
+    minHeight: 60
+  },
+  error: {
+    color: '#b00020',
+    marginBottom: 10,
+    fontWeight: 500
+  },
+  status: {
+    color: '#888',
+    fontSize: 14,
+    marginBottom: 8
+  },
+  button: {
+    background: '#0052cc',
+    color: 'white',
+    border: 'none',
+    borderRadius: 6,
+    padding: '10px 0',
+    fontSize: 17,
+    fontWeight: 600,
+    cursor: 'pointer',
+    marginTop: 12
+  },
+  imagePreview: {
+    width: 120,
+    height: 80,
+    objectFit: 'cover',
+    borderRadius: 6,
+    marginTop: 8
+  },
+  addressInputContainer: {
+    display: 'flex',
+    gap: '10px',
+    alignItems: 'center',
+    width: '100%'
+  },
+  smallButton: {
+    background: '#e0e0e0',
+    border: 'none',
+    borderRadius: 5,
+    padding: '6px 13px',
+    fontSize: 15,
+    cursor: 'pointer',
+    marginLeft: 4
+  },
+};
+
 const EditListingForm = ({ listingId, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     location: '',
@@ -184,60 +273,131 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return <div style={{ textAlign: 'center', padding: 32 }}>Loading...</div>;
+  }
 
   return (
-    <form onSubmit={handleSubmit} style={{ padding: 20, background: 'white', borderRadius: 8, maxWidth: 500 }}>
-      <h2>Edit Storage Space</h2>
-      {error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
+    <div style={styles.container}>
+      {error && <div style={styles.error}>{error}</div>}
       {success && <div style={{ color: 'green', marginBottom: 10 }}>Listing updated!</div>}
-      <div style={{ marginBottom: 10 }}>
-        <label>Title/Location:</label>
-        <input type="text" name="location" value={formData.location} onChange={handleInputChange} required />
+      <div style={styles.content}>
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <div>
+            <label style={styles.label}>Location (Title)</label>
+            <input
+              style={styles.input}
+              type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div>
+            <label style={styles.label}>Location Type</label>
+            <select
+              style={styles.input}
+              value={locationType}
+              onChange={handleLocationTypeChange}
+            >
+              <option value="on-campus">On Campus</option>
+              <option value="off-campus">Off Campus</option>
+            </select>
+          </div>
+          <div>
+            <label style={styles.label}>Address</label>
+            <div style={styles.addressInputContainer}>
+              <input
+                style={styles.input}
+                type="text"
+                value={tempAddress}
+                onChange={handleAddressChange}
+                placeholder={locationType === 'on-campus' ? 'e.g. Bloomberg Hall' : 'Enter full address'}
+              />
+              <button
+                type="button"
+                style={styles.smallButton}
+                onClick={geocodeAddress}
+              >
+                Lookup
+              </button>
+            </div>
+            {geocodingStatus && <div style={styles.status}>{geocodingStatus}</div>}
+          </div>
+          <div>
+            <label style={styles.label}>Cost per Month ($)</label>
+            <input
+              style={styles.input}
+              type="number"
+              name="cost"
+              value={formData.cost}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div>
+            <label style={styles.label}>Cubic Feet</label>
+            <input
+              style={styles.input}
+              type="number"
+              name="cubicFeet"
+              value={formData.cubicFeet}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div>
+            <label style={styles.label}>Description</label>
+            <textarea
+              style={styles.textarea}
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Describe your storage space..."
+            />
+          </div>
+          <div>
+            <label style={styles.label}>Start Date</label>
+            <input
+              style={styles.input}
+              type="date"
+              name="start_date"
+              value={formData.start_date}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div>
+            <label style={styles.label}>End Date</label>
+            <input
+              style={styles.input}
+              type="date"
+              name="end_date"
+              value={formData.end_date}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div>
+            <label style={styles.label}>Image</label>
+            <input
+              style={styles.input}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={uploading}
+            />
+            {formData.image_url && (
+              <img src={formData.image_url} alt="Preview" style={styles.imagePreview} />
+            )}
+          </div>
+          <button type="submit" style={styles.button} disabled={uploading || loading}>
+            {uploading ? 'Uploading...' : loading ? 'Saving...' : 'Save Changes'}
+          </button>
+        </form>
       </div>
-      <div style={{ marginBottom: 10 }}>
-        <label>Location Type:</label>
-        <select value={locationType} onChange={handleLocationTypeChange}>
-          <option value="on-campus">On-Campus</option>
-          <option value="off-campus">Off-Campus</option>
-        </select>
-      </div>
-      <div style={{ marginBottom: 10 }}>
-        <label>Address:</label>
-        <input type="text" value={tempAddress} onChange={handleAddressChange} />
-        <button type="button" onClick={geocodeAddress} style={{ marginLeft: 8 }}>Geocode</button>
-        {geocodingStatus && <span style={{ marginLeft: 8 }}>{geocodingStatus}</span>}
-      </div>
-      <div style={{ marginBottom: 10 }}>
-        <label>Cost per Month ($):</label>
-        <input type="number" name="cost" value={formData.cost} onChange={handleInputChange} required />
-      </div>
-      <div style={{ marginBottom: 10 }}>
-        <label>Size (Cubic Feet):</label>
-        <input type="number" name="cubicFeet" value={formData.cubicFeet} onChange={handleInputChange} required />
-      </div>
-      <div style={{ marginBottom: 10 }}>
-        <label>Description:</label>
-        <textarea name="description" value={formData.description} onChange={handleInputChange} />
-      </div>
-      <div style={{ marginBottom: 10 }}>
-        <label>Start Date:</label>
-        <input type="date" name="start_date" value={formData.start_date} onChange={handleInputChange} required />
-      </div>
-      <div style={{ marginBottom: 10 }}>
-        <label>End Date:</label>
-        <input type="date" name="end_date" value={formData.end_date} onChange={handleInputChange} required />
-      </div>
-      <div style={{ marginBottom: 10 }}>
-        <label>Image:</label>
-        <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
-        {formData.image_url && <img src={formData.image_url} alt="Listing" style={{ maxWidth: 100, marginLeft: 8 }} />}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-        <button type="button" onClick={onClose}>Cancel</button>
-        <button type="submit" disabled={loading || uploading}>Save</button>
-      </div>
-    </form>
+    </div>
   );
 };
 
