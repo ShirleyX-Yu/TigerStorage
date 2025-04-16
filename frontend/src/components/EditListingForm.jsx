@@ -284,7 +284,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       <div style={styles.content}>
         <form onSubmit={handleSubmit} style={styles.form}>
           <div>
-            <label style={styles.label}>Location (Title)</label>
+            <label style={styles.label}>Location (Title) <span style={{color: '#b00020'}}>*</span></label>
             <input
               style={styles.input}
               type="text"
@@ -295,18 +295,19 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
             />
           </div>
           <div>
-            <label style={styles.label}>Location Type</label>
+            <label style={styles.label}>Location Type <span style={{color: '#b00020'}}>*</span></label>
             <select
               style={styles.input}
               value={locationType}
               onChange={handleLocationTypeChange}
+              required
             >
               <option value="on-campus">On Campus</option>
               <option value="off-campus">Off Campus</option>
             </select>
           </div>
           <div>
-            <label style={styles.label}>Address</label>
+            <label style={styles.label}>Address <span style={{color: '#b00020'}}>*</span></label>
             <div style={styles.addressInputContainer}>
               <input
                 style={styles.input}
@@ -314,6 +315,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                 value={tempAddress}
                 onChange={handleAddressChange}
                 placeholder={locationType === 'on-campus' ? 'e.g. Bloomberg Hall' : 'Enter full address'}
+                required
               />
               <button
                 type="button"
@@ -326,7 +328,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
             {geocodingStatus && <div style={styles.status}>{geocodingStatus}</div>}
           </div>
           <div>
-            <label style={styles.label}>Cost per Month ($)</label>
+            <label style={styles.label}>Cost per Month ($) <span style={{color: '#b00020'}}>*</span></label>
             <input
               style={styles.input}
               type="number"
@@ -337,7 +339,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
             />
           </div>
           <div>
-            <label style={styles.label}>Cubic Feet</label>
+            <label style={styles.label}>Cubic Feet <span style={{color: '#b00020'}}>*</span></label>
             <input
               style={styles.input}
               type="number"
@@ -348,17 +350,18 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
             />
           </div>
           <div>
-            <label style={styles.label}>Description</label>
+            <label style={styles.label}>Description <span style={{color: '#b00020'}}>*</span></label>
             <textarea
               style={styles.textarea}
               name="description"
               value={formData.description}
               onChange={handleInputChange}
               placeholder="Describe your storage space..."
+              required
             />
           </div>
           <div>
-            <label style={styles.label}>Start Date</label>
+            <label style={styles.label}>Start Date <span style={{color: '#b00020'}}>*</span></label>
             <input
               style={styles.input}
               type="date"
@@ -369,7 +372,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
             />
           </div>
           <div>
-            <label style={styles.label}>End Date</label>
+            <label style={styles.label}>End Date <span style={{color: '#b00020'}}>*</span></label>
             <input
               style={styles.input}
               type="date"
@@ -380,13 +383,14 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
             />
           </div>
           <div>
-            <label style={styles.label}>Image</label>
+            <label style={styles.label}>Image <span style={{color: '#b00020'}}>*</span></label>
             <input
               style={styles.input}
               type="file"
               accept="image/*"
               onChange={handleImageUpload}
               disabled={uploading}
+              required
             />
             {formData.image_url && (
               <img src={formData.image_url} alt="Preview" style={styles.imagePreview} />
