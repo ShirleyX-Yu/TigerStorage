@@ -303,154 +303,157 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       {error && <div style={styles.error}>{error}</div>}
       {success && <div style={{ color: 'green', marginBottom: 10 }}>Listing updated!</div>}
       <div style={styles.content}>
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div>
-            <label style={styles.label}>Location (Title) <span style={{color: '#b00020'}}>*</span></label>
-            <input
-              style={styles.input}
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div>
-            <label style={styles.label}>Location Type <span style={{color: '#b00020'}}>*</span></label>
-            <select
-              style={styles.input}
-              value={locationType}
-              onChange={handleLocationTypeChange}
-              required
-            >
-              <option value="on-campus">On Campus</option>
-              <option value="off-campus">Off Campus</option>
-            </select>
-          </div>
-          <div style={styles.formGroup}>
-            {locationType === 'on-campus' ? (
-              <div>
-                <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
-                <select
-                  style={styles.input}
-                  value={tempAddress}
-                  onChange={e => {
-                    setTempAddress(e.target.value);
-                    // Auto-geocode on selection
-                    if (e.target.value) {
-                      geocodeAddress(e.target.value);
-                    }
-                  }}
-                  required
-                >
-                  <option value="">Select a hall...</option>
-                  {PRINCETON_HALLS.map(hall => (
-                    <option key={hall} value={hall}>{hall}</option>
-                  ))}
-                </select>
-                {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
-              </div>
-            ) : (
-              <div>
-                <label style={styles.label}>Address <span style={{color: '#b00020'}}>*</span></label>
-                <div style={styles.addressInputContainer}>
-                  <input
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: 32 }}>Loading...</div>
+        ) : (
+          <form onSubmit={handleSubmit} style={{ ...styles.form, gap: 18, padding: 24, width: '100%' }}>
+            <div>
+              <label style={styles.label}>Location (Title) <span style={{color: '#b00020'}}>*</span></label>
+              <input
+                style={styles.input}
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div>
+              <label style={styles.label}>Location Type <span style={{color: '#b00020'}}>*</span></label>
+              <select
+                style={styles.input}
+                value={locationType}
+                onChange={handleLocationTypeChange}
+                required
+              >
+                <option value="on-campus">On Campus</option>
+                <option value="off-campus">Off Campus</option>
+              </select>
+            </div>
+            <div>
+              {locationType === 'on-campus' ? (
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
+                  <select
                     style={styles.input}
-                    type="text"
                     value={tempAddress}
-                    onChange={handleAddressChange}
-                    placeholder="Enter full address"
+                    onChange={e => {
+                      setTempAddress(e.target.value);
+                      if (e.target.value) {
+                        geocodeAddress(e.target.value);
+                      }
+                    }}
                     required
-                    list="address-autocomplete"
-                  />
-                  <datalist id="address-autocomplete">
-                    {/* Optionally, you can fill this with suggestions from Nominatim if you implement autocomplete */}
-                  </datalist>
-                  <button
-                    type="button"
-                    style={styles.smallButton}
-                    onClick={() => geocodeAddress()}
                   >
-                    Lookup
-                  </button>
+                    <option value="">Select a hall...</option>
+                    {PRINCETON_HALLS.map(hall => (
+                      <option key={hall} value={hall}>{hall}</option>
+                    ))}
+                  </select>
+                  {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
                 </div>
-                {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
-              </div>
-            )}
-          </div>
-          <div>
-            <label style={styles.label}>Cost per Month ($) <span style={{color: '#b00020'}}>*</span></label>
-            <input
-              style={styles.input}
-              type="number"
-              name="cost"
-              value={formData.cost}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div>
-            <label style={styles.label}>Cubic Feet <span style={{color: '#b00020'}}>*</span></label>
-            <input
-              style={styles.input}
-              type="number"
-              name="cubicFeet"
-              value={formData.cubicFeet}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div>
-            <label style={styles.label}>Description <span style={{color: '#b00020'}}>*</span></label>
-            <textarea
-              style={styles.textarea}
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Describe your storage space..."
-              required
-            />
-          </div>
-          <div>
-            <label style={styles.label}>Start Date <span style={{color: '#b00020'}}>*</span></label>
-            <input
-              style={styles.input}
-              type="date"
-              name="start_date"
-              value={formData.start_date}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div>
-            <label style={styles.label}>End Date <span style={{color: '#b00020'}}>*</span></label>
-            <input
-              style={styles.input}
-              type="date"
-              name="end_date"
-              value={formData.end_date}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div>
-            <label style={styles.label}>Image <span style={{color: '#b00020'}}>*</span></label>
-            <input
-              style={styles.input}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              disabled={uploading}
-              required
-            />
-            {formData.image_url && (
-              <img src={formData.image_url} alt="Preview" style={styles.imagePreview} />
-            )}
-          </div>
-          <button type="submit" style={styles.button} disabled={uploading || loading}>
-            {uploading ? 'Uploading...' : loading ? 'Saving...' : 'Save Changes'}
-          </button>
-        </form>
+              ) : (
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Address <span style={{color: '#b00020'}}>*</span></label>
+                  <div style={styles.addressInputContainer}>
+                    <input
+                      style={styles.input}
+                      type="text"
+                      value={tempAddress}
+                      onChange={handleAddressChange}
+                      placeholder="Enter full address"
+                      required
+                      list="address-autocomplete"
+                    />
+                    <datalist id="address-autocomplete">
+                      {/* Optionally, you can fill this with suggestions from Nominatim if you implement autocomplete */}
+                    </datalist>
+                    <button
+                      type="button"
+                      style={styles.smallButton}
+                      onClick={() => geocodeAddress()}
+                    >
+                      Lookup
+                    </button>
+                  </div>
+                  {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
+                </div>
+              )}
+            </div>
+            <div>
+              <label style={styles.label}>Cost per Month ($) <span style={{color: '#b00020'}}>*</span></label>
+              <input
+                style={styles.input}
+                type="number"
+                name="cost"
+                value={formData.cost}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div>
+              <label style={styles.label}>Cubic Feet <span style={{color: '#b00020'}}>*</span></label>
+              <input
+                style={styles.input}
+                type="number"
+                name="cubicFeet"
+                value={formData.cubicFeet}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div>
+              <label style={styles.label}>Description <span style={{color: '#b00020'}}>*</span></label>
+              <textarea
+                style={styles.textarea}
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Describe your storage space..."
+                required
+              />
+            </div>
+            <div>
+              <label style={styles.label}>Start Date <span style={{color: '#b00020'}}>*</span></label>
+              <input
+                style={styles.input}
+                type="date"
+                name="start_date"
+                value={formData.start_date}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div>
+              <label style={styles.label}>End Date <span style={{color: '#b00020'}}>*</span></label>
+              <input
+                style={styles.input}
+                type="date"
+                name="end_date"
+                value={formData.end_date}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div>
+              <label style={styles.label}>Image <span style={{color: '#b00020'}}>*</span></label>
+              <input
+                style={styles.input}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                required={!formData.image_url}
+              />
+              {formData.image_url && (
+                <img src={formData.image_url} alt="Preview" style={styles.imagePreview} />
+              )}
+            </div>
+            <button type="submit" style={styles.button} disabled={uploading || loading}>
+              {uploading ? 'Uploading...' : loading ? 'Saving...' : 'Save Changes'}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
