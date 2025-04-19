@@ -535,7 +535,23 @@ const Map = () => {
             </DialogTitle>
             <DialogContent dividers style={{ background: '#fff8f1', padding: 24 }}>
               {interestError && (
-                <Box mb={2}><Alert severity="error" variant="filled">{typeof interestError === 'string' ? interestError.replace(/^{.*"error"\s*:\s*"([^"]+)".*}$/,'$1') : 'An error occurred.'}</Alert></Box>
+                <Box mb={2}><Alert severity="error" variant="filled">{
+                  (() => {
+                    if (typeof interestError === 'string') {
+                      try {
+                        const parsed = JSON.parse(interestError);
+                        if (parsed && parsed.error) return `Error: ${parsed.error}`;
+                      } catch (e) {
+                        // Not JSON, fall through
+                      }
+                      // Try to match {"error":"..."} pattern
+                      const match = interestError.match(/\{"error"\s*:\s*"([^"]+)"\}/);
+                      if (match && match[1]) return `Error: ${match[1]}`;
+                      return `Error: ${interestError}`;
+                    }
+                    return 'An error occurred.';
+                  })()
+                }</Alert></Box>
               )}
               {interestSuccess && (
                 <Box mb={2}><Alert severity="success" variant="filled">{selectedListing && selectedListing.isInterested ? 'Interest removed!' : 'Interest recorded!'}</Alert></Box>
