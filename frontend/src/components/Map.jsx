@@ -21,14 +21,12 @@ L.Icon.Default.mergeOptions({
 
 // Custom orange marker icon
 const orangeIcon = new L.Icon({
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.4/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-  className: 'leaflet-orange-icon'
+  shadowSize: [41, 41]
 });
 
 // Custom gray marker icon
@@ -43,11 +41,8 @@ const grayIcon = new L.Icon({
   className: 'leaflet-gray-icon'
 });
 
-// Add CSS for marker colors
+// Add CSS for marker colors (remove orange filter)
 const markerStyles = `
-  .leaflet-orange-icon {
-    filter: hue-rotate(0deg) saturate(2) brightness(1);
-  }
   .leaflet-gray-icon {
     filter: grayscale(100%) brightness(0.7);
   }
