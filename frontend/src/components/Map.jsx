@@ -529,7 +529,7 @@ const Map = () => {
             />
           </MapContainer>
           {/* Popup Modal for Selected Listing */}
-          <Dialog open={!!selectedListing} onClose={() => { setSelectedListing(null); setSelectedListingId(null); }} PaperProps={{ style: { borderRadius: 16, minWidth: 340, background: '#fff8f1' } }}>
+          <Dialog open={!!selectedListing} onClose={() => setSelectedListingId(null)} PaperProps={{ style: { borderRadius: 16, minWidth: 340, background: '#fff8f1' } }}>
             <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, padding: '16px 24px' }}>
               Listing Details
             </DialogTitle>
@@ -560,13 +560,12 @@ const Map = () => {
               )}
             </DialogContent>
             <DialogActions style={{ padding: '16px' }}>
-              <Button onClick={() => { setSelectedListing(null); setSelectedListingId(null); }} style={{ color: '#888' }}>
+              <Button onClick={() => setSelectedListingId(null)} style={{ color: '#888' }}>
                 Close
               </Button>
               <Button
                 onClick={() => {
                   if (selectedListing) navigate(`/listing/${selectedListing.listing_id || selectedListing.id}`);
-                  setSelectedListing(null);
                 }}
                 style={{ background: '#FF6B00', color: 'white', fontWeight: 600 }}
                 variant="contained"
