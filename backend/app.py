@@ -10,6 +10,7 @@ import uuid
 from werkzeug.utils import secure_filename
 from decimal import Decimal
 from psycopg2.extras import RealDictCursor
+from datetime import datetime
 
 # Set up command-line argument parsing
 parser = argparse.ArgumentParser(description="Run Flask app")
@@ -1941,6 +1942,206 @@ def get_listings_by_username(username):
 
 # Initialize database on startup
 init_db()
+
+# --- RESERVATION REQUEST ENDPOINTS ---
+
+# 1. Renter requests a reservation for a specific volume
+@app.route('/api/listings/<int:listing_id>/reserve', methods=['POST'])
+def reserve_space(listing_id):
+    try:
+        authenticated = auth.is_authenticated()
+        renter_username = None
+        if authenticated:
+            user_info = session.get('user_info', {})
+            renter_username = user_info.get('user', '').lower()
+        else:
+            renter_username = request.headers.get('X-Username', '').lower()
+        if not renter_username:
+            return jsonify({'error': 'Not authenticated'}), 401
+        data = request.get_json()
+        requested_volume = float(data.get('requested_volume', 0))
+        if requested_volume <= 0:
+            return jsonify({'error': 'Requested volume must be positive'}), 400
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                # Duplicate check: does a pending request already exist for this renter and listing?
+                cur.execute("""
+                    SELECT 1 FROM reservation_requests
+                    WHERE listing_id = %s AND renter_username = %s AND status = 'pending'
+                    LIMIT 1
+                """, (listing_id, renter_username))
+                if cur.fetchone():
+                    return jsonify({'error': 'You already have a pending reservation request for this listing.'}), 400
+                # Get listing and check remaining_volume
+                cur.execute("SELECT remaining_volume, is_available FROM storage_listings WHERE listing_id = %s", (listing_id,))
+                row = cur.fetchone()
+                if not row:
+                    return jsonify({'error': 'Listing not found'}), 404
+                remaining_volume, is_available = row
+                if not is_available or remaining_volume is None or remaining_volume < requested_volume:
+                    return jsonify({'error': 'Not enough space available'}), 400
+                # Insert reservation request
+                cur.execute("""
+                    INSERT INTO reservation_requests (listing_id, renter_username, requested_volume, status)
+                    VALUES (%s, %s, %s, 'pending') RETURNING request_id
+                """, (listing_id, renter_username, requested_volume))
+                request_id = cur.fetchone()[0]
+                conn.commit()
+                return jsonify({'success': True, 'request_id': request_id}), 201
+        finally:
+            conn.close()
+    except Exception as e:
+        print('Error in reserve_space:', e)
+        return jsonify({'error': str(e)}), 500
+
+# 2. Lender views all reservation requests for their listing
+@app.route('/api/listings/<int:listing_id>/reservation-requests', methods=['GET'])
+def get_reservation_requests(listing_id):
+    try:
+        authenticated = auth.is_authenticated()
+        owner_id = None
+        if authenticated:
+            user_info = session.get('user_info', {})
+            owner_id = user_info.get('user', '').lower()
+        else:
+            owner_id = request.headers.get('X-Username', '').lower()
+        if not owner_id:
+            return jsonify({'error': 'Not authenticated'}), 401
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                # Check ownership
+                cur.execute("SELECT owner_id FROM storage_listings WHERE listing_id = %s", (listing_id,))
+                row = cur.fetchone()
+                if not row or row[0] != owner_id:
+                    return jsonify({'error': 'Not authorized'}), 403
+                # Get all reservation requests
+                cur.execute("""
+                    SELECT request_id, renter_username, requested_volume, approved_volume, status, created_at, updated_at
+                    FROM reservation_requests WHERE listing_id = %s ORDER BY created_at DESC
+                """, (listing_id,))
+                requests = [
+                    {
+                        'request_id': r[0],
+                        'renter_username': r[1],
+                        'requested_volume': r[2],
+                        'approved_volume': r[3],
+                        'status': r[4],
+                        'created_at': r[5].isoformat() if r[5] else None,
+                        'updated_at': r[6].isoformat() if r[6] else None
+                    } for r in cur.fetchall()
+                ]
+                return jsonify(requests), 200
+        finally:
+            conn.close()
+    except Exception as e:
+        print('Error in get_reservation_requests:', e)
+        return jsonify({'error': str(e)}), 500
+
+# 3. Lender approves/rejects/partially approves a reservation request
+@app.route('/api/reservation-requests/<int:request_id>', methods=['PATCH'])
+def update_reservation_request(request_id):
+    try:
+        authenticated = auth.is_authenticated()
+        owner_id = None
+        if authenticated:
+            user_info = session.get('user_info', {})
+            owner_id = user_info.get('user', '').lower()
+        else:
+            owner_id = request.headers.get('X-Username', '').lower()
+        if not owner_id:
+            return jsonify({'error': 'Not authenticated'}), 401
+        data = request.get_json()
+        new_status = data.get('status')
+        approved_volume = data.get('approved_volume')
+        if new_status not in ['approved_full', 'approved_partial', 'rejected', 'cancelled_by_renter', 'expired']:
+            return jsonify({'error': 'Invalid status'}), 400
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                # Get reservation request and listing
+                cur.execute("SELECT listing_id, requested_volume, status FROM reservation_requests WHERE request_id = %s", (request_id,))
+                req = cur.fetchone()
+                if not req:
+                    return jsonify({'error': 'Request not found'}), 404
+                listing_id, requested_volume, current_status = req
+                if current_status not in ['pending']:
+                    return jsonify({'error': 'Request already processed'}), 400
+                # Check ownership
+                cur.execute("SELECT owner_id, remaining_volume FROM storage_listings WHERE listing_id = %s", (listing_id,))
+                row = cur.fetchone()
+                if not row or row[0] != owner_id:
+                    return jsonify({'error': 'Not authorized'}), 403
+                remaining_volume = row[1]
+                # Approve full
+                if new_status == 'approved_full':
+                    if remaining_volume < requested_volume:
+                        return jsonify({'error': 'Not enough space for full approval'}), 400
+                    cur.execute("""
+                        UPDATE reservation_requests SET status = %s, approved_volume = %s, updated_at = %s WHERE request_id = %s
+                    """, ('approved_full', requested_volume, datetime.utcnow(), request_id))
+                    cur.execute("UPDATE storage_listings SET remaining_volume = 0, is_available = FALSE WHERE listing_id = %s", (listing_id,))
+                # Approve partial
+                elif new_status == 'approved_partial':
+                    if not approved_volume or float(approved_volume) <= 0 or float(approved_volume) > remaining_volume:
+                        return jsonify({'error': 'Invalid approved volume'}), 400
+                    cur.execute("""
+                        UPDATE reservation_requests SET status = %s, approved_volume = %s, updated_at = %s WHERE request_id = %s
+                    """, ('approved_partial', approved_volume, datetime.utcnow(), request_id))
+                    new_remaining = remaining_volume - float(approved_volume)
+                    is_available = new_remaining > 0
+                    cur.execute("UPDATE storage_listings SET remaining_volume = %s, is_available = %s WHERE listing_id = %s", (new_remaining, is_available, listing_id))
+                # Reject/cancel/expire
+                else:
+                    cur.execute("""
+                        UPDATE reservation_requests SET status = %s, updated_at = %s WHERE request_id = %s
+                    """, (new_status, datetime.utcnow(), request_id))
+                conn.commit()
+                return jsonify({'success': True}), 200
+        finally:
+            conn.close()
+    except Exception as e:
+        print('Error in update_reservation_request:', e)
+        return jsonify({'error': str(e)}), 500
+
+# 4. Renter views all their reservation requests
+@app.route('/api/my-reservation-requests', methods=['GET'])
+def my_reservation_requests():
+    try:
+        authenticated = auth.is_authenticated()
+        renter_username = None
+        if authenticated:
+            user_info = session.get('user_info', {})
+            renter_username = user_info.get('user', '').lower()
+        else:
+            renter_username = request.headers.get('X-Username', '').lower()
+        if not renter_username:
+            return jsonify({'error': 'Not authenticated'}), 401
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT request_id, listing_id, requested_volume, approved_volume, status, created_at, updated_at
+                    FROM reservation_requests WHERE renter_username = %s ORDER BY created_at DESC
+                """, (renter_username,))
+                requests = [
+                    {
+                        'request_id': r[0],
+                        'listing_id': r[1],
+                        'requested_volume': r[2],
+                        'approved_volume': r[3],
+                        'status': r[4],
+                        'created_at': r[5].isoformat() if r[5] else None,
+                        'updated_at': r[6].isoformat() if r[6] else None
+                    } for r in cur.fetchall()
+                ]
+                return jsonify(requests), 200
+        finally:
+            conn.close()
+    except Exception as e:
+        print('Error in my_reservation_requests:', e)
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     args = parser.parse_args()
