@@ -111,56 +111,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Helper function to get mock listing data
-def get_mock_listing(listing_id):
-    if listing_id == 101:
-        return jsonify({
-            "id": 101,
-            "location": "Butler College Storage",
-            "cost": 65,
-            "cubic_feet": 90,
-            "description": "Secure storage space near Butler College, perfect for summer storage.",
-            "is_available": True,
-            "created_at": "2025-03-15T10:30:00",
-            "contract_length_months": 3,
-            "owner_id": 1001,
-            "latitude": 40.344,
-            "longitude": -74.656,
-            "image_url": "/assets/placeholder.jpg"
-        }), 200
-    elif listing_id == 102:
-        return jsonify({
-            "id": 102,
-            "location": "Whitman College Basement",
-            "cost": 55,
-            "cubic_feet": 75,
-            "description": "Climate-controlled storage in Whitman College basement.",
-            "is_available": True,
-            "created_at": "2025-03-20T14:45:00",
-            "contract_length_months": 4,
-            "owner_id": 1002,
-            "latitude": 40.343,
-            "longitude": -74.657,
-            "image_url": "/assets/placeholder.jpg"
-        }), 200
-    elif listing_id == 103:
-        return jsonify({
-            "id": 103,
-            "location": "Frist Campus Center",
-            "cost": 80,
-            "cubic_feet": 120,
-            "description": "Large storage space near Frist Campus Center, easily accessible.",
-            "is_available": True,
-            "created_at": "2025-03-25T09:15:00",
-            "contract_length_months": 3,
-            "owner_id": 1003,
-            "latitude": 40.347,
-            "longitude": -74.653,
-            "image_url": "/assets/placeholder.jpg"
-        }), 200
-    else:
-        return jsonify({"error": "Listing not found"}), 404
-
 # Initialize CAS authentication
 auth.init_auth(app)
 
@@ -778,36 +728,7 @@ def get_listings():
         conn = get_db_connection()
         if not conn:
             print("Database connection failed")
-            # In dev mode, return mock data if DB connection fails
-            is_dev = os.environ.get('FLASK_ENV') == 'development' or os.environ.get('DEBUG') == 'true'
-            if is_dev:
-                # Return mock data with valid coordinates
-                mock_listings = [
-                    {
-                        "id": 1,
-                        "location": "Forbes College Storage",
-                        "cost": 50,
-                        "cubic_feet": 75,
-                        "description": "Basement storage in Forbes College.",
-                        "created_at": "2023-04-15T09:45:00", 
-                        "latitude": 40.342,
-                        "longitude": -74.660
-                    },
-                    {
-                        "id": 2,
-                        "location": "Mathey College Storage",
-                        "cost": 60,
-                        "cubic_feet": 100,
-                        "description": "Secure storage space at Mathey College.",
-                        "created_at": "2023-04-20T14:30:00",
-                        "latitude": 40.347,
-                        "longitude": -74.659
-                    }
-                ]
-                print("Returning mock data for development")
-                return jsonify(mock_listings), 200
             return jsonify({"error": "Database connection failed"}), 500
-            
         try:
             with conn.cursor() as cur:
                 # First check if the storage_listings table exists
@@ -952,30 +873,12 @@ def get_listings():
 @app.route('/api/rentals/current', methods=['GET'])
 def get_current_rentals():
     try:
-        # Mock data for current rentals
-        current_rentals = [
-            {
-                "id": 1,
-                "location": "Princeton University Campus",
-                "cost": 75,
-                "cubic_feet": 100,
-                "start_date": "2025-03-01",
-                "end_date": "2025-05-01",
-                "lender": "John Smith",
-                "status": "Active"
-            },
-            {
-                "id": 2,
-                "location": "Nassau Street Storage",
-                "cost": 60,
-                "cubic_feet": 80,
-                "start_date": "2025-02-15",
-                "end_date": "2025-08-15",
-                "lender": "Sarah Johnson",
-                "status": "Active"
-            }
-        ]
-        return jsonify(current_rentals), 200
+        # Get a fresh connection
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+        # Implement real DB logic here or return 404 if not implemented
+        return jsonify({"error": "Not implemented"}), 404
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"error": "Failed to fetch current rentals"}), 500
@@ -983,30 +886,12 @@ def get_current_rentals():
 @app.route('/api/rentals/history', methods=['GET'])
 def get_rental_history():
     try:
-        # Mock data for rental history
-        rental_history = [
-            {
-                "id": 3,
-                "location": "Graduate College",
-                "cost": 50,
-                "cubic_feet": 60,
-                "start_date": "2024-09-01",
-                "end_date": "2024-12-15",
-                "lender": "Mike Wilson",
-                "status": "Completed"
-            },
-            {
-                "id": 4,
-                "location": "Forbes Storage",
-                "cost": 85,
-                "cubic_feet": 120,
-                "start_date": "2024-06-01",
-                "end_date": "2024-08-30",
-                "lender": "Emily Brown",
-                "status": "Completed"
-            }
-        ]
-        return jsonify(rental_history), 200
+        # Get a fresh connection
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+        # Implement real DB logic here or return 404 if not implemented
+        return jsonify({"error": "Not implemented"}), 404
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"error": "Failed to fetch rental history"}), 500
@@ -1019,7 +904,6 @@ def get_listing_by_id(listing_id):
         conn = get_db_connection()
         if not conn:
             return jsonify({"error": "Database connection failed"}), 500
-            
         try:
             with conn.cursor() as cur:
                 # Check if the table exists

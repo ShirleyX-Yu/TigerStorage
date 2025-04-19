@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -213,6 +213,25 @@ const Map = () => {
   const [selectedListingId, setSelectedListingId] = useState(null);
   const selectedListing = listings.find(l => (l.listing_id || l.id) === selectedListingId) || null;
 
+  const fetchAndSyncInterest = useCallback(async (listingsData) => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/my-interested-listings`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch interest');
+      const interested = await response.json();
+      const interestedIds = new Set(interested.map(l => l.id));
+      return listingsData.map(l => ({ ...l, isInterested: interestedIds.has(l.listing_id || l.id) }));
+    } catch (err) {
+      return listingsData.map(l => ({ ...l, isInterested: false }));
+    }
+  }, []);
+
   const fetchListings = async () => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -273,7 +292,8 @@ const Map = () => {
         return listing;
       });
       
-      setListings(listingsWithDistance);
+      const synced = await fetchAndSyncInterest(listingsWithDistance);
+      setListings(synced);
     } catch (err) {
       console.error('Error in fetchListings:', err);
       setError(err.message);
@@ -509,13 +529,13 @@ const Map = () => {
             />
           </MapContainer>
           {/* Popup Modal for Selected Listing */}
-          <Dialog open={!!selectedListing} onClose={() => setSelectedListingId(null)} PaperProps={{ style: { borderRadius: 16, minWidth: 340, background: '#fff8f1' } }}>
+          <Dialog open={!!selectedListing} onClose={() => { setSelectedListing(null); setSelectedListingId(null); }} PaperProps={{ style: { borderRadius: 16, minWidth: 340, background: '#fff8f1' } }}>
             <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, padding: '16px 24px' }}>
               Listing Details
             </DialogTitle>
             <DialogContent dividers style={{ background: '#fff8f1', padding: 24 }}>
               {interestError && (
-                <Box mb={2}><Alert severity="error" variant="filled">{interestError}</Alert></Box>
+                <Box mb={2}><Alert severity="error" variant="filled">{typeof interestError === 'string' ? interestError.replace(/^{.*"error"\s*:\s*"([^"]+)".*}$/,'$1') : 'An error occurred.'}</Alert></Box>
               )}
               {interestSuccess && (
                 <Box mb={2}><Alert severity="success" variant="filled">{selectedListing && selectedListing.isInterested ? 'Interest removed!' : 'Interest recorded!'}</Alert></Box>
@@ -540,7 +560,7 @@ const Map = () => {
               )}
             </DialogContent>
             <DialogActions style={{ padding: '16px' }}>
-              <Button onClick={() => setSelectedListing(null)} style={{ color: '#888' }}>
+              <Button onClick={() => { setSelectedListing(null); setSelectedListingId(null); }} style={{ color: '#888' }}>
                 Close
               </Button>
               <Button
@@ -578,12 +598,8 @@ const Map = () => {
                       throw new Error(errorText || `Failed to ${selectedListing.isInterested ? 'remove' : 'show'} interest`);
                     }
                     setInterestSuccess(true);
-                    setListings(prevListings => prevListings.map(l => {
-                      if ((l.listing_id || l.id) === (selectedListing.listing_id || selectedListing.id)) {
-                        return { ...l, isInterested: !l.isInterested };
-                      }
-                      return l;
-                    }));
+                    // Refetch and sync interest after change
+                    fetchListings();
                   } catch (err) {
                     setInterestError(err.message);
                   } finally {

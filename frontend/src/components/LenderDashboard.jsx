@@ -38,29 +38,6 @@ const LenderDashboard = ({ username }) => {
   const [deleteInProgress, setDeleteInProgress] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
-  const mockListedSpaces = [
-    {
-      id: 1,
-      location: 'Princeton University Campus',
-      cost: 50,
-      cubicFeet: 100,
-      contractLength: 3,
-      dateCreated: '2025-04-08',
-      status: 'Active',
-      interestedRenters: []
-    },
-    {
-      id: 2,
-      location: 'Nassau Street Storage',
-      cost: 75,
-      cubicFeet: 150,
-      contractLength: 4,
-      dateCreated: '2025-04-08',
-      status: 'Active',
-      interestedRenters: []
-    }
-  ];
-
   const fetchListings = useCallback(async () => {
     try {
       setLoading(true);
@@ -132,10 +109,6 @@ const LenderDashboard = ({ username }) => {
       setListedSpaces(formattedListings);
     } catch (err) {
       setError(err.message);
-      if (import.meta.env.DEV && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
-        setListedSpaces(mockListedSpaces);
-        setError('Using sample data (network error: ' + err.message + ')');
-      }
     } finally {
       setLoading(false);
     }
