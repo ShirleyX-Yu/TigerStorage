@@ -831,6 +831,7 @@ def get_listings():
                         formatted_listing = {
                             "id": listing_dict.get('listing_id'),
                             "location": listing_dict.get('location', ''),
+                            "address": listing_dict.get('address', ''),
                             "cost": float(listing_dict.get('cost', 0)) if listing_dict.get('cost') is not None else 0,
                             "cubic_feet": listing_dict.get('cubic_ft', 0),
                             "description": listing_dict.get('description', ''),
@@ -957,6 +958,7 @@ def get_listing_by_id(listing_id):
                     "id": listing_id,  # Use the requested listing_id for consistency
                     "listing_id": listing_dict.get('listing_id'),  # Also include the original listing_id
                     "location": listing_dict.get('location', ''),
+                    "address": listing_dict.get('address', ''),
                     "cost": listing_dict.get('cost', 0),
                     "cubic_feet": listing_dict.get('cubic_ft', 0),
                     "description": listing_dict.get('description') or "Storage space available at " + listing_dict.get('location', ''),
@@ -1207,6 +1209,7 @@ def get_my_listings():
                             formatted_listing = {
                                 "id": listing_dict.get('listing_id'),
                                 "location": listing_dict.get('location', ''),
+                                "address": listing_dict.get('address', ''),
                                 "cost": float(listing_dict.get('cost', 0)) if listing_dict.get('cost') is not None else 0,
                                 "cubic_feet": listing_dict.get('cubic_ft', 0),
                                 "description": listing_dict.get('description', ''),
@@ -1807,8 +1810,8 @@ def get_my_interested_listings():
                     for row in rows:
                         interested_listings.append({
                             "id": row[1],  # listing_id
-                            "location": row[2],
-                            "cost": row[3],
+                            "title": row[2],
+                            "address": row[3],
                             "lender": row[4],
                             "dateInterested": row[5].isoformat(),
                             "status": row[6],
@@ -1901,17 +1904,18 @@ def get_listings_by_username(username):
                     try:
                         formatted_listing = {
                             "id": listing[0],
-                            "location": listing[1],
-                            "cost": float(listing[2]) if listing[2] is not None else 0,
-                            "cubic_feet": listing[3] if listing[3] is not None else 0,
-                            "description": listing[4] if listing[4] is not None else "",
-                            "latitude": float(listing[5]) if listing[5] is not None else None,
-                            "longitude": float(listing[6]) if listing[6] is not None else None,
-                            "start_date": listing[7].isoformat() if listing[7] else None,
-                            "end_date": listing[8].isoformat() if listing[8] else None,
-                            "image_url": listing[9] if listing[9] is not None else "/assets/placeholder.jpg",
-                            "created_at": listing[10].isoformat() if listing[10] else None,
-                            "owner_id": listing[11] if listing[11] is not None else "unknown"
+                            "title": listing[1],
+                            "address": listing[2],
+                            "cost": float(listing[3]) if listing[3] is not None else 0,
+                            "cubic_feet": listing[4] if listing[4] is not None else 0,
+                            "description": listing[5] if listing[5] is not None else "",
+                            "latitude": float(listing[6]) if listing[6] is not None else None,
+                            "longitude": float(listing[7]) if listing[7] is not None else None,
+                            "start_date": listing[8].isoformat() if listing[8] else None,
+                            "end_date": listing[9].isoformat() if listing[9] else None,
+                            "image_url": listing[10] if listing[10] is not None else "/assets/placeholder.jpg",
+                            "created_at": listing[11].isoformat() if listing[11] else None,
+                            "owner_id": listing[12] if listing[12] is not None else "unknown"
                         }
                         formatted_listings.append(formatted_listing)
                     except Exception as e:

@@ -267,6 +267,10 @@ const ListingDetails = () => {
             <div style={styles.infoSection}>
               <h2 style={styles.location}>{listing.location}</h2>
               
+              {listing.address && (
+                <div style={{ fontStyle: 'italic', color: '#888', marginBottom: 8 }}>{listing.address}</div>
+              )}
+
               <div style={styles.listingInfo}>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Location:</span>

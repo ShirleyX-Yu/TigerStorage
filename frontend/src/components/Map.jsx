@@ -561,6 +561,9 @@ const Map = () => {
                   <Typography variant="h5" style={{ color: '#FF6B00', fontWeight: 700, marginBottom: 8 }}>
                     {selectedListing.location}
                   </Typography>
+                  <Typography variant="body2" style={{ fontStyle: 'italic', color: '#888', marginBottom: 8 }}>
+                    {selectedListing.address}
+                  </Typography>
                   <Typography variant="body1" style={{ marginBottom: 4 }}>
                     <b>${selectedListing.cost ?? 0}/month</b> • {selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} cubic feet
                   </Typography>
