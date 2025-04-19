@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import { checkAuthStatus } from '../utils/auth';
+import ReservationModal from './ReservationModal';
 
 console.log('ListingDetails component loaded');
 
@@ -13,15 +14,15 @@ const ListingDetails = () => {
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [reservationVolume, setReservationVolume] = useState('');
+  const [reservationModalOpen, setReservationModalOpen] = useState(false);
   const [reservationLoading, setReservationLoading] = useState(false);
+  const [reservationError, setReservationError] = useState('');
   const [myRequests, setMyRequests] = useState([]);
   const [allRequests, setAllRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [isLender, setIsLender] = useState(false);
   const [lenderActionLoading, setLenderActionLoading] = useState({}); // { [requestId]: bool }
   const [lenderActionError, setLenderActionError] = useState({});
-  const [partialApproveInput, setPartialApproveInput] = useState({}); // { [requestId]: value }
   const [refreshKey, setRefreshKey] = useState(0); // for triggering refresh
 
   useEffect(() => {
@@ -235,91 +236,24 @@ const ListingDetails = () => {
     }
   };
 
-  // Function to handle showing interest
+  // Updated handleShowInterest to open modal
   const handleShowInterest = async () => {
-    // Redirect to login if not authenticated
     if (!isAuthenticated) {
       sessionStorage.setItem('returnTo', `/listing/${id}`);
       navigate('/');
       return;
     }
-
-    try {
-      if (!listing || !listing.id) {
-        console.error('Cannot toggle interest: listing or listing.id is undefined');
-        return;
-      }
-      
-      const isInterested = listing.isInterested;
-      const method = isInterested ? 'DELETE' : 'POST';
-      
-      // Get user information for headers
-      const userType = sessionStorage.getItem('userType') || 'renter';
-      const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
-      
-      // Use axios to ensure withCredentials: true for session cookies
-      const axios = (await import('axios')).default;
-      try {
-        const apiUrl = `${import.meta.env.VITE_API_URL}/api/listings/${listing.id}/interest`;
-        await axios({
-          url: apiUrl,
-          method,
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache',
-            'X-User-Type': userType,
-            'X-Username': storedUsername || ''
-          }
-        });
-      } catch (err) {
-        const errorData = err.response?.data || {};
-        throw new Error(errorData.error || `Failed to ${isInterested ? 'remove' : 'add'} interest`);
-      }
-
-      // Update the listing's interest status immediately
-      setListing(prevListing => ({
-        ...prevListing,
-        isInterested: !isInterested
-      }));
-      
-      // Show success message
-      setMessage({
-        type: 'success',
-        text: `Successfully ${isInterested ? 'removed' : 'added'} interest in this listing`
-      });
-      
-      // Clear message after 3 seconds
-      setTimeout(() => setMessage(null), 3000);
-    } catch (error) {
-      console.error('Error in handleShowInterest:', error);
-      setMessage({
-        type: 'error',
-        text: error.message || 'Failed to update interest status'
-      });
-    }
+    setReservationModalOpen(true);
   };
 
-  // Helper: get username from storage
-  const getStoredUsername = () => sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-
-  const handleReservation = async (e) => {
-    e.preventDefault();
-    if (!reservationVolume || isNaN(reservationVolume) || Number(reservationVolume) <= 0) {
-      setMessage({ type: 'error', text: 'Please enter a valid volume.' });
-      return;
-    }
-    if (hasPendingRequest) {
-      setMessage({ type: 'error', text: 'You already have a pending request for this listing.' });
-      return;
-    }
+  // Reservation submit handler for modal
+  const handleReservationSubmit = async ({ volume, mode }) => {
     setReservationLoading(true);
-    setMessage(null);
+    setReservationError('');
     try {
       const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/listings/${listing.id}/reserve`;
       const userType = sessionStorage.getItem('userType') || 'renter';
-      const storedUsername = getStoredUsername();
+      const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
       const response = await fetch(apiUrl, {
         method: 'POST',
         credentials: 'include',
@@ -330,22 +264,25 @@ const ListingDetails = () => {
           'X-User-Type': userType,
           'X-Username': storedUsername
         },
-        body: JSON.stringify({ requested_volume: reservationVolume })
+        body: JSON.stringify({ requested_volume: volume })
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to request reservation');
       }
+      setReservationModalOpen(false);
       setMessage({ type: 'success', text: 'Reservation request submitted!' });
-      setReservationVolume('');
-      setRefreshKey(k => k + 1); // trigger requests refresh
-      fetchListing(); // refresh listing
+      setRefreshKey && setRefreshKey(k => k + 1); // if using refreshKey for auto-refresh
+      fetchListing && fetchListing();
     } catch (err) {
-      setMessage({ type: 'error', text: err.message });
+      setReservationError(err.message);
     } finally {
       setReservationLoading(false);
     }
   };
+
+  // Helper: get username from storage
+  const getStoredUsername = () => sessionStorage.getItem('username') || localStorage.getItem('username') || '';
 
   // Lender: handle approve/reject/partial
   const handleLenderAction = async (requestId, action, approvedVolume) => {
@@ -504,50 +441,28 @@ const ListingDetails = () => {
                 <p><strong>Name:</strong> {listing.lender?.name || 'Unknown'}</p>
                 <p><strong>Email:</strong> {listing.lender?.email || 'contact@tigerstorage.com'}</p>
                 <div style={styles.actionSection}>
-                  <button 
+                  <button
                     style={{
                       ...styles.interestButton,
                       backgroundColor: listing.isInterested ? '#4caf50' : '#f57c00'
                     }}
                     onClick={handleShowInterest}
                   >
-                    {isAuthenticated 
+                    {isAuthenticated
                       ? (listing.isInterested ? '✓ Interested' : '+ Show Interest')
                       : 'Login to Show Interest'}
                   </button>
                 </div>
               </div>
 
-              {/* Reservation Form for Renters */}
-              {isAuthenticated && listing.isAvailable && !isLender && (
-                <div style={{ marginTop: 32, marginBottom: 16, padding: 16, background: '#f8f8f8', borderRadius: 6 }}>
-                  <h3>Reserve Space</h3>
-                  <form onSubmit={handleReservation} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <input
-                      type="number"
-                      min="0.1"
-                      step="0.1"
-                      max={listing.cubicFeet}
-                      value={reservationVolume}
-                      onChange={e => setReservationVolume(e.target.value)}
-                      placeholder="Volume (cubic feet)"
-                      style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', width: 120 }}
-                      disabled={reservationLoading || !listing.isAvailable || hasPendingRequest}
-                    />
-                    <button
-                      type="submit"
-                      style={{ ...styles.interestButton, backgroundColor: '#1976d2', width: 'auto', minWidth: 120 }}
-                      disabled={reservationLoading || !listing.isAvailable || hasPendingRequest}
-                    >
-                      {reservationLoading ? 'Requesting...' : 'Request Reservation'}
-                    </button>
-                  </form>
-                  <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>
-                    Available: {listing.cubicFeet} cubic feet
-                    {hasPendingRequest && <span style={{ color: '#d32f2f', marginLeft: 12 }}>You already have a pending request.</span>}
-                  </div>
-                </div>
-              )}
+              <ReservationModal
+                open={reservationModalOpen}
+                onClose={() => setReservationModalOpen(false)}
+                onSubmit={handleReservationSubmit}
+                maxVolume={listing.cubicFeet}
+                loading={reservationLoading}
+                error={reservationError}
+              />
 
               {/* Renter: My Reservation Requests for this Listing */}
               {isAuthenticated && myRequests.length > 0 && !isLender && (
@@ -588,28 +503,6 @@ const ListingDetails = () => {
                                 disabled={lenderActionLoading[req.request_id]}
                                 onClick={() => handleLenderAction(req.request_id, 'approved_full')}
                               >Approve Full</button>
-                              <input
-                                type="number"
-                                min="0.1"
-                                max={req.requested_volume}
-                                step="0.1"
-                                value={partialApproveInput[req.request_id] || ''}
-                                onChange={e => setPartialApproveInput(inp => ({ ...inp, [req.request_id]: e.target.value }))}
-                                placeholder="Partial (cu ft)"
-                                style={{ width: 80, padding: 4, borderRadius: 4, border: '1px solid #ccc' }}
-                                disabled={lenderActionLoading[req.request_id]}
-                              />
-                              <button
-                                style={{ ...styles.interestButton, backgroundColor: '#fbc02d', minWidth: 80, marginRight: 6 }}
-                                disabled={lenderActionLoading[req.request_id] || !partialApproveInput[req.request_id] || isNaN(partialApproveInput[req.request_id]) || Number(partialApproveInput[req.request_id]) <= 0 || Number(partialApproveInput[req.request_id]) > req.requested_volume}
-                                onClick={() => {
-                                  const vol = Number(partialApproveInput[req.request_id]);
-                                  if (vol > 0 && vol <= req.requested_volume) {
-                                    handleLenderAction(req.request_id, 'approved_partial', vol);
-                                    setPartialApproveInput(inp => ({ ...inp, [req.request_id]: '' }));
-                                  }
-                                }}
-                              >Partial Approve</button>
                               <button
                                 style={{ ...styles.interestButton, backgroundColor: '#d32f2f', minWidth: 80 }}
                                 disabled={lenderActionLoading[req.request_id]}

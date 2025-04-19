@@ -10,6 +10,7 @@ import { Box, Typography, List, ListItem, ListItemText, Divider, Dialog, DialogT
 import Header from './Header';
 import { logout } from '../utils/auth';
 import { Link } from 'react-router-dom';
+import ReservationModal from './ReservationModal';
 
 // Fix for Leaflet marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -212,6 +213,9 @@ const Map = () => {
   const navigate = useNavigate();
   const [selectedListingId, setSelectedListingId] = useState(null);
   const selectedListing = listings.find(l => (l.listing_id || l.id) === selectedListingId) || null;
+  const [reservationModalOpen, setReservationModalOpen] = useState(false);
+  const [reservationLoading, setReservationLoading] = useState(false);
+  const [reservationError, setReservationError] = useState('');
 
   const fetchAndSyncInterest = useCallback(async (listingsData) => {
     try {
@@ -594,34 +598,44 @@ const Map = () => {
               <Button
                 onClick={async () => {
                   if (!selectedListing) return;
-                  setInterestLoading(true);
-                  setInterestError(null);
-                  setInterestSuccess(false);
-                  try {
-                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-                    const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
-                    const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-                    const method = selectedListing.isInterested ? 'DELETE' : 'POST';
-                    const response = await fetch(`${apiUrl}/api/listings/${selectedListing.listing_id || selectedListing.id}/interest`, {
-                      method,
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'X-User-Type': userType,
-                        'X-Username': username,
-                      },
-                      credentials: 'include',
-                    });
-                    if (!response.ok) {
-                      const errorText = await response.text();
-                      throw new Error(errorText || `Failed to ${selectedListing.isInterested ? 'remove' : 'show'} interest`);
+                  if (selectedListing.isInterested) {
+                    // Remove interest as before
+                    setInterestLoading(true);
+                    setInterestError(null);
+                    setInterestSuccess(false);
+                    try {
+                      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+                      const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+                      const response = await fetch(`${apiUrl}/api/listings/${selectedListing.listing_id || selectedListing.id}/interest`, {
+                        method: 'DELETE',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'X-User-Type': userType,
+                          'X-Username': username,
+                        },
+                        credentials: 'include',
+                      });
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(errorText || 'Failed to remove interest');
+                      }
+                      setInterestSuccess(true);
+                      fetchListings();
+                    } catch (err) {
+                      setInterestError(err.message);
+                    } finally {
+                      setInterestLoading(false);
                     }
-                    setInterestSuccess(true);
-                    // Refetch and sync interest after change
-                    fetchListings();
-                  } catch (err) {
-                    setInterestError(err.message);
-                  } finally {
-                    setInterestLoading(false);
+                  } else {
+                    // Show reservation modal for new interest
+                    const isAuthenticated = !!(sessionStorage.getItem('username') || localStorage.getItem('username'));
+                    if (!isAuthenticated) {
+                      sessionStorage.setItem('returnTo', `/listing/${selectedListing.listing_id || selectedListing.id}`);
+                      navigate('/');
+                      return;
+                    }
+                    setReservationModalOpen(true);
                   }
                 }}
                 style={{
@@ -651,6 +665,45 @@ const Map = () => {
           />
         </div>
       </div>
+      <ReservationModal
+        open={reservationModalOpen}
+        onClose={() => setReservationModalOpen(false)}
+        onSubmit={async ({ volume, mode }) => {
+          setReservationLoading(true);
+          setReservationError('');
+          try {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+            const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+            const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+            const response = await fetch(`${apiUrl}/api/listings/${selectedListing.listing_id || selectedListing.id}/reserve`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache',
+                'X-User-Type': userType,
+                'X-Username': username
+              },
+              body: JSON.stringify({ requested_volume: volume })
+            });
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(errorData.error || 'Failed to request reservation');
+            }
+            setReservationModalOpen(false);
+            setInterestSuccess(true);
+            fetchListings();
+          } catch (err) {
+            setReservationError(err.message);
+          } finally {
+            setReservationLoading(false);
+          }
+        }}
+        maxVolume={selectedListing ? (selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0) : 0}
+        loading={reservationLoading}
+        error={reservationError}
+      />
     </div>
   );
 };

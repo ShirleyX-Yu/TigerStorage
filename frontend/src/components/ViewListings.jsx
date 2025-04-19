@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
+import ReservationModal from './ReservationModal';
 
 const ViewListings = () => {
   const navigate = useNavigate();
@@ -8,6 +9,10 @@ const ViewListings = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [interestedListings, setInterestedListings] = useState(new Set());
+  const [reservationModalOpen, setReservationModalOpen] = useState(false);
+  const [reservationLoading, setReservationLoading] = useState(false);
+  const [reservationError, setReservationError] = useState('');
+  const [reservationListing, setReservationListing] = useState(null);
 
   const openMap = () => {
     navigate('/map');
@@ -86,33 +91,37 @@ const ViewListings = () => {
 
   // Function to toggle interest in a listing
   const toggleInterest = async (listingId) => {
-    try {
-      const isInterested = interestedListings.has(listingId);
-      const method = isInterested ? 'DELETE' : 'POST';
-      
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}/interest`, {
-        method,
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
+    const isInterested = interestedListings.has(listingId);
+    if (isInterested) {
+      // Remove interest as before
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}/interest`, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to remove interest`);
         }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to ${isInterested ? 'remove' : 'add'} interest`);
-      }
-
-      // Update the interested listings state
-      const newInterestedListings = new Set(interestedListings);
-      if (isInterested) {
+        const newInterestedListings = new Set(interestedListings);
         newInterestedListings.delete(listingId);
-      } else {
-        newInterestedListings.add(listingId);
+        setInterestedListings(newInterestedListings);
+      } catch (err) {
+        setError(err.message);
       }
-      setInterestedListings(newInterestedListings);
-    } catch (err) {
-      console.error('Error toggling interest:', err);
-      setError(err.message);
+    } else {
+      // Show reservation modal for new interest
+      const isAuthenticated = !!(sessionStorage.getItem('username') || localStorage.getItem('username'));
+      if (!isAuthenticated) {
+        sessionStorage.setItem('returnTo', `/listing/${listingId}`);
+        navigate('/');
+        return;
+      }
+      const listing = listings.find(l => l.id === listingId);
+      setReservationListing(listing);
+      setReservationModalOpen(true);
     }
   };
 
@@ -292,6 +301,45 @@ const ViewListings = () => {
                               <i className={`fas ${interestedListings.has(listing.id) ? 'fa-check' : 'fa-heart'}`}></i>
                               {interestedListings.has(listing.id) ? 'Interested' : 'Show Interest'}
                             </button>
+                            <ReservationModal
+                              open={reservationModalOpen}
+                              onClose={() => setReservationModalOpen(false)}
+                              onSubmit={async ({ volume, mode }) => {
+                                setReservationLoading(true);
+                                setReservationError('');
+                                try {
+                                  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                                  const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+                                  const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+                                  const response = await fetch(`${apiUrl}/api/listings/${reservationListing?.id}/reserve`, {
+                                    method: 'POST',
+                                    credentials: 'include',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Accept': 'application/json',
+                                      'Cache-Control': 'no-cache',
+                                      'X-User-Type': userType,
+                                      'X-Username': username
+                                    },
+                                    body: JSON.stringify({ requested_volume: volume })
+                                  });
+                                  if (!response.ok) {
+                                    const errorData = await response.json().catch(() => ({}));
+                                    throw new Error(errorData.error || 'Failed to request reservation');
+                                  }
+                                  setReservationModalOpen(false);
+                                  // Optionally, update interestedListings state here if you want instant UI feedback
+                                  setInterestedListings(new Set([...interestedListings, reservationListing.id]));
+                                } catch (err) {
+                                  setReservationError(err.message);
+                                } finally {
+                                  setReservationLoading(false);
+                                }
+                              }}
+                              maxVolume={reservationListing ? reservationListing.cubic_feet : 0}
+                              loading={reservationLoading}
+                              error={reservationError}
+                            />
                             <button 
                               style={styles.viewButton}
                               onClick={() => navigate(`/listing/${listing.id}`)}
