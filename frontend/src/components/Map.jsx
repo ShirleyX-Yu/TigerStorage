@@ -6,7 +6,7 @@ import FilterColumn from './FilterColumn';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartBar } from '@fortawesome/free-solid-svg-icons';
-import { Box, Typography, List, ListItem, ListItemText, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { Box, Typography, List, ListItem, ListItemText, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button, Alert } from '@mui/material';
 import Header from './Header';
 import { logout } from '../utils/auth';
 import { Link } from 'react-router-dom';
@@ -509,41 +509,51 @@ const Map = () => {
             />
           </MapContainer>
           {/* Popup Modal for Selected Listing */}
-          <Dialog open={!!selectedListing} onClose={() => setSelectedListingId(null)}>
-            <DialogTitle>Listing Details</DialogTitle>
-            <DialogContent>
+          <Dialog open={!!selectedListing} onClose={() => setSelectedListingId(null)} PaperProps={{ style: { borderRadius: 16, minWidth: 340, background: '#fff8f1' } }}>
+            <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, padding: '16px 24px' }}>
+              Listing Details
+            </DialogTitle>
+            <DialogContent dividers style={{ background: '#fff8f1', padding: 24 }}>
+              {interestError && (
+                <Box mb={2}><Alert severity="error" variant="filled">{interestError}</Alert></Box>
+              )}
+              {interestSuccess && (
+                <Box mb={2}><Alert severity="success" variant="filled">{selectedListing && selectedListing.isInterested ? 'Interest removed!' : 'Interest recorded!'}</Alert></Box>
+              )}
               {selectedListing && (
                 <Box>
-                  <Typography variant="h6">{selectedListing.location}</Typography>
-                  <Typography variant="body1">
-                    ${selectedListing.cost ?? 0}/month • {selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} cubic feet
+                  <Typography variant="h5" style={{ color: '#FF6B00', fontWeight: 700, marginBottom: 8 }}>
+                    {selectedListing.location}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body1" style={{ marginBottom: 4 }}>
+                    <b>${selectedListing.cost ?? 0}/month</b> • {selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} cubic feet
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" style={{ marginBottom: 8 }}>
                     {selectedListing.distance ? selectedListing.distance.toFixed(1) : 'N/A'} miles from Princeton University
                   </Typography>
                   {selectedListing.description && (
-                    <Typography variant="body2" style={{ marginTop: 8 }}>
+                    <Typography variant="body2" style={{ marginBottom: 8 }}>
                       {selectedListing.description}
                     </Typography>
                   )}
                 </Box>
               )}
             </DialogContent>
-            <DialogActions>
-              <Button style={{ color: 'purple' }} onClick={() => setSelectedListing(null)}>
-                CLOSE
+            <DialogActions style={{ padding: '16px' }}>
+              <Button onClick={() => setSelectedListing(null)} style={{ color: '#888' }}>
+                Close
               </Button>
-              <Button 
+              <Button
                 onClick={() => {
                   if (selectedListing) navigate(`/listing/${selectedListing.listing_id || selectedListing.id}`);
                   setSelectedListing(null);
-                }} 
-                color="primary" 
+                }}
+                style={{ background: '#FF6B00', color: 'white', fontWeight: 600 }}
                 variant="contained"
               >
                 View Details
               </Button>
-              <Button 
+              <Button
                 onClick={async () => {
                   if (!selectedListing) return;
                   setInterestLoading(true);
@@ -568,7 +578,6 @@ const Map = () => {
                       throw new Error(errorText || `Failed to ${selectedListing.isInterested ? 'remove' : 'show'} interest`);
                     }
                     setInterestSuccess(true);
-                    // Update main listings array
                     setListings(prevListings => prevListings.map(l => {
                       if ((l.listing_id || l.id) === (selectedListing.listing_id || selectedListing.id)) {
                         return { ...l, isInterested: !l.isInterested };
@@ -580,9 +589,14 @@ const Map = () => {
                   } finally {
                     setInterestLoading(false);
                   }
-                }} 
-                color={selectedListing && selectedListing.isInterested ? "warning" : "success"}
-                variant={selectedListing && selectedListing.isInterested ? "outlined" : "contained"}
+                }}
+                style={{
+                  background: selectedListing && selectedListing.isInterested ? '#fff' : '#FF6B00',
+                  color: selectedListing && selectedListing.isInterested ? '#FF6B00' : 'white',
+                  border: selectedListing && selectedListing.isInterested ? '1.5px solid #FF6B00' : 'none',
+                  fontWeight: 600
+                }}
+                variant={selectedListing && selectedListing.isInterested ? 'outlined' : 'contained'}
                 disabled={interestLoading}
               >
                 {interestLoading
@@ -591,14 +605,6 @@ const Map = () => {
                     ? "Remove Interest"
                     : "Show Interest"}
               </Button>
-              {interestError && (
-                <Typography color="error" variant="caption">{interestError}</Typography>
-              )}
-              {interestSuccess && (
-                <Typography color="success.main" variant="caption">
-                  {selectedListing && selectedListing.isInterested ? 'Interest recorded!' : 'Interest removed!'}
-                </Typography>
-              )}
             </DialogActions>
           </Dialog>
         </div>
