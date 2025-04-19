@@ -1109,7 +1109,7 @@ def get_my_listings():
             # Get from session if authenticated
             print("User authenticated via session")
             user_info = session.get('user_info', {})
-            owner_id = user_info.get('user', '')
+            owner_id = user_info.get('user', '').lower()
             print(f"Authenticated username from session: {owner_id}")
         else:
             # If not authenticated via session, check headers
@@ -1118,7 +1118,7 @@ def get_my_listings():
             user_type_header = request.headers.get('X-User-Type')
             
             if username_header:
-                owner_id = username_header
+                owner_id = username_header.lower()
                 print(f"Using username from X-Username header: {owner_id}")
             elif user_type_header == 'lender':
                 # If user type header indicates lender, use it as fallback
@@ -1287,11 +1287,11 @@ def get_my_listings():
                         query = f"""
                             SELECT {select_columns}
                             FROM storage_listings
-                            WHERE owner_id = %s
+                            WHERE LOWER(owner_id) = %s
                             ORDER BY created_at DESC;
                         """
                         print(f"Using string owner_id for query: {owner_id}")
-                        cur.execute(query, (str(owner_id),))
+                        cur.execute(query, (str(owner_id).lower(),))
                     
                     listings = cur.fetchall()
                     print(f"Found {len(listings)} listings for owner_id: {owner_id}")
@@ -1370,7 +1370,7 @@ def update_listing(listing_id):
             # Get from session if authenticated
             print("User authenticated via session for update")
             user_info = session.get('user_info', {})
-            owner_id = user_info.get('user', '')
+            owner_id = user_info.get('user', '').lower()
             print(f"Authenticated username from session: {owner_id}")
         else:
             # If not authenticated via session, check headers
@@ -1379,7 +1379,7 @@ def update_listing(listing_id):
             user_type_header = request.headers.get('X-User-Type')
             
             if username_header:
-                owner_id = username_header
+                owner_id = username_header.lower()
                 print(f"Using username from X-Username header for listing update: {owner_id}")
             else:
                 # No authentication found
@@ -1472,7 +1472,7 @@ def delete_listing(listing_id):
             # Get from session if authenticated
             print("User authenticated via session")
             user_info = session.get('user_info', {})
-            owner_id = user_info.get('user', '')
+            owner_id = user_info.get('user', '').lower()
             print(f"Authenticated username from session: {owner_id}")
         else:
             # If not authenticated via session, check headers
@@ -1481,7 +1481,7 @@ def delete_listing(listing_id):
             user_type_header = request.headers.get('X-User-Type')
             
             if username_header:
-                owner_id = username_header
+                owner_id = username_header.lower()
                 print(f"Using username from X-Username header for listing deletion: {owner_id}")
             else:
                 # No authentication found
@@ -1561,7 +1561,7 @@ def handle_interest(listing_id):
             # Get from session if authenticated
             print("User authenticated via session")
             user_info = session['user_info']
-            renter_username = user_info.get('user', '')
+            renter_username = user_info.get('user', '').lower()
             print(f"Authenticated username from session: {renter_username}")
         else:
             # If not authenticated via session, check headers
@@ -1570,7 +1570,7 @@ def handle_interest(listing_id):
             user_type_header = request.headers.get('X-User-Type')
             
             if username_header:
-                renter_username = username_header
+                renter_username = username_header.lower()
                 print(f"Using username from X-Username header: {renter_username}")
             else:
                 # No authentication found
@@ -1723,7 +1723,7 @@ def get_interested_renters(listing_id):
             
         # Get user info from session
         user_info = session['user_info']
-        owner_id = user_info.get('user', '')
+        owner_id = user_info.get('user', '').lower()
         
         # Get a fresh connection
         conn = get_db_connection()
@@ -1801,7 +1801,7 @@ def get_my_interested_listings():
             # Get from session if authenticated
             print("User authenticated via session")
             user_info = session.get('user_info', {})
-            renter_username = user_info.get('user', '')
+            renter_username = user_info.get('user', '').lower()
             print(f"Authenticated username from session: {renter_username}")
         else:
             # If not authenticated via session, check headers
@@ -1810,7 +1810,7 @@ def get_my_interested_listings():
             user_type_header = request.headers.get('X-User-Type')
             
             if username_header:
-                renter_username = username_header
+                renter_username = username_header.lower()
                 print(f"Using username from X-Username header: {renter_username}")
             else:
                 # No authentication found
@@ -2001,9 +2001,9 @@ def get_listings_by_username(username):
                     SELECT listing_id, location, cost, cubic_ft, description, latitude, longitude,
                            start_date, end_date, image_url, created_at, owner_id
                     FROM storage_listings
-                    WHERE owner_id = %s
+                    WHERE LOWER(owner_id) = %s
                     ORDER BY created_at DESC;
-                """, (username,))
+                """, (username.lower(),))
                 
                 listings = cur.fetchall()
                 print(f"Found {len(listings)} listings for {username}")

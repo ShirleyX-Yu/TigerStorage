@@ -78,6 +78,10 @@ def authenticate():
         )
         flask.abort(flask.redirect(login_url))
 
+    # Normalize NetID to lowercase
+    if "user" in user_info:
+        user_info["user"] = user_info["user"].lower()
+
     # Store authentication info in session
     print(f"CAS authentication successful for user: {user_info.get('user', 'unknown')}")
     flask.session["user_info"] = user_info
