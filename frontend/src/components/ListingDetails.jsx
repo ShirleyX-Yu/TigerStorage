@@ -379,7 +379,7 @@ const ListingDetails = () => {
           <div style={styles.detailsContainer}>
             <div style={styles.imageSection}>
               <img 
-                src={listing.images?.[0] || '/assets/placeholder.jpg'} 
+                src={listing.images && listing.images.length > 0 ? (listing.images[0].startsWith('http') ? listing.images[0] : `${import.meta.env.VITE_API_URL}${listing.images[0]}`) : '/assets/placeholder.jpg'} 
                 alt="Storage Space" 
                 style={styles.mainImage} 
                 onError={(e) => {
