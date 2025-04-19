@@ -52,10 +52,17 @@ const ReservationModal = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Reserve Space</DialogTitle>
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="xs" 
+      fullWidth
+      PaperProps={{ style: { boxShadow: '0 8px 32px rgba(0,0,0,0.18)', borderRadius: 16, background: '#fff8f1' } }}
+      BackdropProps={{ style: { backgroundColor: 'transparent' } }}
+    >
+      <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: '16px 24px' }}>Reserve Space</DialogTitle>
       <form onSubmit={handleSubmit}>
-        <DialogContent style={{ paddingTop: 8 }}>
+        <DialogContent style={{ padding: 24, background: '#fff8f1' }}>
           <ToggleButtonGroup
             value={mode}
             exclusive
@@ -63,8 +70,8 @@ const ReservationModal = ({
             style={{ marginBottom: 16 }}
             fullWidth
           >
-            <ToggleButton value="full" style={{ flex: 1 }}>Full ({maxVolume} cu ft)</ToggleButton>
-            <ToggleButton value="partial" style={{ flex: 1 }}>Partial</ToggleButton>
+            <ToggleButton value="full" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Full ({maxVolume} cu ft)</ToggleButton>
+            <ToggleButton value="partial" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Partial</ToggleButton>
           </ToggleButtonGroup>
           <TextField
             label="Volume (cubic feet)"
@@ -75,16 +82,16 @@ const ReservationModal = ({
             onChange={e => setVolume(e.target.value)}
             disabled={mode === 'full' || loading}
             inputProps={{ min: 0.1, max: maxVolume, step: 0.1 }}
-            style={{ marginBottom: 12 }}
+            style={{ marginBottom: 12, background: 'white', borderRadius: 6 }}
           />
           <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>
             Max available: {maxVolume} cu ft
           </div>
-          {(localError || error) && <Alert severity="error">{localError || error}</Alert>}
+          {(localError || error) && <Alert severity="error" style={{ marginBottom: 8 }}>{localError || error}</Alert>}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} disabled={loading}>Cancel</Button>
-          <Button type="submit" variant="contained" color="primary" disabled={loading}>
+        <DialogActions style={{ padding: '16px 24px', background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
+          <Button onClick={onClose} disabled={loading} style={{ color: '#888', fontWeight: 600 }}>Cancel</Button>
+          <Button type="submit" variant="contained" style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }} disabled={loading}>
             {loading ? 'Submitting...' : 'Submit'}
           </Button>
         </DialogActions>

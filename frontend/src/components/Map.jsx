@@ -6,11 +6,10 @@ import FilterColumn from './FilterColumn';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartBar } from '@fortawesome/free-solid-svg-icons';
-import { Box, Typography, List, ListItem, ListItemText, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button, Alert } from '@mui/material';
+import { Box, Typography, List, ListItem, ListItemText, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button, Alert, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import Header from './Header';
 import { logout } from '../utils/auth';
 import { Link } from 'react-router-dom';
-import ReservationModal from './ReservationModal';
 
 // Fix for Leaflet marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -213,7 +212,10 @@ const Map = () => {
   const navigate = useNavigate();
   const [selectedListingId, setSelectedListingId] = useState(null);
   const selectedListing = listings.find(l => (l.listing_id || l.id) === selectedListingId) || null;
-  const [reservationModalOpen, setReservationModalOpen] = useState(false);
+  const [showReservationForm, setShowReservationForm] = useState(false);
+  const [reservationMode, setReservationMode] = useState('full');
+  const [reservationVolume, setReservationVolume] = useState('');
+  const [reservationLocalError, setReservationLocalError] = useState('');
   const [reservationLoading, setReservationLoading] = useState(false);
   const [reservationError, setReservationError] = useState('');
 
@@ -581,6 +583,88 @@ const Map = () => {
                   )}
                 </Box>
               )}
+              {showReservationForm && selectedListing && (
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  let vol = reservationMode === 'full' ? (selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0) : Number(reservationVolume);
+                  if (reservationMode === 'partial') {
+                    if (!reservationVolume || isNaN(reservationVolume) || vol <= 0 || vol > (selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0)) {
+                      setReservationLocalError(`Enter a valid volume (0 < volume ≤ ${(selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0)})`);
+                      return;
+                    }
+                  }
+                  setReservationLocalError('');
+                  setReservationLoading(true);
+                  setReservationError('');
+                  try {
+                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                    const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+                    const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+                    const response = await fetch(`${apiUrl}/api/listings/${selectedListing.listing_id || selectedListing.id}/reserve`, {
+                      method: 'POST',
+                      credentials: 'include',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache',
+                        'X-User-Type': userType,
+                        'X-Username': username
+                      },
+                      body: JSON.stringify({ requested_volume: vol })
+                    });
+                    if (!response.ok) {
+                      const errorData = await response.json().catch(() => ({}));
+                      throw new Error(errorData.error || 'Failed to request reservation');
+                    }
+                    setShowReservationForm(false);
+                    setInterestSuccess(true);
+                    fetchListings();
+                  } catch (err) {
+                    setReservationError(err.message);
+                  } finally {
+                    setReservationLoading(false);
+                  }
+                }} style={{ marginTop: 24 }}>
+                  <ToggleButtonGroup
+                    value={reservationMode}
+                    exclusive
+                    onChange={(e, newMode) => {
+                      if (newMode) {
+                        setReservationMode(newMode);
+                        if (newMode === 'full') setReservationVolume(selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0);
+                        else setReservationVolume('');
+                        setReservationLocalError('');
+                      }
+                    }}
+                    style={{ marginBottom: 16 }}
+                    fullWidth
+                  >
+                    <ToggleButton value="full" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Full ({selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} cu ft)</ToggleButton>
+                    <ToggleButton value="partial" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Partial</ToggleButton>
+                  </ToggleButtonGroup>
+                  <TextField
+                    label="Volume (cubic feet)"
+                    type="number"
+                    fullWidth
+                    variant="outlined"
+                    value={reservationMode === 'full' ? (selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0) : reservationVolume}
+                    onChange={e => setReservationVolume(e.target.value)}
+                    disabled={reservationMode === 'full' || reservationLoading}
+                    inputProps={{ min: 0.1, max: (selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0), step: 0.1 }}
+                    style={{ marginBottom: 12, background: 'white', borderRadius: 6 }}
+                  />
+                  <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>
+                    Max available: {selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} cu ft
+                  </div>
+                  {(reservationLocalError || reservationError) && <Alert severity="error" style={{ marginBottom: 8 }}>{reservationLocalError || reservationError}</Alert>}
+                  <DialogActions style={{ padding: '16px 0 0 0', background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
+                    <Button onClick={() => setShowReservationForm(false)} disabled={reservationLoading} style={{ color: '#888', fontWeight: 600 }}>Cancel</Button>
+                    <Button type="submit" variant="contained" style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }} disabled={reservationLoading}>
+                      {reservationLoading ? 'Submitting...' : 'Submit'}
+                    </Button>
+                  </DialogActions>
+                </form>
+              )}
             </DialogContent>
             <DialogActions style={{ padding: '16px' }}>
               <Button onClick={() => setSelectedListingId(null)} style={{ color: '#888' }}>
@@ -628,14 +712,17 @@ const Map = () => {
                       setInterestLoading(false);
                     }
                   } else {
-                    // Show reservation modal for new interest
+                    // Show reservation form inline
                     const isAuthenticated = !!(sessionStorage.getItem('username') || localStorage.getItem('username'));
                     if (!isAuthenticated) {
                       sessionStorage.setItem('returnTo', `/listing/${selectedListing.listing_id || selectedListing.id}`);
                       navigate('/');
                       return;
                     }
-                    setReservationModalOpen(true);
+                    setShowReservationForm(true);
+                    setReservationMode('full');
+                    setReservationVolume(selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0);
+                    setReservationLocalError('');
                   }
                 }}
                 style={{
@@ -665,45 +752,6 @@ const Map = () => {
           />
         </div>
       </div>
-      <ReservationModal
-        open={reservationModalOpen}
-        onClose={() => setReservationModalOpen(false)}
-        onSubmit={async ({ volume, mode }) => {
-          setReservationLoading(true);
-          setReservationError('');
-          try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-            const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
-            const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-            const response = await fetch(`${apiUrl}/api/listings/${selectedListing.listing_id || selectedListing.id}/reserve`, {
-              method: 'POST',
-              credentials: 'include',
-              headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Cache-Control': 'no-cache',
-                'X-User-Type': userType,
-                'X-Username': username
-              },
-              body: JSON.stringify({ requested_volume: volume })
-            });
-            if (!response.ok) {
-              const errorData = await response.json().catch(() => ({}));
-              throw new Error(errorData.error || 'Failed to request reservation');
-            }
-            setReservationModalOpen(false);
-            setInterestSuccess(true);
-            fetchListings();
-          } catch (err) {
-            setReservationError(err.message);
-          } finally {
-            setReservationLoading(false);
-          }
-        }}
-        maxVolume={selectedListing ? (selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0) : 0}
-        loading={reservationLoading}
-        error={reservationError}
-      />
     </div>
   );
 };
