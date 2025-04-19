@@ -70,7 +70,7 @@ const styles = {
     marginBottom: 8
   },
   button: {
-    background: '#0052cc',
+    background: '#f57c00',
     color: 'white',
     border: 'none',
     borderRadius: 6,
