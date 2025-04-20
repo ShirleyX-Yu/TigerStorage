@@ -41,10 +41,39 @@ const grayIcon = new L.Icon({
   className: 'leaflet-gray-icon'
 });
 
-// Add CSS for marker colors (remove orange filter)
+// Add CSS for marker colors and custom grouped marker
 const markerStyles = `
   .leaflet-gray-icon {
     filter: grayscale(100%) brightness(0.7);
+  }
+  .custom-grouped-marker .grouped-marker-outer {
+    position: relative;
+    width: 38px;
+    height: 48px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .custom-grouped-marker .grouped-marker-inner {
+    display: none;
+  }
+  .custom-grouped-marker .grouped-marker-badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    min-width: 22px;
+    height: 22px;
+    background: #ff9800;
+    color: #fff;
+    font-weight: bold;
+    font-size: 13px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff3e6;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    z-index: 2;
   }
 `;
 
@@ -91,14 +120,39 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
     return groups;
   }
 
-  // Helper to offset coordinates
-  function getOffsetCoords(lat, lng, count, idx) {
-    // Offset by ~0.0001 degrees per marker, arrange in a circle
-    const angle = (2 * Math.PI * idx) / count;
-    const radius = 0.00018 + 0.00007 * count; // tweak as needed
-    const dLat = Math.cos(angle) * radius;
-    const dLng = Math.sin(angle) * radius;
-    return [lat + dLat, lng + dLng];
+  // Helper to create a grouped divIcon with badge
+  function getGroupedDivIcon(count) {
+    return L.divIcon({
+      className: 'custom-grouped-marker',
+      html: `
+        <div style="position: relative; width: 25px; height: 41px;">
+          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png" style="width: 25px; height: 41px; display: block;" />
+          <div class="grouped-marker-badge" style="
+            position: absolute;
+            top: -7px;
+            right: -7px;
+            min-width: 22px;
+            height: 22px;
+            background: #ff9800;
+            color: #fff;
+            font-weight: bold;
+            font-size: 13px;
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #fff3e6;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.23);
+            z-index: 2;
+            letter-spacing: 0.5px;
+            padding: 0 4px;
+          ">+${count}</div>
+        </div>
+      `,
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34]
+    });
   }
 
   useEffect(() => {
@@ -136,29 +190,28 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
             onListingClick(listing);
           });
         } else {
-          // Multiple listings at same coordinates, offset each
-          group.forEach((listing, idx) => {
-            const [lat, lng] = getOffsetCoords(listing.latitude, listing.longitude, group.length, idx);
-            const markerIcon = listing.isInterested ? orangeIcon : grayIcon;
-            const marker = L.marker([lat, lng], { icon: markerIcon })
-              .addTo(map)
-              .bindPopup(`
-                <div>
-                  <h3>${listing.location || 'Unknown Location'}</h3>
-                  <p>Price: $${listing.cost ?? 0}/month</p>
-                  <p>Size: ${listing.cubic_ft ?? listing.cubic_feet ?? 0} cubic feet</p>
-                  <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
-                  <button 
-                    style="background-color: #f57c00; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;"
-                    onclick="window.location.href='/listing/${listing.id || listing.listing_id}'"
-                  >
-                    View Details
-                  </button>
-                </div>
-              `);
-            marker.on('click', () => {
-              onListingClick(listing);
-            });
+          // Multiple listings at same coordinates: show a single thick orange marker with badge
+          const lat = group[0].latitude;
+          const lng = group[0].longitude;
+          const markerIcon = getGroupedDivIcon(group.length);
+          const marker = L.marker([lat, lng], { icon: markerIcon })
+            .addTo(map)
+            .bindPopup(`
+              <div>
+                <h3>${group[0].location || 'Multiple Listings'}</h3>
+                <p><b>${group.length}</b> storage listings at this location.</p>
+                <ul style="padding-left: 18px;">
+                  ${group.map(listing => `
+                    <li style='margin-bottom: 2px;'>
+                      <b>$${listing.cost ?? 0}/mo</b>, ${listing.cubic_ft ?? listing.cubic_feet ?? 0} ft³
+                      <a href='/listing/${listing.id || listing.listing_id}' style='color:#f57c00;margin-left:5px;'>View</a>
+                    </li>
+                  `).join('')}
+                </ul>
+              </div>
+            `);
+          marker.on('click', () => {
+            onListingClick(group[0], group);
           });
         }
       });
@@ -211,13 +264,21 @@ const Map = () => {
   const mapRef = useRef(null);
   const navigate = useNavigate();
   const [selectedListingId, setSelectedListingId] = useState(null);
-  const selectedListing = listings.find(l => (l.listing_id || l.id) === selectedListingId) || null;
   const [showReservationForm, setShowReservationForm] = useState(false);
   const [reservationMode, setReservationMode] = useState('full');
   const [reservationVolume, setReservationVolume] = useState('');
   const [reservationLocalError, setReservationLocalError] = useState('');
   const [reservationLoading, setReservationLoading] = useState(false);
   const [reservationError, setReservationError] = useState('');
+
+  // --- Grouped listing modal state ---
+  const [groupedListings, setGroupedListings] = useState(null); // array of listings at same coords or null
+  const [groupedIndex, setGroupedIndex] = useState(0);
+
+  // Compute selected listing: if grouped modal, pick from group, else by id
+  const selectedListing = groupedListings && groupedListings.length > 0
+    ? groupedListings[groupedIndex]
+    : listings.find(l => (l.listing_id || l.id) === selectedListingId) || null;
 
   const fetchAndSyncInterest = useCallback(async (listingsData) => {
     try {
@@ -530,18 +591,47 @@ const Map = () => {
             />
             <MapContent 
               listings={filteredListings} 
-              onListingClick={handleListingClick}
+              onListingClick={(listing, group) => {
+                if (group && group.length > 1) {
+                  setGroupedListings(group);
+                  setGroupedIndex(0);
+                  setSelectedListingId(null);
+                } else {
+                  setGroupedListings(null);
+                  setGroupedIndex(0);
+                  setSelectedListingId(listing.listing_id || listing.id);
+                }
+              }}
               selectedListing={selectedListing}
             />
           </MapContainer>
           {/* Popup Modal for Selected Listing */}
-          <Dialog open={!!selectedListing} onClose={() => setSelectedListingId(null)} PaperProps={{ style: { borderRadius: 16, minWidth: 340, background: '#fff8f1' } }}>
+          <Dialog open={!!selectedListing} onClose={() => { setSelectedListingId(null); setGroupedListings(null); }} PaperProps={{ style: { borderRadius: 16, minWidth: 340, background: '#fff8f1' } }}>
             <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, padding: '16px 24px' }}>
               Listing Details
             </DialogTitle>
             <DialogContent dividers style={{ background: '#fff8f1', padding: 24 }}>
-              {interestError && (
-                <Box mb={2}><Alert severity="error" variant="filled">{
+              {/* Grouped modal navigation */}
+              {groupedListings && groupedListings.length > 1 && (
+                <Box mb={2} display="flex" alignItems="center" justifyContent="center" gap={2}>
+                  <Button
+                    onClick={() => setGroupedIndex(i => (i - 1 + groupedListings.length) % groupedListings.length)}
+                    disabled={groupedListings.length <= 1}
+                    style={{ minWidth: 40, fontWeight: 700 }}
+                  >
+                    &#8592; Prev
+                  </Button>
+                  <span style={{ fontWeight: 600, color: '#FF6B00' }}>{groupedIndex + 1} / {groupedListings.length}</span>
+                  <Button
+                    onClick={() => setGroupedIndex(i => (i + 1) % groupedListings.length)}
+                    disabled={groupedListings.length <= 1}
+                    style={{ minWidth: 40, fontWeight: 700 }}
+                  >
+                    Next &#8594;
+                  </Button>
+                </Box>
+              )}
+              {interestError && (<Box mb={2}><Alert severity="error" variant="filled">{
                   (() => {
                     if (typeof interestError === 'string') {
                       try {
