@@ -324,7 +324,7 @@ const LenderDashboard = ({ username }) => {
                 <p>You haven't listed any storage spaces yet.</p>
                 <button 
                   style={styles.createButton}
-                  onClick={() => navigate('/create-listing')}
+                  onClick={() => setCreateModalOpen(true)}
                 >
                   Create Your First Listing
                 </button>

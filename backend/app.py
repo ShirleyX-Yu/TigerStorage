@@ -670,7 +670,8 @@ def create_listing():
                     'latitude': latitude,
                     'longitude': longitude,
                     'description': data['description'],
-                    'image_url': image_url
+                    'image_url': image_url,
+                    'remaining_volume': total_sq_ft  # Set remaining_volume to cubic_ft on creation
                 }
                 
                 # Add address if provided
