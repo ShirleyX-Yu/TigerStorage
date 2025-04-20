@@ -109,8 +109,8 @@ const LenderListingDetails = () => {
           <div style={styles.detailsContainer}>
             <div style={styles.imageSection}>
               <img
-                src={listing.images && listing.images.length > 0 ? (listing.images[0].startsWith('http') ? listing.images[0] : `${import.meta.env.VITE_API_URL}${listing.images[0]}`) : '/assets/placeholder.jpg'}
-                alt="Storage Space"
+                src={getFullImageUrl(listing.images[0])}
+                alt={listing.location}
                 style={styles.mainImage}
                 onError={(e) => { e.target.src = '/assets/placeholder.jpg'; }}
               />
