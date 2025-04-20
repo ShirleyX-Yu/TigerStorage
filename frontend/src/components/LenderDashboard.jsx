@@ -305,7 +305,7 @@ const LenderDashboard = ({ username }) => {
                       </button>
                       <button 
                         style={styles.viewButton}
-                        onClick={() => navigate(`/listing/${space.id}`)}
+                        onClick={() => navigate(`/lender-dashboard/listing/${space.id}`)}
                       >
                         View Details
                       </button>

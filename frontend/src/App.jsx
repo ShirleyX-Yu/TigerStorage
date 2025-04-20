@@ -289,20 +289,6 @@ const RedirectToUserDashboard = () => {
   return null;
 };
 
-// Component to conditionally render the correct listing details view based on user type
-const ListingDetailsRouter = () => {
-  const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
-  console.log(`ListingDetailsRouter - Current userType from storage: ${userType}`);
-  
-  if (!userType) {
-    console.log('ListingDetailsRouter - No userType found, redirecting to home');
-    return <Navigate to="/" />;
-  }
-  
-  console.log(`ListingDetailsRouter - Rendering for userType: ${userType}`);
-  return userType === 'lender' ? <LenderListingDetails /> : <ListingDetails />;
-};
-
 function App() {
   return (
     <Router>
@@ -314,13 +300,14 @@ function App() {
           {/* Renter routes */}
           <Route path="/map" element={<ProtectedRoute component={<Map />} allowedUserType="renter" />} />
           <Route path="/renter-dashboard" element={<ProtectedRoute component={<RenterDashboard />} allowedUserType="renter" />} />
-          <Route path="/listing/:id" element={<ProtectedRoute component={<ListingDetailsRouter />} />} />
+          <Route path="/listing/:id" element={<ProtectedRoute component={<ListingDetails />} allowedUserType="renter" />} />
           
           {/* Lender routes */}
           <Route path="/lender-dashboard" element={<ProtectedRoute component={<LenderDashboard />} allowedUserType="lender" />} />
           <Route path="/create-listing" element={<ProtectedRoute component={<CreateListing />} allowedUserType="lender" />} />
           <Route path="/edit-listing/:id" element={<ProtectedRoute component={<EditListing />} allowedUserType="lender" />} />
           <Route path="/view-listings" element={<ProtectedRoute component={<ViewListings />} allowedUserType="renter" />} />
+          <Route path="/lender-dashboard/listing/:id" element={<ProtectedRoute component={<LenderListingDetails />} allowedUserType="lender" />} />
           
           {/* Public routes */}
           <Route path="/privacy" element={<PrivacyPolicy />} />
