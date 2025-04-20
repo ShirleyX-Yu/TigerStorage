@@ -49,7 +49,9 @@ const LenderListingDetails = () => {
           cubicFeet: data.cubic_feet,
           description: data.description,
           contractLength: data.contract_length_months,
-          images: [data.image_url || '/assets/placeholder.jpg'],
+          images: Array.isArray(data.images) && data.images.length > 0
+            ? data.images
+            : [data.image_url || '/assets/placeholder.jpg'],
           interestedRenters: rentersData.map(r => ({
             id: r.id,
             name: r.username,
@@ -107,7 +109,7 @@ const LenderListingDetails = () => {
           <div style={styles.detailsContainer}>
             <div style={styles.imageSection}>
               <img
-                src={listing.images?.[0] || '/assets/placeholder.jpg'}
+                src={listing.images && listing.images.length > 0 ? (listing.images[0].startsWith('http') ? listing.images[0] : `${import.meta.env.VITE_API_URL}${listing.images[0]}`) : '/assets/placeholder.jpg'}
                 alt="Storage Space"
                 style={styles.mainImage}
                 onError={(e) => { e.target.src = '/assets/placeholder.jpg'; }}
