@@ -1794,6 +1794,7 @@ def get_my_interested_listings():
                             sl.listing_id,
                             sl.location,
                             sl.cost,
+                            sl.address,
                             sl.owner_id as lender,
                             il.created_at,
                             il.status
@@ -1812,12 +1813,13 @@ def get_my_interested_listings():
                     for row in rows:
                         interested_listings.append({
                             "id": row[1],  # listing_id
-                            "title": row[2],
-                            "address": row[3],
-                            "lender": row[4],
-                            "dateInterested": row[5].isoformat(),
-                            "status": row[6],
-                            "nextStep": "Waiting for lender response" if row[6] == 'pending' else "In Discussion"
+                            "location": row[2],
+                            "cost": row[3],
+                            "address": row[4],
+                            "lender": row[5],
+                            "dateInterested": row[6].isoformat(),
+                            "status": row[7],
+                            "nextStep": "Waiting for lender response" if row[7] == 'pending' else "In Discussion"
                         })
                     
                     print(f"Found {len(interested_listings)} interested listings for user {renter_username}")

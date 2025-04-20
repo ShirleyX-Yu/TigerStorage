@@ -74,7 +74,7 @@ const LenderListingDetails = () => {
     <div style={styles.errorContainer}>
       <h2>Error</h2>
       <p>{error}</p>
-      <button style={styles.backButton} onClick={() => navigate('/lender')}>
+      <button style={styles.backButton} onClick={() => navigate('/lender-dashboard')}>
         &larr; Back to Dashboard
       </button>
     </div>
@@ -90,7 +90,7 @@ const LenderListingDetails = () => {
     <div style={styles.errorContainer}>
       <h2>Listing Not Found</h2>
       <p>Sorry, we couldn't find this listing.</p>
-      <button style={styles.backButton} onClick={() => navigate('/lender')}>
+      <button style={styles.backButton} onClick={() => navigate('/lender-dashboard')}>
         &larr; Back to Dashboard
       </button>
     </div>
@@ -100,7 +100,7 @@ const LenderListingDetails = () => {
     <div style={styles.container}>
       <Header title="Storage Space Details" />
       <div style={styles.content}>
-        <button style={styles.backButton} onClick={() => navigate('/lender')}>
+        <button style={styles.backButton} onClick={() => navigate('/lender-dashboard')}>
           &larr; Back to Dashboard
         </button>
         {loading ? renderLoading() : error ? renderError() : !listing ? renderNotFound() : (
