@@ -593,6 +593,14 @@ def upload_file():
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
+    import os
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    print(f"[uploads] Requested filename: {filename}")
+    print(f"[uploads] Resolved file path: {file_path}")
+    if not os.path.exists(file_path):
+        print(f"[uploads] File does not exist: {file_path}")
+        return {'error': f'File not found: {filename}'}, 404
+    print(f"[uploads] File exists, serving: {file_path}")
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # Database connection function to handle reconnection
