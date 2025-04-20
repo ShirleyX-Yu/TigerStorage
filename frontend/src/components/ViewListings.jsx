@@ -265,10 +265,10 @@ const ViewListings = () => {
                     
                     return (
                       <div key={listing.id} style={styles.listingCard}>
-                        <img 
-                          src={imageUrl} 
-                          alt={`Storage space at ${listing.location}`} 
-                          style={styles.listingImage} 
+                        <img
+                          src={getFullImageUrl(listing.image_url)}
+                          alt={listing.location}
+                          style={styles.listingImage}
                           onError={(e) => {
                             e.target.onerror = null;
                             e.target.src = '/assets/placeholder.jpg';

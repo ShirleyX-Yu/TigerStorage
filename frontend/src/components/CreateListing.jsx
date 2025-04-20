@@ -411,7 +411,13 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                 required
               />
               {formData.image_url && (
-                <img src={formData.image_url} alt="Preview" style={styles.imagePreview} />
+                <img
+                  src={formData.image_url.startsWith('/uploads/')
+                    ? `${import.meta.env.VITE_API_URL}${formData.image_url}`
+                    : formData.image_url}
+                  alt="Preview"
+                  style={styles.imagePreview}
+                />
               )}
             </div>
             <button type="submit" style={styles.submitButton} disabled={uploading}>

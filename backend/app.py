@@ -847,10 +847,10 @@ def get_listings():
                             "description": listing_dict.get('description', ''),
                             "latitude": float(listing_dict.get('latitude', 0)) if listing_dict.get('latitude') is not None else None,
                             "longitude": float(listing_dict.get('longitude', 0)) if listing_dict.get('longitude') is not None else None,
-                            "start_date": listing_dict.get('start_date').isoformat() if listing_dict.get('start_date') else None,
-                            "end_date": listing_dict.get('end_date').isoformat() if listing_dict.get('end_date') else None,
+                            "start_date": listing_dict.get('start_date').isoformat() if hasattr(listing_dict.get('start_date'), 'isoformat') else (listing_dict.get('start_date') if listing_dict.get('start_date') else None),
+                            "end_date": listing_dict.get('end_date').isoformat() if hasattr(listing_dict.get('end_date'), 'isoformat') else (listing_dict.get('end_date') if listing_dict.get('end_date') else None),
                             "image_url": listing_dict.get('image_url', '/assets/placeholder.jpg'),
-                            "created_at": listing_dict.get('created_at').isoformat() if listing_dict.get('created_at') else None,
+                            "created_at": listing_dict.get('created_at').isoformat() if hasattr(listing_dict.get('created_at'), 'isoformat') else (listing_dict.get('created_at') if listing_dict.get('created_at') else None),
                             "owner_id": listing_dict.get('owner_id', '')
                         }
 
@@ -973,12 +973,15 @@ def get_listing_by_id(listing_id):
                     "cubic_feet": listing_dict.get('cubic_ft', 0),
                     "description": listing_dict.get('description') or "Storage space available at " + listing_dict.get('location', ''),
                     "is_available": listing_dict.get('is_available', True),
-                    "created_at": listing_dict.get('created_at', "2025-04-01"),
+                    "created_at": listing_dict.get('created_at').isoformat() if hasattr(listing_dict.get('created_at'), 'isoformat') else (listing_dict.get('created_at') if listing_dict.get('created_at') else None),
                     "contract_length_months": listing_dict.get('contract_length_months', 12),
                     "owner_id": listing_dict.get('owner_id', 1000),
                     "latitude": listing_dict.get('latitude'),
                     "longitude": listing_dict.get('longitude'),
-                    "image_url": listing_dict.get('image_url', '/assets/placeholder.jpg')
+                    "image_url": listing_dict.get('image_url', '/assets/placeholder.jpg'),
+                    "start_date": listing_dict.get('start_date').isoformat() if hasattr(listing_dict.get('start_date'), 'isoformat') else (listing_dict.get('start_date') if listing_dict.get('start_date') else None),
+                    "end_date": listing_dict.get('end_date').isoformat() if hasattr(listing_dict.get('end_date'), 'isoformat') else (listing_dict.get('end_date') if listing_dict.get('end_date') else None),
+                    "updated_at": listing_dict.get('updated_at').isoformat() if hasattr(listing_dict.get('updated_at'), 'isoformat') else (listing_dict.get('updated_at') if listing_dict.get('updated_at') else None)
                 }
                 
                 return jsonify(formatted_listing), 200
