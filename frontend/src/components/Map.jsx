@@ -706,6 +706,16 @@ const Map = () => {
                       const errorData = await response.json().catch(() => ({}));
                       throw new Error(errorData.error || 'Failed to request reservation');
                     }
+                    // Also record interest so the pin/heart updates
+                    await fetch(`${apiUrl}/api/listings/${selectedListing.listing_id || selectedListing.id}/interest`, {
+                      method: 'POST',
+                      credentials: 'include',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'X-User-Type': userType,
+                        'X-Username': username
+                      }
+                    });
                     setShowReservationForm(false);
                     setInterestSuccess(true);
                     fetchListings();
