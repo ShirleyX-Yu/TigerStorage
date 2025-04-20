@@ -51,7 +51,7 @@ const LenderListingDetails = () => {
           contractLength: data.contract_length_months,
           images: Array.isArray(data.images) && data.images.length > 0
             ? data.images
-            : [data.image_url || '/assets/placeholder.jpg'],
+            : (data.image_url ? [data.image_url] : []),
           interestedRenters: rentersData.map(r => ({
             id: r.id,
             name: r.username,
@@ -108,12 +108,13 @@ const LenderListingDetails = () => {
         {loading ? renderLoading() : error ? renderError() : !listing ? renderNotFound() : (
           <div style={styles.detailsContainer}>
             <div style={styles.imageSection}>
-              <img
-                src={listing.images && listing.images.length > 0 ? (listing.images[0].startsWith('http') ? listing.images[0] : `${import.meta.env.VITE_API_URL}${listing.images[0]}`) : '/assets/placeholder.jpg'}
-                alt="Storage Space"
-                style={styles.mainImage}
-                onError={(e) => { e.target.src = '/assets/placeholder.jpg'; }}
-              />
+              {listing.images && listing.images.length > 0 && (
+  <img
+    src={listing.images[0].startsWith('http') ? listing.images[0] : `${import.meta.env.VITE_API_URL}${listing.images[0]}`}
+    alt="Storage Space"
+    style={styles.mainImage}
+  />
+) }
             </div>
             <div style={styles.infoSection}>
               <h2 style={styles.location}>{listing.location}</h2>

@@ -20,7 +20,7 @@ const ViewListings = () => {
 
   // Function to get the full image URL based on the backend URL
   const getFullImageUrl = (imageUrl) => {
-    if (!imageUrl) return '/assets/placeholder.jpg';
+    if (!imageUrl) return null;
     if (imageUrl.startsWith('http')) return imageUrl;
     return `${import.meta.env.VITE_API_URL}${imageUrl}`;
   };
@@ -264,15 +264,13 @@ const ViewListings = () => {
                     
                     return (
                       <div key={listing.id} style={styles.listingCard}>
-                        <img 
-                          src={imageUrl} 
-                          alt={`Storage space at ${listing.location}`} 
-                          style={styles.listingImage} 
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = '/assets/placeholder.jpg';
-                          }}
-                        />
+                        {imageUrl && (
+  <img
+    src={imageUrl}
+    alt={`Storage space at ${listing.location}`}
+    style={styles.listingImage}
+  />
+)}
                         <div style={styles.listingDetails}>
                           <h3 style={styles.listingTitle}>{listing.location}</h3>
                           <p style={styles.listingInfo}>
