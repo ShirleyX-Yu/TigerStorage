@@ -258,6 +258,7 @@ const ViewListings = () => {
                   {filteredListings.map(listing => {
                     // Get the full image URL using the same logic as the map view
                     const imageUrl = getFullImageUrl(listing.image_url);
+                    console.log('Image src for listing', listing.id, ':', imageUrl);
                     // Check if this listing is in the interested list
                     const interestedLocations = new Set(JSON.parse(localStorage.getItem('interestedLocations') || '[]'));
                     const isInterested = interestedLocations.has(listing.id);

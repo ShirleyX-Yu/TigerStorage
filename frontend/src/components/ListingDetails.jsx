@@ -381,12 +381,12 @@ const ListingDetails = () => {
           <div style={styles.detailsContainer}>
             <div style={styles.imageSection}>
               {listing.images && listing.images.length > 0 && (
-  <img
-    src={listing.images[0].startsWith('http') ? listing.images[0] : `${import.meta.env.VITE_API_URL}${listing.images[0]}`}
-    alt="Storage Space"
-    style={styles.mainImage}
-  />
-) }
+                <img
+                  src={listing.images[0].startsWith('http') ? listing.images[0] : `${import.meta.env.VITE_API_URL}${listing.images[0]}`}
+                  alt="Storage Space"
+                  style={styles.mainImage}
+                />
+              )}
             </div>
 
             <div style={styles.infoSection}>
