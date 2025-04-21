@@ -116,7 +116,7 @@ const AdminPlatform = () => {
           textAlign: 'center',
         }}>⚙️</span>
         <h1 style={{ ...styles.title, textAlign: 'center' }}>Admin Dashboard</h1>
-        <p style={{ ...styles.subtitle, textAlign: 'center' }}>Manage, update, and approve all listings on TigerStorage.</p>
+        <p style={{ ...styles.subtitle, textAlign: 'center' }}>Manage, update, and approve flagged listings on TigerStorage.</p>
         {loading ? (
           <div style={{ color: '#bbb', textAlign: 'center', padding: '2rem' }}>Loading listings...</div>
         ) : error ? (
@@ -153,11 +153,8 @@ const AdminPlatform = () => {
                   </div>
                 )}
                 <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-                  <button style={{ background: '#2196f3', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 5, cursor: 'pointer', fontWeight: 600 }} onClick={() => handleOpenEditModal(listing.id)}>
-                    Edit
-                  </button>
                   {/* Admin approve/reject actions could go here */}
-                  <button style={{ background: '#4caf50', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 5, cursor: 'pointer', fontWeight: 600 }} disabled>
+                  <button style={{ background: '#2196f3', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 5, cursor: 'pointer', fontWeight: 600 }} disabled>
                     Approve
                   </button>
                   <button style={{ background: '#f44336', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 5, cursor: 'pointer', fontWeight: 600 }} disabled>

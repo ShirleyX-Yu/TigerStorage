@@ -179,10 +179,18 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
                 <p>Size: ${listing.cubic_ft ?? listing.cubic_feet ?? 0} cubic feet</p>
                 <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
                 <button 
-                  style="background-color: #f57c00; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;"
+                  style="background-color: #f57c00; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
                   onclick="window.location.href='/listing/${listing.id || listing.listing_id}'"
                 >
                   View Details
+                </button>
+                <button 
+                  style="background: none; border: none; color: #f44336; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; cursor: pointer; gap: 5px; padding: 2px 8px; border-radius: 6px;"
+                  onclick="window.dispatchEvent(new CustomEvent('open-report-modal', { detail: { listingId: '${listing.id || listing.listing_id}' } }))"
+                  title="Report this listing"
+                >
+                  <span style='font-size:18px;color:#f44336;'>🚩</span>
+                  <span>Report</span>
                 </button>
               </div>
             `);
@@ -610,7 +618,31 @@ const Map = () => {
             <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, padding: '16px 24px' }}>
               Listing Details
             </DialogTitle>
-            <DialogContent dividers style={{ background: '#fff8f1', padding: 24 }}>
+            <DialogContent dividers style={{ background: '#fff8f1', padding: 24, position: 'relative' }}>
+                {/* Report Button - top right */}
+                <button
+                  style={{
+                    position: 'absolute',
+                    top: 12,
+                    right: 12,
+                    background: '#ffeaea', // light red
+                    border: '1.5px solid #f44336',
+                    color: '#f44336',
+                    fontWeight: 700,
+                    fontSize: 15,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    cursor: 'pointer',
+                    padding: '4px 12px',
+                    borderRadius: 7,
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+                  }}
+                  title="Report this listing"
+                >
+                  <span style={{fontSize: 20, color: '#f44336'}}>🚩</span>
+                  <span>Report</span>
+                </button>
               {/* Grouped modal navigation */}
               {groupedListings && groupedListings.length > 1 && (
                 <Box mb={2} display="flex" alignItems="center" justifyContent="center" gap={2}>
@@ -767,9 +799,11 @@ const Map = () => {
               )}
             </DialogContent>
             <DialogActions style={{ padding: '16px' }}>
-              <Button onClick={() => setSelectedListingId(null)} style={{ color: '#888' }}>
+              <Button
+                onClick={() => setSelectedListingId(null)} style={{ color: '#888' }}>
                 Close
               </Button>
+              
               <Button
                 onClick={() => {
                   if (selectedListing) navigate(`/listing/${selectedListing.listing_id || selectedListing.id}`);
