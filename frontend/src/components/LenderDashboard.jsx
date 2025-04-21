@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 import CreateListing from './CreateListing';
 import { useNavigate, useLocation } from 'react-router-dom';
 import EditListingForm from './EditListingForm';
@@ -18,6 +23,13 @@ const LenderDashboard = ({ username }) => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editListingId, setEditListingId] = useState(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [reservationRequests, setReservationRequests] = useState({});
+  const [requestsLoading, setRequestsLoading] = useState({});
+  const [lenderActionLoading, setLenderActionLoading] = useState({});
+  const [lenderActionError, setLenderActionError] = useState({});
+  const [partialModal, setPartialModal] = useState({ open: false, request: null, listingId: null });
+  const [partialVolume, setPartialVolume] = useState('');
+  const [partialError, setPartialError] = useState('');
 
   const handleOpenEditModal = (listingId) => {
     setEditListingId(listingId);
@@ -117,6 +129,75 @@ const LenderDashboard = ({ username }) => {
   useEffect(() => {
     fetchListings();
   }, [fetchListings]);
+
+  useEffect(() => {
+    if (!listedSpaces.length) return;
+    listedSpaces.forEach(space => {
+      fetchReservationRequests(space.id);
+    });
+    // eslint-disable-next-line
+  }, [listedSpaces.length]);
+
+  const fetchReservationRequests = async (listingId) => {
+    setRequestsLoading(l => ({ ...l, [listingId]: true }));
+    try {
+      let apiUrl = import.meta.env.VITE_API_URL;
+      if (!apiUrl && typeof window !== 'undefined') {
+        apiUrl = window.location.origin;
+      } else if (!apiUrl) {
+        apiUrl = 'http://localhost:8000';
+      }
+      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'lender';
+      const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || username || 'lender';
+      const resp = await fetch(`${apiUrl}/api/listings/${listingId}/reservation-requests`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-User-Type': userType,
+          'X-Username': storedUsername
+        }
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setReservationRequests(r => ({ ...r, [listingId]: data }));
+      }
+    } catch (err) {
+      // ignore
+    } finally {
+      setRequestsLoading(l => ({ ...l, [listingId]: false }));
+    }
+  };
+
+  const handleLenderAction = async (requestId, action, approvedVolume, listingId) => {
+    setLenderActionLoading(l => ({ ...l, [requestId]: true }));
+    setLenderActionError(e => ({ ...e, [requestId]: null }));
+    try {
+      const userType = sessionStorage.getItem('userType') || 'lender';
+      const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || username || 'lender';
+      const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/reservation-requests/${requestId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-User-Type': userType,
+          'X-Username': storedUsername
+        },
+        body: JSON.stringify(action === 'approved_partial' ? { status: action, approved_volume: approvedVolume } : { status: action })
+      });
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to update request');
+      }
+      fetchReservationRequests(listingId);
+    } catch (err) {
+      setLenderActionError(e => ({ ...e, [requestId]: err.message }));
+    } finally {
+      setLenderActionLoading(l => ({ ...l, [requestId]: false }));
+    }
+  };
 
   const handleDeleteListing = async (listingId) => {
     if (!window.confirm('Are you sure you want to delete this listing? This action cannot be undone.')) return;
@@ -296,6 +377,50 @@ const LenderDashboard = ({ username }) => {
 })}
                       </div>
                     )}
+                    {reservationRequests[space.id] && reservationRequests[space.id].length > 0 && (
+                      <div style={{ marginTop: 12, marginBottom: 8, padding: 12, background: '#fff3e0', borderRadius: 6 }}>
+                        <h4>Reservation Requests</h4>
+                        {requestsLoading[space.id] ? <div>Loading requests...</div> : (
+                          <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                            {reservationRequests[space.id].map(req => (
+                              <li key={req.request_id} style={{ marginBottom: 12, borderBottom: '1px solid #eee', paddingBottom: 8 }}>
+                                <span style={{ fontWeight: 500 }}>{req.renter_username}</span>: {req.requested_volume} cu ft
+                                <span style={{ marginLeft: 8, fontWeight: 500 }}>Status:</span> {req.status.replace('_', ' ')}
+                                {req.approved_volume && (
+                                  <span style={{ marginLeft: 8 }}>(Approved: {req.approved_volume} cu ft)</span>
+                                )}
+                                {req.status === 'pending' && (
+                                  <span style={{ marginLeft: 16, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                    <button
+                                      style={{ ...styles.interestButton, backgroundColor: '#388e3c', minWidth: 80, marginRight: 6 }}
+                                      disabled={lenderActionLoading[req.request_id]}
+                                      onClick={() => handleLenderAction(req.request_id, 'approved_full', null, space.id)}
+                                    >Approve Full</button>
+                                    <button
+                                      style={{ ...styles.interestButton, backgroundColor: '#fbc02d', minWidth: 80, marginRight: 6 }}
+                                      disabled={lenderActionLoading[req.request_id]}
+                                      onClick={() => {
+                                        setPartialModal({ open: true, request: req, listingId: space.id });
+                                        setPartialVolume('');
+                                        setPartialError('');
+                                      }}
+                                    >Approve Partial</button>
+                                    <button
+                                      style={{ ...styles.interestButton, backgroundColor: '#d32f2f', minWidth: 80 }}
+                                      disabled={lenderActionLoading[req.request_id]}
+                                      onClick={() => handleLenderAction(req.request_id, 'rejected', null, space.id)}
+                                    >Reject</button>
+                                  </span>
+                                )}
+                                {lenderActionError[req.request_id] && (
+                                  <span style={{ color: 'red', marginLeft: 8 }}>{lenderActionError[req.request_id]}</span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
                     <div style={styles.spaceActions}>
                       <button 
                         style={styles.editButton}
@@ -380,6 +505,43 @@ const LenderDashboard = ({ username }) => {
             />
           )}
         </div>
+      </Dialog>
+      <Dialog open={partialModal.open} onClose={() => setPartialModal({ open: false, request: null, listingId: null })} maxWidth="xs" fullWidth>
+        <DialogTitle>Approve Partial Reservation</DialogTitle>
+        <DialogContent>
+          <div style={{ marginBottom: 12 }}>
+            <b>Renter:</b> {partialModal.request?.renter_username}<br />
+            <b>Requested Volume:</b> {partialModal.request?.requested_volume} cu ft
+          </div>
+          <TextField
+            label="Approved Volume (cu ft)"
+            type="number"
+            fullWidth
+            variant="outlined"
+            value={partialVolume}
+            onChange={e => setPartialVolume(e.target.value)}
+            inputProps={{ min: 0.1, max: partialModal.request?.requested_volume || 1000, step: 0.1 }}
+            style={{ marginBottom: 12 }}
+          />
+          {partialError && <div style={{ color: 'red', marginBottom: 8 }}>{partialError}</div>}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPartialModal({ open: false, request: null, listingId: null })} color="secondary">Cancel</Button>
+          <Button
+            onClick={async () => {
+              const vol = Number(partialVolume);
+              if (!partialVolume || isNaN(vol) || vol <= 0 || vol > (partialModal.request?.requested_volume || 0)) {
+                setPartialError(`Enter a valid volume (0 < volume ≤ ${partialModal.request?.requested_volume || 0})`);
+                return;
+              }
+              setPartialError('');
+              await handleLenderAction(partialModal.request.request_id, 'approved_partial', vol, partialModal.listingId);
+              setPartialModal({ open: false, request: null, listingId: null });
+            }}
+            variant="contained"
+            style={{ background: '#388e3c', color: 'white', fontWeight: 700 }}
+          >Approve</Button>
+        </DialogActions>
       </Dialog>
     </div>
   );
@@ -675,6 +837,16 @@ const styles = {
     cursor: 'pointer',
     fontSize: '14px',
     margin: '10px 0 0 5px',
+  },
+  interestButton: {
+    backgroundColor: '#388e3c',
+    color: 'white',
+    border: 'none',
+    padding: '8px 12px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    flex: 1,
   },
 };
 
