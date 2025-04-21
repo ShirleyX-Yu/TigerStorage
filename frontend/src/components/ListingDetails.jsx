@@ -390,29 +390,6 @@ const ListingDetails = () => {
 
         {loading ? renderLoading() : error ? renderError() : !listing ? renderNotFound() : (
           <div style={styles.detailsContainer}>
-            {/* Report Button - top right */}
-            <div style={{ position: 'absolute', top: 34, right: 34, zIndex: 10 }}>
-              <button
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#f44336',
-                  fontWeight: 700,
-                  fontSize: 16,
-                  display: 'flex',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                  gap: 6,
-                  padding: '4px 10px',
-                  borderRadius: 6,
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
-                }}
-                title="Report this listing"
-              >
-                <FontAwesomeIcon icon={faFlag} style={{ color: '#f44336', fontSize: 20 }} />
-                <span>Report</span>
-              </button>
-            </div>
             <div style={styles.imageSection}>
               {listing.images && listing.images.length > 0 && (
                 <img

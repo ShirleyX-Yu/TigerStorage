@@ -6,7 +6,7 @@ import FilterColumn from './FilterColumn';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartBar } from '@fortawesome/free-solid-svg-icons';
-import { Box, Typography, List, ListItem, ListItemText, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button, Alert, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Box, Typography, List, ListItem, ListItemText, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button, Alert, TextField, ToggleButton, ToggleButtonGroup, Select, MenuItem } from '@mui/material';
 import Header from './Header';
 import { logout } from '../utils/auth';
 import { Link } from 'react-router-dom';
@@ -258,6 +258,11 @@ const Map = () => {
   const [interestLoading, setInterestLoading] = React.useState(false);
   const [interestSuccess, setInterestSuccess] = React.useState(false);
   const [interestError, setInterestError] = React.useState(null);
+
+  // State for report modal
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportSuccess, setReportSuccess] = useState(false);
 
   const [listings, setListings] = useState([]);
   const [error, setError] = useState(null);
@@ -625,7 +630,7 @@ const Map = () => {
                     position: 'absolute',
                     top: 12,
                     right: 12,
-                    background: '#ffeaea', // light red
+                    background: '#ffeaea',
                     border: '1.5px solid #f44336',
                     color: '#f44336',
                     fontWeight: 700,
@@ -639,6 +644,11 @@ const Map = () => {
                     boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
                   }}
                   title="Report this listing"
+                  onClick={() => {
+                    setReportModalOpen(true);
+                    setReportReason("");
+                    setReportSuccess(false);
+                  }}
                 >
                   <span style={{fontSize: 20, color: '#f44336'}}>🚩</span>
                   <span>Report</span>
@@ -873,6 +883,86 @@ const Map = () => {
                   : selectedListing && selectedListing.isInterested
                     ? "Remove Interest"
                     : "Show Interest"}
+              </Button>
+              <Button
+                onClick={() => setReportModalOpen(true)}
+                style={{
+                  background: '#fff',
+                  color: '#FF6B00',
+                  border: '1.5px solid #FF6B00',
+                  fontWeight: 600
+                }}
+                variant="outlined"
+              >
+                Report
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          {/* Report Modal */}
+          <Dialog 
+            open={reportModalOpen} 
+            onClose={() => {
+              setReportModalOpen(false);
+              setReportReason("");
+              setReportSuccess(false);
+            }} 
+            maxWidth="xs" 
+            fullWidth
+            PaperProps={{
+              style: {
+                borderRadius: 16,
+                minWidth: 340,
+                background: '#fff8f1',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.14)'
+              }
+            }}
+          >
+            <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, padding: '16px 24px', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
+              Report Listing
+            </DialogTitle>
+            <DialogContent dividers style={{ background: '#fff8f1', padding: 28 }}>
+              <div style={{ marginTop: 6, marginBottom: 18 }}>
+                <span style={{ fontWeight: 600, fontSize: 17, color: '#FF6B00' }}>Reason for Report</span>
+                <Select
+                  value={reportReason}
+                  onChange={e => setReportReason(e.target.value)}
+                  disabled={reportSuccess}
+                  displayEmpty
+                  style={{ width: '100%', marginTop: 16, background: '#fff', borderRadius: 8, fontSize: 16, border: '1.5px solid #FF6B00', color: '#444', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
+                  inputProps={{ 'aria-label': 'Reason' }}
+                >
+                  <MenuItem value="" disabled>
+                    <span style={{ color: '#bbb' }}>Select a reason...</span>
+                  </MenuItem>
+                  <MenuItem value="Inappropriate or offensive content">Inappropriate or offensive content</MenuItem>
+                  <MenuItem value="Misleading or false information">Misleading or false information</MenuItem>
+                  <MenuItem value="Suspicious or scam-related listing">Suspicious or scam-related listing</MenuItem>
+                  <MenuItem value="Irrelevant to summer storage">Irrelevant to summer storage</MenuItem>
+                  <MenuItem value="Duplicate post">Duplicate post</MenuItem>
+                  <MenuItem value="Other">Other</MenuItem>
+                </Select>
+                {reportSuccess && (
+                  <Alert severity="success" style={{ marginTop: 22, background: '#e6f4ea', color: '#1b5e20', borderRadius: 8, textAlign: 'center', fontWeight: 600, fontSize: 16 }}>
+                    Thank you for your report!
+                  </Alert>
+                )}
+              </div>
+            </DialogContent>
+            <DialogActions style={{ background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, padding: '16px 24px' }}>
+              <Button 
+                onClick={() => setReportModalOpen(false)} 
+                disabled={reportSuccess}
+                style={{ color: '#888', fontWeight: 600 }}
+              >Cancel</Button>
+              <Button
+                onClick={() => { if (reportReason) setReportSuccess(true); }}
+                color="success"
+                variant="contained"
+                disabled={!reportReason || reportSuccess}
+                style={{ background: reportSuccess ? '#4caf50' : '#FF6B00', fontWeight: 700, letterSpacing: 1, borderRadius: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.12)' }}
+              >
+                {reportSuccess ? 'Submitted!' : 'Submit'}
               </Button>
             </DialogActions>
           </Dialog>
