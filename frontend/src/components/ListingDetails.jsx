@@ -119,6 +119,7 @@ const ListingDetails = () => {
             name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
             email: 'contact@tigerstorage.com'
           },
+          owner_id: data.owner_id,
           isInterested: isInterested
         };
         
@@ -153,7 +154,7 @@ const ListingDetails = () => {
       try {
         const userType = sessionStorage.getItem('userType') || 'renter';
         const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-        if (listing.lender && listing.lender.name && storedUsername && listing.lender.name.includes(storedUsername)) {
+        if (listing.owner_id && storedUsername && String(listing.owner_id).toLowerCase() === String(storedUsername).toLowerCase()) {
           setIsLender(true);
           const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/listings/${listing.id}/reservation-requests`, {
             credentials: 'include',
@@ -228,6 +229,7 @@ const ListingDetails = () => {
           name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
           email: 'contact@tigerstorage.com'
         },
+        owner_id: data.owner_id,
         isInterested: false // skip for now
       };
       setListing(formattedListing);
