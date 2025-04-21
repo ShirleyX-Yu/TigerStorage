@@ -884,18 +884,7 @@ const Map = () => {
                     ? "Remove Interest"
                     : "Show Interest"}
               </Button>
-              <Button
-                onClick={() => setReportModalOpen(true)}
-                style={{
-                  background: '#fff',
-                  color: '#FF6B00',
-                  border: '1.5px solid #FF6B00',
-                  fontWeight: 600
-                }}
-                variant="outlined"
-              >
-                Report
-              </Button>
+
             </DialogActions>
           </Dialog>
 
