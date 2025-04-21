@@ -82,7 +82,28 @@ const Home = () => {
   };
 
   return (
-    <div className="home-container">
+    <div className="home-container" style={{ position: 'relative', minHeight: '100vh' }}>
+      <button
+        style={{
+          position: 'absolute',
+          top: 20,
+          right: 30,
+          zIndex: 1000,
+          background: '#24292f',
+          color: 'white',
+          border: 'none',
+          borderRadius: '6px',
+          padding: '10px 18px',
+          fontWeight: 600,
+          fontSize: '15px',
+          cursor: 'pointer',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.08)'
+        }}
+        onClick={() => navigate('/admin')}
+        disabled={loading}
+      >
+        Admin Platform
+      </button>
       <div className="home-content">
         {!logoError ? (
           <img 
@@ -135,6 +156,7 @@ const Home = () => {
         >
           Privacy Policy
         </button>
+
       </div>
     </div>
   );

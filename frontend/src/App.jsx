@@ -11,6 +11,7 @@ import LenderListingDetails from './components/LenderListingDetails';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import AuthDebug from './components/AuthDebug';
 import Map from './components/Map';
+import AdminPlatform from './components/AdminPlatform';
 import { checkAuthStatus, login } from './utils/auth';
 import './App.css';
 import './index.css';
@@ -310,6 +311,7 @@ function App() {
           <Route path="/lender-dashboard/listing/:id" element={<ProtectedRoute component={<LenderListingDetails />} allowedUserType="lender" />} />
           
           {/* Public routes */}
+          <Route path="/admin" element={<AdminPlatform />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/debug" element={<AuthDebug />} />
         </Routes>
