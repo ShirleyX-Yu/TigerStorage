@@ -11,6 +11,16 @@ from werkzeug.utils import secure_filename
 from decimal import Decimal
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+# Initialize Cloudinary
+cloudinary.config(
+    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.getenv('CLOUDINARY_API_KEY'),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET')
+)
 
 # Set up command-line argument parsing
 parser = argparse.ArgumentParser(description="Run Flask app")
@@ -582,13 +592,11 @@ def upload_file():
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
     if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        # Generate unique filename to prevent collisions
-        unique_filename = f"{uuid.uuid4()}_{filename}"
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-        file.save(file_path)
-        # Return relative URL for the uploaded file
-        return jsonify({'url': f'/uploads/{unique_filename}'}), 200
+        # Upload to Cloudinary
+        upload_result = cloudinary.uploader.upload(file)
+        # The URL of the uploaded image
+        image_url = upload_result.get('secure_url')
+        return jsonify({'url': image_url}), 200
     return jsonify({'error': 'Invalid file type'}), 400
 
 @app.route('/uploads/<filename>')
