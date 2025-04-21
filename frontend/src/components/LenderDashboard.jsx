@@ -346,79 +346,67 @@ const LenderDashboard = ({ username }) => {
                         <span style={styles.statValue}>{space.interestedRenters.length}</span>
                       </div>
                     </div>
-                    {space.interestedRenters.length > 0 && (
+                    {reservationRequests[space.id] && reservationRequests[space.id].length > 0 && (
                       <div style={styles.rentersList}>
                         <h4 style={styles.rentersTitle}>Interested Renters</h4>
-                        {space.interestedRenters.map(renter => {
-  let formattedDate = '';
-  let formattedTime = '';
-  if (renter.dateInterested) {
-    const dateObj = new Date(renter.dateInterested);
-    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const dd = String(dateObj.getDate()).padStart(2, '0');
-    const yy = String(dateObj.getFullYear()).slice(-2);
-    formattedDate = `${mm}/${dd}/${yy}`;
-    const hours = String(dateObj.getHours()).padStart(2, '0');
-    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-    formattedTime = `${hours}:${minutes}`;
-  }
-  return (
-    <div key={renter.id} style={styles.renterItem}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={styles.renterName}>{renter.name}</span>
-        <span style={{ ...styles.renterDate, marginLeft: 8 }}>{formattedDate} {formattedTime}</span>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-        <span style={styles.renterEmail}>{renter.email}</span>
-        <span style={styles.renterStatusBadge}>{renter.status}</span>
-      </div>
-    </div>
-  );
-})}
-                      </div>
-                    )}
-                    {reservationRequests[space.id] && reservationRequests[space.id].length > 0 && (
-                      <div style={{ marginTop: 12, marginBottom: 8, padding: 12, background: '#fff3e0', borderRadius: 6 }}>
-                        <h4>Reservation Requests</h4>
-                        {requestsLoading[space.id] ? <div>Loading requests...</div> : (
-                          <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                            {reservationRequests[space.id].map(req => (
-                              <li key={req.request_id} style={{ marginBottom: 12, borderBottom: '1px solid #eee', paddingBottom: 8 }}>
-                                <span style={{ fontWeight: 500 }}>{req.renter_username}</span>: {req.requested_volume} cu ft
-                                <span style={{ marginLeft: 8, fontWeight: 500 }}>Status:</span> {req.status.replace('_', ' ')}
+                        {reservationRequests[space.id].map(req => {
+                          let formattedDate = '';
+                          let formattedTime = '';
+                          if (req.created_at) {
+                            const dateObj = new Date(req.created_at);
+                            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                            const dd = String(dateObj.getDate()).padStart(2, '0');
+                            const yy = String(dateObj.getFullYear()).slice(-2);
+                            formattedDate = `${mm}/${dd}/${yy}`;
+                            const hours = String(dateObj.getHours()).padStart(2, '0');
+                            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                            formattedTime = `${hours}:${minutes}`;
+                          }
+                          return (
+                            <div key={req.request_id} style={styles.renterItem}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={styles.renterName}>{req.renter_username}</span>
+                                <span style={{ ...styles.renterDate, marginLeft: 8 }}>{formattedDate} {formattedTime}</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                                <span style={styles.renterEmail}>{req.renter_username}@princeton.edu</span>
+                                <span style={styles.renterStatusBadge}>{req.status.replace('_', ' ')}</span>
+                              </div>
+                              <div style={{ marginTop: 4 }}>
+                                <b>Requested:</b> {req.requested_volume} cu ft
                                 {req.approved_volume && (
-                                  <span style={{ marginLeft: 8 }}>(Approved: {req.approved_volume} cu ft)</span>
+                                  <span style={{ marginLeft: 8 }}><b>Approved:</b> {req.approved_volume} cu ft</span>
                                 )}
-                                {req.status === 'pending' && (
-                                  <span style={{ marginLeft: 16, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                                    <button
-                                      style={{ ...styles.interestButton, backgroundColor: '#388e3c', minWidth: 80, marginRight: 6 }}
-                                      disabled={lenderActionLoading[req.request_id]}
-                                      onClick={() => handleLenderAction(req.request_id, 'approved_full', null, space.id)}
-                                    >Approve Full</button>
-                                    <button
-                                      style={{ ...styles.interestButton, backgroundColor: '#fbc02d', minWidth: 80, marginRight: 6 }}
-                                      disabled={lenderActionLoading[req.request_id]}
-                                      onClick={() => {
-                                        setPartialModal({ open: true, request: req, listingId: space.id });
-                                        setPartialVolume('');
-                                        setPartialError('');
-                                      }}
-                                    >Approve Partial</button>
-                                    <button
-                                      style={{ ...styles.interestButton, backgroundColor: '#d32f2f', minWidth: 80 }}
-                                      disabled={lenderActionLoading[req.request_id]}
-                                      onClick={() => handleLenderAction(req.request_id, 'rejected', null, space.id)}
-                                    >Reject</button>
-                                  </span>
-                                )}
-                                {lenderActionError[req.request_id] && (
-                                  <span style={{ color: 'red', marginLeft: 8 }}>{lenderActionError[req.request_id]}</span>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                              </div>
+                              {req.status === 'pending' && (
+                                <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                                  <button
+                                    style={{ ...styles.interestButton, backgroundColor: '#388e3c', minWidth: 80 }}
+                                    disabled={lenderActionLoading[req.request_id]}
+                                    onClick={() => handleLenderAction(req.request_id, 'approved_full', null, space.id)}
+                                  >Approve Full</button>
+                                  <button
+                                    style={{ ...styles.interestButton, backgroundColor: '#fbc02d', minWidth: 80 }}
+                                    disabled={lenderActionLoading[req.request_id]}
+                                    onClick={() => {
+                                      setPartialModal({ open: true, request: req, listingId: space.id });
+                                      setPartialVolume('');
+                                      setPartialError('');
+                                    }}
+                                  >Approve Partial</button>
+                                  <button
+                                    style={{ ...styles.interestButton, backgroundColor: '#d32f2f', minWidth: 80 }}
+                                    disabled={lenderActionLoading[req.request_id]}
+                                    onClick={() => handleLenderAction(req.request_id, 'rejected', null, space.id)}
+                                  >Reject</button>
+                                </div>
+                              )}
+                              {lenderActionError[req.request_id] && (
+                                <span style={{ color: 'red', marginLeft: 8 }}>{lenderActionError[req.request_id]}</span>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                     <div style={styles.spaceActions}>
