@@ -114,7 +114,8 @@ const LenderDashboard = ({ username }) => {
           startDate: listing.start_date ? new Date(listing.start_date).toLocaleDateString() : '',
           endDate: listing.end_date ? new Date(listing.end_date).toLocaleDateString() : '',
           status: 'Active',
-          interestedRenters
+          interestedRenters,
+          remaining_volume: listing.remaining_volume
         };
       }));
 
@@ -331,6 +332,9 @@ const LenderDashboard = ({ username }) => {
                         <p style={styles.spaceDetails}>
                           Start: {space.startDate || 'N/A'} | End: {space.endDate || 'N/A'}
                         </p>
+                        <div style={{ marginBottom: 8, color: '#4caf50', fontWeight: 600 }}>
+                          Remaining Volume: {space.remaining_volume} cu ft
+                        </div>
                       </div>
                       <div style={styles.spaceBadge}>
                         {space.status}
@@ -499,7 +503,8 @@ const LenderDashboard = ({ username }) => {
         <DialogContent>
           <div style={{ marginBottom: 12 }}>
             <b>Renter:</b> {partialModal.request?.renter_username}<br />
-            <b>Requested Volume:</b> {partialModal.request?.requested_volume} cu ft
+            <b>Requested Volume:</b> {partialModal.request?.requested_volume} cu ft<br />
+            <b>Remaining Volume:</b> {listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_volume ?? 0} cu ft
           </div>
           <TextField
             label="Approved Volume (cu ft)"
@@ -508,7 +513,7 @@ const LenderDashboard = ({ username }) => {
             variant="outlined"
             value={partialVolume}
             onChange={e => setPartialVolume(e.target.value)}
-            inputProps={{ min: 0.1, max: partialModal.request?.requested_volume || 1000, step: 0.1 }}
+            inputProps={{ min: 0.1, max: Math.min(partialModal.request?.requested_volume || 1000, listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_volume ?? 0), step: 0.1 }}
             style={{ marginBottom: 12 }}
           />
           {partialError && <div style={{ color: 'red', marginBottom: 8 }}>{partialError}</div>}
@@ -518,8 +523,9 @@ const LenderDashboard = ({ username }) => {
           <Button
             onClick={async () => {
               const vol = Number(partialVolume);
-              if (!partialVolume || isNaN(vol) || vol <= 0 || vol > (partialModal.request?.requested_volume || 0)) {
-                setPartialError(`Enter a valid volume (0 < volume ≤ ${partialModal.request?.requested_volume || 0})`);
+              const maxAllowed = Math.min(partialModal.request?.requested_volume || 0, listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_volume ?? 0);
+              if (!partialVolume || isNaN(vol) || vol <= 0 || vol > maxAllowed) {
+                setPartialError(`Enter a valid volume (0 < volume ≤ ${maxAllowed})`);
                 return;
               }
               setPartialError('');
