@@ -1808,9 +1808,13 @@ def get_my_interested_listings():
                             sl.address,
                             sl.owner_id as lender,
                             il.created_at,
-                            il.status
+                            il.status,
+                            rr.requested_volume,
+                            rr.approved_volume,
+                            rr.status as reservation_status
                         FROM interested_listings il
                         JOIN storage_listings sl ON il.listing_id = sl.listing_id
+                        LEFT JOIN reservation_requests rr ON rr.listing_id = il.listing_id AND rr.renter_username = il.renter_username
                         WHERE il.renter_username = %s
                         ORDER BY il.created_at DESC
                     """
@@ -1828,8 +1832,11 @@ def get_my_interested_listings():
                             "cost": row[3],
                             "address": row[4],
                             "lender": row[5],
-                            "dateInterested": row[6].isoformat(),
+                            "dateInterested": row[6].isoformat() if row[6] else None,
                             "status": row[7],
+                            "requested_volume": row[8],
+                            "approved_volume": row[9],
+                            "approval_type": row[10],
                             "nextStep": "Waiting for lender response" if row[7] == 'pending' else "In Discussion"
                         })
                     
