@@ -18,13 +18,6 @@ const ViewListings = () => {
     navigate('/map');
   };
 
-  // Function to get the full image URL based on the backend URL
-  const getFullImageUrl = (imageUrl) => {
-    if (!imageUrl) return '/assets/placeholder.jpg';
-    if (imageUrl.startsWith('http')) return imageUrl;
-    return `${import.meta.env.VITE_API_URL}${imageUrl}`;
-  };
-
   useEffect(() => {
     const fetchListings = async () => {
       try {
@@ -256,9 +249,6 @@ const ViewListings = () => {
               ) : (
                 <div style={styles.listingsGrid}>
                   {filteredListings.map(listing => {
-                    // Get the full image URL using the same logic as the map view
-                    const imageUrl = getFullImageUrl(listing.image_url);
-                    console.log('Image src for listing', listing.id, ':', imageUrl);
                     // Check if this listing is in the interested list
                     const interestedLocations = new Set(JSON.parse(localStorage.getItem('interestedLocations') || '[]'));
                     const isInterested = interestedLocations.has(listing.id);
@@ -266,7 +256,7 @@ const ViewListings = () => {
                     return (
                       <div key={listing.id} style={styles.listingCard}>
                         <img
-                          src={getFullImageUrl(listing.image_url)}
+                          src={listing.image_url}
                           alt={listing.location}
                           style={styles.listingImage}
                           onError={(e) => {

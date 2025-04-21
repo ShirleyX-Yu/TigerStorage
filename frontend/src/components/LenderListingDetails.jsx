@@ -109,7 +109,7 @@ const LenderListingDetails = () => {
           <div style={styles.detailsContainer}>
             <div style={styles.imageSection}>
               <img
-                src={getFullImageUrl(listing.images[0])}
+                src={listing.images[0]}
                 alt={listing.location}
                 style={styles.mainImage}
                 onError={(e) => { e.target.src = '/assets/placeholder.jpg'; }}

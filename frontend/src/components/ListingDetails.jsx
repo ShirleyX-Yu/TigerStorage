@@ -323,13 +323,6 @@ const ListingDetails = () => {
     }
   };
 
-  // Function to get the full image URL based on the backend URL
-  const getFullImageUrl = (imageUrl) => {
-    if (!imageUrl) return '/assets/placeholder.jpg';
-    if (imageUrl.startsWith('http')) return imageUrl;
-    return `${import.meta.env.VITE_API_URL}${imageUrl}`;
-  };
-
   // Simple render function for error state
   const renderError = () => (
     <div style={styles.errorContainer}>
@@ -393,7 +386,7 @@ const ListingDetails = () => {
             <div style={styles.imageSection}>
               {listing.images && listing.images.length > 0 && (
                 <img
-                  src={getFullImageUrl(listing.images[0])}
+                  src={listing.images[0]}
                   alt="Storage Space"
                   style={styles.mainImage}
                 />
