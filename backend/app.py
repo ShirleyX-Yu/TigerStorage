@@ -2213,6 +2213,35 @@ def report_listing():
     finally:
         conn.close()
 
+# --- API endpoint for admin to get all reported listings ---
+@app.route('/api/reported-listings', methods=['GET'])
+def get_reported_listings():
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT s.*, r.report_id, r.reason, r.status AS report_status, r.created_at AS report_created_at, r.renter_id
+                FROM storage_listings s
+                JOIN reported_listings r ON s.listing_id = r.listing_id
+                ORDER BY r.created_at DESC
+            ''')
+            reported = []
+            columns = [desc[0] for desc in cur.description]
+            for row in cur.fetchall():
+                listing = dict(zip(columns, row))
+                # Convert all date or datetime fields to ISO format
+                for k, v in listing.items():
+                    if hasattr(v, 'isoformat'):
+                        listing[k] = v.isoformat()
+                reported.append(listing)
+            return jsonify(reported), 200
+    except Exception as e:
+        print('Error in get_reported_listings:', e)
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
 if __name__ == "__main__":
     args = parser.parse_args()
     app.debug = not args.production

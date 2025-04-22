@@ -71,7 +71,7 @@ const AdminPlatform = () => {
       } else if (!apiUrl) {
         apiUrl = 'http://localhost:8000';
       }
-      const response = await fetch(`${apiUrl}/api/listings`, {
+      const response = await fetch(`${apiUrl}/api/reported-listings`, {
         credentials: 'include',
         headers: {
           'Accept': 'application/json',
@@ -80,7 +80,7 @@ const AdminPlatform = () => {
         },
       });
       if (!response.ok) {
-        throw new Error(`Unable to load listings (${response.status}): ${response.statusText}`);
+        throw new Error(`Unable to load reported listings (${response.status}): ${response.statusText}`);
       }
       const data = await response.json();
       setListings(data);
@@ -124,7 +124,7 @@ const AdminPlatform = () => {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '2rem', marginTop: '2rem' }}>
             {listings.map(listing => (
-              <div key={listing.id} style={{ background: '#232526', borderRadius: 12, padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.13)', color: '#fff', minHeight: 260 }}>
+              <div key={listing.listing_id || listing.id} style={{ background: '#232526', borderRadius: 12, padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.13)', color: '#fff', minHeight: 260 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{listing.location || listing.address || 'No Location'}</h2>
@@ -137,6 +137,13 @@ const AdminPlatform = () => {
                 </div>
                 <div style={{ fontSize: 14, color: '#b0b0b0', marginBottom: 10 }}>
                   Created: {listing.created_at ? new Date(listing.created_at).toLocaleDateString() : 'N/A'}
+                </div>
+                {/* Display report reason and status */}
+                <div style={{ fontSize: 15, color: '#ffb300', marginBottom: 8, fontWeight: 600 }}>
+                  <span role="img" aria-label="flag">🚩</span> Report Reason: {listing.reason}
+                </div>
+                <div style={{ fontSize: 14, color: '#f44336', marginBottom: 10, fontWeight: 500 }}>
+                  Report Status: {listing.report_status}
                 </div>
                 {/* Interested renters section (optional, admin view) */}
                 {listing.interested_renters && listing.interested_renters.length > 0 && (
