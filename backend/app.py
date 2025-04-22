@@ -74,27 +74,10 @@ def add_cors_headers(response):
     if origin in allowed_origins:
         response.headers['Access-Control-Allow-Origin'] = origin
         response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, PATCH, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Pragma, Cache-Control, Origin, Accept, X-CSRFToken, X-Session-Id, X-Auth-Token, X-User-Type, X-Username'
+        response.headers['Access-Control-Expose-Headers'] = 'Content-Type, Authorization, X-Requested-With, Pragma, Cache-Control, Origin, Accept, X-CSRFToken, X-Session-Id, X-Auth-Token, X-User-Type, X-Username'
     return response
-
-
-
-# Function to add CORS headers to responses
-def add_cors_headers(response):
-    origin = request.headers.get('Origin')
-    if origin and (origin == 'https://tigerstorage-frontend.onrender.com' or origin.startswith('http://localhost')):
-        response.headers['Access-Control-Allow-Origin'] = origin
-    else:
-        response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, PATCH, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Pragma, Cache-Control, Origin, Accept, X-CSRFToken, X-Session-Id, X-Auth-Token, X-User-Type, X-Username'
-    response.headers['Access-Control-Expose-Headers'] = 'Content-Type, Authorization, X-Requested-With, Pragma, Cache-Control, Origin, Accept, X-CSRFToken, X-Session-Id, X-Auth-Token, X-User-Type, X-Username'
-    return response
-
-# Register the after_request function to add CORS headers to all responses
-@app.after_request
-def after_request(response):
-    return add_cors_headers(response)
 
 # Load environment variables and set secret key
 dotenv.load_dotenv()
