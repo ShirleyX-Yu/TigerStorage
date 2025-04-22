@@ -1363,6 +1363,23 @@ def update_listing(listing_id):
                 cur.execute(query, list(update_values.values()) + [listing_id])
                 conn.commit()
                 print(f"Listing {listing_id} updated successfully")
+
+                # If cubicFeet or cubic_feet was updated, recalculate remaining_volume
+                if 'cubicFeet' in data or 'cubic_feet' in data:
+                    new_cubic_ft = int(data.get('cubicFeet', data.get('cubic_feet')))
+                    # Calculate total reserved volume (pending + approved)
+                    cur.execute("""
+                        SELECT COALESCE(SUM(requested_volume), 0)
+                        FROM reservation_requests
+                        WHERE listing_id = %s AND status IN ('pending', 'approved_full', 'approved_partial')
+                    """, (listing_id,))
+                    reserved = cur.fetchone()[0] or 0
+                    new_remaining = max(new_cubic_ft - reserved, 0)
+                    cur.execute("""
+                        UPDATE storage_listings SET remaining_volume = %s WHERE listing_id = %s
+                    """, (new_remaining, listing_id))
+                    conn.commit()
+                    print(f"Updated remaining_volume for listing {listing_id} to {new_remaining}")
                 
                 return jsonify({"success": True, "message": "Listing updated successfully"}), 200
         finally:
