@@ -2172,6 +2172,44 @@ def my_reservation_requests():
         print('Error in my_reservation_requests:', e)
         return jsonify({'error': str(e)}), 500
 
+# --- API endpoint for reporting a listing ---
+@app.route('/api/report-listing', methods=['POST'])
+def report_listing():
+    data = request.json
+    listing_id = data.get('listing_id')
+    lender_id = data.get('lender_id')
+    renter_id = data.get('renter_id')
+    reason = data.get('reason')
+
+    # If renter_id is missing or blank, use a random anonymous value
+    if not renter_id or not str(renter_id).strip():
+        import random
+        renter_id = f"anonymous_{random.randint(1000, 9999)}"
+
+    if not (listing_id and reason):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO reported_listings (listing_id, lender_id, renter_id, reason, status)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING report_id, created_at
+            """, (listing_id, lender_id, renter_id, reason, 'pending'))
+            report = cur.fetchone()
+            conn.commit()
+        return jsonify({
+            'success': True,
+            'report_id': report[0],
+            'created_at': report[1].isoformat() if report[1] else None
+        }), 201
+    except Exception as e:
+        print('Error in report_listing:', e)
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
 if __name__ == "__main__":
     args = parser.parse_args()
     app.debug = not args.production

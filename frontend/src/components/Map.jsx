@@ -945,7 +945,37 @@ const Map = () => {
                 style={{ color: '#888', fontWeight: 600 }}
               >Cancel</Button>
               <Button
-                onClick={() => { if (reportReason) setReportSuccess(true); }}
+                onClick={async () => {
+                  if (!reportReason || reportSuccess) return;
+                  // Get user info (renter_id) from local/session storage
+                  const renter_id = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+                  const lender_id = selectedListing?.owner_id || selectedListing?.lender_id || '';
+                  const listing_id = selectedListing?.listing_id || selectedListing?.id;
+                  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                  try {
+                    const response = await fetch(`${apiUrl}/api/report-listing`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({
+                        listing_id,
+                        lender_id,
+                        renter_id,
+                        reason: reportReason
+                      })
+                    });
+                    if (response.ok) {
+                      setReportSuccess(true);
+                    } else {
+                      // Optionally handle error
+                      setReportSuccess(false);
+                      alert('Failed to submit report.');
+                    }
+                  } catch (err) {
+                    setReportSuccess(false);
+                    alert('Error submitting report.');
+                  }
+                }}
                 color="success"
                 variant="contained"
                 disabled={!reportReason || reportSuccess}
