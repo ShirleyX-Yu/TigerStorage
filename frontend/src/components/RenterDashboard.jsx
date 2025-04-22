@@ -95,6 +95,7 @@ const RenterDashboard = ({ username }) => {
                     <th style={styles.th}>Cost/Month</th>
                     <th style={styles.th}>Lender</th>
                     <th style={styles.th}>Requested Volume</th>
+                    <th style={styles.th}>Approved Volume</th>
                     <th style={styles.th}>Approval Type</th>
                     <th style={styles.th}>Status</th>
                     <th style={styles.th}>Next Step</th>
@@ -108,6 +109,7 @@ const RenterDashboard = ({ username }) => {
                       <td style={styles.td}>${space.cost}</td>
                       <td style={styles.td}>{space.lender}</td>
                       <td style={styles.td}>{space.requested_volume ? `${space.requested_volume} cu ft` : '-'}</td>
+                      <td style={styles.td}>{space.approved_volume ? `${space.approved_volume} cu ft` : '-'}</td>
                       <td style={styles.td}>{
                         space.approval_type === 'approved_full' ? 'Full' :
                         space.approval_type === 'approved_partial' ? 'Partial' :

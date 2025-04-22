@@ -86,7 +86,7 @@ def add_cors_headers(response):
     else:
         response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
     response.headers['Access-Control-Allow-Credentials'] = 'true'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, PATCH, OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Pragma, Cache-Control, Origin, Accept, X-CSRFToken, X-Session-Id, X-Auth-Token, X-User-Type, X-Username'
     response.headers['Access-Control-Expose-Headers'] = 'Content-Type, Authorization, X-Requested-With, Pragma, Cache-Control, Origin, Accept, X-CSRFToken, X-Session-Id, X-Auth-Token, X-User-Type, X-Username'
     return response
@@ -859,7 +859,8 @@ def get_listings():
                             "end_date": listing_dict.get('end_date').isoformat() if hasattr(listing_dict.get('end_date'), 'isoformat') else (listing_dict.get('end_date') if listing_dict.get('end_date') else None),
                             "image_url": listing_dict.get('image_url', '/assets/placeholder.jpg'),
                             "created_at": listing_dict.get('created_at').isoformat() if hasattr(listing_dict.get('created_at'), 'isoformat') else (listing_dict.get('created_at') if listing_dict.get('created_at') else None),
-                            "owner_id": listing_dict.get('owner_id', '')
+                            "owner_id": listing_dict.get('owner_id', ''),
+                            "remaining_volume": listing_dict.get('remaining_volume', 0)
                         }
 
                         # Ensure latitude and longitude have values for map display
@@ -989,7 +990,8 @@ def get_listing_by_id(listing_id):
                     "image_url": listing_dict.get('image_url', '/assets/placeholder.jpg'),
                     "start_date": listing_dict.get('start_date').isoformat() if hasattr(listing_dict.get('start_date'), 'isoformat') else (listing_dict.get('start_date') if listing_dict.get('start_date') else None),
                     "end_date": listing_dict.get('end_date').isoformat() if hasattr(listing_dict.get('end_date'), 'isoformat') else (listing_dict.get('end_date') if listing_dict.get('end_date') else None),
-                    "updated_at": listing_dict.get('updated_at').isoformat() if hasattr(listing_dict.get('updated_at'), 'isoformat') else (listing_dict.get('updated_at') if listing_dict.get('updated_at') else None)
+                    "updated_at": listing_dict.get('updated_at').isoformat() if hasattr(listing_dict.get('updated_at'), 'isoformat') else (listing_dict.get('updated_at') if listing_dict.get('updated_at') else None),
+                    "remaining_volume": listing_dict.get('remaining_volume', 0)
                 }
                 
                 return jsonify(formatted_listing), 200
@@ -1240,7 +1242,8 @@ def get_my_listings():
                                 "end_date": listing_dict.get('end_date').isoformat() if listing_dict.get('end_date') else None,
                                 "image_url": listing_dict.get('image_url', '/assets/placeholder.jpg'),
                                 "created_at": listing_dict.get('created_at').isoformat() if listing_dict.get('created_at') else None,
-                                "owner_id": listing_dict.get('owner_id', '')
+                                "owner_id": listing_dict.get('owner_id', ''),
+                                "remaining_volume": listing_dict.get('remaining_volume', 0)
                             }
                             formatted_listings.append(formatted_listing)
                         except Exception as e:

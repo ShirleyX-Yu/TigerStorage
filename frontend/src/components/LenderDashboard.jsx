@@ -114,7 +114,8 @@ const LenderDashboard = ({ username }) => {
           startDate: listing.start_date ? new Date(listing.start_date).toLocaleDateString() : '',
           endDate: listing.end_date ? new Date(listing.end_date).toLocaleDateString() : '',
           status: 'Active',
-          interestedRenters
+          interestedRenters,
+          remaining_volume: listing.remaining_volume
         };
       }));
 
@@ -331,6 +332,9 @@ const LenderDashboard = ({ username }) => {
                         <p style={styles.spaceDetails}>
                           Start: {space.startDate || 'N/A'} | End: {space.endDate || 'N/A'}
                         </p>
+                        <div style={{ marginBottom: 8, color: '#4caf50', fontWeight: 600 }}>
+                          Remaining Volume: {space.remaining_volume} cu ft
+                        </div>
                       </div>
                       <div style={styles.spaceBadge}>
                         {space.status}
@@ -346,79 +350,67 @@ const LenderDashboard = ({ username }) => {
                         <span style={styles.statValue}>{space.interestedRenters.length}</span>
                       </div>
                     </div>
-                    {space.interestedRenters.length > 0 && (
+                    {reservationRequests[space.id] && reservationRequests[space.id].length > 0 && (
                       <div style={styles.rentersList}>
                         <h4 style={styles.rentersTitle}>Interested Renters</h4>
-                        {space.interestedRenters.map(renter => {
-  let formattedDate = '';
-  let formattedTime = '';
-  if (renter.dateInterested) {
-    const dateObj = new Date(renter.dateInterested);
-    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const dd = String(dateObj.getDate()).padStart(2, '0');
-    const yy = String(dateObj.getFullYear()).slice(-2);
-    formattedDate = `${mm}/${dd}/${yy}`;
-    const hours = String(dateObj.getHours()).padStart(2, '0');
-    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-    formattedTime = `${hours}:${minutes}`;
-  }
-  return (
-    <div key={renter.id} style={styles.renterItem}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={styles.renterName}>{renter.name}</span>
-        <span style={{ ...styles.renterDate, marginLeft: 8 }}>{formattedDate} {formattedTime}</span>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-        <span style={styles.renterEmail}>{renter.email}</span>
-        <span style={styles.renterStatusBadge}>{renter.status}</span>
-      </div>
-    </div>
-  );
-})}
-                      </div>
-                    )}
-                    {reservationRequests[space.id] && reservationRequests[space.id].length > 0 && (
-                      <div style={{ marginTop: 12, marginBottom: 8, padding: 12, background: '#fff3e0', borderRadius: 6 }}>
-                        <h4>Reservation Requests</h4>
-                        {requestsLoading[space.id] ? <div>Loading requests...</div> : (
-                          <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                            {reservationRequests[space.id].map(req => (
-                              <li key={req.request_id} style={{ marginBottom: 12, borderBottom: '1px solid #eee', paddingBottom: 8 }}>
-                                <span style={{ fontWeight: 500 }}>{req.renter_username}</span>: {req.requested_volume} cu ft
-                                <span style={{ marginLeft: 8, fontWeight: 500 }}>Status:</span> {req.status.replace('_', ' ')}
+                        {reservationRequests[space.id].map(req => {
+                          let formattedDate = '';
+                          let formattedTime = '';
+                          if (req.created_at) {
+                            const dateObj = new Date(req.created_at);
+                            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                            const dd = String(dateObj.getDate()).padStart(2, '0');
+                            const yy = String(dateObj.getFullYear()).slice(-2);
+                            formattedDate = `${mm}/${dd}/${yy}`;
+                            const hours = String(dateObj.getHours()).padStart(2, '0');
+                            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                            formattedTime = `${hours}:${minutes}`;
+                          }
+                          return (
+                            <div key={req.request_id} style={styles.renterItem}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={styles.renterName}>{req.renter_username}</span>
+                                <span style={{ ...styles.renterDate, marginLeft: 8 }}>{formattedDate} {formattedTime}</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                                <span style={styles.renterEmail}>{req.renter_username}@princeton.edu</span>
+                                <span style={styles.renterStatusBadge}>{req.status.replace('_', ' ')}</span>
+                              </div>
+                              <div style={{ marginTop: 4 }}>
+                                <b>Requested:</b> {req.requested_volume} cu ft
                                 {req.approved_volume && (
-                                  <span style={{ marginLeft: 8 }}>(Approved: {req.approved_volume} cu ft)</span>
+                                  <span style={{ marginLeft: 8 }}><b>Approved:</b> {req.approved_volume} cu ft</span>
                                 )}
-                                {req.status === 'pending' && (
-                                  <span style={{ marginLeft: 16, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                                    <button
-                                      style={{ ...styles.interestButton, backgroundColor: '#388e3c', minWidth: 80, marginRight: 6 }}
-                                      disabled={lenderActionLoading[req.request_id]}
-                                      onClick={() => handleLenderAction(req.request_id, 'approved_full', null, space.id)}
-                                    >Approve Full</button>
-                                    <button
-                                      style={{ ...styles.interestButton, backgroundColor: '#fbc02d', minWidth: 80, marginRight: 6 }}
-                                      disabled={lenderActionLoading[req.request_id]}
-                                      onClick={() => {
-                                        setPartialModal({ open: true, request: req, listingId: space.id });
-                                        setPartialVolume('');
-                                        setPartialError('');
-                                      }}
-                                    >Approve Partial</button>
-                                    <button
-                                      style={{ ...styles.interestButton, backgroundColor: '#d32f2f', minWidth: 80 }}
-                                      disabled={lenderActionLoading[req.request_id]}
-                                      onClick={() => handleLenderAction(req.request_id, 'rejected', null, space.id)}
-                                    >Reject</button>
-                                  </span>
-                                )}
-                                {lenderActionError[req.request_id] && (
-                                  <span style={{ color: 'red', marginLeft: 8 }}>{lenderActionError[req.request_id]}</span>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                              </div>
+                              {req.status === 'pending' && (
+                                <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                                  <button
+                                    style={{ ...styles.interestButton, backgroundColor: '#388e3c', minWidth: 80 }}
+                                    disabled={lenderActionLoading[req.request_id]}
+                                    onClick={() => handleLenderAction(req.request_id, 'approved_full', null, space.id)}
+                                  >Approve Full</button>
+                                  <button
+                                    style={{ ...styles.interestButton, backgroundColor: '#fbc02d', minWidth: 80 }}
+                                    disabled={lenderActionLoading[req.request_id]}
+                                    onClick={() => {
+                                      setPartialModal({ open: true, request: req, listingId: space.id });
+                                      setPartialVolume('');
+                                      setPartialError('');
+                                    }}
+                                  >Approve Partial</button>
+                                  <button
+                                    style={{ ...styles.interestButton, backgroundColor: '#d32f2f', minWidth: 80 }}
+                                    disabled={lenderActionLoading[req.request_id]}
+                                    onClick={() => handleLenderAction(req.request_id, 'rejected', null, space.id)}
+                                  >Reject</button>
+                                </div>
+                              )}
+                              {lenderActionError[req.request_id] && (
+                                <span style={{ color: 'red', marginLeft: 8 }}>{lenderActionError[req.request_id]}</span>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                     <div style={styles.spaceActions}>
@@ -511,7 +503,8 @@ const LenderDashboard = ({ username }) => {
         <DialogContent>
           <div style={{ marginBottom: 12 }}>
             <b>Renter:</b> {partialModal.request?.renter_username}<br />
-            <b>Requested Volume:</b> {partialModal.request?.requested_volume} cu ft
+            <b>Requested Volume:</b> {partialModal.request?.requested_volume} cu ft<br />
+            <b>Remaining Volume:</b> {listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_volume ?? 0} cu ft
           </div>
           <TextField
             label="Approved Volume (cu ft)"
@@ -520,7 +513,7 @@ const LenderDashboard = ({ username }) => {
             variant="outlined"
             value={partialVolume}
             onChange={e => setPartialVolume(e.target.value)}
-            inputProps={{ min: 0.1, max: partialModal.request?.requested_volume || 1000, step: 0.1 }}
+            inputProps={{ min: 0.1, max: Math.min(partialModal.request?.requested_volume || 1000, listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_volume ?? 0), step: 0.1 }}
             style={{ marginBottom: 12 }}
           />
           {partialError && <div style={{ color: 'red', marginBottom: 8 }}>{partialError}</div>}
@@ -530,8 +523,9 @@ const LenderDashboard = ({ username }) => {
           <Button
             onClick={async () => {
               const vol = Number(partialVolume);
-              if (!partialVolume || isNaN(vol) || vol <= 0 || vol > (partialModal.request?.requested_volume || 0)) {
-                setPartialError(`Enter a valid volume (0 < volume ≤ ${partialModal.request?.requested_volume || 0})`);
+              const maxAllowed = Math.min(partialModal.request?.requested_volume || 0, listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_volume ?? 0);
+              if (!partialVolume || isNaN(vol) || vol <= 0 || vol > maxAllowed) {
+                setPartialError(`Enter a valid volume (0 < volume ≤ ${maxAllowed})`);
                 return;
               }
               setPartialError('');

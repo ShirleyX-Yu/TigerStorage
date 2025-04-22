@@ -475,10 +475,10 @@ const ListingDetails = () => {
                   <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
                     {myRequests.map(req => (
                       <li key={req.request_id} style={{ marginBottom: 8 }}>
-                        <span style={{ fontWeight: 500 }}>Requested:</span> {req.requested_volume} cu ft | 
+                        <span style={{ fontWeight: 500 }}>Requested:</span> {req.requested_volume} cu ft |
                         <span style={{ fontWeight: 500, marginLeft: 8 }}>Status:</span> {req.status.replace('_', ' ')}
                         {req.approved_volume && (
-                          <span style={{ marginLeft: 8 }}>(Approved: {req.approved_volume} cu ft)</span>
+                          <span style={{ marginLeft: 8 }}><b>Approved:</b> {req.approved_volume} cu ft</span>
                         )}
                       </li>
                     ))}
