@@ -833,6 +833,7 @@ def get_listings():
                         listing_dict = {}
                         for i, col_name in enumerate(column_names):
                             listing_dict[col_name] = listing[i]
+                        print('DEBUG: listing_dict:', listing_dict)
                         
                         # If no latitude/longitude, set default values for Princeton with random offsets
                         if not listing_dict.get('latitude') or not listing_dict.get('longitude'):
@@ -1216,6 +1217,7 @@ def get_my_listings():
                             listing_dict = {}
                             for i, col_name in enumerate(column_names):
                                 listing_dict[col_name] = listing[i]
+                            print('DEBUG: listing_dict:', listing_dict)
                             
                             # If no latitude/longitude, set default values for Princeton
                             if not listing_dict.get('latitude') or not listing_dict.get('longitude'):
