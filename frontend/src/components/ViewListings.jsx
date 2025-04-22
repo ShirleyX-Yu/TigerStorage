@@ -137,17 +137,15 @@ const ViewListings = () => {
     }));
   };
 
-  // Use the same filtering logic as the map view
-  const filteredListings = listings.filter(listing => {
-    if (filters.minPrice && listing.cost < Number(filters.minPrice)) return false;
-    if (filters.maxPrice && listing.cost > Number(filters.maxPrice)) return false;
-    if (filters.minSize && listing.cubic_feet < Number(filters.minSize)) return false;
-    if (filters.maxSize && listing.cubic_feet > Number(filters.maxSize)) return false;
-    if (filters.minContract && listing.contract_length_months < Number(filters.minContract)) return false;
-    if (filters.maxContract && listing.contract_length_months > Number(filters.maxContract)) return false;
-    // Rating filter would go here if implemented in the backend
-    return true;
-  });
+  // Filter out unavailable listings before rendering
+  const filteredListings = listings.filter(listing => (listing.is_available === undefined || listing.is_available === true) &&
+    (!filters.minPrice || listing.cost >= Number(filters.minPrice)) &&
+    (!filters.maxPrice || listing.cost <= Number(filters.maxPrice)) &&
+    (!filters.minSize || listing.cubic_feet >= Number(filters.minSize)) &&
+    (!filters.maxSize || listing.cubic_feet <= Number(filters.maxSize)) &&
+    (!filters.minContract || listing.contract_length_months >= Number(filters.minContract)) &&
+    (!filters.maxContract || listing.contract_length_months <= Number(filters.maxContract))
+  );
 
   // After a reservation is submitted, re-fetch the listings to update remaining_volume.
   const handleReservationSubmit = async ({ volume, mode }) => {

@@ -2115,7 +2115,9 @@ def update_reservation_request(request_id):
                     cur.execute("""
                         UPDATE reservation_requests SET status = %s, approved_volume = %s, updated_at = %s WHERE request_id = %s
                     """, ('approved_full', requested_volume, datetime.utcnow(), request_id))
-                    cur.execute("UPDATE storage_listings SET remaining_volume = 0, is_available = FALSE WHERE listing_id = %s", (listing_id,))
+                    new_remaining = remaining_volume - requested_volume
+                    is_available = new_remaining > 0
+                    cur.execute("UPDATE storage_listings SET remaining_volume = %s, is_available = %s WHERE listing_id = %s", (new_remaining, is_available, listing_id))
                 # Approve partial
                 elif new_status == 'approved_partial':
                     if not approved_volume or float(approved_volume) <= 0 or float(approved_volume) > remaining_volume:
