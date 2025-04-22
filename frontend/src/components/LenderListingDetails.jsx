@@ -117,6 +117,7 @@ const LenderListingDetails = () => {
         throw new Error(errData.error || 'Failed to update request');
       }
       await refreshRequests();
+      if (fetchListingDetailsRef.current) fetchListingDetailsRef.current();
     } catch (err) {
       setActionError(e => ({ ...e, [requestId]: err.message }));
     } finally {

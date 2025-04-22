@@ -194,6 +194,7 @@ const LenderDashboard = ({ username }) => {
         throw new Error(errData.error || 'Failed to update request');
       }
       fetchReservationRequests(listingId);
+      fetchListings();
     } catch (err) {
       setLenderActionError(e => ({ ...e, [requestId]: err.message }));
     } finally {

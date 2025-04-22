@@ -149,6 +149,40 @@ const ViewListings = () => {
     return true;
   });
 
+  // After a reservation is submitted, re-fetch the listings to update remaining_volume.
+  const handleReservationSubmit = async ({ volume, mode }) => {
+    setReservationLoading(true);
+    setReservationError('');
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+      const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+      const response = await fetch(`${apiUrl}/api/listings/${reservationListing?.id}/reserve`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-User-Type': userType,
+          'X-Username': username
+        },
+        body: JSON.stringify({ requested_volume: volume })
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to request reservation');
+      }
+      setReservationModalOpen(false);
+      setInterestedListings(new Set([...interestedListings, reservationListing.id]));
+      fetchListings(); // <-- Always re-fetch listings after reservation
+    } catch (err) {
+      setReservationError(err.message);
+    } finally {
+      setReservationLoading(false);
+    }
+  };
+
   return (
     <div style={styles.container}>
       <Header title="Storage Listings" />
@@ -295,38 +329,7 @@ const ViewListings = () => {
                             <ReservationModal
                               open={reservationModalOpen}
                               onClose={() => setReservationModalOpen(false)}
-                              onSubmit={async ({ volume, mode }) => {
-                                setReservationLoading(true);
-                                setReservationError('');
-                                try {
-                                  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-                                  const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
-                                  const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-                                  const response = await fetch(`${apiUrl}/api/listings/${reservationListing?.id}/reserve`, {
-                                    method: 'POST',
-                                    credentials: 'include',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                      'Accept': 'application/json',
-                                      'Cache-Control': 'no-cache',
-                                      'X-User-Type': userType,
-                                      'X-Username': username
-                                    },
-                                    body: JSON.stringify({ requested_volume: volume })
-                                  });
-                                  if (!response.ok) {
-                                    const errorData = await response.json().catch(() => ({}));
-                                    throw new Error(errorData.error || 'Failed to request reservation');
-                                  }
-                                  setReservationModalOpen(false);
-                                  // Optionally, update interestedListings state here if you want instant UI feedback
-                                  setInterestedListings(new Set([...interestedListings, reservationListing.id]));
-                                } catch (err) {
-                                  setReservationError(err.message);
-                                } finally {
-                                  setReservationLoading(false);
-                                }
-                              }}
+                              onSubmit={handleReservationSubmit}
                               maxVolume={reservationListing ? reservationListing.cubic_feet : 0}
                               loading={reservationLoading}
                               error={reservationError}
