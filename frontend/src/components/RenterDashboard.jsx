@@ -98,7 +98,6 @@ const RenterDashboard = ({ username }) => {
                     <th style={styles.th}>Approved Volume</th>
                     <th style={styles.th}>Approval Type</th>
                     <th style={styles.th}>Status</th>
-                    <th style={styles.th}>Next Step</th>
                     <th style={styles.th}>Actions</th>
                   </tr>
                 </thead>
@@ -125,7 +124,6 @@ const RenterDashboard = ({ username }) => {
                           {space.status}
                         </span>
                       </td>
-                      <td style={styles.td}>{space.nextStep}</td>
                       <td style={styles.td}>
                         <button 
                           style={styles.viewButton}
