@@ -177,6 +177,11 @@ const LenderDashboard = ({ username }) => {
     try {
       const userType = sessionStorage.getItem('userType') || 'lender';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || username || 'lender';
+      const reqObj = reservationRequests[listingId]?.find(r => r.request_id === requestId);
+      const approvedVolume = (action === 'approved_full' && reqObj) ? reqObj.requested_volume : approvedVolume;
+      const body = action === 'approved_partial' || action === 'approved_full'
+        ? { status: action, approved_volume: approvedVolume }
+        : { status: action };
       const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/reservation-requests/${requestId}`, {
         method: 'PATCH',
         credentials: 'include',
@@ -187,7 +192,7 @@ const LenderDashboard = ({ username }) => {
           'X-User-Type': userType,
           'X-Username': storedUsername
         },
-        body: JSON.stringify(action === 'approved_partial' ? { status: action, approved_volume: approvedVolume } : { status: action })
+        body: JSON.stringify(body)
       });
       if (!resp.ok) {
         const errData = await resp.json().catch(() => ({}));

@@ -102,6 +102,11 @@ const LenderListingDetails = () => {
     setActionLoading(l => ({ ...l, [requestId]: true }));
     setActionError(e => ({ ...e, [requestId]: null }));
     try {
+      const reqObj = reservationRequests.find(r => r.request_id === requestId);
+      const approvedVolume = (action === 'approved_full' && reqObj) ? reqObj.requested_volume : approvedVolume;
+      const body = action === 'approved_partial' || action === 'approved_full'
+        ? { status: action, approved_volume: approvedVolume }
+        : { status: action };
       const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/reservation-requests/${requestId}`, {
         method: 'PATCH',
         credentials: 'include',
@@ -110,7 +115,7 @@ const LenderListingDetails = () => {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
         },
-        body: JSON.stringify(action === 'approved_partial' ? { status: action, approved_volume: approvedVolume } : { status: action })
+        body: JSON.stringify(body)
       });
       if (!resp.ok) {
         const errData = await resp.json().catch(() => ({}));
