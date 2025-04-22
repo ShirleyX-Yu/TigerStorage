@@ -795,7 +795,7 @@ def get_listings():
                 # Build the query dynamically based on available columns
                 select_parts = []
                 essential_columns = ['listing_id', 'location', 'cost', 'cubic_ft', 'description', 
-                                     'created_at', 'owner_id']
+                                     'created_at', 'owner_id', 'remaining_volume']
                 
                 # Add all essential columns that exist
                 for col in essential_columns:
@@ -1139,7 +1139,7 @@ def get_my_listings():
                 # Build the query dynamically based on available columns
                 select_parts = []
                 essential_columns = ['listing_id', 'location', 'cost', 'cubic_ft', 'description', 
-                                    'created_at', 'owner_id']
+                                    'created_at', 'owner_id', 'remaining_volume']
                 
                 # Add all essential columns that exist
                 for col in essential_columns:
@@ -1844,7 +1844,7 @@ def get_my_interested_listings():
                             "address": row[4],
                             "lender": row[5],
                             "dateInterested": row[6].isoformat() if row[6] else None,
-                            "status": row[7],
+                            "status": row[10] if row[10] else row[7],
                             "requested_volume": row[8],
                             "approved_volume": row[9],
                             "approval_type": row[10],
