@@ -8,7 +8,7 @@ import ReservationModal from './ReservationModal';
 
 console.log('ListingDetails component loaded');
 
-const ListingDetails = () => {
+const RenterListingDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [listing, setListing] = useState(null);
@@ -20,12 +20,7 @@ const ListingDetails = () => {
   const [reservationLoading, setReservationLoading] = useState(false);
   const [reservationError, setReservationError] = useState('');
   const [myRequests, setMyRequests] = useState([]);
-  const [allRequests, setAllRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
-  const [isLender, setIsLender] = useState(false);
-  const [lenderActionLoading, setLenderActionLoading] = useState({}); // { [requestId]: bool }
-  const [lenderActionError, setLenderActionError] = useState({});
-  const [refreshKey, setRefreshKey] = useState(0); // for triggering refresh
 
   useEffect(() => {
     // Check authentication status
@@ -142,48 +137,26 @@ const ListingDetails = () => {
     };
   }, [id, isAuthenticated]);
 
-  // Helper: check if renter has a pending request for this listing
-  const hasPendingRequest = myRequests.some(r => r.status === 'pending');
-
   // Fetch reservation requests for this listing (auto-refresh on refreshKey)
   useEffect(() => {
     if (!listing || !isAuthenticated) return;
     const fetchRequests = async () => {
       setRequestsLoading(true);
-      setIsLender(false);
-      setMyRequests([]);
-      setAllRequests([]);
       try {
         const userType = sessionStorage.getItem('userType') || 'renter';
         const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-        if (listing.owner_id && storedUsername && String(listing.owner_id).toLowerCase() === String(storedUsername).toLowerCase()) {
-          setIsLender(true);
-          const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/listings/${listing.id}/reservation-requests`, {
-            credentials: 'include',
-            headers: {
-              'Accept': 'application/json',
-              'Cache-Control': 'no-cache',
-              'X-User-Type': userType,
-              'X-Username': storedUsername
-            }
-          });
-          if (resp.ok) {
-            setAllRequests(await resp.json());
+        const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/my-reservation-requests`, {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType,
+            'X-Username': storedUsername
           }
-        } else {
-          const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/my-reservation-requests`, {
-            credentials: 'include',
-            headers: {
-              'Accept': 'application/json',
-              'Cache-Control': 'no-cache',
-              'X-User-Type': userType,
-              'X-Username': storedUsername
-            }
-          });
-          if (resp.ok) {
-            const all = await resp.json();
-            setMyRequests(all.filter(r => String(r.listing_id) === String(listing.id)));
-          }
+        });
+        if (resp.ok) {
+          const all = await resp.json();
+          setMyRequests(all.filter(r => String(r.listing_id) === String(listing.id)));
         }
       } catch (err) {
         // ignore for now
@@ -192,7 +165,7 @@ const ListingDetails = () => {
       }
     };
     fetchRequests();
-  }, [listing, isAuthenticated, refreshKey]);
+  }, [listing, isAuthenticated]);
 
   // Auto-refresh listing after lender action or reservation
   const fetchListing = async () => {
@@ -278,48 +251,11 @@ const ListingDetails = () => {
       }
       setReservationModalOpen(false);
       setMessage({ type: 'success', text: 'Reservation request submitted!' });
-      setRefreshKey && setRefreshKey(k => k + 1); // if using refreshKey for auto-refresh
       fetchListing && fetchListing();
     } catch (err) {
       setReservationError(err.message);
     } finally {
       setReservationLoading(false);
-    }
-  };
-
-  // Helper: get username from storage
-  const getStoredUsername = () => sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-
-  // Lender: handle approve/reject/partial
-  const handleLenderAction = async (requestId, action, approvedVolume) => {
-    setLenderActionLoading(l => ({ ...l, [requestId]: true }));
-    setLenderActionError(e => ({ ...e, [requestId]: null }));
-    try {
-      const userType = sessionStorage.getItem('userType') || 'lender';
-      const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-      const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/reservation-requests/${requestId}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-          'X-User-Type': userType,
-          'X-Username': storedUsername
-        },
-        body: JSON.stringify(action === 'approved_partial' ? { status: action, approved_volume: approvedVolume } : { status: action })
-      });
-      if (!resp.ok) {
-        const errData = await resp.json().catch(() => ({}));
-        throw new Error(errData.error || 'Failed to update request');
-      }
-      setMessage({ type: 'success', text: 'Request updated!' });
-      setRefreshKey(k => k + 1); // trigger requests refresh
-      fetchListing(); // refresh listing
-    } catch (err) {
-      setLenderActionError(e => ({ ...e, [requestId]: err.message }));
-    } finally {
-      setLenderActionLoading(l => ({ ...l, [requestId]: false }));
     }
   };
 
@@ -467,44 +403,6 @@ const ListingDetails = () => {
                 loading={reservationLoading}
                 error={reservationError}
               />
-
-              {/* Lender: All Reservation Requests for this Listing */}
-              {isAuthenticated && isLender && (
-                <div style={{ marginTop: 24, marginBottom: 8, padding: 16, background: '#fff3e0', borderRadius: 6 }}>
-                  <h4>Reservation Requests (Lender View)</h4>
-                  {requestsLoading ? <div>Loading requests...</div> : (
-                    <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                      {allRequests.length === 0 && <li>No reservation requests yet.</li>}
-                      {allRequests.map(req => (
-                        <li key={req.request_id} style={{ marginBottom: 12, borderBottom: '1px solid #eee', paddingBottom: 8 }}>
-                          <span style={{ fontWeight: 500 }}>{req.renter_username}</span>: {req.requested_volume} cu ft
-                          <span style={{ marginLeft: 8, fontWeight: 500 }}>Status:</span> {req.status.replace('_', ' ')}
-                          {req.approved_volume && (
-                            <span style={{ marginLeft: 8 }}>(Approved: {req.approved_volume} cu ft)</span>
-                          )}
-                          {req.status === 'pending' && (
-                            <span style={{ marginLeft: 16, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                              <button
-                                style={{ ...styles.interestButton, backgroundColor: '#388e3c', minWidth: 80, marginRight: 6 }}
-                                disabled={lenderActionLoading[req.request_id]}
-                                onClick={() => handleLenderAction(req.request_id, 'approved_full')}
-                              >Approve Full</button>
-                              <button
-                                style={{ ...styles.interestButton, backgroundColor: '#d32f2f', minWidth: 80 }}
-                                disabled={lenderActionLoading[req.request_id]}
-                                onClick={() => handleLenderAction(req.request_id, 'rejected')}
-                              >Reject</button>
-                            </span>
-                          )}
-                          {lenderActionError[req.request_id] && (
-                            <span style={{ color: 'red', marginLeft: 8 }}>{lenderActionError[req.request_id]}</span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -694,4 +592,4 @@ const styles = {
   },
 };
 
-export default ListingDetails;
+export default RenterListingDetails;

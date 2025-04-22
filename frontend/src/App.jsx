@@ -6,7 +6,7 @@ import LenderDashboard from './components/LenderDashboard';
 import CreateListing from './components/CreateListing';
 import EditListing from './components/EditListing';
 import ViewListings from './components/ViewListings';
-import ListingDetails from './components/ListingDetails';
+import RenterListingDetails from './components/RenterListingDetails';
 import LenderListingDetails from './components/LenderListingDetails';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import AuthDebug from './components/AuthDebug';
@@ -301,7 +301,7 @@ function App() {
           {/* Renter routes */}
           <Route path="/map" element={<ProtectedRoute component={<Map />} allowedUserType="renter" />} />
           <Route path="/renter-dashboard" element={<ProtectedRoute component={<RenterDashboard />} allowedUserType="renter" />} />
-          <Route path="/listing/:id" element={<ProtectedRoute component={<ListingDetails />} allowedUserType="renter" />} />
+          <Route path="/listing/:id" element={<ProtectedRoute component={<RenterListingDetails />} allowedUserType="renter" />} />
           
           {/* Lender routes */}
           <Route path="/lender-dashboard" element={<ProtectedRoute component={<LenderDashboard />} allowedUserType="lender" />} />
