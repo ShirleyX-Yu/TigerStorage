@@ -162,6 +162,7 @@ const LenderDashboard = ({ username }) => {
       if (resp.ok) {
         const data = await resp.json();
         setReservationRequests(r => ({ ...r, [listingId]: data }));
+        fetchListings();
       }
     } catch (err) {
       // ignore

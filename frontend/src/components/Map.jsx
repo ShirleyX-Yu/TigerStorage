@@ -384,6 +384,8 @@ const Map = () => {
 
   useEffect(() => {
     fetchListings();
+    const interval = setInterval(fetchListings, 10000); // Poll every 10 seconds
+    return () => clearInterval(interval);
   }, []);
 
   const handleFilterChange = (key, value) => {
