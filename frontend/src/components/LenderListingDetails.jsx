@@ -3,10 +3,20 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Dialog from '@mui/material/Dialog';
 import EditListingForm from './EditListingForm';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 
 const LenderListingDetails = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const fetchListingDetailsRef = useRef(null);
+  const [actionLoading, setActionLoading] = useState({});
+  const [actionError, setActionError] = useState({});
+  const [partialModal, setPartialModal] = useState({ open: false, request: null });
+  const [partialVolume, setPartialVolume] = useState('');
+  const [partialError, setPartialError] = useState('');
 
   const handleOpenEditModal = () => setEditModalOpen(true);
   const handleCloseEditModal = (shouldRefresh = false) => {
@@ -21,7 +31,7 @@ const LenderListingDetails = () => {
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [interestedRenters, setInterestedRenters] = useState([]);
+  const [reservationRequests, setReservationRequests] = useState([]);
 
   useEffect(() => {
     const fetchListingDetails = async () => {
@@ -36,12 +46,18 @@ const LenderListingDetails = () => {
         if (!response.ok) throw new Error(await response.text());
         const data = await response.json();
 
-        const rentersResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/listings/${id}/interested-renters`, {
-          credentials: 'include'
+        // Fetch reservation requests for this listing
+        const requestsResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/listings/${id}/reservation-requests`, {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+          }
         });
-        if (!rentersResponse.ok) throw new Error('Failed to fetch interested renters');
+        if (!requestsResponse.ok) throw new Error('Failed to fetch reservation requests');
+        const requestsData = await requestsResponse.json();
+        setReservationRequests(requestsData);
 
-        const rentersData = await rentersResponse.json();
         setListing({
           id: data.id,
           location: data.location,
@@ -52,13 +68,6 @@ const LenderListingDetails = () => {
           images: Array.isArray(data.images) && data.images.length > 0
             ? data.images
             : [data.image_url || '/assets/placeholder.jpg'],
-          interestedRenters: rentersData.map(r => ({
-            id: r.id,
-            name: r.username,
-            email: `${r.username}@princeton.edu`,
-            dateInterested: r.dateInterested,
-            status: r.status
-          }))
         });
       } catch (err) {
         setError(err.message);
@@ -71,6 +80,72 @@ const LenderListingDetails = () => {
     fetchListingDetails();
     return () => console.log('Component unmounted');
   }, [id]);
+
+  const refreshRequests = async () => {
+    try {
+      const requestsResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/listings/${id}/reservation-requests`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+        }
+      });
+      if (!requestsResponse.ok) throw new Error('Failed to fetch reservation requests');
+      const requestsData = await requestsResponse.json();
+      setReservationRequests(requestsData);
+    } catch (err) {
+      // ignore
+    }
+  };
+
+  const handleAction = async (requestId, action, approvedVolume) => {
+    setActionLoading(l => ({ ...l, [requestId]: true }));
+    setActionError(e => ({ ...e, [requestId]: null }));
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/reservation-requests/${requestId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+        body: JSON.stringify(action === 'approved_partial' ? { status: action, approved_volume: approvedVolume } : { status: action })
+      });
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to update request');
+      }
+      await refreshRequests();
+    } catch (err) {
+      setActionError(e => ({ ...e, [requestId]: err.message }));
+    } finally {
+      setActionLoading(l => ({ ...l, [requestId]: false }));
+    }
+  };
+
+  const openPartialModal = (request) => {
+    setPartialModal({ open: true, request });
+    setPartialVolume('');
+    setPartialError('');
+  };
+  const closePartialModal = () => {
+    setPartialModal({ open: false, request: null });
+    setPartialVolume('');
+    setPartialError('');
+  };
+  const handlePartialApprove = async () => {
+    const req = partialModal.request;
+    const max = Math.min(req.requested_volume, listing.cubicFeet);
+    const vol = Number(partialVolume);
+    if (!vol || isNaN(vol) || vol <= 0 || vol > max) {
+      setPartialError(`Enter a valid volume (0 < volume ≤ ${max})`);
+      return;
+    }
+    setPartialError('');
+    await handleAction(req.request_id, 'approved_partial', vol);
+    closePartialModal();
+  };
 
   const renderError = () => (
     <div style={styles.errorContainer}>
@@ -121,24 +196,45 @@ const LenderListingDetails = () => {
                 <div style={styles.specItem}><span style={styles.specLabel}>Cost:</span><span style={styles.specValue}>${listing.cost}/month</span></div>
                 <div style={styles.specItem}><span style={styles.specLabel}>Size:</span><span style={styles.specValue}>{listing.cubicFeet} cubic feet</span></div>
                 <div style={styles.specItem}><span style={styles.specLabel}>Contract:</span><span style={styles.specValue}>{listing.contractLength} months</span></div>
-                <div style={styles.specItem}><span style={styles.specLabel}>Interested Renters:</span><span style={styles.specValue}>{listing.interestedRenters?.length || 0}</span></div>
               </div>
               <div style={styles.descriptionSection}>
                 <h3>Description</h3>
                 <p style={styles.description}>{listing.description}</p>
               </div>
               <div style={styles.interestedRenters}>
-                <h3>Interested Renters ({listing.interestedRenters?.length || 0})</h3>
-                {listing.interestedRenters.length === 0 ? <p>No interest yet.</p> : (
-                  <div style={styles.rentersList}>
-                    {listing.interestedRenters.map(r => (
-                      <div key={r.id} style={styles.renterItem}>
-                        <div style={styles.renterHeader}><h4 style={styles.renterName}>{r.name}</h4></div>
-                        <p style={styles.renterContact}><a href={`mailto:${r.email}`} style={styles.renterEmail}>{r.email}</a></p>
-                        <p style={styles.renterDate}>Interested since: {new Date(r.dateInterested).toLocaleDateString()}</p>
-                      </div>
-                    ))}
-                  </div>
+                <h3>Reservation Requests</h3>
+                {reservationRequests.length === 0 ? <p>No reservation requests yet.</p> : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 12 }}>
+                    <thead>
+                      <tr style={{ background: '#f8f8f8' }}>
+                        <th style={{ padding: 8, border: '1px solid #eee' }}>Renter</th>
+                        <th style={{ padding: 8, border: '1px solid #eee' }}>Status</th>
+                        <th style={{ padding: 8, border: '1px solid #eee' }}>Requested Volume</th>
+                        <th style={{ padding: 8, border: '1px solid #eee' }}>Approved Volume</th>
+                        <th style={{ padding: 8, border: '1px solid #eee' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reservationRequests.map(req => (
+                        <tr key={req.request_id}>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.renter_username}</td>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.status.replace('_', ' ')}</td>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.requested_volume} cu ft</td>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.approved_volume ? `${req.approved_volume} cu ft` : '-'}</td>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>
+                            {req.status === 'pending' && (
+                              <>
+                                <Button size="small" variant="contained" style={{ background: '#388e3c', color: 'white', marginRight: 6 }} disabled={actionLoading[req.request_id]} onClick={() => handleAction(req.request_id, 'approved_full')}>Approve Full</Button>
+                                <Button size="small" variant="contained" style={{ background: '#1976d2', color: 'white', marginRight: 6 }} disabled={actionLoading[req.request_id]} onClick={() => openPartialModal(req)}>Approve Partial</Button>
+                                <Button size="small" variant="contained" style={{ background: '#d32f2f', color: 'white' }} disabled={actionLoading[req.request_id]} onClick={() => handleAction(req.request_id, 'rejected')}>Reject</Button>
+                                {actionError[req.request_id] && <div style={{ color: 'red', marginTop: 4 }}>{actionError[req.request_id]}</div>}
+                              </>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 )}
               </div>
             </div>
@@ -152,6 +248,32 @@ const LenderListingDetails = () => {
               onSuccess={() => handleCloseEditModal(true)}
             />
           )}
+        </Dialog>
+        {/* Partial Approval Modal */}
+        <Dialog open={partialModal.open} onClose={closePartialModal} maxWidth="xs" fullWidth>
+          <DialogTitle>Approve Partial Reservation</DialogTitle>
+          <DialogContent>
+            <div style={{ marginBottom: 12 }}>
+              <b>Renter:</b> {partialModal.request?.renter_username}<br />
+              <b>Requested Volume:</b> {partialModal.request?.requested_volume} cu ft<br />
+              <b>Max Allowed:</b> {partialModal.request ? Math.min(partialModal.request.requested_volume, listing.cubicFeet) : 0} cu ft
+            </div>
+            <TextField
+              label="Approved Volume (cu ft)"
+              type="number"
+              fullWidth
+              variant="outlined"
+              value={partialVolume}
+              onChange={e => setPartialVolume(e.target.value)}
+              inputProps={{ min: 0.1, max: partialModal.request ? Math.min(partialModal.request.requested_volume, listing.cubicFeet) : 0, step: 0.1 }}
+              style={{ marginBottom: 12 }}
+            />
+            {partialError && <div style={{ color: 'red', marginBottom: 8 }}>{partialError}</div>}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closePartialModal} color="secondary">Cancel</Button>
+            <Button onClick={handlePartialApprove} variant="contained" color="primary">Approve</Button>
+          </DialogActions>
         </Dialog>
       </div>
     </div>
