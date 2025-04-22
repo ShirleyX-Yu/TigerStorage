@@ -301,7 +301,7 @@ const ViewListings = () => {
                         <div style={styles.listingDetails}>
                           <h3 style={styles.listingTitle}>{listing.location}</h3>
                           <p style={styles.listingInfo}>
-                            <strong>${listing.cost}</strong> per month · {listing.cubic_feet} cubic feet · {listing.contract_length_months} months
+                            <strong>${listing.cost}</strong> per month · {listing.remaining_volume ?? listing.cubic_feet} cu ft remaining / {listing.cubic_feet} cu ft total · {listing.contract_length_months} months
                           </p>
                           <div style={styles.descriptionBox}>
                             <p style={styles.description}>{listing.description || 'No description available'}</p>
