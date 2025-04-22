@@ -453,6 +453,9 @@ const Map = () => {
     };
   });
 
+  // Filter out unavailable listings before rendering
+  const availableListings = listings.filter(listing => listing.is_available === undefined || listing.is_available === true);
+
   // No listings message component
   const NoListingsMessage = () => (
     <div style={{ 
@@ -549,9 +552,9 @@ const Map = () => {
           <Typography variant="h6" style={{ padding: '16px', color: '#FF6B00' }}>
             Available Listings
           </Typography>
-          {filteredListings && filteredListings.length > 0 ? (
+          {availableListings && availableListings.length > 0 ? (
             <List style={{ overflowY: 'auto', flex: 1, height: 'calc(100vh - 72px)' }}>
-              {filteredListings
+              {availableListings
                 .filter(listing => listing.matchesFilters)
                 .map((listing) => (
                 <React.Fragment key={listing.listing_id || listing.id}>
@@ -605,7 +608,7 @@ const Map = () => {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
             <MapContent 
-              listings={filteredListings} 
+              listings={availableListings} 
               onListingClick={(listing, group) => {
                 if (group && group.length > 1) {
                   setGroupedListings(group);

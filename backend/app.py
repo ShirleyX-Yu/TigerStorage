@@ -844,7 +844,8 @@ def get_listings():
                             "image_url": listing_dict.get('image_url', '/assets/placeholder.jpg'),
                             "created_at": listing_dict.get('created_at').isoformat() if hasattr(listing_dict.get('created_at'), 'isoformat') else (listing_dict.get('created_at') if listing_dict.get('created_at') else None),
                             "owner_id": listing_dict.get('owner_id', ''),
-                            "remaining_volume": listing_dict.get('remaining_volume', 0)
+                            "remaining_volume": listing_dict.get('remaining_volume', 0),
+                            "is_available": listing_dict.get('is_available', True)
                         }
 
                         # Ensure latitude and longitude have values for map display
@@ -1228,7 +1229,8 @@ def get_my_listings():
                                 "image_url": listing_dict.get('image_url', '/assets/placeholder.jpg'),
                                 "created_at": listing_dict.get('created_at').isoformat() if listing_dict.get('created_at') else None,
                                 "owner_id": listing_dict.get('owner_id', ''),
-                                "remaining_volume": listing_dict.get('remaining_volume', 0)
+                                "remaining_volume": listing_dict.get('remaining_volume', 0),
+                                "is_available": listing_dict.get('is_available', True)
                             }
                             formatted_listings.append(formatted_listing)
                         except Exception as e:
