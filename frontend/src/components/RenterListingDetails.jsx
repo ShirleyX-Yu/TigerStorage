@@ -298,6 +298,7 @@ const RenterListingDetails = () => {
       return;
     }
     // Find an approved reservation with end date in the past (date-only comparison)
+    console.log('myRequests:', myRequests);
     const today = new Date();
     today.setHours(0,0,0,0); // midnight local time
     console.log('Review eligibility check - today is:', today.toISOString(), today.toLocaleString());
