@@ -2260,7 +2260,13 @@ def submit_lender_review():
     request_id = data.get('request_id')
     rating = data.get('rating')
     review_text = data.get('review_text', '')
-    renter_username = session.get('username')  # or however you store user info
+    # Support both session and header-based auth for renter_username
+    renter_username = (
+        session.get('username')
+        or session.get('user_info', {}).get('user')
+        or request.headers.get('X-Username', '').lower()
+    )
+    print(f"[REVIEW SUBMIT] Authenticated renter_username: {renter_username}")
 
     conn = get_db_connection()
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -2274,6 +2280,7 @@ def submit_lender_review():
         reservation = cur.fetchone()
         if not reservation:
             return jsonify({'error': 'Reservation not found'}), 404
+        print(f"[REVIEW SUBMIT] Reservation renter_username: {reservation['renter_username']}")
         if reservation['renter_username'] != renter_username:
             return jsonify({'error': 'Not your reservation'}), 403
         if reservation['status'] not in ('approved_full', 'approved_partial'):
