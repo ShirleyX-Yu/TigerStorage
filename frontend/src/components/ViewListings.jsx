@@ -138,13 +138,16 @@ const ViewListings = () => {
   };
 
   // Filter out unavailable listings before rendering
-  const filteredListings = listings.filter(listing => (listing.is_available === undefined || listing.is_available === true) &&
-    (!filters.minPrice || listing.cost >= Number(filters.minPrice)) &&
-    (!filters.maxPrice || listing.cost <= Number(filters.maxPrice)) &&
-    (!filters.minSize || listing.cubic_feet >= Number(filters.minSize)) &&
-    (!filters.maxSize || listing.cubic_feet <= Number(filters.maxSize)) &&
-    (!filters.minContract || listing.contract_length_months >= Number(filters.minContract)) &&
-    (!filters.maxContract || listing.contract_length_months <= Number(filters.maxContract))
+  const filteredListings = listings.filter(
+    listing =>
+      (listing.is_available === undefined || listing.is_available === true) &&
+      Number(listing.remaining_volume) > 0 &&
+      (!filters.minPrice || listing.cost >= Number(filters.minPrice)) &&
+      (!filters.maxPrice || listing.cost <= Number(filters.maxPrice)) &&
+      (!filters.minSize || listing.cubic_feet >= Number(filters.minSize)) &&
+      (!filters.maxSize || listing.cubic_feet <= Number(filters.maxSize)) &&
+      (!filters.minContract || listing.contract_length_months >= Number(filters.minContract)) &&
+      (!filters.maxContract || listing.contract_length_months <= Number(filters.maxContract))
   );
 
   // After a reservation is submitted, re-fetch the listings to update remaining_volume.

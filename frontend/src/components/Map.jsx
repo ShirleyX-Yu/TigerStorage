@@ -454,7 +454,9 @@ const Map = () => {
   });
 
   // Filter out unavailable listings before rendering
-  const availableListings = listings.filter(listing => listing.is_available === undefined || listing.is_available === true);
+  const availableListings = listings.filter(
+    listing => (listing.is_available === undefined || listing.is_available === true) && Number(listing.remaining_volume) > 0
+  );
 
   // No listings message component
   const NoListingsMessage = () => (
