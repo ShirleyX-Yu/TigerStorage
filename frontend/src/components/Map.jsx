@@ -176,7 +176,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
               <div>
                 <h3>${listing.location || 'Unknown Location'}</h3>
                 <p>Price: $${listing.cost ?? 0}/month</p>
-                <p>Size: ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} cu ft remaining / ${listing.cubic_ft ?? listing.cubic_feet ?? 0} cu ft total</p>
+                <p>Size: ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • ${listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total</p>
                 <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
                 <button 
                   style="background-color: #f57c00; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
@@ -211,7 +211,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
                 <ul style="padding-left: 18px;">
                   ${group.map(listing => `
                     <li style='margin-bottom: 2px;'>
-                      <b>$${listing.cost ?? 0}/mo</b>, ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} cu ft remaining / ${listing.cubic_ft ?? listing.cubic_feet ?? 0} cu ft total
+                      <b>$${listing.cost ?? 0}/mo</b>, ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • ${listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total
                       <a href='/listing/${listing.id || listing.listing_id}' style='color:#f57c00;margin-left:5px;'>View</a>
                     </li>
                   `).join('')}
@@ -574,7 +574,7 @@ const Map = () => {
                       secondary={
                         <>
                           <Typography component="span" variant="body2" color="textPrimary">
-                            ${listing.cost !== undefined ? listing.cost : 0}/month • {listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} cu ft remaining / {listing.cubic_ft ?? listing.cubic_feet ?? 0} cu ft total
+                            ${listing.cost !== undefined ? listing.cost : 0}/month • {listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • {listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total
                           </Typography>
                           <br />
                           <Typography component="span" variant="body2" color="textSecondary">
@@ -706,7 +706,7 @@ const Map = () => {
                     {selectedListing.address}
                   </Typography>
                   <Typography variant="body1" style={{ marginBottom: 4 }}>
-                    <b>${selectedListing.cost ?? 0}/month</b> • {selectedListing.remaining_volume ?? selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} cu ft remaining / {selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} cu ft total
+                    <b>${selectedListing.cost ?? 0}/month</b> • {selectedListing.remaining_volume ?? selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} sq ft remaining • {selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} sq ft total
                   </Typography>
                   <Typography variant="body2" color="textSecondary" style={{ marginBottom: 8 }}>
                     {selectedListing.distance ? selectedListing.distance.toFixed(1) : 'N/A'} miles from Princeton University
@@ -784,7 +784,7 @@ const Map = () => {
                     style={{ marginBottom: 16 }}
                     fullWidth
                   >
-                    <ToggleButton value="full" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Full ({selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} cu ft)</ToggleButton>
+                    <ToggleButton value="full" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Full ({selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} sq ft)</ToggleButton>
                     <ToggleButton value="partial" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Partial</ToggleButton>
                   </ToggleButtonGroup>
                   <TextField
@@ -799,7 +799,7 @@ const Map = () => {
                     style={{ marginBottom: 12, background: 'white', borderRadius: 6 }}
                   />
                   <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>
-                    Max available: {selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} cu ft
+                    Max available: {selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} sq ft
                   </div>
                   {(reservationLocalError || reservationError) && <Alert severity="error" style={{ marginBottom: 8 }}>{reservationLocalError || reservationError}</Alert>}
                   <DialogActions style={{ padding: '16px 0 0 0', background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
