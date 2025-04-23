@@ -2160,8 +2160,12 @@ def my_reservation_requests():
         try:
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT request_id, listing_id, requested_volume, approved_volume, status, created_at, updated_at
-                    FROM reservation_requests WHERE renter_username = %s ORDER BY created_at DESC
+                    SELECT rr.request_id, rr.listing_id, rr.requested_volume, rr.approved_volume, rr.status, rr.created_at, rr.updated_at,
+                           sl.end_date, sl.start_date
+                    FROM reservation_requests rr
+                    JOIN storage_listings sl ON rr.listing_id = sl.listing_id
+                    WHERE rr.renter_username = %s
+                    ORDER BY rr.created_at DESC
                 """, (renter_username,))
                 requests = [
                     {
@@ -2171,7 +2175,9 @@ def my_reservation_requests():
                         'approved_volume': r[3],
                         'status': r[4],
                         'created_at': r[5].isoformat() if r[5] else None,
-                        'updated_at': r[6].isoformat() if r[6] else None
+                        'updated_at': r[6].isoformat() if r[6] else None,
+                        'end_date': r[7].isoformat() if r[7] else None,
+                        'start_date': r[8].isoformat() if r[8] else None,
                     } for r in cur.fetchall()
                 ]
                 return jsonify(requests), 200
