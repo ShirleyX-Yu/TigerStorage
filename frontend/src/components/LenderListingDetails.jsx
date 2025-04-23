@@ -8,6 +8,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
+import StarIcon from '@mui/icons-material/Star';
 
 const LenderListingDetails = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -17,6 +18,8 @@ const LenderListingDetails = () => {
   const [partialModal, setPartialModal] = useState({ open: false, request: null });
   const [partialVolume, setPartialVolume] = useState('');
   const [partialError, setPartialError] = useState('');
+  const [lenderReviews, setLenderReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   const handleOpenEditModal = () => setEditModalOpen(true);
   const handleCloseEditModal = (shouldRefresh = false) => {
@@ -80,6 +83,24 @@ const LenderListingDetails = () => {
     fetchListingDetails();
     return () => console.log('Component unmounted');
   }, [id]);
+
+  useEffect(() => {
+    if (!listing || !listing.owner_id) return;
+    const fetchReviews = async () => {
+      setReviewsLoading(true);
+      try {
+        const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lender-reviews/${listing.owner_id}`);
+        if (resp.ok) {
+          setLenderReviews(await resp.json());
+        }
+      } catch (err) {
+        setLenderReviews([]);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+    fetchReviews();
+  }, [listing]);
 
   const refreshRequests = async () => {
     try {
@@ -241,6 +262,37 @@ const LenderListingDetails = () => {
                       ))}
                     </tbody>
                   </table>
+                )}
+              </div>
+              {/* --- Lender Reviews Section --- */}
+              <div style={{ marginTop: 32 }}>
+                <h3>Lender Reviews</h3>
+                {reviewsLoading ? <div>Loading reviews...</div> : (
+                  lenderReviews.length === 0 ? <div>No reviews yet.</div> : (
+                    <>
+                      <div style={{ marginBottom: 16 }}>
+                        <b>Average Rating: </b>
+                        {(
+                          lenderReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / lenderReviews.length
+                        ).toFixed(1)}
+                        <span style={{ color: '#fbc02d', marginLeft: 8 }}>
+                          {[...Array(Math.round(lenderReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / lenderReviews.length))].map((_, i) => <StarIcon key={i} fontSize="small" />)}
+                        </span>
+                      </div>
+                      <div>
+                        {lenderReviews.map((r, i) => (
+                          <div key={i} style={{ background: '#f8f8f8', borderRadius: 6, padding: 12, marginBottom: 10 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ color: '#fbc02d' }}>{[...Array(r.rating)].map((_, j) => <StarIcon key={j} fontSize="small" />)}</span>
+                              <span style={{ fontWeight: 600 }}>{r.renter_username}</span>
+                              <span style={{ color: '#888', fontSize: 12 }}>{new Date(r.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <div style={{ marginTop: 4 }}>{r.review_text}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )
                 )}
               </div>
             </div>
