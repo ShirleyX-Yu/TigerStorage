@@ -178,9 +178,12 @@ const LenderDashboard = ({ username }) => {
       const userType = sessionStorage.getItem('userType') || 'lender';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || username || 'lender';
       const reqObj = reservationRequests[listingId]?.find(r => r.request_id === requestId);
-      const approvedVolume = (action === 'approved_full' && reqObj) ? reqObj.requested_volume : approvedVolume;
+      let finalApprovedVolume = approvedVolume;
+      if (action === 'approved_full' && reqObj) {
+        finalApprovedVolume = reqObj.requested_volume;
+      }
       const body = action === 'approved_partial' || action === 'approved_full'
-        ? { status: action, approved_volume: approvedVolume }
+        ? { status: action, approved_volume: finalApprovedVolume }
         : { status: action };
       const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/reservation-requests/${requestId}`, {
         method: 'PATCH',
