@@ -297,12 +297,16 @@ const RenterListingDetails = () => {
       setMyRequestId(null);
       return;
     }
-    // Find an approved reservation with end date in the past
-    const now = new Date();
-    const eligible = myRequests.find(r =>
-      (r.status === 'approved_full' || r.status === 'approved_partial') &&
-      r.end_date && new Date(r.end_date) < now
-    );
+    // Find an approved reservation with end date in the past (date-only comparison)
+    const today = new Date();
+    today.setHours(0,0,0,0); // midnight local time
+    console.log('Review eligibility check - today is:', today.toISOString(), today.toLocaleString());
+    const eligible = myRequests.find(r => {
+      if (!(r.status === 'approved_full' || r.status === 'approved_partial') || !r.end_date) return false;
+      const endDate = new Date(r.end_date);
+      endDate.setHours(0,0,0,0); // ignore time
+      return endDate < today;
+    });
     if (!eligible) {
       setCanReview(false);
       setHasReviewed(false);
