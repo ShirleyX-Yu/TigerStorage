@@ -425,20 +425,17 @@ const Map = () => {
   // Filter listings based on current filters
   const filteredListings = listings.map(listing => {
     if (!listing.latitude || !listing.longitude) return { ...listing, matchesFilters: false };
-    
     // Prioritize the database column names
     const listingCost = listing.cost !== undefined ? listing.cost : 0;
     const costMatches = (filters.minCost === 0 && filters.maxCost === 0) 
       ? listingCost === 0 
       : listingCost >= filters.minCost && listingCost <= filters.maxCost;
-    
     // Prioritize cubic_ft which is the actual database column
-    const listingSize = listing.cubic_ft !== undefined ? listing.cubic_ft : 
-                        (listing.cubic_feet !== undefined ? listing.cubic_feet : 0);
+    const listingSize = listing.cubic_ft !== undefined ? Number(listing.cubic_ft) : 
+                        (listing.cubic_feet !== undefined ? Number(listing.cubic_feet) : 0);
     const sizeMatches = (filters.minSize === 0 && filters.maxSize === 0)
       ? listingSize === 0
       : listingSize >= filters.minSize && listingSize <= filters.maxSize;
-    
     const distance = calculateDistance(
       PRINCETON_COORDS.lat,
       PRINCETON_COORDS.lng,
@@ -446,16 +443,15 @@ const Map = () => {
       listing.longitude
     );
     const distanceMatches = distance <= filters.maxDistance;
-    
     return {
       ...listing,
       matchesFilters: costMatches && sizeMatches && distanceMatches
     };
   });
 
-  // Filter out unavailable listings before rendering
-  const availableListings = listings.filter(
-    listing => (listing.is_available === undefined || listing.is_available === true) && Number(listing.remaining_volume) > 0
+  // Use filteredListings for sidebar, checking availability and matchesFilters
+  const availableListings = filteredListings.filter(
+    listing => (listing.is_available === undefined || listing.is_available === true) && Number(listing.remaining_volume) > 0 && listing.matchesFilters
   );
 
   // No listings message component
