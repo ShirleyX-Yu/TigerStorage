@@ -5,6 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import { checkAuthStatus } from '../utils/auth';
 import ReservationModal from './ReservationModal';
+import StarIcon from '@mui/icons-material/Star';
 
 console.log('ListingDetails component loaded');
 
@@ -21,6 +22,15 @@ const RenterListingDetails = () => {
   const [reservationError, setReservationError] = useState('');
   const [myRequests, setMyRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const [reviewSuccess, setReviewSuccess] = useState('');
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [canReview, setCanReview] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [myRequestId, setMyRequestId] = useState(null);
 
   useEffect(() => {
     // Check authentication status
@@ -259,6 +269,100 @@ const RenterListingDetails = () => {
     }
   };
 
+  // Fetch reviews for this lender
+  useEffect(() => {
+    if (!listing || !listing.owner_id) return;
+    const fetchReviews = async () => {
+      try {
+        setReviewLoading(true);
+        const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lender-reviews/${listing.owner_id}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          setReviews(data);
+        }
+      } catch (err) {
+        // ignore
+      } finally {
+        setReviewLoading(false);
+      }
+    };
+    fetchReviews();
+  }, [listing]);
+
+  // Determine if user can review
+  useEffect(() => {
+    if (!myRequests || myRequests.length === 0) {
+      setCanReview(false);
+      setHasReviewed(false);
+      setMyRequestId(null);
+      return;
+    }
+    // Find an approved reservation with end date in the past
+    const now = new Date();
+    const eligible = myRequests.find(r =>
+      (r.status === 'approved_full' || r.status === 'approved_partial') &&
+      r.end_date && new Date(r.end_date) < now
+    );
+    if (!eligible) {
+      setCanReview(false);
+      setHasReviewed(false);
+      setMyRequestId(null);
+      return;
+    }
+    setMyRequestId(eligible.request_id);
+    // Check if already reviewed
+    const checkReviewed = async () => {
+      try {
+        const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lender-reviews/${listing.owner_id}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
+          const found = data.find(r => r.renter_username === storedUsername && r.request_id === eligible.request_id);
+          setHasReviewed(!!found);
+          setCanReview(!found);
+        }
+      } catch (err) {
+        setHasReviewed(false);
+        setCanReview(true);
+      }
+    };
+    checkReviewed();
+  }, [myRequests, listing]);
+
+  // Review form submit
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    setReviewLoading(true);
+    setReviewError('');
+    setReviewSuccess('');
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lender-reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          request_id: myRequestId,
+          rating: reviewRating,
+          review_text: reviewText
+        })
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Failed to submit review');
+      setReviewSuccess('Review submitted!');
+      setHasReviewed(true);
+      setCanReview(false);
+      setReviewRating(0);
+      setReviewText('');
+      // Refresh reviews
+      const reviewsResp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lender-reviews/${listing.owner_id}`);
+      if (reviewsResp.ok) setReviews(await reviewsResp.json());
+    } catch (err) {
+      setReviewError(err.message);
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
   // Simple render function for error state
   const renderError = () => (
     <div style={styles.errorContainer}>
@@ -393,6 +497,67 @@ const RenterListingDetails = () => {
                       : 'Login to Show Interest'}
                   </button>
                 </div>
+              </div>
+
+              {/* --- Renter Review Section --- */}
+              <div style={{ marginTop: 32 }}>
+                <h3>Lender Reviews</h3>
+                {reviewLoading ? <div>Loading reviews...</div> : (
+                  <>
+                    {reviews.length === 0 && <div>No reviews yet.</div>}
+                    {reviews.length > 0 && (
+                      <div style={{ marginBottom: 16 }}>
+                        <b>Average Rating: </b>
+                        {(
+                          reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
+                        ).toFixed(1)}
+                        <span style={{ color: '#fbc02d', marginLeft: 8 }}>
+                          {[...Array(Math.round(reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length))].map((_, i) => <StarIcon key={i} fontSize="small" />)}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      {reviews.map((r, i) => (
+                        <div key={i} style={{ background: '#f8f8f8', borderRadius: 6, padding: 12, marginBottom: 10 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ color: '#fbc02d' }}>{[...Array(r.rating)].map((_, j) => <StarIcon key={j} fontSize="small" />)}</span>
+                            <span style={{ fontWeight: 600 }}>{r.renter_username}</span>
+                            <span style={{ color: '#888', fontSize: 12 }}>{new Date(r.created_at).toLocaleDateString()}</span>
+                          </div>
+                          <div style={{ marginTop: 4 }}>{r.review_text}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {/* Review Form */}
+                {canReview && !hasReviewed && (
+                  <form onSubmit={handleReviewSubmit} style={{ marginTop: 24, background: '#fffbe6', borderRadius: 8, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                    <div style={{ marginBottom: 8 }}><b>Leave a Review</b></div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      {[1,2,3,4,5].map(star => (
+                        <span key={star} style={{ cursor: 'pointer', color: reviewRating >= star ? '#fbc02d' : '#ccc' }} onClick={() => setReviewRating(star)}>
+                          <StarIcon fontSize="medium" />
+                        </span>
+                      ))}
+                      <span style={{ marginLeft: 8 }}>{reviewRating} / 5</span>
+                    </div>
+                    <textarea
+                      value={reviewText}
+                      onChange={e => setReviewText(e.target.value)}
+                      rows={3}
+                      placeholder="Write your review..."
+                      style={{ width: '100%', borderRadius: 6, border: '1px solid #ddd', padding: 8, marginBottom: 8 }}
+                      required
+                    />
+                    {reviewError && <div style={{ color: 'red', marginBottom: 8 }}>{reviewError}</div>}
+                    {reviewSuccess && <div style={{ color: 'green', marginBottom: 8 }}>{reviewSuccess}</div>}
+                    <button type="submit" style={{ background: '#fbc02d', color: '#333', border: 'none', borderRadius: 4, padding: '8px 18px', fontWeight: 600, cursor: 'pointer' }} disabled={reviewLoading || reviewRating === 0}>
+                      {reviewLoading ? 'Submitting...' : 'Submit Review'}
+                    </button>
+                  </form>
+                )}
+                {hasReviewed && <div style={{ color: 'green', marginTop: 12 }}>You have already reviewed this reservation.</div>}
               </div>
 
               <ReservationModal

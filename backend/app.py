@@ -2248,6 +2248,64 @@ def get_reported_listings():
         if 'conn' in locals():
             conn.close()
 
+@app.route('/api/lender-reviews', methods=['POST'])
+def submit_lender_review():
+    data = request.json
+    request_id = data.get('request_id')
+    rating = data.get('rating')
+    review_text = data.get('review_text', '')
+    renter_username = session.get('username')  # or however you store user info
+
+    conn = get_db_connection()
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        # 1. Fetch reservation and check ownership and approval
+        cur.execute("""
+            SELECT rr.*, sl.owner_id, sl.end_date
+            FROM reservation_requests rr
+            JOIN storage_listings sl ON rr.listing_id = sl.listing_id
+            WHERE rr.request_id = %s
+        """, (request_id,))
+        reservation = cur.fetchone()
+        if not reservation:
+            return jsonify({'error': 'Reservation not found'}), 404
+        if reservation['renter_username'] != renter_username:
+            return jsonify({'error': 'Not your reservation'}), 403
+        if reservation['status'] not in ('approved_full', 'approved_partial'):
+            return jsonify({'error': 'Reservation not approved'}), 403
+        if not reservation['end_date'] or datetime.now().date() < reservation['end_date']:
+            return jsonify({'error': 'You can only review after your reservation ends'}), 403
+
+        # 2. Check if review already exists
+        cur.execute("""
+            SELECT 1 FROM lender_reviews WHERE request_id = %s
+        """, (request_id,))
+        if cur.fetchone():
+            return jsonify({'error': 'You have already reviewed this reservation'}), 400
+
+        # 3. Insert review
+        cur.execute("""
+            INSERT INTO lender_reviews (lender_username, renter_username, request_id, rating, review_text)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (reservation['owner_id'], renter_username, request_id, rating, review_text))
+        conn.commit()
+    return jsonify({'success': True})
+
+@app.route('/api/lender-reviews/<lender_username>', methods=['GET'])
+def get_lender_reviews(lender_username):
+    conn = get_db_connection()
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute("""
+            SELECT lr.rating, lr.review_text, lr.created_at, lr.renter_username,
+                   sl.listing_id, sl.location
+            FROM lender_reviews lr
+            JOIN reservation_requests rr ON lr.request_id = rr.request_id
+            JOIN storage_listings sl ON rr.listing_id = sl.listing_id
+            WHERE lr.lender_username = %s
+            ORDER BY lr.created_at DESC
+        """, (lender_username,))
+        reviews = cur.fetchall()
+    return jsonify(reviews)
+
 if __name__ == "__main__":
     args = parser.parse_args()
     app.debug = not args.production

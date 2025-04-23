@@ -9,6 +9,7 @@ import TextField from '@mui/material/TextField';
 import CreateListing from './CreateListing';
 import { useNavigate, useLocation } from 'react-router-dom';
 import EditListingForm from './EditListingForm';
+import StarIcon from '@mui/icons-material/Star';
 
 // Modal wrapper for CreateListing to allow passing onClose/onSuccess
 const CreateListingModal = ({ onClose, onSuccess }) => {
@@ -30,6 +31,8 @@ const LenderDashboard = ({ username }) => {
   const [partialModal, setPartialModal] = useState({ open: false, request: null, listingId: null });
   const [partialVolume, setPartialVolume] = useState('');
   const [partialError, setPartialError] = useState('');
+  const [lenderReviews, setLenderReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   const handleOpenEditModal = (listingId) => {
     setEditListingId(listingId);
@@ -252,6 +255,26 @@ const LenderDashboard = ({ username }) => {
       setDeleteInProgress(false);
     }
   };
+
+  // Fetch reviews for this lender
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!username) return;
+      setReviewsLoading(true);
+      try {
+        const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lender-reviews/${username}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          setLenderReviews(data);
+        }
+      } catch (err) {
+        setLenderReviews([]);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+    fetchReviews();
+  }, [username]);
 
   return (
     <div style={styles.container}>
@@ -547,6 +570,45 @@ const LenderDashboard = ({ username }) => {
           >Approve</Button>
         </DialogActions>
       </Dialog>
+      {/* --- Lender Reviews Section --- */}
+      <div style={{ margin: '40px auto 0', maxWidth: 900, background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: 24 }}>
+        <h2 style={{ marginBottom: 16 }}>Your Reviews</h2>
+        {reviewsLoading ? <div>Loading reviews...</div> : (
+          lenderReviews.length === 0 ? <div>No reviews yet.</div> : (
+            <>
+              <div style={{ marginBottom: 16 }}>
+                <b>Average Rating: </b>
+                {(
+                  lenderReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / lenderReviews.length
+                ).toFixed(1)}
+                <span style={{ color: '#fbc02d', marginLeft: 8 }}>
+                  {[...Array(Math.round(lenderReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / lenderReviews.length))].map((_, i) => <StarIcon key={i} fontSize="small" />)}
+                </span>
+              </div>
+              <div>
+                {lenderReviews.map((r, i) => (
+                  <div key={i} style={{ background: '#f8f8f8', borderRadius: 6, padding: 12, marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ color: '#fbc02d' }}>{[...Array(r.rating)].map((_, j) => <StarIcon key={j} fontSize="small" />)}</span>
+                      <span style={{ fontWeight: 600 }}>{r.renter_username}</span>
+                      <span style={{ color: '#888', fontSize: 12 }}>{new Date(r.created_at).toLocaleDateString()}</span>
+                      {r.listing_id && (
+                        <span style={{ marginLeft: 12, fontSize: 13, color: '#333' }}>
+                          for listing: 
+                          <a href={`/lender-dashboard/listing/${r.listing_id}`} style={{ color: '#1976d2', textDecoration: 'underline', marginLeft: 4 }}>
+                            {r.location || `Listing #${r.listing_id}`}
+                          </a>
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ marginTop: 4 }}>{r.review_text}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )
+        )}
+      </div>
     </div>
   );
 };
