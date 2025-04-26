@@ -126,7 +126,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
       className: 'custom-grouped-marker',
       html: `
         <div style="position: relative; width: 25px; height: 41px;">
-          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png" style="width: 25px; height: 41px; display: block;" />
+          <img src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png" style="width: 25px; height: 41px; display: block; filter: grayscale(100%) brightness(0.7);" />
           <div class="grouped-marker-badge" style="
             position: absolute;
             top: -7px;
