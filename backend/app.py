@@ -10,11 +10,10 @@ import uuid
 from werkzeug.utils import secure_filename
 from decimal import Decimal
 from psycopg2.extras import RealDictCursor
-from datetime import datetime
+from datetime import datetime, date
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
-import datetime
 
 # Initialize Cloudinary
 cloudinary.config(
@@ -666,9 +665,9 @@ def create_listing():
 
             # Date validation
             try:
-                today = datetime.date.today()
-                start_dt = datetime.date.fromisoformat(start_date)
-                end_dt = datetime.date.fromisoformat(end_date)
+                today = date.today()
+                start_dt = date.fromisoformat(start_date)
+                end_dt = date.fromisoformat(end_date)
                 if start_dt < today:
                     return jsonify({"error": "Start date cannot be in the past."}), 400
                 if end_dt < today:
@@ -2328,7 +2327,7 @@ def submit_lender_review():
             return jsonify({'error': 'Not your reservation'}), 403
         if reservation['status'] not in ('approved_full', 'approved_partial'):
             return jsonify({'error': 'Reservation not approved'}), 403
-        if not reservation['end_date'] or datetime.now().date() < reservation['end_date']:
+        if not reservation['end_date'] or date.today() < reservation['end_date']:
             return jsonify({'error': 'You can only review after your reservation ends'}), 403
 
         # 2. Check if review already exists
