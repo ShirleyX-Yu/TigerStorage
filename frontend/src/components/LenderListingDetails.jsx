@@ -21,7 +21,7 @@ const getStatusLabel = (status) => {
     case 'rejected':
       return 'Rejected';
     case 'cancelled_by_renter':
-      return 'Cancelled by You';
+      return 'Cancelled by Renter';
     case 'expired':
       return 'Expired';
     default:

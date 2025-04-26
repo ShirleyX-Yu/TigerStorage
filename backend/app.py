@@ -14,6 +14,7 @@ from datetime import datetime
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+import datetime
 
 # Initialize Cloudinary
 cloudinary.config(
@@ -653,8 +654,8 @@ def create_listing():
                 total_sq_ft = int(data['cubic_feet']) if data['cubic_feet'] else 0
             else:
                 total_sq_ft = 0
-            # Validation: cubic feet must not be negative
-            if total_sq_ft < 0:
+            # Validation: cubic feet must be greater than zero
+            if total_sq_ft <= 0:
                 return jsonify({"error": "Storage space (cubic feet) must be greater than zero."}), 400
                 
             latitude = float(data['latitude'])
@@ -662,6 +663,20 @@ def create_listing():
             start_date = data['start_date']  # Already in ISO format from frontend
             end_date = data['end_date']      # Already in ISO format from frontend
             image_url = data.get('image_url', '')  # Get image URL if provided
+
+            # Date validation
+            try:
+                today = datetime.date.today()
+                start_dt = datetime.date.fromisoformat(start_date)
+                end_dt = datetime.date.fromisoformat(end_date)
+                if start_dt < today:
+                    return jsonify({"error": "Start date cannot be in the past."}), 400
+                if end_dt < today:
+                    return jsonify({"error": "End date cannot be in the past."}), 400
+                if start_dt >= end_dt:
+                    return jsonify({"error": "End date must be after start date."}), 400
+            except Exception:
+                return jsonify({"error": "Invalid date format for start or end date."}), 400
             
             with conn.cursor() as cur:
                 # Prepare column values

@@ -259,8 +259,16 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       if (!formData.start_date || !formData.end_date) {
         throw new Error('Please select both start and end dates');
       }
+      const today = new Date();
+      today.setHours(0,0,0,0);
       const startDate = new Date(formData.start_date);
       const endDate = new Date(formData.end_date);
+      if (startDate < today) {
+        throw new Error('Start date cannot be in the past');
+      }
+      if (endDate < today) {
+        throw new Error('End date cannot be in the past');
+      }
       if (startDate >= endDate) {
         throw new Error('End date must be after start date');
       }
@@ -272,8 +280,16 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
         setError('Please enter a cost');
         return;
       }
+      if (Number(formData.cost) < 0) {
+        setError('Storage cost cannot be negative');
+        return;
+      }
       if (!formData.cubicFeet) {
         setError('Please enter the size (cubic feet)');
+        return;
+      }
+      if (Number(formData.cubicFeet) <= 0) {
+        setError('Storage space (cubic feet) must be greater than zero');
         return;
       }
       if (!formData.latitude || !formData.longitude) {

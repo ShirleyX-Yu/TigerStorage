@@ -251,11 +251,21 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       if (!formData.start_date || !formData.end_date) {
         throw new Error('Please select both start and end dates');
       }
+      const today = new Date();
+      today.setHours(0,0,0,0);
       const start = new Date(formData.start_date);
       const end = new Date(formData.end_date);
+      if (start < today) throw new Error('Start date cannot be in the past');
+      if (end < today) throw new Error('End date cannot be in the past');
       if (start >= end) throw new Error('End date must be after start date');
       if (!formData.location || !formData.cost || !formData.cubicFeet) {
         throw new Error('Please fill in all required fields');
+      }
+      if (Number(formData.cost) < 0) {
+        throw new Error('Storage cost cannot be negative');
+      }
+      if (Number(formData.cubicFeet) <= 0) {
+        throw new Error('Storage space (cubic feet) must be greater than zero');
       }
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/listings`, {
