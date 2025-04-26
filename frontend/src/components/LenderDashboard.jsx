@@ -47,6 +47,7 @@ const LenderDashboard = ({ username }) => {
   const [requestsLoading, setRequestsLoading] = useState({});
   const [lenderActionLoading, setLenderActionLoading] = useState({});
   const [lenderActionError, setLenderActionError] = useState({});
+  const [lenderActionSuccess, setLenderActionSuccess] = useState({});
   const [partialModal, setPartialModal] = useState({ open: false, request: null, listingId: null });
   const [partialVolume, setPartialVolume] = useState('');
   const [partialError, setPartialError] = useState('');
@@ -197,6 +198,7 @@ const LenderDashboard = ({ username }) => {
   const handleLenderAction = async (requestId, action, approvedVolume, listingId) => {
     setLenderActionLoading(l => ({ ...l, [requestId]: true }));
     setLenderActionError(e => ({ ...e, [requestId]: null }));
+    setLenderActionSuccess(s => ({ ...s, [requestId]: null }));
     try {
       const userType = sessionStorage.getItem('userType') || 'lender';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || username || 'lender';
@@ -226,6 +228,14 @@ const LenderDashboard = ({ username }) => {
       }
       fetchReservationRequests(listingId);
       fetchListings();
+      // Set success message
+      let msg = '';
+      if (action === 'approved_full' || action === 'approved_partial') msg = 'Approved successfully!';
+      else if (action === 'rejected') msg = 'Rejected successfully!';
+      if (msg) {
+        setLenderActionSuccess(s => ({ ...s, [requestId]: msg }));
+        setTimeout(() => setLenderActionSuccess(s => ({ ...s, [requestId]: null })), 3000);
+      }
     } catch (err) {
       setLenderActionError(e => ({ ...e, [requestId]: err.message }));
     } finally {
@@ -462,6 +472,9 @@ const LenderDashboard = ({ username }) => {
                                     disabled={lenderActionLoading[req.request_id]}
                                     onClick={() => handleLenderAction(req.request_id, 'rejected', null, space.id)}
                                   >Reject</button>
+                                  {lenderActionSuccess[req.request_id] && (
+                                    <span style={{ color: 'green', marginLeft: 8 }}>{lenderActionSuccess[req.request_id]}</span>
+                                  )}
                                 </div>
                               )}
                               {lenderActionError[req.request_id] && (
