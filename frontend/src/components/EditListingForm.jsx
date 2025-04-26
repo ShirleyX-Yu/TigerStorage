@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const PRINCETON_HALLS = [
   'Bloomberg Hall', 'Butler College', 'First College', 'Forbes College', 'Mathey College',
@@ -132,6 +132,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
   const [geocodingStatus, setGeocodingStatus] = useState('');
   const [locationType, setLocationType] = useState('on-campus');
   const [uploading, setUploading] = useState(false);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     const fetchListingDetails = async () => {
@@ -173,6 +174,12 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
     };
     fetchListingDetails();
   }, [listingId]);
+
+  useEffect(() => {
+    if (error && containerRef.current) {
+      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [error]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -299,7 +306,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
   }
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} ref={containerRef}>
       {error && <div style={styles.error}>{error}</div>}
       {success && <div style={{ color: 'green', marginBottom: 10 }}>Listing updated!</div>}
       <div style={styles.content}>
