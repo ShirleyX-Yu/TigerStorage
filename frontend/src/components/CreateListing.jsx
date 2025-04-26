@@ -166,6 +166,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   }, [error]);
 
   const handleInputChange = (e) => {
+    setError('');
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -174,10 +175,12 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   };
 
   const handleAddressChange = (e) => {
+    setError('');
     setTempAddress(e.target.value);
   };
 
   const handleLocationTypeChange = (e) => {
+    setError('');
     setLocationType(e.target.value);
     setTempAddress('');
     setGeocodingStatus('');

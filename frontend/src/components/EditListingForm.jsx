@@ -182,15 +182,18 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
   }, [error]);
 
   const handleInputChange = (e) => {
+    setError('');
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleAddressChange = (e) => {
+    setError('');
     setTempAddress(e.target.value);
   };
 
   const handleLocationTypeChange = (e) => {
+    setError('');
     setLocationType(e.target.value);
     setTempAddress('');
     setGeocodingStatus('');
