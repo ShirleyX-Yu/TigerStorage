@@ -812,7 +812,12 @@ const Map = () => {
             </DialogContent>
             <DialogActions style={{ padding: '16px' }}>
               <Button
-                onClick={() => setSelectedListingId(null)} style={{ color: '#888' }}>
+                onClick={() => {
+                  setSelectedListingId(null);
+                  setGroupedListings(null);
+                  setShowReservationForm(false);
+                }}
+                style={{ color: '#888' }}>
                 Close
               </Button>
               
