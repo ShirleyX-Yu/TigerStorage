@@ -202,6 +202,10 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { // 5MB
+      setError('Image file size must be less than 5MB.');
+      return;
+    }
     setUploading(true);
     try {
       const formDataUpload = new FormData();
@@ -256,49 +260,45 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccess(false);
+    if (formData.location.length > 100) {
+      setError('Title must be 100 characters or less.');
+      return;
+    }
+    if (formData.description.length > 1000) {
+      setError('Description must be 1000 characters or less.');
+      return;
+    }
+    if (Number(formData.cost) < 0 || Number(formData.cost) > 10000) {
+      setError('Cost must be between $0 and $10,000.');
+      return;
+    }
+    if (Number(formData.cubicFeet) <= 0 || Number(formData.cubicFeet) > 10000) {
+      setError('Cubic feet must be between 1 and 10,000.');
+      return;
+    }
+    if (!formData.start_date || !formData.end_date) {
+      setError('Start and end dates are required.');
+      return;
+    }
+    if (formData.end_date <= formData.start_date) {
+      setError('End date must be after start date.');
+      return;
+    }
+    if (!formData.location) {
+      setError('Please enter a title for your listing');
+      return;
+    }
+    if (!formData.cost) {
+      setError('Please enter a cost');
+      return;
+    }
+    if (!formData.latitude || !formData.longitude) {
+      setError('Please geocode the address to get coordinates');
+      return;
+    }
     try {
-      setError('');
-      setSuccess(false);
-      if (!formData.start_date || !formData.end_date) {
-        throw new Error('Please select both start and end dates');
-      }
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      const startDate = new Date(formData.start_date);
-      const endDate = new Date(formData.end_date);
-      if (startDate < today) {
-        throw new Error('Start date cannot be in the past');
-      }
-      if (endDate < today) {
-        throw new Error('End date cannot be in the past');
-      }
-      if (startDate >= endDate) {
-        throw new Error('End date must be after start date');
-      }
-      if (!formData.location) {
-        setError('Please enter a title for your listing');
-        return;
-      }
-      if (!formData.cost) {
-        setError('Please enter a cost');
-        return;
-      }
-      if (Number(formData.cost) < 0) {
-        setError('Storage cost cannot be negative');
-        return;
-      }
-      if (!formData.cubicFeet) {
-        setError('Please enter the size (cubic feet)');
-        return;
-      }
-      if (Number(formData.cubicFeet) <= 0) {
-        setError('Storage space (cubic feet) must be greater than zero');
-        return;
-      }
-      if (!formData.latitude || !formData.longitude) {
-        setError('Please geocode the address to get coordinates');
-        return;
-      }
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -342,6 +342,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                 value={formData.location}
                 onChange={handleInputChange}
                 required
+                maxLength={100}
               />
             </div>
             <div>
@@ -415,6 +416,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                 value={formData.cost}
                 onChange={handleInputChange}
                 required
+                min={0}
+                max={10000}
               />
             </div>
             <div>
@@ -426,6 +429,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                 value={formData.cubicFeet}
                 onChange={handleInputChange}
                 required
+                min={1}
+                max={10000}
               />
             </div>
             <div>
@@ -437,6 +442,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                 onChange={handleInputChange}
                 placeholder="Describe your storage space..."
                 required
+                maxLength={1000}
               />
             </div>
             <div>
