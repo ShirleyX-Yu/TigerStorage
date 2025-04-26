@@ -176,7 +176,7 @@ const ViewListings = () => {
       }
       setReservationModalOpen(false);
       setInterestedListings(new Set([...interestedListings, reservationListing.id]));
-      fetchListings(); // <-- Always re-fetch listings after reservation
+      await fetchInterestedListings(); // ensure state is up to date
     } catch (err) {
       setReservationError(err.message);
     } finally {
@@ -284,9 +284,8 @@ const ViewListings = () => {
               ) : (
                 <div style={styles.listingsGrid}>
                   {filteredListings.map(listing => {
-                    // Check if this listing is in the interested list
-                    const interestedLocations = new Set(JSON.parse(localStorage.getItem('interestedLocations') || '[]'));
-                    const isInterested = interestedLocations.has(listing.id);
+                    // Only use React state for interest
+                    const isInterested = interestedListings.has(listing.id);
                     
                     return (
                       <div key={listing.id} style={styles.listingCard}>
@@ -320,12 +319,12 @@ const ViewListings = () => {
                             <button 
                               style={{
                                 ...styles.interestButton,
-                                backgroundColor: interestedListings.has(listing.id) ? '#4caf50' : '#FF8F00'
+                                backgroundColor: isInterested ? '#4caf50' : '#FF8F00'
                               }}
                               onClick={() => toggleInterest(listing.id)}
                             >
-                              <i className={`fas ${interestedListings.has(listing.id) ? 'fa-check' : 'fa-heart'}`}></i>
-                              {interestedListings.has(listing.id) ? 'Interested' : 'Show Interest'}
+                              <i className={`fas ${isInterested ? 'fa-check' : 'fa-heart'}`}></i>
+                              {isInterested ? 'Interested' : 'Show Interest'}
                             </button>
                             <ReservationModal
                               open={reservationModalOpen}

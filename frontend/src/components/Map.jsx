@@ -258,6 +258,7 @@ const Map = () => {
   const [interestLoading, setInterestLoading] = React.useState(false);
   const [interestSuccess, setInterestSuccess] = React.useState(false);
   const [interestError, setInterestError] = React.useState(null);
+  const [lastInterestAction, setLastInterestAction] = useState(null); // 'add' or 'remove'
 
   // State for report modal
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -417,6 +418,8 @@ const Map = () => {
 
   const handleListingClick = (listing) => {
     setSelectedListingId(listing.listing_id || listing.id);
+    setInterestSuccess(false);
+    setLastInterestAction(null);
     if (mapRef.current) {
       mapRef.current.setView([listing.latitude, listing.longitude], 16);
     }
@@ -470,6 +473,57 @@ const Map = () => {
       <div style={{ fontSize: '14px' }}>Try adjusting your filters or check back later for new listings</div>
     </div>
   );
+
+  // Interest toggle handler
+  const handleToggleInterest = async (listing) => {
+    setInterestLoading(true);
+    setInterestError(null);
+    setInterestSuccess(false);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+      const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+      if (listing.isInterested) {
+        // Remove interest
+        const response = await fetch(`${apiUrl}/api/listings/${listing.listing_id || listing.id}/interest`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Type': userType,
+            'X-Username': username,
+          },
+          credentials: 'include',
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || 'Failed to remove interest');
+        }
+        setInterestSuccess(true);
+        setLastInterestAction('remove');
+      } else {
+        // Add interest (show reservation form if needed)
+        const isAuthenticated = !!(sessionStorage.getItem('username') || localStorage.getItem('username'));
+        if (!isAuthenticated) {
+          sessionStorage.setItem('returnTo', `/listing/${listing.listing_id || listing.id}`);
+          navigate('/');
+          setInterestLoading(false);
+          return;
+        }
+        setShowReservationForm(true);
+        setReservationMode('full');
+        setReservationVolume(listing.cubic_ft ?? listing.cubic_feet ?? 0);
+        setReservationLocalError('');
+        setInterestLoading(false);
+        return;
+      }
+      // Always re-fetch listings after interest change
+      await fetchListings();
+    } catch (err) {
+      setInterestError(err.message);
+    } finally {
+      setInterestLoading(false);
+    }
+  };
 
   if (error) {
     return (
@@ -622,7 +676,7 @@ const Map = () => {
             />
           </MapContainer>
           {/* Popup Modal for Selected Listing */}
-          <Dialog open={!!selectedListing} onClose={() => { setSelectedListingId(null); setGroupedListings(null); }} PaperProps={{ style: { borderRadius: 16, minWidth: 340, background: '#fff8f1' } }}>
+          <Dialog open={!!selectedListing} onClose={() => { setSelectedListingId(null); setGroupedListings(null); setInterestSuccess(false); setLastInterestAction(null); }} PaperProps={{ style: { borderRadius: 16, minWidth: 340, background: '#fff8f1' } }}>
             <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, padding: '16px 24px' }}>
               Listing Details
             </DialogTitle>
@@ -694,7 +748,7 @@ const Map = () => {
                 }</Alert></Box>
               )}
               {interestSuccess && (
-                <Box mb={2}><Alert severity="success" variant="filled">{selectedListing && selectedListing.isInterested ? 'Interest removed!' : 'Interest recorded!'}</Alert></Box>
+                <Box mb={2}><Alert severity="success" variant="filled">{lastInterestAction === 'remove' ? 'Interest removed!' : 'Interest recorded!'}</Alert></Box>
               )}
               {selectedListing && (
                 <Box>
@@ -762,7 +816,8 @@ const Map = () => {
                     });
                     setShowReservationForm(false);
                     setInterestSuccess(true);
-                    fetchListings();
+                    setLastInterestAction('add');
+                    await fetchListings();
                   } catch (err) {
                     setReservationError(err.message);
                   } finally {
@@ -816,6 +871,8 @@ const Map = () => {
                   setSelectedListingId(null);
                   setGroupedListings(null);
                   setShowReservationForm(false);
+                  setInterestSuccess(false);
+                  setLastInterestAction(null);
                 }}
                 style={{ color: '#888' }}>
                 Close
@@ -831,51 +888,7 @@ const Map = () => {
                 View Details
               </Button>
               <Button
-                onClick={async () => {
-                  if (!selectedListing) return;
-                  if (selectedListing.isInterested) {
-                    // Remove interest as before
-                    setInterestLoading(true);
-                    setInterestError(null);
-                    setInterestSuccess(false);
-                    try {
-                      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-                      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
-                      const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-                      const response = await fetch(`${apiUrl}/api/listings/${selectedListing.listing_id || selectedListing.id}/interest`, {
-                        method: 'DELETE',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'X-User-Type': userType,
-                          'X-Username': username,
-                        },
-                        credentials: 'include',
-                      });
-                      if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(errorText || 'Failed to remove interest');
-                      }
-                      setInterestSuccess(true);
-                      fetchListings();
-                    } catch (err) {
-                      setInterestError(err.message);
-                    } finally {
-                      setInterestLoading(false);
-                    }
-                  } else {
-                    // Show reservation form inline
-                    const isAuthenticated = !!(sessionStorage.getItem('username') || localStorage.getItem('username'));
-                    if (!isAuthenticated) {
-                      sessionStorage.setItem('returnTo', `/listing/${selectedListing.listing_id || selectedListing.id}`);
-                      navigate('/');
-                      return;
-                    }
-                    setShowReservationForm(true);
-                    setReservationMode('full');
-                    setReservationVolume(selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0);
-                    setReservationLocalError('');
-                  }
-                }}
+                onClick={() => handleToggleInterest(selectedListing)}
                 style={{
                   background: selectedListing && selectedListing.isInterested ? '#fff' : '#FF6B00',
                   color: selectedListing && selectedListing.isInterested ? '#FF6B00' : 'white',

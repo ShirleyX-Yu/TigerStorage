@@ -225,14 +225,56 @@ const RenterListingDetails = () => {
     }
   };
 
-  // Updated handleShowInterest to open modal
-  const handleShowInterest = async () => {
+  // Add interest toggle handler
+  const handleToggleInterest = async () => {
+    if (!listing) return;
     if (!isAuthenticated) {
       sessionStorage.setItem('returnTo', `/listing/${id}`);
       navigate('/');
       return;
     }
-    setReservationModalOpen(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const userType = sessionStorage.getItem('userType') || 'renter';
+      const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+      if (listing.isInterested) {
+        // Remove interest
+        const response = await fetch(`${apiUrl}/api/listings/${listing.id}/interest`, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Type': userType,
+            'X-Username': storedUsername
+          }
+        });
+        if (!response.ok) {
+          throw new Error('Failed to remove interest');
+        }
+      } else {
+        // Add interest (show reservation modal)
+        setReservationModalOpen(true);
+        return;
+      }
+      // After changing interest, re-fetch interest state for this listing
+      const interestResponse = await fetch(`${apiUrl}/api/my-interested-listings`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-User-Type': userType,
+          'X-Username': storedUsername
+        }
+      });
+      let isInterested = false;
+      if (interestResponse.ok) {
+        const interestedListings = await interestResponse.json();
+        isInterested = interestedListings.some(l => l.id === listing.id);
+      }
+      setListing(l => l ? { ...l, isInterested } : l);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   // Reservation submit handler for modal
@@ -261,7 +303,22 @@ const RenterListingDetails = () => {
       }
       setReservationModalOpen(false);
       setMessage({ type: 'success', text: 'Reservation request submitted!' });
-      fetchListing && fetchListing();
+      // After reservation, mark as interested
+      const interestResponse = await fetch(`${apiUrl}/api/my-interested-listings`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-User-Type': userType,
+          'X-Username': storedUsername
+        }
+      });
+      let isInterested = false;
+      if (interestResponse.ok) {
+        const interestedListings = await interestResponse.json();
+        isInterested = interestedListings.some(l => l.id === listing.id);
+      }
+      setListing(l => l ? { ...l, isInterested } : l);
     } catch (err) {
       setReservationError(err.message);
     } finally {
@@ -495,7 +552,7 @@ const RenterListingDetails = () => {
                       ...styles.interestButton,
                       backgroundColor: listing.isInterested ? '#4caf50' : '#f57c00'
                     }}
-                    onClick={handleShowInterest}
+                    onClick={handleToggleInterest}
                   >
                     {isAuthenticated
                       ? (listing.isInterested ? '✓ Interested' : '+ Show Interest')
