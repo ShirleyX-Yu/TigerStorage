@@ -655,7 +655,7 @@ def create_listing():
                 total_sq_ft = 0
             # Validation: cubic feet must not be negative
             if total_sq_ft < 0:
-                return jsonify({"error": "Storage space (cubic feet) cannot be negative."}), 400
+                return jsonify({"error": "Storage space (cubic feet) must be greater than zero."}), 400
                 
             latitude = float(data['latitude'])
             longitude = float(data['longitude'])
@@ -1307,15 +1307,15 @@ def update_listing(listing_id):
         if 'cubicFeet' in data:
             try:
                 cubic_val = int(data['cubicFeet'])
-                if cubic_val < 0:
-                    return jsonify({"error": "Storage space (cubic feet) cannot be negative."}), 400
+                if cubic_val <= 0:
+                    return jsonify({"error": "Storage space (cubic feet) must be greater than zero."}), 400
             except Exception:
                 return jsonify({"error": "Invalid value for cubic feet."}), 400
         if 'cubic_feet' in data:
             try:
                 cubic_val = int(data['cubic_feet'])
-                if cubic_val < 0:
-                    return jsonify({"error": "Storage space (cubic feet) cannot be negative."}), 400
+                if cubic_val <= 0:
+                    return jsonify({"error": "Storage space (cubic feet) must be greater than zero."}), 400
             except Exception:
                 return jsonify({"error": "Invalid value for cubic feet."}), 400
 

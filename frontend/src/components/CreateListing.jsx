@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 
@@ -139,6 +139,7 @@ const styles = {
 
 const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const navigate = useNavigate();
+  const errorRef = useRef(null);
   const [formData, setFormData] = useState({
     location: '',
     address: '',
@@ -156,6 +157,13 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const [tempAddress, setTempAddress] = useState('');
   const [geocodingStatus, setGeocodingStatus] = useState('');
   const [locationType, setLocationType] = useState('on-campus');
+
+  // Scroll to error when it appears
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [error]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -269,7 +277,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
 
   return (
     <div style={styles.container}>
-      {error && <div style={styles.error}>{error}</div>}
+      {error && <div ref={errorRef} style={styles.error}>{error}</div>}
       <form onSubmit={handleSubmit} style={{ ...styles.form, gap: 18, padding: 24, width: '100%' }}>
         <div>
             <label style={styles.label}>Location (Title) <span style={{color: '#b00020'}}>*</span></label>

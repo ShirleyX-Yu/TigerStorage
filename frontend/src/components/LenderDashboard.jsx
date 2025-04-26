@@ -20,6 +20,25 @@ const CreateListingModal = ({ onClose, onSuccess }) => {
   );
 };
 
+const getStatusLabel = (status) => {
+  switch (status) {
+    case 'approved_full':
+      return 'Approved (Full)';
+    case 'approved_partial':
+      return 'Approved (Partial)';
+    case 'pending':
+      return 'Pending';
+    case 'rejected':
+      return 'Rejected';
+    case 'cancelled_by_renter':
+      return 'Cancelled by You';
+    case 'expired':
+      return 'Expired';
+    default:
+      return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+};
+
 const LenderDashboard = ({ username }) => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editListingId, setEditListingId] = useState(null);
@@ -377,7 +396,7 @@ const LenderDashboard = ({ username }) => {
                         </div>
                       </div>
                       <div style={styles.spaceBadge}>
-                        {space.status}
+                        {getStatusLabel(space.status)}
                       </div>
                     </div>
                     <div style={styles.spaceStats}>
@@ -414,7 +433,7 @@ const LenderDashboard = ({ username }) => {
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
                                 <span style={styles.renterEmail}>{req.renter_username}@princeton.edu</span>
-                                <span style={styles.renterStatusBadge}>{req.status.replace('_', ' ')}</span>
+                                <span style={styles.renterStatusBadge}>{getStatusLabel(req.status)}</span>
                               </div>
                               <div style={{ marginTop: 4 }}>
                                 <b>Requested:</b> {req.requested_volume} cu ft

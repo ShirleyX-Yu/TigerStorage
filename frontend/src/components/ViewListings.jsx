@@ -3,6 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import ReservationModal from './ReservationModal';
 
+const getStatusLabel = (status) => {
+  switch (status) {
+    case 'approved_full':
+      return 'Approved (Full)';
+    case 'approved_partial':
+      return 'Approved (Partial)';
+    case 'pending':
+      return 'Pending';
+    case 'rejected':
+      return 'Rejected';
+    case 'cancelled_by_renter':
+      return 'Cancelled by You';
+    case 'expired':
+      return 'Expired';
+    default:
+      return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+};
+
 const ViewListings = () => {
   const navigate = useNavigate();
   const [listings, setListings] = useState([]);
@@ -311,7 +330,7 @@ const ViewListings = () => {
                               ...styles.status,
                               backgroundColor: listing.is_available ? '#4caf50' : '#f44336'
                             }}>
-                              {listing.is_available ? 'Available' : 'Not Available'}
+                              {getStatusLabel(listing.status)}
                             </span>
                             <span style={styles.lenderInfo}>Lender: Owner #{listing.owner_id}</span>
                           </div>

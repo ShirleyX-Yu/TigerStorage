@@ -10,6 +10,25 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import StarIcon from '@mui/icons-material/Star';
 
+const getStatusLabel = (status) => {
+  switch (status) {
+    case 'approved_full':
+      return 'Approved (Full)';
+    case 'approved_partial':
+      return 'Approved (Partial)';
+    case 'pending':
+      return 'Pending';
+    case 'rejected':
+      return 'Rejected';
+    case 'cancelled_by_renter':
+      return 'Cancelled by You';
+    case 'expired':
+      return 'Expired';
+    default:
+      return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+};
+
 const LenderListingDetails = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const fetchListingDetailsRef = useRef(null);
@@ -245,7 +264,7 @@ const LenderListingDetails = () => {
                       {reservationRequests.map(req => (
                         <tr key={req.request_id}>
                           <td style={{ padding: 8, border: '1px solid #eee' }}>{req.renter_username}</td>
-                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.status.replace('_', ' ')}</td>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>{getStatusLabel(req.status)}</td>
                           <td style={{ padding: 8, border: '1px solid #eee' }}>{req.requested_volume} cu ft</td>
                           <td style={{ padding: 8, border: '1px solid #eee' }}>{req.approved_volume ? `${req.approved_volume} cu ft` : '-'}</td>
                           <td style={{ padding: 8, border: '1px solid #eee' }}>

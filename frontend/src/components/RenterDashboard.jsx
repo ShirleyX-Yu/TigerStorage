@@ -2,6 +2,27 @@ import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 
+const getStatusLabel = (status) => {
+  switch (status) {
+    case 'approved_full':
+      return 'Approved (Full)';
+    case 'approved_partial':
+      return 'Approved (Partial)';
+    case 'pending':
+      return 'Pending';
+    case 'rejected':
+      return 'Rejected';
+    case 'cancelled_by_renter':
+      return 'Cancelled by You';
+    case 'expired':
+      return 'Expired';
+    case 'in_discussion':
+      return 'In Discussion';
+    default:
+      return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+};
+
 const RenterDashboard = ({ username }) => {
   const navigate = useNavigate();
   const [interestedSpaces, setInterestedSpaces] = useState([]);
@@ -109,17 +130,13 @@ const RenterDashboard = ({ username }) => {
                       <td style={styles.td}>{space.lender}</td>
                       <td style={styles.td}>{space.requested_volume ? `${space.requested_volume} cu ft` : '-'}</td>
                       <td style={styles.td}>{space.approved_volume ? `${space.approved_volume} cu ft` : '-'}</td>
-                      <td style={styles.td}>{
-                        space.approval_type === 'approved_full' ? 'Full' :
-                        space.approval_type === 'approved_partial' ? 'Partial' :
-                        space.approval_type ? space.approval_type : '-'
-                      }</td>
+                      <td style={styles.td}>{getStatusLabel(space.approval_type)}</td>
                       <td style={styles.td}>
                         <span style={{
                           ...styles.status,
                           backgroundColor: space.status === 'In Discussion' ? '#4caf50' : '#ff9800'
                         }}>
-                          {space.status}
+                          {getStatusLabel(space.status)}
                         </span>
                       </td>
                       <td style={styles.td}>
@@ -170,13 +187,13 @@ const RenterDashboard = ({ username }) => {
                       <td style={styles.td}>{space.lender}</td>
                       <td style={styles.td}>{space.requested_volume ? `${space.requested_volume} cu ft` : '-'}</td>
                       <td style={styles.td}>{space.approved_volume ? `${space.approved_volume} cu ft` : '-'}</td>
-                      <td style={styles.td}>Pending</td>
+                      <td style={styles.td}>{getStatusLabel(space.approval_type)}</td>
                       <td style={styles.td}>
                         <span style={{
                           ...styles.status,
                           backgroundColor: space.status === 'In Discussion' ? '#4caf50' : '#ff9800'
                         }}>
-                          {space.status}
+                          {getStatusLabel(space.status)}
                         </span>
                       </td>
                       <td style={styles.td}>
