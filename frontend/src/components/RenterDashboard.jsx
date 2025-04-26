@@ -81,12 +81,12 @@ const RenterDashboard = ({ username }) => {
         </div>
 
         <div style={styles.section}>
-          <h2>My Interested Spaces</h2>
+          <h2>My Approved Spaces</h2>
           {loading ? (
             <div style={styles.placeholder}>Loading...</div>
           ) : error ? (
             <div style={styles.error}>{error}</div>
-          ) : interestedSpaces.length > 0 ? (
+          ) : interestedSpaces.filter(space => space.approval_type === 'approved_full' || space.approval_type === 'approved_partial').length > 0 ? (
             <div style={styles.tableContainer}>
               <table style={styles.table}>
                 <thead>
@@ -102,7 +102,7 @@ const RenterDashboard = ({ username }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {interestedSpaces.map(space => (
+                  {interestedSpaces.filter(space => space.approval_type === 'approved_full' || space.approval_type === 'approved_partial').map(space => (
                     <tr key={space.id}>
                       <td style={styles.td}>{space.location}</td>
                       <td style={styles.td}>${space.cost}</td>
@@ -112,10 +112,65 @@ const RenterDashboard = ({ username }) => {
                       <td style={styles.td}>{
                         space.approval_type === 'approved_full' ? 'Full' :
                         space.approval_type === 'approved_partial' ? 'Partial' :
-                        space.approval_type === 'rejected' ? 'Rejected' :
-                        space.approval_type === 'pending' ? 'Pending' :
                         space.approval_type ? space.approval_type : '-'
                       }</td>
+                      <td style={styles.td}>
+                        <span style={{
+                          ...styles.status,
+                          backgroundColor: space.status === 'In Discussion' ? '#4caf50' : '#ff9800'
+                        }}>
+                          {space.status}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <button 
+                          style={styles.viewButton}
+                          onClick={() => navigate(`/listing/${space.id}`)}
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div style={styles.placeholder}>
+              You have no approved spaces yet.
+            </div>
+          )}
+        </div>
+        <div style={styles.section}>
+          <h2>My Interested Spaces</h2>
+          {loading ? (
+            <div style={styles.placeholder}>Loading...</div>
+          ) : error ? (
+            <div style={styles.error}>{error}</div>
+          ) : interestedSpaces.filter(space => space.approval_type === 'pending').length > 0 ? (
+            <div style={styles.tableContainer}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Location</th>
+                    <th style={styles.th}>Cost/Month</th>
+                    <th style={styles.th}>Lender</th>
+                    <th style={styles.th}>Requested Volume</th>
+                    <th style={styles.th}>Approved Volume</th>
+                    <th style={styles.th}>Approval Type</th>
+                    <th style={styles.th}>Status</th>
+                    <th style={styles.th}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {interestedSpaces.filter(space => space.approval_type === 'pending').map(space => (
+                    <tr key={space.id}>
+                      <td style={styles.td}>{space.location}</td>
+                      <td style={styles.td}>${space.cost}</td>
+                      <td style={styles.td}>{space.lender}</td>
+                      <td style={styles.td}>{space.requested_volume ? `${space.requested_volume} cu ft` : '-'}</td>
+                      <td style={styles.td}>{space.approved_volume ? `${space.approved_volume} cu ft` : '-'}</td>
+                      <td style={styles.td}>Pending</td>
                       <td style={styles.td}>
                         <span style={{
                           ...styles.status,
