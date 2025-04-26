@@ -654,7 +654,6 @@ const Map = () => {
                   }}
                 >
                   <span style={{fontSize: 20, color: '#f44336'}}>🚩</span>
-                  <span>Report</span>
                 </button>
               {/* Grouped modal navigation */}
               {groupedListings && groupedListings.length > 1 && (
