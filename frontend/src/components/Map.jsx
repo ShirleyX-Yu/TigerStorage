@@ -484,6 +484,40 @@ const Map = () => {
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
       if (listing.isInterested) {
+        // Remove interest AND cancel pending reservation request if it exists
+        // 1. Fetch my pending reservation requests for this listing
+        const resp = await fetch(`${apiUrl}/api/my-reservation-requests`, {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType,
+            'X-Username': username
+          }
+        });
+        if (resp.ok) {
+          const all = await resp.json();
+          const pending = all.find(r => (String(r.listing_id) === String(listing.listing_id || listing.id)) && r.status === 'pending');
+          if (pending) {
+            // Cancel the reservation request
+            const cancelResp = await fetch(`${apiUrl}/api/reservation-requests/${pending.request_id}`, {
+              method: 'PATCH',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache',
+                'X-User-Type': userType,
+                'X-Username': username
+              },
+              body: JSON.stringify({ status: 'cancelled_by_renter' })
+            });
+            if (!cancelResp.ok) {
+              const errData = await cancelResp.json().catch(() => ({}));
+              throw new Error(errData.error || 'Failed to cancel reservation request');
+            }
+          }
+        }
         // Remove interest
         const response = await fetch(`${apiUrl}/api/listings/${listing.listing_id || listing.id}/interest`, {
           method: 'DELETE',
