@@ -525,6 +525,11 @@ const Map = () => {
     }
   };
 
+  useEffect(() => {
+    setInterestSuccess(false);
+    setLastInterestAction(null);
+  }, [groupedListings, groupedIndex]);
+
   if (error) {
     return (
       <div style={{ 
