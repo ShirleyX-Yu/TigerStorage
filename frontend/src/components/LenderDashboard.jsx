@@ -33,6 +33,7 @@ const LenderDashboard = ({ username }) => {
   const [partialError, setPartialError] = useState('');
   const [lenderReviews, setLenderReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [editSuccess, setEditSuccess] = useState(false);
 
   const handleOpenEditModal = (listingId) => {
     setEditListingId(listingId);
@@ -285,6 +286,12 @@ const LenderDashboard = ({ username }) => {
           <div style={styles.successText}>Listing deleted successfully!</div>
         </div>
       )}
+      {editSuccess && (
+        <div style={styles.successMessage}>
+          <div style={styles.successIcon}>✓</div>
+          <div style={styles.successText}>Listing updated successfully!</div>
+        </div>
+      )}
       <div style={styles.content}>
         <div style={styles.welcome}>
           Welcome back, {username && username !== 'Unknown' ? username : 'Lender'}!
@@ -524,6 +531,8 @@ const LenderDashboard = ({ username }) => {
               listingId={editListingId} 
               onClose={handleCloseEditModal}
               onSuccess={() => {
+                setEditSuccess(true);
+                setTimeout(() => setEditSuccess(false), 3000);
                 handleCloseEditModal();
                 fetchListings();
               }}
