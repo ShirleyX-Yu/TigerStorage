@@ -75,8 +75,8 @@ def add_cors_headers(response):
         response.headers['Access-Control-Allow-Origin'] = origin
         response.headers['Access-Control-Allow-Credentials'] = 'true'
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, PATCH, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Pragma, Cache-Control, Origin, Accept, X-CSRFToken, X-Session-Id, X-Auth-Token, X-User-Type, X-Username'
-        response.headers['Access-Control-Expose-Headers'] = 'Content-Type, Authorization, X-Requested-With, Pragma, Cache-Control, Origin, Accept, X-CSRFToken, X-Session-Id, X-Auth-Token, X-User-Type, X-Username'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, X-User-Type, X-Username, Accept, Cache-Control'
+        response.headers['Access-Control-Expose-Headers'] = 'Content-Type, Authorization, X-Requested-With, X-User-Type, X-Username, Accept, Cache-Control'
     return response
 
 # Load environment variables and set secret key
@@ -643,7 +643,9 @@ def create_listing():
         try:
             # Convert data to correct types
             cost = float(data['cost']) if data['cost'] else 0
-            
+            # Validation: cost must not be negative
+            if cost < 0:
+                return jsonify({"error": "Storage cost cannot be negative."}), 400
             # Handle both cubicFeet and cubic_feet field names
             if 'cubicFeet' in data:
                 total_sq_ft = int(data['cubicFeet']) if data['cubicFeet'] else 0
@@ -651,6 +653,9 @@ def create_listing():
                 total_sq_ft = int(data['cubic_feet']) if data['cubic_feet'] else 0
             else:
                 total_sq_ft = 0
+            # Validation: cubic feet must not be negative
+            if total_sq_ft < 0:
+                return jsonify({"error": "Storage space (cubic feet) cannot be negative."}), 400
                 
             latitude = float(data['latitude'])
             longitude = float(data['longitude'])
@@ -1291,6 +1296,29 @@ def update_listing(listing_id):
         # Get the updated data
         data = request.get_json()
         
+        # Validation: Prevent negative cost or cubic feet
+        if 'cost' in data:
+            try:
+                cost_val = float(data['cost'])
+                if cost_val < 0:
+                    return jsonify({"error": "Storage cost cannot be negative."}), 400
+            except Exception:
+                return jsonify({"error": "Invalid value for cost."}), 400
+        if 'cubicFeet' in data:
+            try:
+                cubic_val = int(data['cubicFeet'])
+                if cubic_val < 0:
+                    return jsonify({"error": "Storage space (cubic feet) cannot be negative."}), 400
+            except Exception:
+                return jsonify({"error": "Invalid value for cubic feet."}), 400
+        if 'cubic_feet' in data:
+            try:
+                cubic_val = int(data['cubic_feet'])
+                if cubic_val < 0:
+                    return jsonify({"error": "Storage space (cubic feet) cannot be negative."}), 400
+            except Exception:
+                return jsonify({"error": "Invalid value for cubic feet."}), 400
+
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
