@@ -56,33 +56,7 @@ const Home = () => {
   }, [navigate]);
   
   const handleLogin = (userType) => {
-    console.log('handleLogin called with userType:', userType);
-    
-    // Set loading state
-    setLoading(true);
-    
-    // Clear any existing user type first
-    sessionStorage.removeItem('userType');
-    localStorage.removeItem('userType');
-    console.log('Cleared existing userType from storage');
-    
-    // Set the new user type
-    sessionStorage.setItem('userType', userType);
-    localStorage.setItem('userType', userType);
-    console.log('Set new userType in storage:', userType);
-    
-    try {
-      // Navigate to the appropriate dashboard
-      if (userType === 'renter') {
-        navigate('/renter-dashboard');
-      } else if (userType === 'lender') {
-        navigate('/lender-dashboard');
-      }
-    } catch (error) {
-      console.error('Error during navigation:', error);
-      setErrorMessage('There was an error. Please try again.');
-      setLoading(false);
-    }
+    login(userType); // Always use the login utility, which handles CAS in production
   };
 
   return (

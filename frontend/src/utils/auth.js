@@ -114,7 +114,8 @@ export const logout = () => {
   
   // Add redirect for production
   if (isProduction()) {
-    const redirectUri = encodeURIComponent(window.location.origin);
+    // Redirect to the login page (root '/') after logout
+    const redirectUri = encodeURIComponent(window.location.origin + '/');
     logoutUrl += `?redirectUri=${redirectUri}`;
   }
   
