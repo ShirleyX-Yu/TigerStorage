@@ -39,6 +39,7 @@ const LenderListingDetails = () => {
   const [partialError, setPartialError] = useState('');
   const [lenderReviews, setLenderReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
   const handleOpenEditModal = () => setEditModalOpen(true);
   const handleCloseEditModal = (shouldRefresh = false) => {
@@ -163,6 +164,34 @@ const LenderListingDetails = () => {
       }
       await refreshRequests();
       if (fetchListingDetailsRef.current) fetchListingDetailsRef.current();
+
+      // Show notification based on action type
+      let notificationConfig = {
+        show: true,
+        message: '',
+        type: ''
+      };
+      switch (action) {
+        case 'approved_full':
+          notificationConfig.message = 'Request fully approved successfully!';
+          notificationConfig.type = 'success';
+          break;
+        case 'approved_partial':
+          notificationConfig.message = 'Request partially approved successfully!';
+          notificationConfig.type = 'partial';
+          break;
+        case 'rejected':
+          notificationConfig.message = 'Request rejected successfully!';
+          notificationConfig.type = 'error';
+          break;
+      }
+      setNotification(notificationConfig);
+
+      // Hide notification after 3 seconds
+      setTimeout(() => {
+        setNotification({ show: false, message: '', type: '' });
+      }, 3000);
+
     } catch (err) {
       setActionError(e => ({ ...e, [requestId]: err.message }));
     } finally {
@@ -222,6 +251,16 @@ const LenderListingDetails = () => {
   return (
     <div style={styles.container}>
       <Header title="Storage Space Details" />
+      {notification.show && (
+        <div style={{
+          ...styles.notification,
+          backgroundColor: notification.type === 'success' ? '#4caf50' : 
+                          notification.type === 'partial' ? '#ff9800' : 
+                          '#f44336',
+        }}>
+          {notification.message}
+        </div>
+      )}
       <div style={styles.content}>
         <button style={styles.backButton} onClick={() => navigate('/lender-dashboard')}>
           &larr; Back to Dashboard
@@ -549,6 +588,18 @@ const styles = {
   renterEmail: {
     color: '#333',
     textDecoration: 'none',
+  },
+  notification: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    padding: '16px',
+    textAlign: 'center',
+    color: 'white',
+    fontWeight: 'bold',
+    zIndex: 1000,
+    transition: 'all 0.3s ease',
   },
 };
 
