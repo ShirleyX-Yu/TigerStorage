@@ -104,9 +104,9 @@ export const logout = () => {
   if (isLoggingOut) return; // Prevent double logout
   isLoggingOut = true;
 
-  // Clear the user type from both session and local storage
-  sessionStorage.removeItem('userType');
-  localStorage.removeItem('userType');
+  // Clear all authentication-related storage
+  sessionStorage.clear();
+  localStorage.clear();
   
   // Get the logout URL
   const backendUrl = getBackendUrl();
