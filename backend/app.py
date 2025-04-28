@@ -447,33 +447,6 @@ def welcome():
         asset_path=asset_path
     )
 
-@app.route('/api/auth/status', methods=['GET', 'OPTIONS'])
-def auth_status():
-    # Handle OPTIONS request for CORS preflight
-    if request.method == 'OPTIONS':
-        response = jsonify({})
-        return response, 200
-    
-    if auth.is_authenticated():
-        # Add debug information to help troubleshoot
-        print("User is authenticated. Session info:", session.get('user_info', {}))
-        user_info = session.get('user_info', {})
-        user_type = session.get('user_type', 'unknown')
-        
-        response = jsonify({
-            'authenticated': True,
-            'username': user_info.get('user', ''),
-            'userType': user_type,
-            'session_id': session.get('_id', 'unknown')
-        })
-        return response
-    
-    print("User is not authenticated")
-    response = jsonify({
-        'authenticated': False
-    })
-    return response
-
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
