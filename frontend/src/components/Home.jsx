@@ -15,6 +15,7 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
+  const [aboutUsModalOpen, setAboutUsModalOpen] = useState(false);
   
   // Check for dashboard redirect flag
   React.useEffect(() => {
@@ -107,19 +108,29 @@ const Home = () => {
       >
         Admin Platform
       </button>
-      <button 
-        className="home-privacy-button"
-        onClick={() => setPrivacyModalOpen(true)}
-        disabled={loading}
-        style={{
-          position: 'absolute',
-          top: 20,
-          right: 30,
-          zIndex: 1000,
-        }}
-      >
-        Privacy Policy
-      </button>
+      <div style={{ 
+        position: 'absolute',
+        top: 20,
+        right: 30,
+        zIndex: 1000,
+        display: 'flex',
+        gap: '20px'
+      }}>
+        <button 
+          className="home-privacy-button"
+          onClick={() => setAboutUsModalOpen(true)}
+          disabled={loading}
+        >
+          About Us
+        </button>
+        <button 
+          className="home-privacy-button"
+          onClick={() => setPrivacyModalOpen(true)}
+          disabled={loading}
+        >
+          Privacy Policy
+        </button>
+      </div>
       <div className="home-content">
         {!logoError ? (
           <img 
@@ -198,6 +209,229 @@ const Home = () => {
           </button>
         </div>
       </div>
+
+      {/* About Us Modal */}
+      <Dialog 
+        open={aboutUsModalOpen} 
+        onClose={() => setAboutUsModalOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ 
+          style: { 
+            borderRadius: 16, 
+            background: '#fff8f1',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)'
+          } 
+        }}
+      >
+        <DialogTitle style={{ 
+          background: '#FF6B00', 
+          color: 'white', 
+          fontWeight: 700, 
+          letterSpacing: 1, 
+          padding: '16px 24px',
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16
+        }}>
+          About Us
+        </DialogTitle>
+        <DialogContent style={{ padding: '24px 32px', fontSize: '14px', lineHeight: '1.6' }}>
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <section style={{ marginBottom: '32px' }}>
+              <h2 style={{ 
+                color: '#333', 
+                fontSize: '24px', 
+                fontWeight: 700, 
+                marginBottom: '24px',
+                textAlign: 'center'
+              }}>
+                Meet the Team Behind TigerStorage
+              </h2>
+              <p style={{ 
+                marginBottom: '40px', 
+                textAlign: 'center', 
+                color: '#666',
+                fontSize: '16px',
+                maxWidth: '600px',
+                margin: '0 auto 48px'
+              }}>
+                We are a dedicated team of Princeton University Computer Science students committed to revolutionizing storage solutions for our campus community.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
+                {/* Diya's Section */}
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '24px',
+                  alignItems: 'flex-start',
+                  padding: '24px',
+                  background: 'white',
+                  borderRadius: '16px',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+                }}>
+                  <div style={{ 
+                    width: '200px',
+                    height: '200px',
+                    borderRadius: '16px',
+                    background: '#f5f5f5',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#999',
+                    fontSize: '14px'
+                  }}>
+                    Profile Image
+                  </div>
+                  <div>
+                    <h3 style={{ 
+                      color: '#333', 
+                      fontSize: '20px', 
+                      fontWeight: 600, 
+                      marginBottom: '8px' 
+                    }}>
+                      Diya Hundiwala
+                    </h3>
+                    <p style={{ 
+                      color: '#FF6B00', 
+                      fontSize: '14px', 
+                      fontWeight: 500,
+                      marginBottom: '16px'
+                    }}>
+                      Computer Science '25
+                    </p>
+                    <p style={{ color: '#666', lineHeight: '1.6' }}>
+                      Diya brings her expertise in full-stack development and user experience design to TigerStorage. Originally from Pennsylvania, her passion for creating intuitive interfaces has been instrumental in making our platform user-friendly and accessible to all Princeton students.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Cindy's Section */}
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '24px',
+                  alignItems: 'flex-start',
+                  padding: '24px',
+                  background: 'white',
+                  borderRadius: '16px',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+                }}>
+                  <div style={{ 
+                    width: '200px',
+                    height: '200px',
+                    borderRadius: '16px',
+                    background: '#f5f5f5',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#999',
+                    fontSize: '14px'
+                  }}>
+                    Profile Image
+                  </div>
+                  <div>
+                    <h3 style={{ 
+                      color: '#333', 
+                      fontSize: '20px', 
+                      fontWeight: 600, 
+                      marginBottom: '8px' 
+                    }}>
+                      Cindy Tong
+                    </h3>
+                    <p style={{ 
+                      color: '#FF6B00', 
+                      fontSize: '14px', 
+                      fontWeight: 500,
+                      marginBottom: '16px'
+                    }}>
+                      Computer Science '25
+                    </p>
+                    <p style={{ color: '#666', lineHeight: '1.6' }}>
+                      Cindy specializes in backend development and database management. Hailing from Ohio, her strong technical background ensures that TigerStorage operates smoothly and securely, providing reliable service to our users.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Shirley's Section */}
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '24px',
+                  alignItems: 'flex-start',
+                  padding: '24px',
+                  background: 'white',
+                  borderRadius: '16px',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+                }}>
+                  <div style={{ 
+                    width: '200px',
+                    height: '200px',
+                    borderRadius: '16px',
+                    background: '#f5f5f5',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#999',
+                    fontSize: '14px'
+                  }}>
+                    Profile Image
+                  </div>
+                  <div>
+                    <h3 style={{ 
+                      color: '#333', 
+                      fontSize: '20px', 
+                      fontWeight: 600, 
+                      marginBottom: '8px' 
+                    }}>
+                      Shirley Yu
+                    </h3>
+                    <p style={{ 
+                      color: '#FF6B00', 
+                      fontSize: '14px', 
+                      fontWeight: 500,
+                      marginBottom: '16px'
+                    }}>
+                      Computer Science '25
+                    </p>
+                    <p style={{ color: '#666', lineHeight: '1.6' }}>
+                      Shirley leads the frontend development and system architecture of TigerStorage. Coming from British Columbia, Canada, her focus on creating seamless user experiences has helped shape our platform into an efficient and enjoyable storage solution.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section style={{ marginTop: '48px', marginBottom: '32px' }}>
+              <h2 style={{ color: '#333', fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>Our Mission</h2>
+              <p style={{ marginBottom: '24px', color: '#666', lineHeight: '1.6' }}>
+                TigerStorage aims to revolutionize how Princeton students handle their storage needs. By creating a secure and efficient peer-to-peer marketplace, we're building a community-driven solution that makes storage more accessible and affordable for everyone on campus.
+              </p>
+            </section>
+
+            <section>
+              <h2 style={{ color: '#333', fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>Contact Us</h2>
+              <p style={{ marginBottom: '16px', color: '#666', lineHeight: '1.6' }}>
+                Have questions or suggestions? We'd love to hear from you! Reach out to us at <span style={{ color: '#FF6B00', fontWeight: 500 }}>tigerstorage@princeton.edu</span>
+              </p>
+            </section>
+          </div>
+        </DialogContent>
+        <DialogActions style={{ padding: '16px 24px', background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
+          <Button 
+            onClick={() => setAboutUsModalOpen(false)} 
+            style={{ 
+              background: '#FF6B00', 
+              color: 'white', 
+              fontWeight: 600,
+              padding: '8px 24px'
+            }}
+            variant="contained"
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Privacy Policy Modal */}
       <Dialog 
