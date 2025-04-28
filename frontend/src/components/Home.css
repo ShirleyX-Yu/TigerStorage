@@ -1,20 +1,32 @@
 .home-container {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
   background-color: rgba(245, 124, 0, 0.1);
+  position: relative;
 }
 
 .home-content {
   text-align: center;
-  padding: 2rem;
-  max-width: 600px;
+  padding: 4rem 2rem;
+  width: 100%;
+  background: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .home-logo {
   width: 150px;
   margin-bottom: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.home-logo:hover {
+  transform: scale(1.05);
 }
 
 .home-logo-fallback {
@@ -25,48 +37,125 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 16px;
   font-weight: bold;
   font-size: 3rem;
   margin: 0 auto;
   margin-bottom: 1.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.home-logo-fallback:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(255, 143, 0, 0.2);
 }
 
 .home-title {
   font-size: 2.5rem;
   color: #333;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
+  font-weight: 700;
 }
 
 .home-button-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
   margin-bottom: 2rem;
+  max-width: 800px;
+  width: 100%;
 }
 
 .home-button {
-  background-color: #f57c00;
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
+  position: relative;
+  background-color: white;
+  color: #333;
+  border: 2px solid #f0f0f0;
+  padding: 2rem;
   font-size: 1.2rem;
-  border-radius: 4px;
+  border-radius: 16px;
   cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  overflow: hidden;
+  min-height: 200px;
+}
+
+.home-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(245, 124, 0, 0.1), rgba(255, 143, 0, 0.05));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
 }
 
 .home-button:hover {
-  background-color: #e65100;
+  transform: translateY(-4px);
+  border-color: #f57c00;
+  box-shadow: 0 8px 24px rgba(245, 124, 0, 0.15);
+}
+
+.home-button:hover::before {
+  opacity: 1;
+}
+
+.home-button::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 60px;
+  margin-bottom: 1rem;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 2;
+}
+
+.home-button:first-child::after {
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f57c00"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>');
+}
+
+.home-button:last-child::after {
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f57c00"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>');
+}
+
+.home-button span {
+  display: block;
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 0.5rem;
+  z-index: 2;
 }
 
 .home-privacy-button {
   background-color: transparent;
   color: #666;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.5rem;
   font-size: 0.9rem;
   cursor: pointer;
-  text-decoration: underline;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.home-privacy-button:hover {
+  background-color: rgba(245, 124, 0, 0.1);
+  color: #f57c00;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.home-privacy-button:active {
+  transform: translateY(1px);
 } 

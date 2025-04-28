@@ -87,7 +87,7 @@ const Home = () => {
         style={{
           position: 'absolute',
           top: 20,
-          right: 30,
+          left: 30,
           zIndex: 1000,
           background: '#24292f',
           color: 'white',
@@ -103,6 +103,19 @@ const Home = () => {
         disabled={loading}
       >
         Admin Platform
+      </button>
+      <button 
+        className="home-privacy-button"
+        onClick={() => navigate('/privacy')}
+        disabled={loading}
+        style={{
+          position: 'absolute',
+          top: 20,
+          right: 30,
+          zIndex: 1000,
+        }}
+      >
+        Privacy Policy
       </button>
       <div className="home-content">
         {!logoError ? (
@@ -139,24 +152,26 @@ const Home = () => {
             onClick={() => handleLogin('renter')}
             disabled={loading}
           >
-            {loading ? 'Loading...' : 'I am a space renter.'}
+            <div style={{ position: 'relative', zIndex: 2 }}>
+              <div style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>
+                I am a space renter
+              </div>
+              <span>Find secure, local storage for your stuff.</span>
+            </div>
           </button>
           <button 
             className="home-button" 
             onClick={() => handleLogin('lender')}
             disabled={loading}
           >
-            {loading ? 'Loading...' : 'I am a space lender.'}
+            <div style={{ position: 'relative', zIndex: 2 }}>
+              <div style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>
+                I am a space lender
+              </div>
+              <span>Earn passive income by sharing your extra space.</span>
+            </div>
           </button>
         </div>
-        <button 
-          className="home-privacy-button"
-          onClick={() => navigate('/privacy')}
-          disabled={loading}
-        >
-          Privacy Policy
-        </button>
-
       </div>
     </div>
   );
