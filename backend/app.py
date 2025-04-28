@@ -36,7 +36,7 @@ app = Flask(
 
 # Configure CORS to allow requests from Render domains
 # --- CORS CONFIGURATION ---
-# Explicitly allow all necessary headers and credentials for frontend integration
+# Configure CORS to allow requests from Render domains
 CORS(
     app,
     resources={
@@ -53,8 +53,29 @@ CORS(
                 "X-User-Type",
                 "X-Username",
                 "Accept",
-                "Cache-Control"
-            ]
+                "Cache-Control",
+                "Pragma",
+                "Origin",
+                "X-CSRFToken",
+                "X-Session-Id",
+                "X-Auth-Token"
+            ],
+            "expose_headers": [
+                "Content-Type",
+                "Authorization",
+                "X-Requested-With",
+                "X-User-Type",
+                "X-Username",
+                "Accept",
+                "Cache-Control",
+                "Pragma",
+                "Origin",
+                "X-CSRFToken",
+                "X-Session-Id",
+                "X-Auth-Token"
+            ],
+            "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+            "max_age": 3600
         }
     }
 )
@@ -63,21 +84,8 @@ CORS(
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 app.config['SESSION_COOKIE_SECURE'] = True
 
-# Utility: Add CORS headers to all responses for cross-origin credentialed requests
-@app.after_request
-def add_cors_headers(response):
-    origin = request.headers.get('Origin')
-    allowed_origins = [
-        "https://tigerstorage-frontend.onrender.com",
-        "http://localhost:5173"
-    ]
-    if origin in allowed_origins:
-        response.headers['Access-Control-Allow-Origin'] = origin
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, PATCH, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, X-User-Type, X-Username, Accept, Cache-Control'
-        response.headers['Access-Control-Expose-Headers'] = 'Content-Type, Authorization, X-Requested-With, X-User-Type, X-Username, Accept, Cache-Control'
-    return response
+# Remove the add_cors_headers after_request handler since CORS is now handled by the CORS extension
+# ... existing code ...
 
 # Load environment variables and set secret key
 dotenv.load_dotenv()
@@ -526,16 +534,12 @@ def login():
 def logout():
     return redirect('/api/logoutcas')
 
-@app.route('/api/auth/status')
+@app.route('/api/auth/status', methods=['GET', 'OPTIONS'])
 def auth_status():
-    # Add CORS headers for this critical endpoint
-    response_headers = {
-        'Access-Control-Allow-Origin': request.headers.get('Origin', '*'),
-        'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Pragma, Cache-Control, Origin, Accept, X-CSRFToken, X-Session-Id, X-Auth-Token, X-User-Type, X-Username',
-        'Access-Control-Expose-Headers': 'Content-Type, Authorization, X-Requested-With, Pragma, Cache-Control, Origin, Accept, X-CSRFToken, X-Session-Id, X-Auth-Token, X-User-Type, X-Username'
-    }
+    # Handle OPTIONS request for CORS preflight
+    if request.method == 'OPTIONS':
+        response = jsonify({})
+        return response, 200
     
     if auth.is_authenticated():
         # Add debug information to help troubleshoot
@@ -549,22 +553,12 @@ def auth_status():
             'userType': user_type,
             'session_id': session.get('_id', 'unknown')
         })
-        
-        # Add CORS headers
-        for key, value in response_headers.items():
-            response.headers[key] = value
-            
         return response
     
     print("User is not authenticated")
     response = jsonify({
         'authenticated': False
     })
-    
-    # Add CORS headers
-    for key, value in response_headers.items():
-        response.headers[key] = value
-        
     return response
 
 @app.route('/api/upload', methods=['POST'])
