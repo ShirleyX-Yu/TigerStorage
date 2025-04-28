@@ -63,12 +63,15 @@ export const login = (userType) => {
     // Calculate the CAS login URL
     const backendUrl = getBackendUrl();
     
-    // Get the redirect URI from environment, or use default
-    const redirectPath = import.meta.env.VITE_AUTH_REDIRECT_PATH || '/dashboard';
+    // Set redirect path based on userType
+    let redirectPath = '/';
+    if (userType === 'renter') {
+      redirectPath = '/map';
+    } else if (userType === 'lender') {
+      redirectPath = '/lender-dashboard';
+    }
     const frontendUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-    
-    // Ensure we redirect back to our app after CAS auth with the user type preserved
-    const redirectUri = encodeURIComponent(`${frontendUrl}${redirectPath}?userType=${userType}`);
+    const redirectUri = encodeURIComponent(`${frontendUrl}${redirectPath}`);
     const casLoginUrl = `${backendUrl}/api/auth/login?userType=${userType}&redirectUri=${redirectUri}`;
     
     console.log(`auth.js - Production environment, redirecting to CAS: ${casLoginUrl}`);
