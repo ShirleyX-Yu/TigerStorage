@@ -4,6 +4,7 @@ import Header from './Header';
 import ReservationModal from './ReservationModal';
 
 const getStatusLabel = (status) => {
+  if (!status) return '';
   switch (status) {
     case 'approved_full':
       return 'Approved (Full)';
@@ -21,6 +22,12 @@ const getStatusLabel = (status) => {
       return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 };
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
 
 const ViewListings = () => {
   const navigate = useNavigate();
@@ -320,7 +327,7 @@ const ViewListings = () => {
                         <div style={styles.listingDetails}>
                           <h3 style={styles.listingTitle}>{listing.location}</h3>
                           <p style={styles.listingInfo}>
-                            <strong>${listing.cost}</strong> per month · {listing.remaining_volume ?? listing.cubic_feet} sq ft remaining / {listing.cubic_feet} sq ft total · {listing.contract_length_months} months
+                            <strong>${listing.cost}</strong> per month · {listing.remaining_volume ?? listing.cubic_feet} sq ft remaining / {listing.cubic_feet} sq ft total · Available: {formatDate(listing.start_date)} - {formatDate(listing.end_date)}
                           </p>
                           <div style={styles.descriptionBox}>
                             <p style={styles.description}>{listing.description || 'No description available'}</p>
