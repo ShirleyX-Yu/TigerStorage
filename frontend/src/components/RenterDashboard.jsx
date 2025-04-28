@@ -23,6 +23,27 @@ const getStatusLabel = (status) => {
   }
 };
 
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'In Discussion':
+      return '#4caf50'; // green
+    case 'pending':
+      return '#ff9800'; // orange
+    case 'approved_full':
+      return '#388e3c'; // green (darker)
+    case 'approved_partial':
+      return '#81c784'; // light green
+    case 'rejected':
+      return '#e53935'; // red
+    case 'cancelled_by_renter':
+      return '#757575'; // grey
+    case 'expired':
+      return '#9e9e9e'; // light grey
+    default:
+      return '#bdbdbd'; // default grey
+  }
+};
+
 const RenterDashboard = ({ username }) => {
   const navigate = useNavigate();
   const [interestedSpaces, setInterestedSpaces] = useState([]);
@@ -134,7 +155,7 @@ const RenterDashboard = ({ username }) => {
                       <td style={styles.td}>
                         <span style={{
                           ...styles.status,
-                          backgroundColor: space.status === 'In Discussion' ? '#4caf50' : '#ff9800'
+                          backgroundColor: getStatusColor(space.status)
                         }}>
                           {getStatusLabel(space.status)}
                         </span>
@@ -191,7 +212,7 @@ const RenterDashboard = ({ username }) => {
                       <td style={styles.td}>
                         <span style={{
                           ...styles.status,
-                          backgroundColor: space.status === 'In Discussion' ? '#4caf50' : '#ff9800'
+                          backgroundColor: getStatusColor(space.status)
                         }}>
                           {getStatusLabel(space.status)}
                         </span>
