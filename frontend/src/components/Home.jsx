@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../utils/auth';
 import tiger_storage_logo from '../assets/tiger_storage_logo.png';
-import renter_icon from '../assets/renter_icon.png';
-import lender_icon from '../assets/lender_icon.png';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -67,24 +65,21 @@ const Home = () => {
     localStorage.removeItem('userType');
     console.log('Cleared existing userType from storage');
     
-    // Set the new user type and call login
+    // Set the new user type
     sessionStorage.setItem('userType', userType);
     localStorage.setItem('userType', userType);
     console.log('Set new userType in storage:', userType);
-    console.log('SessionStorage after setting:', sessionStorage.getItem('userType'));
-    console.log('LocalStorage after setting:', localStorage.getItem('userType'));
     
-    // Set dashboard redirect flag in local storage with the user type
-    localStorage.setItem('dashboardRedirect', userType);
-    console.log(`Set dashboardRedirect flag in localStorage with value: ${userType}`);
-    
-    // Call login function - this may redirect to CAS in production
     try {
-      login(userType);
-      console.log('Called login function with userType:', userType);
+      // Navigate to the appropriate dashboard
+      if (userType === 'renter') {
+        navigate('/renter-dashboard');
+      } else if (userType === 'lender') {
+        navigate('/lender-dashboard');
+      }
     } catch (error) {
-      console.error('Error during login:', error);
-      setErrorMessage('There was an error during login. Please try again.');
+      console.error('Error during navigation:', error);
+      setErrorMessage('There was an error. Please try again.');
       setLoading(false);
     }
   };
@@ -167,7 +162,7 @@ const Home = () => {
               <span>Find secure, local storage for your stuff.</span>
               <div style={{ marginTop: '1rem' }}>
                 <img 
-                  src={renter_icon} 
+                  src="/assets/renter_icon.png"
                   alt="Renter Icon" 
                   style={{ 
                     width: '80px',
@@ -190,7 +185,7 @@ const Home = () => {
               <span>Earn passive income by sharing your extra space.</span>
               <div style={{ marginTop: '1rem' }}>
                 <img 
-                  src={lender_icon} 
+                  src="/assets/lender_icon.png"
                   alt="Lender Icon" 
                   style={{ 
                     width: '80px',
