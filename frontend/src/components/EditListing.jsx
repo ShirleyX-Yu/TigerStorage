@@ -227,7 +227,7 @@ const EditListing = () => {
         return;
       }
       if (!formData.cubicFeet) {
-        setError('Please enter the cubic feet');
+        setError('Please enter the square feet');
         return;
       }
       if (!formData.address) {
@@ -398,14 +398,14 @@ const EditListing = () => {
           </div>
 
           <div style={styles.formGroup}>
-            <label htmlFor="cubicFeet" style={styles.label}>Size (cubic feet)</label>
+            <label htmlFor="cubicFeet" style={styles.label}>Size (sq ft)</label>
             <input
               type="number"
               id="cubicFeet"
               name="cubicFeet"
               value={formData.cubicFeet}
               onChange={handleInputChange}
-              placeholder="Enter size in cubic feet"
+              placeholder="Enter size in square feet"
               min="0"
               style={styles.input}
               required

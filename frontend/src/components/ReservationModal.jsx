@@ -74,7 +74,7 @@ const ReservationModal = ({
             <ToggleButton value="partial" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Partial</ToggleButton>
           </ToggleButtonGroup>
           <TextField
-            label="Volume (cubic feet)"
+            label="Volume (sq ft)"
             type="number"
             fullWidth
             variant="outlined"

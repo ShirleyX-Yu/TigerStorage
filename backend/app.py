@@ -136,7 +136,7 @@ def init_db():
                             location VARCHAR(255) NOT NULL,
                             address VARCHAR(255),
                             cost NUMERIC,
-                            cubic_ft INTEGER,
+                            sq_ft INTEGER,
                             description TEXT,
                             latitude FLOAT,
                             longitude FLOAT,

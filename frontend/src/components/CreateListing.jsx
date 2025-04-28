@@ -266,7 +266,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       return;
     }
     if (Number(formData.cubicFeet) <= 0 || Number(formData.cubicFeet) > 10000) {
-      setError('Cubic feet must be between 1 and 10,000.');
+      setError('Square feet must be between 1 and 10,000.');
       return;
     }
     if (!formData.start_date || !formData.end_date) {
@@ -392,7 +392,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
               />
             </div>
             <div>
-              <label style={styles.label}>Cubic Feet <span style={{color: '#b00020'}}>*</span></label>
+              <label style={styles.label}>Square Feet <span style={{color: '#b00020'}}>*</span></label>
               <input
                 style={styles.input}
                 type="number"

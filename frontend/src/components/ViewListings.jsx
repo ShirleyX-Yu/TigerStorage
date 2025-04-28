@@ -252,7 +252,7 @@ const ViewListings = () => {
                     </div>
                   </div>
                   <div style={styles.filterGroup}>
-                    <label style={styles.filterLabel}>Size Range (cubic feet)</label>
+                    <label style={styles.filterLabel}>Size Range (sq ft)</label>
                     <div style={styles.rangeInputs}>
                       <input
                         type="number"
@@ -320,7 +320,7 @@ const ViewListings = () => {
                         <div style={styles.listingDetails}>
                           <h3 style={styles.listingTitle}>{listing.location}</h3>
                           <p style={styles.listingInfo}>
-                            <strong>${listing.cost}</strong> per month · {listing.remaining_volume ?? listing.cubic_feet} cu ft remaining / {listing.cubic_feet} cu ft total · {listing.contract_length_months} months
+                            <strong>${listing.cost}</strong> per month · {listing.remaining_volume ?? listing.cubic_feet} sq ft remaining / {listing.cubic_feet} sq ft total · {listing.contract_length_months} months
                           </p>
                           <div style={styles.descriptionBox}>
                             <p style={styles.description}>{listing.description || 'No description available'}</p>

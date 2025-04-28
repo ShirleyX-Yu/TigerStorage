@@ -133,7 +133,7 @@ const AdminPlatform = () => {
                   <div style={{ background: '#4caf50', color: '#fff', borderRadius: 6, padding: '2px 10px', fontSize: 13, fontWeight: 600 }}>{listing.status || 'Active'}</div>
                 </div>
                 <div style={{ fontSize: 15, margin: '0.5rem 0' }}>
-                  ${listing.cost}/month · {listing.cubic_feet} cubic feet · {listing.contract_length_months || 12} months
+                  ${listing.cost}/month · {listing.cubic_feet} sq ft · {listing.contract_length_months || 12} months
                 </div>
                 <div style={{ fontSize: 14, color: '#b0b0b0', marginBottom: 10 }}>
                   Created: {listing.created_at ? new Date(listing.created_at).toLocaleDateString() : 'N/A'}

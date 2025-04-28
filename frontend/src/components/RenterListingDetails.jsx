@@ -513,7 +513,7 @@ const RenterListingDetails = () => {
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Size:</span>
-                  <span style={styles.infoValue}>{listing.cubicFeet} cubic feet</span>
+                  <span style={styles.infoValue}>{listing.cubicFeet} sq ft</span>
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Contract Length:</span>

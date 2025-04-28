@@ -78,7 +78,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
       </Box>
 
       <Box sx={{ mb: 3 }}>
-        <Typography gutterBottom>Size Range (cubic feet)</Typography>
+        <Typography gutterBottom>Size Range (sq ft)</Typography>
         <Slider
           value={[filters.minSize || 0, filters.maxSize || 0]}
           onChange={handleSliderChange('size')}

@@ -240,7 +240,7 @@ const LenderListingDetails = () => {
               <h2 style={styles.location}>{listing.location}</h2>
               <div style={styles.specs}>
                 <div style={styles.specItem}><span style={styles.specLabel}>Cost:</span><span style={styles.specValue}>${listing.cost}/month</span></div>
-                <div style={styles.specItem}><span style={styles.specLabel}>Size:</span><span style={styles.specValue}>{listing.cubicFeet} cubic feet</span></div>
+                <div style={styles.specItem}><span style={styles.specLabel}>Size:</span><span style={styles.specValue}>{listing.cubicFeet} sq ft</span></div>
                 <div style={styles.specItem}><span style={styles.specLabel}>Contract:</span><span style={styles.specValue}>{listing.contractLength} months</span></div>
               </div>
               <div style={styles.descriptionSection}>
@@ -333,7 +333,7 @@ const LenderListingDetails = () => {
             <div style={{ marginBottom: 12 }}>
               <b>Renter:</b> {partialModal.request?.renter_username}<br />
               <b>Requested Volume:</b> {partialModal.request?.requested_volume} cu ft<br />
-              <b>Max Allowed:</b> {partialModal.request ? Math.min(partialModal.request.requested_volume, listing.cubicFeet) : 0} cu ft
+              <b>Max Allowed:</b> {partialModal.request ? Math.min(partialModal.request.requested_volume, listing.cubicFeet) : 0} sq ft
             </div>
             <TextField
               label="Approved Volume (cu ft)"
