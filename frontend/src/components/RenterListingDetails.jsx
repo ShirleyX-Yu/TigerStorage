@@ -516,21 +516,13 @@ const RenterListingDetails = () => {
                   <span style={styles.infoValue}>{listing.cubicFeet} sq ft</span>
                 </div>
                 <div style={styles.infoRow}>
-                  <span style={styles.infoLabel}>Contract Length:</span>
-                  <span style={styles.infoValue}>{listing.contractLength} months</span>
+                  <span style={styles.infoLabel}>Start Date:</span>
+                  <span style={styles.infoValue}>{listing.startDate ? new Date(listing.startDate).toLocaleDateString() : 'N/A'}</span>
                 </div>
-                {listing.contractStartDate && (
-                  <div style={styles.infoRow}>
-                    <span style={styles.infoLabel}>Start Date:</span>
-                    <span style={styles.infoValue}>{new Date(listing.contractStartDate).toLocaleDateString()}</span>
-                  </div>
-                )}
-                {listing.contractEndDate && (
-                  <div style={styles.infoRow}>
-                    <span style={styles.infoLabel}>End Date:</span>
-                    <span style={styles.infoValue}>{new Date(listing.contractEndDate).toLocaleDateString()}</span>
-                  </div>
-                )}
+                <div style={styles.infoRow}>
+                  <span style={styles.infoLabel}>End Date:</span>
+                  <span style={styles.infoValue}>{listing.endDate ? new Date(listing.endDate).toLocaleDateString() : 'N/A'}</span>
+                </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Lender:</span>
                   <span style={styles.infoValue}>{listing.lender.name}</span>
