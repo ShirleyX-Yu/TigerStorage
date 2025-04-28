@@ -3,6 +3,7 @@ import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 
 const getStatusLabel = (status) => {
+  if (!status) return '';
   switch (status) {
     case 'approved_full':
       return 'Approved (Full)';
