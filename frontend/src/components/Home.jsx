@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../utils/auth';
 import tiger_storage_logo from '../assets/tiger_storage_logo.png';
+import renter_icon from '../assets/renter_icon.png';
+import lender_icon from '../assets/lender_icon.png';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -136,7 +138,7 @@ const Home = () => {
             TS
           </div>
         )}
-        <h1 className="home-title">Tiger Storage</h1>
+        <h1 className="home-title">TigerStorage</h1>
         
         {errorMessage && (
           <div style={{
@@ -163,6 +165,17 @@ const Home = () => {
                 I am a space renter
               </div>
               <span>Find secure, local storage for your stuff.</span>
+              <div style={{ marginTop: '1rem' }}>
+                <img 
+                  src={renter_icon} 
+                  alt="Renter Icon" 
+                  style={{ 
+                    width: '80px',
+                    height: '80px',
+                    objectFit: 'contain'
+                  }} 
+                />
+              </div>
             </div>
           </button>
           <button 
@@ -175,6 +188,17 @@ const Home = () => {
                 I am a space lender
               </div>
               <span>Earn passive income by sharing your extra space.</span>
+              <div style={{ marginTop: '1rem' }}>
+                <img 
+                  src={lender_icon} 
+                  alt="Lender Icon" 
+                  style={{ 
+                    width: '80px',
+                    height: '80px',
+                    objectFit: 'contain'
+                  }} 
+                />
+              </div>
             </div>
           </button>
         </div>
