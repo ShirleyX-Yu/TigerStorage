@@ -186,3 +186,19 @@ def init_auth(app):
             'username': username,
             'userType': user_type
         })
+
+    @app.route('/api/auth/login')
+    def login():
+        # Store user type in session if provided
+        user_type = flask.request.args.get('userType')
+        if user_type:
+            flask.session['user_type'] = user_type
+            flask.session.permanent = True
+
+        # If already authenticated, redirect to the redirectUri
+        if is_authenticated():
+            redirect_uri = flask.request.args.get('redirectUri', '/')
+            return flask.redirect(redirect_uri)
+
+        # Otherwise, authenticate (this will handle CAS redirect)
+        return authenticate()
