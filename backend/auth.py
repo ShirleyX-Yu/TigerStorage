@@ -149,21 +149,40 @@ def init_auth(app):
         print(f"Logging out and redirecting to: {frontend_url}")
         return flask.redirect(frontend_url)
 
-@app.route('/api/auth/logout')
-def logout():
-    """Logout route that clears the session and redirects to CAS logout"""
-    # Clear the session
-    flask.session.clear()
-    
-    # Get the redirect URI from the request
-    redirect_uri = flask.request.args.get('redirectUri', '')
-    
-    # If we're in production, use CAS logout
-    if not flask.current_app.debug:
-        # Construct the CAS logout URL with the redirect URI
-        cas_logout_url = f"{_CAS_URL}logout?service={redirect_uri}"
-        # Redirect to CAS logout
-        return flask.redirect(cas_logout_url)
-    else:
-        # In development, just redirect to the home page
-        return flask.redirect(redirect_uri or '/')
+    @app.route('/api/auth/logout')
+    def logout():
+        """Logout route that clears the session and redirects to CAS logout"""
+        # Clear the session
+        flask.session.clear()
+        
+        # Get the redirect URI from the request
+        redirect_uri = flask.request.args.get('redirectUri', '')
+        
+        # If we're in production, use CAS logout
+        if not flask.current_app.debug:
+            # Construct the CAS logout URL with the redirect URI
+            cas_logout_url = f"{_CAS_URL}logout?service={redirect_uri}"
+            # Redirect to CAS logout
+            return flask.redirect(cas_logout_url)
+        else:
+            # In development, just redirect to the home page
+            return flask.redirect(redirect_uri or '/')
+
+    @app.route('/api/auth/status', methods=['GET', 'OPTIONS'])
+    def auth_status():
+        """Check if the user is authenticated"""
+        # Handle OPTIONS request for CORS preflight
+        if flask.request.method == 'OPTIONS':
+            return '', 204
+
+        # Check if user is authenticated
+        authenticated = is_authenticated()
+        user_info = flask.session.get('user_info', {})
+        username = user_info.get('user', '')
+        user_type = flask.session.get('user_type', '')
+
+        return flask.jsonify({
+            'authenticated': authenticated,
+            'username': username,
+            'userType': user_type
+        })
