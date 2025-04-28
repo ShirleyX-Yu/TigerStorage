@@ -140,22 +140,20 @@
   background-color: transparent;
   color: #666;
   border: none;
-  padding: 0.75rem 1.5rem;
+  padding: 0;
   font-size: 0.9rem;
   cursor: pointer;
   text-decoration: none;
-  border-radius: 8px;
   transition: all 0.2s ease;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
 }
 
 .home-privacy-button:hover {
-  background-color: rgba(245, 124, 0, 0.1);
+  background-color: transparent;
   color: #f57c00;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  text-decoration: underline;
+  box-shadow: none;
 }
 
 .home-privacy-button:active {
-  transform: translateY(1px);
+  transform: none;
 } 

@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../utils/auth';
 import tiger_storage_logo from '../assets/tiger_storage_logo.png';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
 import './Home.css';
 
 const Home = () => {
@@ -9,6 +14,7 @@ const Home = () => {
   const [logoError, setLogoError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
   
   // Check for dashboard redirect flag
   React.useEffect(() => {
@@ -106,7 +112,7 @@ const Home = () => {
       </button>
       <button 
         className="home-privacy-button"
-        onClick={() => navigate('/privacy')}
+        onClick={() => setPrivacyModalOpen(true)}
         disabled={loading}
         style={{
           position: 'absolute',
@@ -173,6 +179,138 @@ const Home = () => {
           </button>
         </div>
       </div>
+
+      {/* Privacy Policy Modal */}
+      <Dialog 
+        open={privacyModalOpen} 
+        onClose={() => setPrivacyModalOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ 
+          style: { 
+            borderRadius: 16, 
+            background: '#fff8f1',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)'
+          } 
+        }}
+      >
+        <DialogTitle style={{ 
+          background: '#FF6B00', 
+          color: 'white', 
+          fontWeight: 700, 
+          letterSpacing: 1, 
+          padding: '16px 24px',
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16
+        }}>
+          Privacy Policy
+        </DialogTitle>
+        <DialogContent style={{ padding: '24px 32px', fontSize: '14px', lineHeight: '1.6' }}>
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <p style={{ marginBottom: '24px' }}>
+              Last Updated: March 19, 2024
+            </p>
+
+            <p style={{ marginBottom: '24px' }}>
+              This Privacy Policy describes how TigerStorage ("we," "our," or "us") collects, uses, and shares your personal information when you use our storage space rental platform. By using TigerStorage, you agree to the collection and use of information in accordance with this policy.
+            </p>
+
+            <section style={{ marginBottom: '32px' }}>
+              <h2 style={{ color: '#333', fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>1. Information Collection</h2>
+              
+              <h3 style={{ color: '#444', fontSize: '16px', fontWeight: 600, marginBottom: '12px' }}>1.1 Information You Provide</h3>
+              <p style={{ marginBottom: '16px' }}>We collect information you provide directly to us, including:</p>
+              <ul style={{ marginBottom: '16px', paddingLeft: '24px' }}>
+                <li style={{ marginBottom: '8px' }}>Princeton University NetID and affiliated email</li>
+                <li style={{ marginBottom: '8px' }}>Name and contact information</li>
+                <li style={{ marginBottom: '8px' }}>For lenders: Storage space details, location, and pricing information</li>
+                <li style={{ marginBottom: '8px' }}>For renters: Storage requirements and preferences</li>
+                <li style={{ marginBottom: '8px' }}>Communication with other users through our platform</li>
+              </ul>
+
+              <h3 style={{ color: '#444', fontSize: '16px', fontWeight: 600, marginBottom: '12px' }}>1.2 Automatically Collected Information</h3>
+              <p style={{ marginBottom: '16px' }}>When you use our platform, we automatically collect:</p>
+              <ul style={{ marginBottom: '16px', paddingLeft: '24px' }}>
+                <li style={{ marginBottom: '8px' }}>Log data (IP address, browser type, pages visited)</li>
+                <li style={{ marginBottom: '8px' }}>Device information</li>
+                <li style={{ marginBottom: '8px' }}>Usage information and preferences</li>
+              </ul>
+            </section>
+
+            <section style={{ marginBottom: '32px' }}>
+              <h2 style={{ color: '#333', fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>2. Use of Information</h2>
+              <p style={{ marginBottom: '16px' }}>We use the collected information to:</p>
+              <ul style={{ marginBottom: '16px', paddingLeft: '24px' }}>
+                <li style={{ marginBottom: '8px' }}>Facilitate and manage storage space rentals</li>
+                <li style={{ marginBottom: '8px' }}>Process transactions and send related notifications</li>
+                <li style={{ marginBottom: '8px' }}>Verify Princeton University affiliation</li>
+                <li style={{ marginBottom: '8px' }}>Provide customer support</li>
+                <li style={{ marginBottom: '8px' }}>Improve and optimize our platform</li>
+                <li style={{ marginBottom: '8px' }}>Ensure platform safety and security</li>
+                <li style={{ marginBottom: '8px' }}>Comply with legal obligations</li>
+              </ul>
+            </section>
+
+            <section style={{ marginBottom: '32px' }}>
+              <h2 style={{ color: '#333', fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>3. Information Sharing</h2>
+              <p style={{ marginBottom: '16px' }}>We share your information only in the following circumstances:</p>
+              <ul style={{ marginBottom: '16px', paddingLeft: '24px' }}>
+                <li style={{ marginBottom: '8px' }}>Between renters and lenders to facilitate transactions</li>
+                <li style={{ marginBottom: '8px' }}>With service providers who assist in our operations</li>
+                <li style={{ marginBottom: '8px' }}>When required by law or to protect rights</li>
+                <li style={{ marginBottom: '8px' }}>With your consent</li>
+              </ul>
+            </section>
+
+            <section style={{ marginBottom: '32px' }}>
+              <h2 style={{ color: '#333', fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>4. Data Security</h2>
+              <p style={{ marginBottom: '16px' }}>
+                We implement appropriate technical and organizational security measures to protect your personal information. However, no method of transmission over the Internet or electronic storage is 100% secure. While we strive to protect your personal information, we cannot guarantee its absolute security.
+              </p>
+            </section>
+
+            <section style={{ marginBottom: '32px' }}>
+              <h2 style={{ color: '#333', fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>5. Your Rights</h2>
+              <p style={{ marginBottom: '16px' }}>You have the right to:</p>
+              <ul style={{ marginBottom: '16px', paddingLeft: '24px' }}>
+                <li style={{ marginBottom: '8px' }}>Access your personal information</li>
+                <li style={{ marginBottom: '8px' }}>Correct inaccurate information</li>
+                <li style={{ marginBottom: '8px' }}>Request deletion of your information</li>
+                <li style={{ marginBottom: '8px' }}>Opt out of marketing communications</li>
+                <li style={{ marginBottom: '8px' }}>Object to certain data processing</li>
+              </ul>
+            </section>
+
+            <section style={{ marginBottom: '32px' }}>
+              <h2 style={{ color: '#333', fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>6. Changes to This Policy</h2>
+              <p style={{ marginBottom: '16px' }}>
+                We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date at the top of this policy.
+              </p>
+            </section>
+
+            <section style={{ marginBottom: '32px' }}>
+              <h2 style={{ color: '#333', fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>7. Contact Us</h2>
+              <p style={{ marginBottom: '16px' }}>
+                If you have any questions about this Privacy Policy or our practices, please contact the TigerStorage team at <span style={{ color: '#FF6B00' }}>tigerstorage@princeton.edu</span>.
+              </p>
+            </section>
+          </div>
+        </DialogContent>
+        <DialogActions style={{ padding: '16px 24px', background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
+          <Button 
+            onClick={() => setPrivacyModalOpen(false)} 
+            style={{ 
+              background: '#FF6B00', 
+              color: 'white', 
+              fontWeight: 600,
+              padding: '8px 24px'
+            }}
+            variant="contained"
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
