@@ -1162,12 +1162,14 @@ def update_listing(listing_id):
         # Check authentication from different possible sources
         authenticated = auth.is_authenticated()
         owner_id = None
+        user_type_header = None  # Ensure this is always defined
         
         if authenticated:
             # Get from session if authenticated
             print("User authenticated via session for update")
             user_info = session.get('user_info', {})
             owner_id = user_info.get('user', '').lower()
+            user_type_header = user_info.get('user_type', None)  # Try to get user_type from session
             print(f"Authenticated username from session: {owner_id}")
         else:
             # If not authenticated via session, check headers
