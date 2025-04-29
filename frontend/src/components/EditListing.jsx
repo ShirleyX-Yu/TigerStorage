@@ -312,27 +312,15 @@ const EditListing = () => {
                   value="on-campus"
                   checked={locationType === 'on-campus'}
                   onChange={handleLocationTypeChange}
+                  disabled
                 />
                 On Campus
               </label>
-              <label style={styles.radioLabel}>
-                <input
-                  type="radio"
-                  name="locationType"
-                  value="off-campus"
-                  checked={locationType === 'off-campus'}
-                  onChange={handleLocationTypeChange}
-                />
-                Off Campus
-              </label>
             </div>
-
             <div style={styles.addressInputContainer}>
               <input
                 type="text"
-                placeholder={locationType === 'on-campus' 
-                  ? "[Hall Name] Hall" 
-                  : "Enter full street address (e.g., 123 Main St, Princeton, NJ)"}
+                placeholder="[Hall Name] Hall"
                 value={tempAddress}
                 onChange={handleAddressChange}
                 style={styles.addressInput}

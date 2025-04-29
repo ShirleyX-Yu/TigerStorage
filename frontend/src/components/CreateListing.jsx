@@ -353,61 +353,32 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                 value={locationType}
                 onChange={handleLocationTypeChange}
                 required
+                disabled
               >
                 <option value="on-campus">On Campus</option>
-                <option value="off-campus">Off Campus</option>
               </select>
             </div>
             <div>
-              {locationType === 'on-campus' ? (
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
-                  <select
-                    style={styles.input}
-                    value={tempAddress}
-                    onChange={e => {
-                      setTempAddress(e.target.value);
-                      // Auto-geocode on selection
-                      if (e.target.value) {
-                        geocodeAddress(e.target.value);
-                      }
-                    }}
-                    required
-                  >
-                    <option value="">Select a hall...</option>
-                    {PRINCETON_HALLS.map(hall => (
-                      <option key={hall} value={hall}>{hall}</option>
-                    ))}
-                  </select>
-                  {geocodingStatus && <div style={styles.geocodingStatus || styles.status}>{geocodingStatus}</div>}
-                </div>
-              ) : (
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Address <span style={{color: '#b00020'}}>*</span></label>
-                  <div style={styles.addressInputContainer}>
-                    <input
-                      style={styles.input}
-                      type="text"
-                      value={tempAddress}
-                      onChange={handleAddressChange}
-                      placeholder="Enter full address"
-                      required
-                      list="address-autocomplete"
-                    />
-                    <datalist id="address-autocomplete">
-                      {/* Optionally, you can fill this with suggestions from Nominatim if you implement autocomplete */}
-                    </datalist>
-                    <button
-                      type="button"
-                      style={styles.geocodeButton || styles.smallButton}
-                      onClick={() => geocodeAddress()}
-                    >
-                      Lookup
-                    </button>
-                  </div>
-                  {geocodingStatus && <div style={styles.geocodingStatus || styles.status}>{geocodingStatus}</div>}
-                </div>
-              )}
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
+                <select
+                  style={styles.input}
+                  value={tempAddress}
+                  onChange={e => {
+                    setTempAddress(e.target.value);
+                    if (e.target.value) {
+                      geocodeAddress(e.target.value);
+                    }
+                  }}
+                  required
+                >
+                  <option value="">Select a hall...</option>
+                  {PRINCETON_HALLS.map(hall => (
+                    <option key={hall} value={hall}>{hall}</option>
+                  ))}
+                </select>
+                {geocodingStatus && <div style={styles.geocodingStatus || styles.status}>{geocodingStatus}</div>}
+              </div>
             </div>
             <div>
               <label style={styles.label}>Cost per Month ($) <span style={{color: '#b00020'}}>*</span></label>
