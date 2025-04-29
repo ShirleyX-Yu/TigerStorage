@@ -39,6 +39,13 @@ const getStatusLabel = (status) => {
   }
 };
 
+// Helper to format YYYY-MM-DD as MM/DD/YYYY
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-');
+  return `${month}/${day}/${year}`;
+}
+
 const LenderDashboard = ({ username }) => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editListingId, setEditListingId] = useState(null);
@@ -134,9 +141,9 @@ const LenderDashboard = ({ username }) => {
           cost: listing.cost,
           cubicFeet: listing.cubic_feet,
           contractLength: listing.contract_length_months || 12,
-          dateCreated: new Date(listing.created_at || Date.now()).toLocaleDateString(),
-          startDate: listing.start_date ? new Date(listing.start_date).toLocaleDateString() : '',
-          endDate: listing.end_date ? new Date(listing.end_date).toLocaleDateString() : '',
+          dateCreated: listing.created_at ? formatDate(listing.created_at.split('T')[0]) : '',
+          startDate: listing.start_date ? formatDate(listing.start_date) : '',
+          endDate: listing.end_date ? formatDate(listing.end_date) : '',
           status: 'Active',
           interestedRenters,
           remaining_volume: listing.remaining_volume
@@ -396,7 +403,7 @@ const LenderDashboard = ({ username }) => {
                           <p style={{ ...styles.spaceAddress, fontStyle: 'italic', color: '#666', margin: '0 0 6px 0' }}>{space.address}</p>
                         )}
                         <p style={styles.spaceDetails}>
-                          ${space.cost}/month · {space.cubicFeet} cubic feet · {space.contractLength} months
+                          ${space.cost}/month · {space.cubicFeet} cubic feet
                         </p>
                         <p style={styles.spaceDetails}>
                           Start: {space.startDate || 'N/A'} | End: {space.endDate || 'N/A'}
@@ -617,6 +624,8 @@ const LenderDashboard = ({ username }) => {
         maxWidth: '1200px',
         margin: '40px auto 0',
         fontFamily: 'inherit',
+        width: '100%',
+        boxSizing: 'border-box',
       }}>
         <h2 style={{ marginBottom: 16, fontSize: '20px', fontWeight: 'bold', color: '#333' }}>Your Reviews</h2>
         {reviewsLoading ? <div style={{ fontSize: '16px', color: '#666' }}>Loading reviews...</div> : (
@@ -655,6 +664,16 @@ const LenderDashboard = ({ username }) => {
           )
         )}
       </div>
+      {/* Spacer after reviews section */}
+      <div style={{
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '32px auto 0',
+        background: '#f5f5f5',
+        borderRadius: '0 0 12px 12px',
+        minHeight: 40,
+        padding: '24px 0',
+      }} />
     </div>
   );
 };

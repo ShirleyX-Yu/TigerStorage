@@ -9,6 +9,13 @@ import StarIcon from '@mui/icons-material/Star';
 
 console.log('ListingDetails component loaded');
 
+// Helper to format YYYY-MM-DD as MM/DD/YYYY
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-');
+  return `${month}/${day}/${year}`;
+}
+
 const RenterListingDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -496,7 +503,7 @@ const RenterListingDetails = () => {
             </div>
 
             <div style={styles.infoSection}>
-              <h2 style={styles.location}>{listing.location}</h2>
+              <h2 style={styles.location}>{listing.address || listing.location}</h2>
               
               {listing.address && (
                 <div style={{ fontStyle: 'italic', color: '#888', marginBottom: 8 }}>{listing.address}</div>
@@ -505,7 +512,7 @@ const RenterListingDetails = () => {
               <div style={styles.listingInfo}>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Location:</span>
-                  <span style={styles.infoValue}>{listing.location}</span>
+                  <span style={styles.infoValue}>{listing.address || listing.location}</span>
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Cost:</span>
@@ -517,15 +524,15 @@ const RenterListingDetails = () => {
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Start Date:</span>
-                  <span style={styles.infoValue}>{listing.startDate ? new Date(listing.startDate).toLocaleDateString() : 'N/A'}</span>
+                  <span style={styles.infoValue}>{listing.startDate ? formatDate(listing.startDate) : 'N/A'}</span>
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>End Date:</span>
-                  <span style={styles.infoValue}>{listing.endDate ? new Date(listing.endDate).toLocaleDateString() : 'N/A'}</span>
+                  <span style={styles.infoValue}>{listing.endDate ? formatDate(listing.endDate) : 'N/A'}</span>
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Lender NetID:</span>
-                  <span style={styles.infoValue}>{listing.lender?.username || listing.lender?.netid || 'Unknown'}</span>
+                  <span style={styles.infoValue}>{listing.lender?.username || listing.lender?.netid || listing.owner_id || 'Unknown'}</span>
                 </div>
               </div>
 
@@ -536,8 +543,8 @@ const RenterListingDetails = () => {
 
               <div style={styles.lenderInfo}>
                 <h3>Lender Information</h3>
-                <p><strong>NetID:</strong> {listing.lender?.username || listing.lender?.netid || 'Unknown'}</p>
-                <p><strong>Email:</strong> {(listing.lender?.username || listing.lender?.netid) ? `${listing.lender.username || listing.lender.netid}@princeton.edu` : 'cs-tigerstorage@princeton.edu'}</p>
+                <p><strong>NetID:</strong> {listing.lender?.username || listing.lender?.netid || listing.owner_id || 'Unknown'}</p>
+                <p><strong>Email:</strong> {(listing.lender?.username || listing.lender?.netid || listing.owner_id) ? `${listing.lender?.username || listing.lender?.netid || listing.owner_id}@princeton.edu` : 'cs-tigerstorage@princeton.edu'}</p>
                 <div style={styles.actionSection}>
                   <button
                     style={{
