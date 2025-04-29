@@ -496,7 +496,7 @@ const Home = () => {
             <section>
               <h2 style={{ color: '#4D2E1E', fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>Contact Us</h2>
               <p style={{ marginBottom: '16px', color: '#666', lineHeight: '1.6' }}>
-                Have questions or suggestions? We'd love to hear from you! Reach out to us at <span style={{ color: '#F47C2E', fontWeight: 500 }}>tigerstorage@princeton.edu</span>
+                Have questions or suggestions? We'd love to hear from you! Reach out to us at <span style={{ color: '#F47C2E', fontWeight: 500 }}>cs-tigerstorage@princeton.edu</span>
               </p>
             </section>
           </div>
@@ -631,7 +631,7 @@ const Home = () => {
             <section style={{ marginBottom: '32px' }}>
               <h2 style={{ color: '#4D2E1E', fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>7. Contact Us</h2>
               <p style={{ marginBottom: '16px' }}>
-                If you have any questions about this Privacy Policy or our practices, please contact the TigerStorage team at <span style={{ color: '#F47C2E' }}>tigerstorage@princeton.edu</span>.
+                If you have any questions about this Privacy Policy or our practices, please contact the TigerStorage team at <span style={{ color: '#F47C2E' }}>cs-tigerstorage@princeton.edu</span>.
               </p>
             </section>
           </div>
