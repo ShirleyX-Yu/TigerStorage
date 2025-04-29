@@ -389,7 +389,7 @@ const Home = () => {
                       fontWeight: 500,
                       marginBottom: '16px'
                     }}>
-                      Computer Science '25
+                      Computer Science '27
                     </p>
                     <p style={{ color: '#6B5E54', lineHeight: '1.6' }}>
                       Diya brings her expertise in full-stack development and user experience design to TigerStorage. Originally from Pennsylvania, her passion for creating intuitive interfaces has been instrumental in making our platform user-friendly and accessible to all Princeton students.
@@ -436,7 +436,7 @@ const Home = () => {
                       fontWeight: 500,
                       marginBottom: '16px'
                     }}>
-                      Computer Science '25
+                      Computer Science '27
                     </p>
                     <p style={{ color: '#6B5E54', lineHeight: '1.6' }}>
                       Cindy specializes in backend development and database management. Hailing from Ohio, her strong technical background ensures that TigerStorage operates smoothly and securely, providing reliable service to our users.
@@ -483,7 +483,7 @@ const Home = () => {
                       fontWeight: 500,
                       marginBottom: '16px'
                     }}>
-                      Computer Science '25
+                      Computer Science '27
                     </p>
                     <p style={{ color: '#6B5E54', lineHeight: '1.6' }}>
                       Shirley leads the frontend development and system architecture of TigerStorage. Coming from British Columbia, Canada, her focus on creating seamless user experiences has helped shape our platform into an efficient and enjoyable storage solution.
