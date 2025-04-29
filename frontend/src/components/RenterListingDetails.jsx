@@ -524,8 +524,8 @@ const RenterListingDetails = () => {
                   <span style={styles.infoValue}>{listing.endDate ? new Date(listing.endDate).toLocaleDateString() : 'N/A'}</span>
                 </div>
                 <div style={styles.infoRow}>
-                  <span style={styles.infoLabel}>Lender:</span>
-                  <span style={styles.infoValue}>{listing.lender.name}</span>
+                  <span style={styles.infoLabel}>Lender NetID:</span>
+                  <span style={styles.infoValue}>{listing.lender?.username || listing.lender?.netid || 'Unknown'}</span>
                 </div>
               </div>
 
@@ -536,8 +536,8 @@ const RenterListingDetails = () => {
 
               <div style={styles.lenderInfo}>
                 <h3>Lender Information</h3>
-                <p><strong>Name:</strong> {listing.lender?.name || 'Unknown'}</p>
-                <p><strong>Email:</strong> {listing.lender?.email || 'contact@tigerstorage.com'}</p>
+                <p><strong>NetID:</strong> {listing.lender?.username || listing.lender?.netid || 'Unknown'}</p>
+                <p><strong>Email:</strong> {(listing.lender?.username || listing.lender?.netid) ? `${listing.lender.username || listing.lender.netid}@princeton.edu` : 'cs-tigerstorage@princeton.edu'}</p>
                 <div style={styles.actionSection}>
                   <button
                     style={{
