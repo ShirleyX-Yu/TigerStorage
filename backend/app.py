@@ -1285,12 +1285,15 @@ def update_listing(listing_id):
                 conn.commit()
                 print(f"Listing {listing_id} updated successfully")
 
-                # If admin, update reported_listings status as well
+                # If admin, update reported_listings status as well (now by report_id, not listing_id)
                 if is_admin and data.get('admin_action') in ['accept', 'reject']:
                     new_status = 'rejected' if data.get('admin_action') == 'reject' else 'accepted'
+                    report_id = data.get('report_id')
+                    if not report_id:
+                        return jsonify({"error": "Missing report_id for admin action"}), 400
                     cur.execute(
-                        "UPDATE reported_listings SET status = %s WHERE listing_id = %s AND status = 'pending'",
-                        (new_status, listing_id)
+                        "UPDATE reported_listings SET status = %s WHERE report_id = %s AND status = 'pending'",
+                        (new_status, report_id)
                     )
                     conn.commit()
 
