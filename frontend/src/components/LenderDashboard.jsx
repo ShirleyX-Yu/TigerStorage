@@ -193,7 +193,6 @@ const LenderDashboard = ({ username }) => {
       if (resp.ok) {
         const data = await resp.json();
         setReservationRequests(r => ({ ...r, [listingId]: data }));
-        fetchListings();
       }
     } catch (err) {
       // ignore
@@ -664,16 +663,6 @@ const LenderDashboard = ({ username }) => {
           )
         )}
       </div>
-      {/* Spacer after reviews section */}
-      <div style={{
-        width: '100%',
-        maxWidth: '1200px',
-        margin: '32px auto 0',
-        background: '#f5f5f5',
-        borderRadius: '0 0 12px 12px',
-        minHeight: 40,
-        padding: '24px 0',
-      }} />
     </div>
   );
 };

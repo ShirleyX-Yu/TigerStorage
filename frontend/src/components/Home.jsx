@@ -115,25 +115,8 @@ const Home = () => {
         WebkitBackdropFilter: 'blur(60px)'
       }}>
         <button
-          style={{
-            position: 'absolute',
-            top: 20,
-            left: 30,
-            zIndex: 1000,
-            background: '#F47C2E',
-            color: '#FFF8F1',
-            border: 'none',
-            borderRadius: '6px',
-            padding: '10px 18px',
-            fontWeight: 600,
-            fontSize: '15px',
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-            transition: 'all 0.2s ease-in-out',
-            '&:hover': {
-              background: '#F8B88B'
-            }
-          }}
+          className="home-privacy-button"
+          style={{ position: 'absolute', top: 20, left: 30, zIndex: 1000 }}
           onClick={() => navigate('/admin')}
           disabled={loading}
         >
