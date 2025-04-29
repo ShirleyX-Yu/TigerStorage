@@ -60,11 +60,11 @@ const AdminPlatform = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editListingId, setEditListingId] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [loadingActionId, setLoadingActionId] = useState(null);
+  const [loadingReportId, setLoadingReportId] = useState(null);
   const [actionType, setActionType] = useState(null);
 
-  const handleAccept = async (listingId) => {
-    setLoadingActionId(listingId);
+  const handleAccept = async (reportId, listingId) => {
+    setLoadingReportId(reportId);
     setActionType('accept');
     try {
       let apiUrl = import.meta.env.VITE_API_URL;
@@ -93,13 +93,13 @@ const AdminPlatform = () => {
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoadingActionId(null);
+      setLoadingReportId(null);
       setActionType(null);
     }
   };
 
-  const handleReject = async (listingId) => {
-    setLoadingActionId(listingId);
+  const handleReject = async (reportId, listingId) => {
+    setLoadingReportId(reportId);
     setActionType('reject');
     try {
       let apiUrl = import.meta.env.VITE_API_URL;
@@ -128,7 +128,7 @@ const AdminPlatform = () => {
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoadingActionId(null);
+      setLoadingReportId(null);
       setActionType(null);
     }
   };
@@ -198,7 +198,7 @@ const AdminPlatform = () => {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '2rem', marginTop: '2rem' }}>
             {listings.map(listing => (
-              <div key={listing.listing_id || listing.id} style={{ background: '#232526', borderRadius: 12, padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.13)', color: '#fff', minHeight: 260 }}>
+              <div key={listing.report_id || listing.listing_id || listing.id} style={{ background: '#232526', borderRadius: 12, padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.13)', color: '#fff', minHeight: 260 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{listing.location || listing.address || 'No Location'}</h2>
@@ -237,17 +237,17 @@ const AdminPlatform = () => {
                   {/* Admin approve/reject actions could go here */}
                   <button
                     style={{ background: '#2196f3', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 5, cursor: 'pointer', fontWeight: 600 }}
-                    onClick={() => handleAccept(listing.listing_id)}
-                    disabled={listing.status === 'accepted' || listing.status === 'rejected' || loadingActionId === listing.listing_id}
+                    onClick={() => handleAccept(listing.report_id, listing.listing_id)}
+                    disabled={listing.status === 'accepted' || listing.status === 'rejected' || loadingReportId === listing.report_id}
                   >
-                    {loadingActionId === listing.listing_id && actionType === 'accept' ? 'Approving...' : 'Approve'}
+                    {loadingReportId === listing.report_id && actionType === 'accept' ? 'Approving...' : 'Approve'}
                   </button>
                   <button
                     style={{ background: '#f44336', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 5, cursor: 'pointer', fontWeight: 600 }}
-                    onClick={() => handleReject(listing.listing_id)}
-                    disabled={listing.status === 'accepted' || listing.status === 'rejected' || loadingActionId === listing.listing_id}
+                    onClick={() => handleReject(listing.report_id, listing.listing_id)}
+                    disabled={listing.status === 'accepted' || listing.status === 'rejected' || loadingReportId === listing.report_id}
                   >
-                    {loadingActionId === listing.listing_id && actionType === 'reject' ? 'Rejecting...' : 'Reject'}
+                    {loadingReportId === listing.report_id && actionType === 'reject' ? 'Rejecting...' : 'Reject'}
                   </button>
                 </div>
               </div>
