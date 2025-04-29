@@ -60,6 +60,79 @@ const AdminPlatform = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editListingId, setEditListingId] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [loadingActionId, setLoadingActionId] = useState(null);
+  const [actionType, setActionType] = useState(null);
+
+  const handleAccept = async (listingId) => {
+    setLoadingActionId(listingId);
+    setActionType('accept');
+    try {
+      let apiUrl = import.meta.env.VITE_API_URL;
+      if (!apiUrl && typeof window !== 'undefined') {
+        apiUrl = window.location.origin;
+      } else if (!apiUrl) {
+        apiUrl = 'http://localhost:8000';
+      }
+      const response = await fetch(`${apiUrl}/api/listings/${listingId}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-User-Type': 'admin',
+          'X-Username': 'admin',
+        },
+        body: JSON.stringify({ admin_action: 'accept' })
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to accept listing (${response.status}): ${response.statusText}`);
+      }
+      // Refresh listings
+      setRefreshKey(k => k + 1);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoadingActionId(null);
+      setActionType(null);
+    }
+  };
+
+  const handleReject = async (listingId) => {
+    setLoadingActionId(listingId);
+    setActionType('reject');
+    try {
+      let apiUrl = import.meta.env.VITE_API_URL;
+      if (!apiUrl && typeof window !== 'undefined') {
+        apiUrl = window.location.origin;
+      } else if (!apiUrl) {
+        apiUrl = 'http://localhost:8000';
+      }
+      const response = await fetch(`${apiUrl}/api/listings/${listingId}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-User-Type': 'admin',
+          'X-Username': 'admin',
+        },
+        body: JSON.stringify({ admin_action: 'reject' })
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to reject listing (${response.status}): ${response.statusText}`);
+      }
+      // Refresh listings
+      setRefreshKey(k => k + 1);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoadingActionId(null);
+      setActionType(null);
+    }
+  };
+
 
   const fetchListings = useCallback(async () => {
     try {
@@ -77,6 +150,7 @@ const AdminPlatform = () => {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
           'X-User-Type': 'admin',
+          'X-Username': 'admin',
         },
       });
       if (!response.ok) {
@@ -161,11 +235,19 @@ const AdminPlatform = () => {
                 )}
                 <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
                   {/* Admin approve/reject actions could go here */}
-                  <button style={{ background: '#2196f3', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 5, cursor: 'pointer', fontWeight: 600 }} disabled>
-                    Approve
+                  <button
+                    style={{ background: '#2196f3', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 5, cursor: 'pointer', fontWeight: 600 }}
+                    onClick={() => handleAccept(listing.listing_id)}
+                    disabled={listing.status === 'accepted' || listing.status === 'rejected' || loadingActionId === listing.listing_id}
+                  >
+                    {loadingActionId === listing.listing_id && actionType === 'accept' ? 'Approving...' : 'Approve'}
                   </button>
-                  <button style={{ background: '#f44336', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 5, cursor: 'pointer', fontWeight: 600 }} disabled>
-                    Reject
+                  <button
+                    style={{ background: '#f44336', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 5, cursor: 'pointer', fontWeight: 600 }}
+                    onClick={() => handleReject(listing.listing_id)}
+                    disabled={listing.status === 'accepted' || listing.status === 'rejected' || loadingActionId === listing.listing_id}
+                  >
+                    {loadingActionId === listing.listing_id && actionType === 'reject' ? 'Rejecting...' : 'Reject'}
                   </button>
                 </div>
               </div>

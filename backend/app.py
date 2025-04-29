@@ -677,7 +677,7 @@ def get_listings():
                 # Build the query dynamically based on available columns
                 select_parts = []
                 essential_columns = ['listing_id', 'location', 'cost', 'cubic_ft', 'description', 
-                                     'created_at', 'owner_id', 'remaining_volume']
+                                     'created_at', 'owner_id', 'remaining_volume', 'is_available']
                 
                 # Add all essential columns that exist
                 for col in essential_columns:
@@ -1189,7 +1189,7 @@ def update_listing(listing_id):
         
         # Get the updated data
         data = request.get_json()
-        
+
         # Validation: Prevent negative cost or cubic feet
         if 'cost' in data:
             try:
@@ -1217,28 +1217,30 @@ def update_listing(listing_id):
         conn = get_db_connection()
         if not conn:
             return jsonify({"error": "Database connection failed"}), 500
-            
+
         try:
             with conn.cursor() as cur:
-                # First verify that the listing belongs to the current user
-                print(f"Checking if listing {listing_id} belongs to {owner_id} for update")
+                # First verify that the listing exists
+                print(f"Checking if listing {listing_id} exists for update")
                 cur.execute("SELECT owner_id FROM storage_listings WHERE listing_id = %s", (listing_id,))
                 listing = cur.fetchone()
-                
+
                 if not listing:
                     print(f"Listing {listing_id} not found for update")
                     return jsonify({"error": "Listing not found"}), 404
-                    
-                # Check if the current user is the owner
+
                 db_owner_id = listing[0]
-                print(f"Listing owner is: {db_owner_id}, update request from: {owner_id}")
-                if db_owner_id != owner_id:
-                    print(f"Permission denied: {owner_id} is not owner of listing {listing_id}")
+                print(f"Listing owner is: {db_owner_id}, update request from: {owner_id}, user_type: {user_type_header}")
+
+                # Admin can update any listing
+                is_admin = user_type_header == 'admin'
+                if not is_admin and db_owner_id != owner_id:
+                    print(f"Permission denied: {owner_id} is not owner of listing {listing_id} and not admin")
                     return jsonify({"error": "You don't have permission to update this listing"}), 403
-                
+
                 # Prepare update data
                 update_values = {}
-                
+
                 # Only update fields that are provided
                 if 'location' in data:
                     update_values['location'] = data['location']
@@ -1258,9 +1260,21 @@ def update_listing(listing_id):
                     update_values['end_date'] = data['end_date']
                 if 'image_url' in data:
                     update_values['image_url'] = data['image_url']
-                
+
+                # Admin actions: accept/reject listing
+                if is_admin:
+                    # Accept Report: is_available = False (listing becomes unavailable)
+                    if data.get('admin_action') == 'accept':
+                        update_values['is_available'] = False
+                    # Reject Report: is_available = True (listing remains available)
+                    elif data.get('admin_action') == 'reject':
+                        update_values['is_available'] = True
+                    # Allow direct is_available update if provided
+                    if 'is_available' in data:
+                        update_values['is_available'] = bool(data['is_available'])
+
                 if not update_values:
-                    return jsonify({"error": "No valid fields to update"}), 400
+                    return jsonify({"error": "No fields provided to update"}), 400
                 
                 # Build the SQL update query
                 set_clause = ", ".join([f"{key} = %s" for key in update_values.keys()])
@@ -1270,6 +1284,15 @@ def update_listing(listing_id):
                 cur.execute(query, list(update_values.values()) + [listing_id])
                 conn.commit()
                 print(f"Listing {listing_id} updated successfully")
+
+                # If admin, update reported_listings status as well
+                if is_admin and data.get('admin_action') in ['accept', 'reject']:
+                    new_status = 'rejected' if data.get('admin_action') == 'reject' else 'accepted'
+                    cur.execute(
+                        "UPDATE reported_listings SET status = %s WHERE listing_id = %s AND status = 'pending'",
+                        (new_status, listing_id)
+                    )
+                    conn.commit()
 
                 # If cubicFeet or cubic_feet was updated, recalculate remaining_volume
                 if 'cubicFeet' in data or 'cubic_feet' in data:
