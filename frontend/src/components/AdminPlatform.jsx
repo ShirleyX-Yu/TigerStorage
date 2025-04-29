@@ -185,6 +185,23 @@ const AdminPlatform = () => {
     <>
       <div style={{ ...styles.container, alignItems: 'flex-start', justifyContent: 'flex-start', padding: '2rem 0' }}>
         <div style={{ ...styles.card, maxWidth: 1200, width: '98%', margin: '2rem auto', textAlign: 'left', background: 'rgba(24,24,24,0.98)' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 8 }}>
+            <button
+              style={{
+                background: '#f44336',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 18px',
+                borderRadius: 6,
+                fontWeight: 700,
+                fontSize: 16,
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.13)',
+                transition: 'background 0.2s',
+              }}
+              onClick={() => { window.location.href = '/'; }}
+            >Logout</button>
+          </div>
           <span role="img" aria-label="hammer and wrench" style={{
             display: 'block',
             fontSize: '2.7rem',
