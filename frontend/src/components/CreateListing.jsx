@@ -1,6 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
 
 const PRINCETON_HALLS = [
   'Bloomberg Hall', 'Butler College', 'First College', 'Forbes College', 'Mathey College',
@@ -157,6 +162,8 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const [tempAddress, setTempAddress] = useState('');
   const [geocodingStatus, setGeocodingStatus] = useState('');
   const [locationType, setLocationType] = useState('on-campus');
+  const [showAddressConfirm, setShowAddressConfirm] = useState(false);
+  const [pendingAddress, setPendingAddress] = useState(null);
 
   // Scroll to error when it appears
   useEffect(() => {
@@ -204,20 +211,38 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       if (!response.ok) throw new Error('Failed to fetch coordinates');
       const data = await response.json();
       if (data.length > 0) {
-        const { lat, lon } = data[0];
-        setFormData(prev => ({
-          ...prev,
-          address: addressToGeocode,
+        const { lat, lon, display_name } = data[0];
+        setPendingAddress({
+          address: display_name,
           latitude: lat,
           longitude: lon
-        }));
-        setGeocodingStatus('Address found!');
+        });
+        setShowAddressConfirm(true);
+        setGeocodingStatus('');
       } else {
         setGeocodingStatus('Address not found. Try being more specific.');
       }
     } catch {
       setGeocodingStatus('Error looking up address. Please try again.');
     }
+  };
+
+  const handleConfirmAddress = () => {
+    if (pendingAddress) {
+      setFormData(prev => ({
+        ...prev,
+        address: pendingAddress.address,
+        latitude: pendingAddress.latitude,
+        longitude: pendingAddress.longitude
+      }));
+    }
+    setShowAddressConfirm(false);
+    setPendingAddress(null);
+  };
+
+  const handleEditAddress = () => {
+    setShowAddressConfirm(false);
+    setPendingAddress(null);
   };
 
   const handleImageUpload = async (e) => {
@@ -297,6 +322,14 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     } catch (err) {
       setError(err.message);
     }
+  };
+
+  // Helper to check if address is a valid street address
+  const isValidStreetAddress = (address) => {
+    if (!address) return false;
+    // Check for a number followed by a street name, or 'Princeton, NJ' for campus
+    // This is a simple heuristic; you can improve it as needed
+    return /\d+\s+\w+/.test(address) || /Princeton,?\s*NJ/i.test(address);
   };
 
   return (
@@ -463,6 +496,28 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             </button>
         </form>
       </div>
-    );
-  }
+      {/* Address Confirmation Modal */}
+      <Dialog open={showAddressConfirm} onClose={handleEditAddress} maxWidth="xs" fullWidth>
+        <DialogTitle>Confirm Address</DialogTitle>
+        <DialogContent>
+          <div style={{ marginBottom: 16 }}>
+            Please confirm the address for your listing:
+          </div>
+          <div style={{ fontWeight: 600, fontSize: 16, color: '#333', marginBottom: 8 }}>
+            {pendingAddress?.address}
+          </div>
+          {!isValidStreetAddress(pendingAddress?.address) && (
+            <div style={{ color: '#c62828', marginTop: 8, fontWeight: 500 }}>
+              Warning: This does not appear to be a full street address. Please select or enter a more specific address.
+            </div>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleEditAddress} color="secondary">Edit</Button>
+          <Button onClick={handleConfirmAddress} color="primary" variant="contained" disabled={!isValidStreetAddress(pendingAddress?.address)}>Confirm</Button>
+        </DialogActions>
+      </Dialog>
+    </div>
+  );
+}
 export default CreateListing;
