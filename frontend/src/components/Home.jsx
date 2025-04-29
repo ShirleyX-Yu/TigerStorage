@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../utils/auth';
 import tiger_storage_logo from '../assets/tiger_storage_logo.png';
+import cindytImg from '../assets/cindyt.jpeg';
+import diyaImg from '../assets/diya.jpeg';
+import shirleyImg from '../assets/shirley.jpeg';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -360,20 +363,19 @@ const Home = () => {
                   borderRadius: '16px',
                   boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
                 }}>
-                  <div style={{ 
-                    width: '200px',
-                    height: '200px',
-                    borderRadius: '16px',
-                    background: '#f5f5f5',
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#999',
-                    fontSize: '14px'
-                  }}>
-                    Profile Image
-                  </div>
+                  <img 
+                    src={diyaImg} 
+                    alt="Diya Hundiwala" 
+                    style={{
+                      width: '200px',
+                      height: '200px',
+                      borderRadius: '16px',
+                      objectFit: 'cover',
+                      flexShrink: 0,
+                      background: '#f5f5f5',
+                      boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+                    }}
+                  />
                   <div>
                     <h3 style={{ 
                       color: '#333', 
@@ -407,20 +409,19 @@ const Home = () => {
                   borderRadius: '16px',
                   boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
                 }}>
-                  <div style={{ 
-                    width: '200px',
-                    height: '200px',
-                    borderRadius: '16px',
-                    background: '#f5f5f5',
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#999',
-                    fontSize: '14px'
-                  }}>
-                    Profile Image
-                  </div>
+                  <img 
+                    src={cindytImg} 
+                    alt="Cindy Tong" 
+                    style={{
+                      width: '200px',
+                      height: '200px',
+                      borderRadius: '16px',
+                      objectFit: 'cover',
+                      flexShrink: 0,
+                      background: '#f5f5f5',
+                      boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+                    }}
+                  />
                   <div>
                     <h3 style={{ 
                       color: '#333', 
@@ -454,20 +455,19 @@ const Home = () => {
                   borderRadius: '16px',
                   boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
                 }}>
-                  <div style={{ 
-                    width: '200px',
-                    height: '200px',
-                    borderRadius: '16px',
-                    background: '#f5f5f5',
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#999',
-                    fontSize: '14px'
-                  }}>
-                    Profile Image
-                  </div>
+                  <img 
+                    src={shirleyImg} 
+                    alt="Shirley Yu" 
+                    style={{
+                      width: '200px',
+                      height: '200px',
+                      borderRadius: '16px',
+                      objectFit: 'cover',
+                      flexShrink: 0,
+                      background: '#f5f5f5',
+                      boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+                    }}
+                  />
                   <div>
                     <h3 style={{ 
                       color: '#333', 
