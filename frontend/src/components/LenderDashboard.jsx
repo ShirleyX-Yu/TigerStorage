@@ -612,12 +612,17 @@ const LenderDashboard = ({ username }) => {
         </DialogActions>
       </Dialog>
       {/* --- Lender Reviews Section --- */}
-      <div style={{ margin: '40px auto 0', maxWidth: 900, background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: 24 }}>
-        <h2 style={{ marginBottom: 16 }}>Your Reviews</h2>
-        {reviewsLoading ? <div>Loading reviews...</div> : (
-          lenderReviews.length === 0 ? <div>No reviews yet.</div> : (
+      <div style={{
+        ...styles.section,
+        maxWidth: '1200px',
+        margin: '40px auto 0',
+        fontFamily: 'inherit',
+      }}>
+        <h2 style={{ marginBottom: 16, fontSize: '20px', fontWeight: 'bold', color: '#333' }}>Your Reviews</h2>
+        {reviewsLoading ? <div style={{ fontSize: '16px', color: '#666' }}>Loading reviews...</div> : (
+          lenderReviews.length === 0 ? <div style={{ fontSize: '16px', color: '#666' }}>No reviews yet.</div> : (
             <>
-              <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 16, fontSize: '16px' }}>
                 <b>Average Rating: </b>
                 {(
                   lenderReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / lenderReviews.length
@@ -628,14 +633,14 @@ const LenderDashboard = ({ username }) => {
               </div>
               <div>
                 {lenderReviews.map((r, i) => (
-                  <div key={i} style={{ background: '#f8f8f8', borderRadius: 6, padding: 12, marginBottom: 10 }}>
+                  <div key={i} style={{ background: '#f8f8f8', borderRadius: 6, padding: 16, marginBottom: 14, fontSize: '15px', color: '#333' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ color: '#fbc02d' }}>{[...Array(r.rating)].map((_, j) => <StarIcon key={j} fontSize="small" />)}</span>
                       <span style={{ fontWeight: 600 }}>{r.renter_username}</span>
-                      <span style={{ color: '#888', fontSize: 12 }}>{new Date(r.created_at).toLocaleDateString()}</span>
+                      <span style={{ color: '#888', fontSize: 13 }}>{new Date(r.created_at).toLocaleDateString()}</span>
                       {r.listing_id && (
                         <span style={{ marginLeft: 12, fontSize: 13, color: '#333' }}>
-                          for listing: 
+                          for listing:
                           <a href={`/lender-dashboard/listing/${r.listing_id}`} style={{ color: '#1976d2', textDecoration: 'underline', marginLeft: 4 }}>
                             {r.location || `Listing #${r.listing_id}`}
                           </a>
