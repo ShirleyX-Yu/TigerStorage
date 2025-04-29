@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { login } from '../utils/auth';
 import tiger_storage_logo from '../assets/tiger_storage_logo.png';
 import cindytImg from '../assets/cindyt.jpeg';
@@ -14,6 +14,7 @@ import './Home.css';
 
 const Home = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [logoError, setLogoError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -57,6 +58,15 @@ const Home = () => {
       console.log("No dashboard redirect flag found");
     }
   }, [navigate]);
+  
+  // Show admin error if redirected from /admin
+  useEffect(() => {
+    if (location.state && location.state.adminError) {
+      setErrorMessage('Access denied: Only verified admins can access the admin dashboard.');
+      // Clear the state so it doesn't persist
+      navigate('/', { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
   
   const handleLogin = (userType) => {
     login(userType); // Always use the login utility, which handles CAS in production

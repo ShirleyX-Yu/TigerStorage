@@ -290,6 +290,59 @@ const RedirectToUserDashboard = () => {
   return null;
 };
 
+// Add a new AdminProtectedRoute for admin access control
+const AdminProtectedRoute = ({ component: Component }) => {
+  const [loading, setLoading] = React.useState(true);
+  const [authenticated, setAuthenticated] = React.useState(false);
+  const [userType, setUserType] = React.useState(null);
+  const [username, setUsername] = React.useState(null);
+  const [error, setError] = React.useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const checkAuth = async () => {
+      try {
+        const { status, authenticated, userType: currentUserType, username: currentUsername } = await checkAuthStatus();
+        if (isMounted) {
+          const isAuthenticated = status === true || authenticated === true;
+          setAuthenticated(isAuthenticated);
+          setUserType(currentUserType);
+          setUsername(currentUsername || 'Unknown');
+
+          if (!isAuthenticated) {
+            navigate('/');
+          } else if (currentUserType !== 'admin' || currentUsername !== 'cs-tigerstorage') {
+            // Not the admin NetID
+            setError('Access denied: Only verified admins can access the admin dashboard.');
+            // Show error on home page
+            navigate('/', { state: { adminError: true } });
+          }
+          setLoading(false);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setAuthenticated(false);
+          setLoading(false);
+          navigate('/');
+        }
+      }
+    };
+    checkAuth();
+    return () => { isMounted = false; };
+  }, [navigate, location.pathname]);
+
+  if (loading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '18px' }}>Loading...</div>;
+  }
+  if (!authenticated || userType !== 'admin' || username !== 'cs-tigerstorage') {
+    // Already redirected, but render nothing here
+    return null;
+  }
+  return React.cloneElement(Component, { username, userType });
+};
+
 function App() {
   return (
     <Router>
@@ -311,7 +364,7 @@ function App() {
           <Route path="/lender-dashboard/listing/:id" element={<ProtectedRoute component={<LenderListingDetails />} allowedUserType="lender" />} />
           
           {/* Public routes */}
-          <Route path="/admin" element={<AdminPlatform />} />
+          <Route path="/admin" element={<AdminProtectedRoute component={<AdminPlatform />} />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/debug" element={<AuthDebug />} />
         </Routes>
