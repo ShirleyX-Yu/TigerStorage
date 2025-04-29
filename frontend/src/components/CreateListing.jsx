@@ -495,28 +495,27 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
               {uploading ? 'Uploading...' : 'Create Listing'}
             </button>
         </form>
-      </div>
-      {/* Address Confirmation Modal */}
-      <Dialog open={showAddressConfirm} onClose={handleEditAddress} maxWidth="xs" fullWidth>
-        <DialogTitle>Confirm Address</DialogTitle>
-        <DialogContent>
-          <div style={{ marginBottom: 16 }}>
-            Please confirm the address for your listing:
-          </div>
-          <div style={{ fontWeight: 600, fontSize: 16, color: '#333', marginBottom: 8 }}>
-            {pendingAddress?.address}
-          </div>
-          {!isValidStreetAddress(pendingAddress?.address) && (
-            <div style={{ color: '#c62828', marginTop: 8, fontWeight: 500 }}>
-              Warning: This does not appear to be a full street address. Please select or enter a more specific address.
+        {/* Address Confirmation Modal */}
+        <Dialog open={showAddressConfirm} onClose={handleEditAddress} maxWidth="xs" fullWidth>
+          <DialogTitle>Confirm Address</DialogTitle>
+          <DialogContent>
+            <div style={{ marginBottom: 16 }}>
+              Please confirm the address for your listing:
             </div>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleEditAddress} color="secondary">Edit</Button>
-          <Button onClick={handleConfirmAddress} color="primary" variant="contained" disabled={!isValidStreetAddress(pendingAddress?.address)}>Confirm</Button>
-        </DialogActions>
-      </Dialog>
+            <div style={{ fontWeight: 600, fontSize: 16, color: '#333', marginBottom: 8 }}>
+              {pendingAddress?.address}
+            </div>
+            {!isValidStreetAddress(pendingAddress?.address) && (
+              <div style={{ color: '#c62828', marginTop: 8, fontWeight: 500 }}>
+                Warning: This does not appear to be a full street address. Please select or enter a more specific address.
+              </div>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleEditAddress} color="secondary">Edit</Button>
+            <Button onClick={handleConfirmAddress} color="primary" variant="contained" disabled={!isValidStreetAddress(pendingAddress?.address)}>Confirm</Button>
+          </DialogActions>
+        </Dialog>
     </div>
   );
 }
