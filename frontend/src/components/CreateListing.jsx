@@ -8,18 +8,16 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 
 const PRINCETON_HALLS = [
-  'Bloomberg Hall', 'Butler College', 'First College', 'Forbes College', 'Mathey College',
-  'Rockefeller College', 'Whitman College', 'Wilson College', 'Yeh College', 'New College West',
-  '1901 Hall', '1915 Hall', '1937 Hall', '1967 Hall', '1976 Hall', '1981 Hall', '1985 Hall',
-  'Brown Hall', 'Cuyler Hall', 'Dodge-Osborn Hall', 'Edwards Hall', 'Foulke Hall', 'Gauss Hall',
-  'Hargadon Hall', 'Holder Hall', 'Little Hall', 'Lockhart Hall', 'Scully Hall', 'Spelman Hall',
-  'Witherspoon Hall', 'Lauritzen Hall', 'Mannion Hall', 'Murley-Pivirotto Hall', 'Robinson Hall',
-  'Scheide Caldwell House', 'Walker Hall', 'Wright Hall', 'Stanhope Hall', 'Pyne Hall', 'Clapp Hall',
-  'Hamilton Hall', 'Hibben-Magie', 'Lawrence Apartments', 'Graduate College', 'Old Graduate College',
-  'New Graduate College', 'New South', 'Alexander Hall', 'Dillon Court East', 'Dillon Court West',
-  'Elm Hall', 'Maple Hall', 'Oak Hall', 'Spruce Hall', 'Tiger Inn', 'Cannon Club', 'Cottage Club',
-  'Quadrangle Club', 'Tower Club', 'Colonial Club', 'Charter Club', 'Cloister Inn', 'Ivy Club',
-  'Cap & Gown Club', 'Princeton Inn', 'Princeton Tower Club', 'Princeton Terrace Club', 'Princeton Charter Club'
+  '1901 Hall', '1903 Hall', '1915 Hall', '1937 Hall', '1939 Hall', '1967 Hall', '1976 Hall', 'Addy Hall',
+  'Baker Hall', 'Blair Hall', 'Bloomberg Hall', 'Bogle Hall', 'Brown Hall', 'Buyers Hall', 'Campbell Hall',
+  'Class of 1981 Hall', 'Cuyler Hall', 'Dod Hall', 'Edwards Hall', 'Feinberg Hall', 'Feliciano Hall',
+  'Fisher Hall', 'Forbes College', 'Foulke Hall', 'Gauss Hall', 'Graduate College (Old Graduate College)',
+  'Grousbeck Hall', 'Hamilton Hall', 'Hariri Hall', 'Hargadon Hall', 'Henry Hall', 'Holder Hall',
+  'Joline Hall', 'Kwanza Jones Hall', 'Laughlin Hall', 'Lauritzen Hall', 'Lawrence Apartments',
+  'Lakeside Apartments', 'Little Hall', 'Lockhart Hall', 'Madison Hall', 'Mannion Hall', 'Meadows Apartments',
+  'Murley-Pivirotto Family Tower', 'New Graduate College', 'Patton Hall', 'Pivirotto Hall', 'Pyne Hall',
+  'Scully Hall', 'Spelman Hall', 'Walker Hall', 'Wendell Hall', 'Wilf Hall', 'Witherspoon Hall', 'Wright Hall',
+  'Yoseloff Hall'
 ];
 
 const styles = {
