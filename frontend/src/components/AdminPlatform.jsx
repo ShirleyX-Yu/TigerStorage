@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import EditListingForm from './EditListingForm';
 import CreateListing from './CreateListing';
+import { logout } from '../utils/auth';
 
 const styles = {
   container: {
@@ -199,7 +200,7 @@ const AdminPlatform = () => {
                 boxShadow: '0 2px 8px rgba(0,0,0,0.13)',
                 transition: 'background 0.2s',
               }}
-              onClick={() => { window.location.href = '/'; }}
+              onClick={logout}
             >Logout</button>
           </div>
           <span role="img" aria-label="hammer and wrench" style={{
