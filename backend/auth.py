@@ -82,6 +82,14 @@ def authenticate():
     if "user" in user_info:
         user_info["user"] = user_info["user"].lower()
 
+    # Set user_type to 'admin' for cs-tigerstorage, else default to 'lender'
+    if user_info.get("user") == "cs-tigerstorage":
+        user_info["user_type"] = "admin"
+        flask.session["user_type"] = "admin"
+    else:
+        user_info["user_type"] = "lender"
+        flask.session["user_type"] = "lender"
+
     # Store authentication info in session
     print(f"CAS authentication successful for user: {user_info.get('user', 'unknown')}")
     flask.session["user_info"] = user_info
