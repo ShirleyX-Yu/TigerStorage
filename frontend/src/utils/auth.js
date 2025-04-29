@@ -69,6 +69,8 @@ export const login = (userType) => {
       redirectPath = '/map';
     } else if (userType === 'lender') {
       redirectPath = '/lender-dashboard';
+    } else if (userType === 'admin') {
+      redirectPath = '/admin';
     }
     const frontendUrl = import.meta.env.VITE_APP_URL || window.location.origin;
     const redirectUri = encodeURIComponent(`${frontendUrl}${redirectPath}`);
@@ -92,6 +94,9 @@ export const login = (userType) => {
   } else if (userType === 'lender') {
     redirectUrl = "/lender-dashboard";
     console.log(`auth.js - User is lender, redirecting to: ${redirectUrl}`);
+  } else if (userType === 'admin') {
+    redirectUrl = "/admin";
+    console.log(`auth.js - User is admin, redirecting to: ${redirectUrl}`);
   } else {
     redirectUrl = "/";
     console.log(`auth.js - Invalid userType (${userType}), redirecting to home: ${redirectUrl}`);

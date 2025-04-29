@@ -117,7 +117,7 @@ const Home = () => {
         <button
           className="home-privacy-button"
           style={{ position: 'absolute', top: 20, left: 30, zIndex: 1000 }}
-          onClick={() => navigate('/admin')}
+          onClick={() => handleLogin('admin')}
           disabled={loading}
         >
           Admin Platform
