@@ -185,15 +185,15 @@ const AdminPlatform = () => {
     <>
       <div style={{ ...styles.container, alignItems: 'flex-start', justifyContent: 'flex-start', padding: '2rem 0' }}>
         <div style={{ ...styles.card, maxWidth: 1200, width: '98%', margin: '2rem auto', textAlign: 'left', background: 'rgba(24,24,24,0.98)' }}>
-          <span role="img" aria-label="gear" style={{
+          <span role="img" aria-label="hammer and wrench" style={{
             display: 'block',
             fontSize: '2.7rem',
             marginBottom: '0.3rem',
             filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.18))',
             textAlign: 'center',
-          }}>⚙️</span>
+          }}>🛠️</span>
           <h1 style={{ ...styles.title, textAlign: 'center' }}>Admin Dashboard</h1>
-          <p style={{ ...styles.subtitle, textAlign: 'center' }}>Manage, update, and approve flagged listings on TigerStorage.</p>
+          <p style={{ ...styles.subtitle, textAlign: 'center' }}>Approve or reject flagged listings on TigerStorage.</p>
           {loading ? (
             <div style={{ color: '#bbb', textAlign: 'center', padding: '2rem' }}>Loading listings...</div>
           ) : error ? (
@@ -219,7 +219,17 @@ const AdminPlatform = () => {
                   <div style={{ fontSize: 15, color: '#ffb300', marginBottom: 8, fontWeight: 600 }}>
                     <span role="img" aria-label="flag">🚩</span> Report Reason: {listing.reason}
                   </div>
-                  <div style={{ fontSize: 14, color: '#f44336', marginBottom: 10, fontWeight: 500 }}>
+                  <div style={{ fontSize: 14, color: 
+                    loadingReportId === listing.report_id
+                      ? '#b0b0b0'
+                      : listing.report_status === 'accepted'
+                        ? '#2196f3'
+                        : listing.report_status === 'rejected'
+                          ? '#f44336'
+                          : listing.report_status === 'pending'
+                            ? '#ffd600'
+                            : '#b0b0b0',
+                    marginBottom: 10, fontWeight: 500 }}>
                     Report Status: {loadingReportId === listing.report_id
                       ? (actionType === 'accept'
                           ? 'Approving...'
@@ -332,8 +342,8 @@ const AdminPlatform = () => {
             </div>
             <div style={{ color: '#fff', marginBottom: 24, fontSize: 16 }}>
               {confirmModal.action === 'accept'
-                ? `This will mean ${confirmModal.listingName} will be deleted off the map.`
-                : `This will mean ${confirmModal.listingName} will remain on the map.`}
+                ? <>This will mean <span style={{ color: '#ffd600', fontWeight: 700 }}>{confirmModal.listingName}</span> will be deleted off the map.</>
+                : <>This will mean <span style={{ color: '#ffd600', fontWeight: 700 }}>{confirmModal.listingName}</span> will remain on the map.</>}
             </div>
             <div style={{ display: 'flex', gap: 14, justifyContent: 'flex-end' }}>
               <button
