@@ -30,13 +30,30 @@ const orangeIcon = new L.Icon({
   className: 'custom-orange-marker'
 });
 
+// Custom green marker icon
+const greenIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.4/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+  className: 'custom-green-marker'
+});
+
 // Add CSS for marker colors and custom grouped marker
 const markerStyles = `
   .custom-orange-marker {
     filter: hue-rotate(0deg) saturate(1.2) brightness(1.1);
   }
+  .custom-green-marker {
+    filter: hue-rotate(85deg) saturate(1.2) brightness(1.1);
+  }
   .custom-grouped-marker {
     filter: hue-rotate(0deg) saturate(1.2) brightness(1.1);
+  }
+  .custom-grouped-marker.interested {
+    filter: hue-rotate(85deg) saturate(1.2) brightness(1.1);
   }
   .custom-grouped-marker .grouped-marker-badge {
     position: absolute;
@@ -55,6 +72,10 @@ const markerStyles = `
     border: 2px solid #fff3e6;
     box-shadow: 0 1px 4px rgba(0,0,0,0.18);
     z-index: 2;
+  }
+  .custom-grouped-marker.interested .grouped-marker-badge {
+    background: #4caf50;
+    border-color: #e8f5e9;
   }
 `;
 
@@ -102,19 +123,19 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
   }
 
   // Helper to create a grouped divIcon with badge
-  function getGroupedDivIcon(count) {
+  function getGroupedDivIcon(count, isInterested = false) {
     return L.divIcon({
-      className: 'custom-grouped-marker',
+      className: `custom-grouped-marker ${isInterested ? 'interested' : ''}`,
       html: `
         <div style="position: relative; width: 25px; height: 41px;">
-          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png" style="width: 25px; height: 41px; display: block;" />
+          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${isInterested ? 'green' : 'orange'}.png" style="width: 25px; height: 41px; display: block;" />
           <div class="grouped-marker-badge" style="
             position: absolute;
             top: -7px;
             right: -7px;
             min-width: 22px;
             height: 22px;
-            background: #e65100;
+            background: ${isInterested ? '#4caf50' : '#e65100'};
             color: #fff;
             font-weight: bold;
             font-size: 13px;
@@ -122,7 +143,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px solid #ffffff;
+            border: 2px solid ${isInterested ? '#e8f5e9' : '#ffffff'};
             box-shadow: 0 1px 6px rgba(0,0,0,0.23);
             z-index: 2;
             letter-spacing: 0.5px;
@@ -148,40 +169,43 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
       const groups = groupListingsByCoords(listings);
       Object.entries(groups).forEach(([key, group]) => {
         if (group.length === 1) {
-          // Single marker - use orange icon for all markers
+          // Single marker - use green icon for interested listings, orange for others
           const listing = group[0];
-          const marker = L.marker([listing.latitude, listing.longitude], { icon: orangeIcon })
-            .addTo(map)
-            .bindPopup(`
-              <div>
-                <h3>${listing.location || 'Unknown Location'}</h3>
-                <p>Price: $${listing.cost ?? 0}/month</p>
-                <p>Size: ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • ${listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total</p>
-                <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
-                <button 
-                  style="background-color: #f57c00; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
-                  onclick="window.location.href='/listing/${listing.id || listing.listing_id}'"
-                >
-                  View Details
-                </button>
-                <button 
-                  style="background: none; border: none; color: #f44336; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; cursor: pointer; gap: 5px; padding: 2px 8px; border-radius: 6px;"
-                  onclick="window.dispatchEvent(new CustomEvent('open-report-modal', { detail: { listingId: '${listing.id || listing.listing_id}' } }))"
-                  title="Report this listing"
-                >
-                  <span style='font-size:18px;color:#f44336;'>🚩</span>
-                  <span>Report</span>
-                </button>
-              </div>
-            `);
+          const marker = L.marker([listing.latitude, listing.longitude], { 
+            icon: listing.isInterested ? greenIcon : orangeIcon 
+          })
+          .addTo(map)
+          .bindPopup(`
+            <div>
+              <h3>${listing.location || 'Unknown Location'}</h3>
+              <p>Price: $${listing.cost ?? 0}/month</p>
+              <p>Size: ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • ${listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total</p>
+              <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
+              <button 
+                style="background-color: ${listing.isInterested ? '#4caf50' : '#f57c00'}; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
+                onclick="window.location.href='/listing/${listing.id || listing.listing_id}'"
+              >
+                View Details
+              </button>
+              <button 
+                style="background: none; border: none; color: #f44336; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; cursor: pointer; gap: 5px; padding: 2px 8px; border-radius: 6px;"
+                onclick="window.dispatchEvent(new CustomEvent('open-report-modal', { detail: { listingId: '${listing.id || listing.listing_id}' } }))"
+                title="Report this listing"
+              >
+                <span style='font-size:18px;color:#f44336;'>🚩</span>
+                <span>Report</span>
+              </button>
+            </div>
+          `);
           marker.on('click', () => {
             onListingClick(listing);
           });
         } else {
-          // Multiple listings - update the grouped marker style
+          // Multiple listings - check if any listing in the group is interested
+          const hasInterestedListing = group.some(listing => listing.isInterested);
           const lat = group[0].latitude;
           const lng = group[0].longitude;
-          const markerIcon = getGroupedDivIcon(group.length);
+          const markerIcon = getGroupedDivIcon(group.length, hasInterestedListing);
           const marker = L.marker([lat, lng], { icon: markerIcon })
             .addTo(map)
             .bindPopup(`
@@ -192,7 +216,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
                   ${group.map(listing => `
                     <li style='margin-bottom: 2px;'>
                       <b>$${listing.cost ?? 0}/mo</b>, ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • ${listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total
-                      <a href='/listing/${listing.id || listing.listing_id}' style='color:#FF8F00;margin-left:5px;'>View</a>
+                      <a href='/listing/${listing.id || listing.listing_id}' style='color:${listing.isInterested ? '#4caf50' : '#FF8F00'};margin-left:5px;'>View</a>
                     </li>
                   `).join('')}
                 </ul>
