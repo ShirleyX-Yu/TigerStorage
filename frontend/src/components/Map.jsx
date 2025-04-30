@@ -224,6 +224,12 @@ const scrollbarStyles = `
     border-radius: 10px;
     border: 2px solid #FFF3E6;
   }
+  .left-scrollbar {
+    direction: rtl;
+  }
+  .left-scrollbar > * {
+    direction: ltr;
+  }
 `;
 
 // Only inject styles in browser environment
@@ -629,7 +635,7 @@ const Map = () => {
             Available Listings
           </Typography>
           {availableListings && availableListings.length > 0 ? (
-            <List style={{ overflowY: 'auto', flex: 1, height: 'calc(100vh - 72px)' }}>
+            <List className="left-scrollbar" style={{ overflowY: 'auto', flex: 1, height: 'calc(100vh - 72px)' }}>
               {availableListings
                 .filter(listing => listing.matchesFilters)
                 .map((listing) => (
