@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import { useNavigate } from 'react-router-dom';
+import boxes from '../assets/boxes.jpg';
 
 const getStatusLabel = (status) => {
   if (!status) return '';
@@ -102,6 +103,7 @@ const RenterDashboard = ({ username }) => {
 
   return (
     <div style={styles.container}>
+      <div style={styles.backgroundImage} />
       <Header title="Renter Dashboard" />
       <div style={styles.content}>
         <div style={styles.welcome}>
@@ -245,23 +247,41 @@ const RenterDashboard = ({ username }) => {
 const styles = {
   container: {
     minHeight: '100vh',
-    backgroundColor: 'rgba(245, 124, 0, 0.1)',
+    backgroundColor: '#fff',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundImage: `url(${boxes})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    opacity: 0.15,
+    zIndex: 0,
   },
   content: {
-    padding: '2rem',
+    padding: '40px',
     maxWidth: '1200px',
     margin: '0 auto',
+    position: 'relative',
+    zIndex: 1,
   },
   welcome: {
     fontSize: '1.5rem',
-    marginBottom: '2rem',
+    marginBottom: '3rem',
   },
   section: {
-    backgroundColor: '#fff',
-    padding: '1.5rem',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: '8px',
-    marginBottom: '2rem',
+    padding: '30px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    position: 'relative',
+    zIndex: 1,
+    marginBottom: '3rem',
   },
   placeholder: {
     color: '#666',

@@ -10,6 +10,7 @@ import CreateListing from './CreateListing';
 import { useNavigate, useLocation } from 'react-router-dom';
 import EditListingForm from './EditListingForm';
 import StarIcon from '@mui/icons-material/Star';
+import dorm_image from '../assets/dorm_image.jpg';
 
 // Modal wrapper for CreateListing to allow passing onClose/onSuccess
 const CreateListingModal = ({ onClose, onSuccess }) => {
@@ -314,6 +315,7 @@ const LenderDashboard = ({ username }) => {
 
   return (
     <div style={styles.container}>
+      <div style={styles.backgroundImage} />
       <Header title="Lender Dashboard" />
       {deleteSuccess && (
         <div style={styles.successMessage}>
@@ -670,7 +672,28 @@ const LenderDashboard = ({ username }) => {
 const styles = {
   container: {
     minHeight: '100vh',
-    backgroundColor: 'rgba(245, 124, 0, 0.1)',
+    backgroundColor: '#fff',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundImage: `url(${dorm_image})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    opacity: 0.15,
+    zIndex: 0,
+  },
+  content: {
+    padding: '20px',
+    maxWidth: '1200px',
+    margin: '0 auto',
+    position: 'relative',
+    zIndex: 1,
   },
   successMessage: {
     display: 'flex',
@@ -701,11 +724,6 @@ const styles = {
     fontSize: '16px',
     fontWeight: '500',
   },
-  content: {
-    padding: '20px',
-    maxWidth: '1200px',
-    margin: '0 auto',
-  },
   welcome: {
     fontSize: '24px',
     fontWeight: 'bold',
@@ -718,10 +736,12 @@ const styles = {
     gap: '30px',
   },
   section: {
-    backgroundColor: 'white',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: '8px',
     padding: '20px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    position: 'relative',
+    zIndex: 1,
   },
   sectionHeader: {
     display: 'flex',
