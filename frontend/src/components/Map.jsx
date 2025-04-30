@@ -30,6 +30,17 @@ const orangeIcon = new L.Icon({
   className: 'custom-orange-marker'
 });
 
+// Custom yellow marker icon (for interested listings)
+const yellowIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.4/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+  className: 'custom-yellow-marker'
+});
+
 // Custom green marker icon
 const greenIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
@@ -46,14 +57,14 @@ const markerStyles = `
   .custom-orange-marker {
     filter: hue-rotate(0deg) saturate(1.2) brightness(1.1);
   }
-  .custom-green-marker {
-    filter: hue-rotate(110deg) saturate(0.9) brightness(1.1);
+  .custom-yellow-marker {
+    filter: none;
   }
   .custom-grouped-marker {
     filter: hue-rotate(0deg) saturate(1.2) brightness(1.1);
   }
   .custom-grouped-marker.interested {
-    filter: hue-rotate(110deg) saturate(0.9) brightness(1.1);
+    filter: none;
   }
   .custom-grouped-marker .grouped-marker-badge {
     position: absolute;
@@ -72,10 +83,6 @@ const markerStyles = `
     border: 2px solid #fff3e6;
     box-shadow: 0 1px 4px rgba(0,0,0,0.18);
     z-index: 2;
-  }
-  .custom-grouped-marker.interested .grouped-marker-badge {
-    background: #76B474;
-    border-color: #e8f5e9;
   }
 `;
 
@@ -128,7 +135,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
       className: `custom-grouped-marker ${isInterested ? 'interested' : ''}`,
       html: `
         <div style="position: relative; width: 25px; height: 41px;">
-          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${isInterested ? 'blue' : 'orange'}.png" style="width: 25px; height: 41px; display: block;" />
+          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${isInterested ? 'yellow' : 'orange'}.png" style="width: 25px; height: 41px; display: block;" />
           <div class="grouped-marker-badge" style="
             position: absolute;
             top: -7px;
@@ -169,10 +176,10 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
       const groups = groupListingsByCoords(listings);
       Object.entries(groups).forEach(([key, group]) => {
         if (group.length === 1) {
-          // Single marker - use green icon for interested listings, orange for others
+          // Single marker - use yellow icon for interested listings, orange for others
           const listing = group[0];
           const marker = L.marker([listing.latitude, listing.longitude], { 
-            icon: listing.isInterested ? greenIcon : orangeIcon 
+            icon: listing.isInterested ? yellowIcon : orangeIcon 
           })
           .addTo(map)
           .bindPopup(`
@@ -182,7 +189,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
               <p>Size: ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • ${listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total</p>
               <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
               <button 
-                style="background-color: ${listing.isInterested ? '#76B474' : '#f57c00'}; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
+                style="background-color: ${listing.isInterested ? '#ffd700' : '#f57c00'}; color: ${listing.isInterested ? '#000' : '#fff'}; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
                 onclick="window.location.href='/listing/${listing.id || listing.listing_id}'"
               >
                 View Details
@@ -216,7 +223,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
                   ${group.map(listing => `
                     <li style='margin-bottom: 2px;'>
                       <b>$${listing.cost ?? 0}/mo</b>, ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • ${listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total
-                      <a href='/listing/${listing.id || listing.listing_id}' style='color:${listing.isInterested ? '#76B474' : '#FF8F00'};margin-left:5px;'>View</a>
+                      <a href='/listing/${listing.id || listing.listing_id}' style='color:${listing.isInterested ? '#ffd700' : '#FF8F00'};margin-left:5px;'>View</a>
                     </li>
                   `).join('')}
                 </ul>
