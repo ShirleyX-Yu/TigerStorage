@@ -71,8 +71,8 @@ const RenterListingDetails = () => {
         console.log('API URL:', apiUrl);
         
         // Get user information for headers
-        const userType = sessionStorage.getItem('userType') || 'renter';
-        const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
+        const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+        const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
         
         const response = await fetch(apiUrl, {
           credentials: 'include',
@@ -160,7 +160,7 @@ const RenterListingDetails = () => {
     const fetchRequests = async () => {
       setRequestsLoading(true);
       try {
-        const userType = sessionStorage.getItem('userType') || 'renter';
+        const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
         const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
         const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/my-reservation-requests`, {
           credentials: 'include',
@@ -190,8 +190,8 @@ const RenterListingDetails = () => {
       setLoading(true);
       setError(null);
       const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/listings/${id}`;
-      const userType = sessionStorage.getItem('userType') || 'renter';
-      const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
+      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+      const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
       const response = await fetch(apiUrl, {
         credentials: 'include',
         headers: {
@@ -242,7 +242,7 @@ const RenterListingDetails = () => {
     }
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const userType = sessionStorage.getItem('userType') || 'renter';
+      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
       if (listing.isInterested) {
         // Remove interest
@@ -290,7 +290,7 @@ const RenterListingDetails = () => {
     setReservationError('');
     try {
       const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/listings/${listing.id}/reserve`;
-      const userType = sessionStorage.getItem('userType') || 'renter';
+      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -435,6 +435,11 @@ const RenterListingDetails = () => {
   // Clear reservation error when listing id changes
   useEffect(() => {
     setReservationError('');
+  }, [id]);
+
+  // Clear general error when listing id changes
+  useEffect(() => {
+    setError(null);
   }, [id]);
 
   // Simple render function for error state

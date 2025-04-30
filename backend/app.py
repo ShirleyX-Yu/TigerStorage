@@ -2047,14 +2047,23 @@ def update_reservation_request(request_id):
         try:
             with conn.cursor() as cur:
                 # Get reservation request and listing
-                cur.execute("SELECT listing_id, requested_volume, status FROM reservation_requests WHERE request_id = %s", (request_id,))
+                cur.execute("SELECT listing_id, requested_volume, status, renter_username FROM reservation_requests WHERE request_id = %s", (request_id,))
                 req = cur.fetchone()
                 if not req:
                     return jsonify({'error': 'Request not found'}), 404
-                listing_id, requested_volume, current_status = req
+                listing_id, requested_volume, current_status, renter_username = req
                 if current_status not in ['pending']:
                     return jsonify({'error': 'Request already processed'}), 400
-                # Check ownership
+                # Special case: allow renter to cancel their own request
+                if new_status == 'cancelled_by_renter':
+                    if renter_username != owner_id:
+                        return jsonify({'error': 'Not authorized'}), 403
+                    cur.execute("""
+                        UPDATE reservation_requests SET status = %s, updated_at = %s WHERE request_id = %s
+                    """, (new_status, datetime.utcnow(), request_id))
+                    conn.commit()
+                    return jsonify({'success': True}), 200
+                # Check ownership (lender actions)
                 cur.execute("SELECT owner_id, remaining_volume FROM storage_listings WHERE listing_id = %s", (listing_id,))
                 row = cur.fetchone()
                 if not row or row[0] != owner_id:
@@ -2080,7 +2089,7 @@ def update_reservation_request(request_id):
                     new_remaining = remaining_volume - float(approved_volume)
                     is_available = new_remaining > 0
                     cur.execute("UPDATE storage_listings SET remaining_volume = %s, is_available = %s WHERE listing_id = %s", (new_remaining, is_available, listing_id))
-                # Reject/cancel/expire
+                # Reject/cancel/expire (by lender)
                 else:
                     cur.execute("""
                         UPDATE reservation_requests SET status = %s, updated_at = %s WHERE request_id = %s
