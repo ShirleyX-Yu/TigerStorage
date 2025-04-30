@@ -31,13 +31,15 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
       width: '100%',
       p: 2,
       height: '100%',
-      overflowY: 'auto'
+      overflowY: 'auto',
+      overflowX: 'hidden',
+      boxSizing: 'border-box'
     }}>
       <Typography variant="h6" gutterBottom>
         Filters
       </Typography>
 
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 3, width: '100%' }}>
         <Typography gutterBottom>Price Range ($/month)</Typography>
         <Slider
           value={[filters.minCost || 0, filters.maxCost || 0]}
@@ -47,7 +49,8 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           max={1000}
           step={1}
           sx={{
-            color: '#FF6B00', // Orange color
+            color: '#FF6B00',
+            width: '100%',
             '& .MuiSlider-thumb': {
               backgroundColor: '#FF6B00',
             },
@@ -59,13 +62,14 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
             },
           }}
         />
-        <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+        <Box sx={{ display: 'flex', gap: 2, mt: 1, width: '100%' }}>
           <TextField
             label="Min"
             type="number"
             value={filters.minCost ?? ''}
             onChange={handleInputChange('minCost')}
             size="small"
+            fullWidth
           />
           <TextField
             label="Max"
@@ -73,11 +77,12 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
             value={filters.maxCost ?? ''}
             onChange={handleInputChange('maxCost')}
             size="small"
+            fullWidth
           />
         </Box>
       </Box>
 
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 3, width: '100%' }}>
         <Typography gutterBottom>Size Range (sq ft)</Typography>
         <Slider
           value={[filters.minSize || 0, filters.maxSize || 0]}
@@ -88,6 +93,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           step={1}
           sx={{
             color: '#FF6B00',
+            width: '100%',
             '& .MuiSlider-thumb': {
               backgroundColor: '#FF6B00',
             },
@@ -99,13 +105,14 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
             },
           }}
         />
-        <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+        <Box sx={{ display: 'flex', gap: 2, mt: 1, width: '100%' }}>
           <TextField
             label="Min"
             type="number"
             value={filters.minSize ?? ''}
             onChange={handleInputChange('minSize')}
             size="small"
+            fullWidth
           />
           <TextField
             label="Max"
@@ -113,11 +120,12 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
             value={filters.maxSize ?? ''}
             onChange={handleInputChange('maxSize')}
             size="small"
+            fullWidth
           />
         </Box>
       </Box>
 
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 3, width: '100%' }}>
         <Typography gutterBottom>Distance from Campus (miles)</Typography>
         <Slider
           value={filters.maxDistance || 0}
@@ -128,6 +136,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           step={0.1}
           sx={{
             color: '#FF6B00',
+            width: '100%',
             '& .MuiSlider-thumb': {
               backgroundColor: '#FF6B00',
             },
@@ -139,7 +148,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
             },
           }}
         />
-        <Box sx={{ mt: 1 }}>
+        <Box sx={{ mt: 1, width: '100%' }}>
           <TextField
             label="Max Distance"
             type="number"
@@ -158,6 +167,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
         sx={{
           borderColor: '#FF6B00',
           color: '#FF6B00',
+          width: '100%',
           '&:hover': {
             borderColor: '#FF6B00',
             backgroundColor: '#FFF3E6'

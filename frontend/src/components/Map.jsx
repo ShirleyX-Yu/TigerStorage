@@ -594,13 +594,16 @@ const Map = () => {
 
   const filterColumn = {
     width: '300px',
-    backgroundColor: '#f5f5f5', // Match the listings column background
-    borderLeft: '1px solid #e0e0e0', // Match the listings column border
+    backgroundColor: '#f5f5f5',
+    borderLeft: '1px solid #e0e0e0',
     display: 'flex',
     flexDirection: 'column',
     padding: '16px',
-    color: '#FF6B00', // Keep the orange text color
-    overflowY: 'hidden' // Remove scrollbar
+    color: '#FF6B00',
+    overflowY: 'hidden',
+    overflowX: 'hidden',
+    boxSizing: 'border-box',
+    maxWidth: '300px'
   };
 
   const listingsColumn = {
@@ -608,7 +611,9 @@ const Map = () => {
     backgroundColor: '#f5f5f5',
     borderRight: '1px solid #e0e0e0',
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    maxWidth: '300px',
+    boxSizing: 'border-box'
   };
 
   return (
@@ -1065,7 +1070,10 @@ const styles = {
     width: '300px',
     height: '100%',
     backgroundColor: '#f5f5f5',
-    overflowY: 'auto'
+    overflowY: 'hidden',
+    overflowX: 'hidden',
+    boxSizing: 'border-box',
+    maxWidth: '300px'
   },
   controls: {
     position: 'absolute',
