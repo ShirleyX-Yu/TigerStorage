@@ -35,6 +35,9 @@ const markerStyles = `
   .custom-orange-marker {
     filter: hue-rotate(0deg) saturate(1.2) brightness(1.1);
   }
+  .custom-grouped-marker {
+    filter: hue-rotate(0deg) saturate(1.2) brightness(1.1);
+  }
   .custom-grouped-marker .grouped-marker-badge {
     position: absolute;
     top: -4px;
