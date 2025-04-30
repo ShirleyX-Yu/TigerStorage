@@ -47,13 +47,13 @@ const markerStyles = `
     filter: hue-rotate(0deg) saturate(1.2) brightness(1.1);
   }
   .custom-green-marker {
-    filter: hue-rotate(85deg) saturate(1.2) brightness(1.1);
+    filter: hue-rotate(95deg) saturate(1.4) brightness(1.2);
   }
   .custom-grouped-marker {
     filter: hue-rotate(0deg) saturate(1.2) brightness(1.1);
   }
   .custom-grouped-marker.interested {
-    filter: hue-rotate(85deg) saturate(1.2) brightness(1.1);
+    filter: hue-rotate(95deg) saturate(1.4) brightness(1.2);
   }
   .custom-grouped-marker .grouped-marker-badge {
     position: absolute;
@@ -74,7 +74,7 @@ const markerStyles = `
     z-index: 2;
   }
   .custom-grouped-marker.interested .grouped-marker-badge {
-    background: #4caf50;
+    background: #76B474;
     border-color: #e8f5e9;
   }
 `;
@@ -135,7 +135,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
             right: -7px;
             min-width: 22px;
             height: 22px;
-            background: ${isInterested ? '#4caf50' : '#e65100'};
+            background: ${isInterested ? '#76B474' : '#e65100'};
             color: #fff;
             font-weight: bold;
             font-size: 13px;
@@ -182,7 +182,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
               <p>Size: ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • ${listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total</p>
               <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
               <button 
-                style="background-color: ${listing.isInterested ? '#4caf50' : '#f57c00'}; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
+                style="background-color: ${listing.isInterested ? '#76B474' : '#f57c00'}; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
                 onclick="window.location.href='/listing/${listing.id || listing.listing_id}'"
               >
                 View Details
@@ -216,7 +216,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
                   ${group.map(listing => `
                     <li style='margin-bottom: 2px;'>
                       <b>$${listing.cost ?? 0}/mo</b>, ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • ${listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total
-                      <a href='/listing/${listing.id || listing.listing_id}' style='color:${listing.isInterested ? '#4caf50' : '#FF8F00'};margin-left:5px;'>View</a>
+                      <a href='/listing/${listing.id || listing.listing_id}' style='color:${listing.isInterested ? '#76B474' : '#FF8F00'};margin-left:5px;'>View</a>
                     </li>
                   `).join('')}
                 </ul>
