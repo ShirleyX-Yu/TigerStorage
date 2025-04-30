@@ -105,7 +105,7 @@ const Home = () => {
         justifyContent: 'center',
         padding: '20px'
       }}>
-        <button
+      <button
           className="home-privacy-button"
           style={{ position: 'absolute', top: 20, left: 30, zIndex: 1000 }}
           onClick={() => handleLogin('admin')}
@@ -131,18 +131,18 @@ const Home = () => {
           <button 
             className="home-privacy-button"
             onClick={() => setPrivacyModalOpen(true)}
-            disabled={loading}
-          >
+        disabled={loading}
+      >
             Privacy Policy
-          </button>
+      </button>
         </div>
-        <div className="home-content">
-          {!logoError ? (
-            <img 
-              src={tiger_storage_logo} 
-              alt="Logo" 
-              className="home-logo"
-              onError={() => setLogoError(true)}
+      <div className="home-content">
+        {!logoError ? (
+          <img 
+            src={tiger_storage_logo} 
+            alt="Logo" 
+            className="home-logo"
+            onError={() => setLogoError(true)}
               style={{ 
                 background: 'transparent',
                 padding: '25px', 
@@ -151,34 +151,34 @@ const Home = () => {
                 height: 'auto',
                 marginBottom: '20px'
               }}
-            />
-          ) : (
+          />
+        ) : (
             <div className="home-logo-fallback" style={{ background: '#DBA986', color: '#F5EFE6' }}>
-              TS
-            </div>
-          )}
+            TS
+          </div>
+        )}
           <h1 className="home-title" style={{ 
             color: '#000000', 
             fontWeight: 700,
             marginBottom: '20px',
             fontSize: 'calc(1.8rem + 1vw)'
           }}>TigerStorage</h1>
-          
-          {errorMessage && (
-            <div style={{
+        
+        {errorMessage && (
+          <div style={{
               backgroundColor: '#E66A6A',
               color: '#FFF8F1',
-              padding: '12px',
-              borderRadius: '4px',
-              marginBottom: '20px',
-              textAlign: 'center',
+            padding: '12px',
+            borderRadius: '4px',
+            marginBottom: '20px',
+            textAlign: 'center',
               fontSize: '14px',
               fontWeight: '500'
-            }}>
-              {errorMessage}
-            </div>
-          )}
-          
+          }}>
+            {errorMessage}
+          </div>
+        )}
+        
           <div className="home-button-container" style={{
             display: 'flex',
             gap: '20px',
@@ -186,10 +186,10 @@ const Home = () => {
             width: '100%',
             maxWidth: '900px'
           }}>
-            <button 
-              className="home-button" 
-              onClick={() => handleLogin('renter')}
-              disabled={loading}
+          <button 
+            className="home-button" 
+            onClick={() => handleLogin('renter')}
+            disabled={loading}
               style={{ 
                 flex: 1,
                 maxWidth: '400px',
@@ -229,11 +229,11 @@ const Home = () => {
                   />
                 </div>
               </div>
-            </button>
-            <button 
-              className="home-button" 
-              onClick={() => handleLogin('lender')}
-              disabled={loading}
+          </button>
+          <button 
+            className="home-button" 
+            onClick={() => handleLogin('lender')}
+            disabled={loading}
               style={{ 
                 flex: 1,
                 maxWidth: '400px',
@@ -273,7 +273,7 @@ const Home = () => {
                   />
                 </div>
               </div>
-            </button>
+          </button>
           </div>
         </div>
       </div>
@@ -615,7 +615,7 @@ const Home = () => {
                 If you have any questions about this Privacy Policy or our practices, please contact the TigerStorage team at <span style={{ color: '#F47C2E' }}>cs-tigerstorage@princeton.edu</span>.
               </p>
             </section>
-          </div>
+      </div>
         </DialogContent>
         <DialogActions style={{ padding: '16px 24px', background: '#FDF3EA', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
           <Button 

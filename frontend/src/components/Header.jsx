@@ -128,14 +128,14 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    maxWidth: '1200px',
+    maxWidth: '98%',
     margin: '0 auto',
-    padding: '0 2rem'
+    padding: '0 0.5rem'
   },
   leftSection: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem'
+    gap: '0.25rem'
   },
   titleSection: {
     display: 'flex',
