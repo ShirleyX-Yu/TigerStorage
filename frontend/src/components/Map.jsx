@@ -37,7 +37,7 @@ const markerStyles = `
     right: -8px;
     min-width: 22px;
     height: 22px;
-    background: #FF8F00;
+    background: #f57c00;
     color: #fff;
     font-weight: bold;
     font-size: 13px;
@@ -107,7 +107,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
             right: -7px;
             min-width: 22px;
             height: 22px;
-            background: #666666;
+            background: #f57c00;
             color: #fff;
             font-weight: bold;
             font-size: 13px;
@@ -152,7 +152,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
                 <p>Size: ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • ${listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total</p>
                 <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
                 <button 
-                  style="background-color: #FF8F00; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
+                  style="background-color: #f57c00; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
                   onclick="window.location.href='/listing/${listing.id || listing.listing_id}'"
                 >
                   View Details

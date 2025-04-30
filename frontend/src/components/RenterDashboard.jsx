@@ -303,6 +303,13 @@ const styles = {
     cursor: 'pointer',
     fontSize: '1rem',
     fontWeight: '500',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    ':hover': {
+      backgroundColor: '#e65100',
+      transform: 'scale(1.05)',
+      boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+    }
   },
   tableContainer: {
     overflowX: 'auto',
