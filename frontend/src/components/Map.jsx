@@ -26,11 +26,15 @@ const orangeIcon = new L.Icon({
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+  shadowSize: [41, 41],
+  className: 'custom-orange-marker'
 });
 
 // Add CSS for marker colors and custom grouped marker
 const markerStyles = `
+  .custom-orange-marker {
+    filter: hue-rotate(0deg) saturate(1.2) brightness(1.1);
+  }
   .custom-grouped-marker .grouped-marker-badge {
     position: absolute;
     top: -4px;
