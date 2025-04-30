@@ -638,8 +638,8 @@ const Map = () => {
                     button 
                     onClick={() => handleListingClick(listing)}
                     style={{ 
-                      backgroundColor: selectedListing && selectedListing.listing_id === listing.listing_id ? '#FFF3E6' : 'transparent',
-                      borderLeft: selectedListing && selectedListing.listing_id === listing.listing_id ? '4px solid #FF6B00' : 'none',
+                      backgroundColor: (selectedListingId && (selectedListingId === (listing.listing_id || listing.id))) ? '#FFF3E6' : 'transparent',
+                      borderLeft: (selectedListingId && (selectedListingId === (listing.listing_id || listing.id))) ? '4px solid #FF6B00' : 'none',
                       display: 'flex',
                       alignItems: 'center'
                     }}
