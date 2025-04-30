@@ -2,6 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import EditListingForm from './EditListingForm';
 import CreateListing from './CreateListing';
 import { logout } from '../utils/auth';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import StarIcon from '@mui/icons-material/Star';
+import { Box, Grid, Typography, List, ListItem, ListItemText, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import { CircularProgress } from '@mui/material';
 
 const styles = {
   container: {
@@ -50,10 +59,6 @@ const styles = {
   },
 };
 
-
-
-
-
 const AdminPlatform = () => {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +70,9 @@ const AdminPlatform = () => {
   const [actionType, setActionType] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ open: false, reportId: null, listingId: null, action: null, listingName: '' });
   const [completedActions, setCompletedActions] = useState({});
+  const [detailsModal, setDetailsModal] = useState({ open: false, listing: null });
+  const [lenderReviews, setLenderReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   const handleAccept = async (reportId, listingId) => {
     setLoadingReportId(reportId);
@@ -136,7 +144,6 @@ const AdminPlatform = () => {
     }
   };
 
-
   const fetchListings = useCallback(async () => {
     try {
       setLoading(true);
@@ -180,6 +187,42 @@ const AdminPlatform = () => {
     setEditModalOpen(false);
     setEditListingId(null);
     setRefreshKey(k => k + 1);
+  };
+
+  const handleOpenDetailsModal = async (listing) => {
+    setDetailsModal({ open: true, listing });
+    setReviewsLoading(true);
+    try {
+      let apiUrl = import.meta.env.VITE_API_URL;
+      if (!apiUrl && typeof window !== 'undefined') {
+        apiUrl = window.location.origin;
+      } else if (!apiUrl) {
+        apiUrl = 'http://localhost:8000';
+      }
+      const response = await fetch(`${apiUrl}/api/lender-reviews/${listing.lender_netid}`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-User-Type': 'admin',
+          'X-Username': 'admin',
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch reviews (${response.status}): ${response.statusText}`);
+      }
+      const data = await response.json();
+      setLenderReviews(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  const handleCloseDetailsModal = () => {
+    setDetailsModal({ open: false, listing: null });
+    setLenderReviews([]);
   };
 
   return (
@@ -272,64 +315,30 @@ const AdminPlatform = () => {
                   )}
                   <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
                     {/* Admin approve/reject actions could go here */}
-                    <button
-                      style={{
-                        background:
-                          listing.report_status === 'accepted'
-                            ? '#2196f3'
-                            : listing.report_status === 'rejected'
-                              ? '#888'
-                              : (loadingReportId === listing.report_id && actionType === 'accept')
-                                ? '#2196f3'
-                                : (loadingReportId === listing.report_id && actionType === 'reject')
-                                  ? '#888'
-                                  : '#2196f3',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '8px 14px',
-                        borderRadius: 5,
-                        cursor:
-                          listing.report_status !== 'pending'
-                            ? 'not-allowed'
-                            : (loadingReportId === listing.report_id)
-                              ? (actionType === 'accept' ? 'pointer' : 'not-allowed')
-                              : 'pointer',
-                        fontWeight: 600
-                      }}
-                      onClick={() => setConfirmModal({ open: true, reportId: listing.report_id, listingId: listing.listing_id, action: 'accept', listingName: listing.location || listing.address || 'this listing' })}
-                      disabled={listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected' || loadingReportId === listing.report_id || completedActions[listing.report_id]}
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => handleOpenEditModal(listing.id)}
+                      sx={{ mr: 1 }}
                     >
-                      {loadingReportId === listing.report_id && actionType === 'accept' ? 'Approving...' : (completedActions[listing.report_id] ? 'Approved' : 'Approve')}
-                    </button>
-                    <button
-                      style={{
-                        background:
-                          listing.report_status === 'rejected'
-                            ? '#f44336'
-                            : listing.report_status === 'accepted'
-                              ? '#888'
-                              : (loadingReportId === listing.report_id && actionType === 'reject')
-                                ? '#f44336'
-                                : (loadingReportId === listing.report_id && actionType === 'accept')
-                                  ? '#888'
-                                  : '#f44336',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '8px 14px',
-                        borderRadius: 5,
-                        cursor:
-                          listing.report_status !== 'pending'
-                            ? 'not-allowed'
-                            : (loadingReportId === listing.report_id)
-                              ? (actionType === 'reject' ? 'pointer' : 'not-allowed')
-                              : 'pointer',
-                        fontWeight: 600
-                      }}
-                      onClick={() => setConfirmModal({ open: true, reportId: listing.report_id, listingId: listing.listing_id, action: 'reject', listingName: listing.location || listing.address || 'this listing' })}
-                      disabled={listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected' || loadingReportId === listing.report_id || completedActions[listing.report_id]}
+                      Edit
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="info"
+                      onClick={() => handleOpenDetailsModal(listing)}
+                      sx={{ mr: 1 }}
                     >
-                      {loadingReportId === listing.report_id && actionType === 'reject' ? 'Rejecting...' : (completedActions[listing.report_id] ? 'Rejected' : 'Reject')}
-                    </button>
+                      View Details
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      onClick={() => handleAccept(listing.report_id, listing.listing_id)}
+                      sx={{ mr: 1 }}
+                    >
+                      Accept
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -383,6 +392,91 @@ const AdminPlatform = () => {
           </div>
         </div>
       )}
+      {/* Details Modal */}
+      <Dialog
+        open={detailsModal.open}
+        onClose={handleCloseDetailsModal}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Listing Details
+          <IconButton
+            onClick={handleCloseDetailsModal}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {detailsModal.listing && (
+            <Box sx={{ mt: 2 }}>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" gutterBottom>Item Information</Typography>
+                  <Typography><strong>Title:</strong> {detailsModal.listing.title}</Typography>
+                  <Typography><strong>Description:</strong> {detailsModal.listing.description}</Typography>
+                  <Typography><strong>Category:</strong> {detailsModal.listing.category}</Typography>
+                  <Typography><strong>Condition:</strong> {detailsModal.listing.condition}</Typography>
+                  <Typography><strong>Price:</strong> ${detailsModal.listing.price}</Typography>
+                  <Typography><strong>Location:</strong> {detailsModal.listing.location}</Typography>
+                  <Typography><strong>Status:</strong> {detailsModal.listing.status}</Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" gutterBottom>Lender Information</Typography>
+                  <Typography><strong>Name:</strong> {detailsModal.listing.lender_name}</Typography>
+                  <Typography><strong>NetID:</strong> {detailsModal.listing.lender_netid}</Typography>
+                  <Typography><strong>Email:</strong> {detailsModal.listing.lender_email}</Typography>
+                  <Typography><strong>Phone:</strong> {detailsModal.listing.lender_phone}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom>Lender Reviews</Typography>
+                  {reviewsLoading ? (
+                    <CircularProgress size={24} />
+                  ) : lenderReviews.length > 0 ? (
+                    <List>
+                      {lenderReviews.map((review) => (
+                        <ListItem key={review.id} divider>
+                          <ListItemText
+                            primary={
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                {[...Array(5)].map((_, i) => (
+                                  <StarIcon
+                                    key={i}
+                                    sx={{
+                                      color: i < review.rating ? 'warning.main' : 'grey.300',
+                                      fontSize: 20
+                                    }}
+                                  />
+                                ))}
+                              </Box>
+                            }
+                            secondary={
+                              <>
+                                <Typography variant="body2" color="text.secondary">
+                                  {review.comment}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  By {review.reviewer_name} on {new Date(review.created_at).toLocaleDateString()}
+                                </Typography>
+                              </>
+                            }
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  ) : (
+                    <Typography color="text.secondary">No reviews available</Typography>
+                  )}
+                </Grid>
+              </Grid>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDetailsModal}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
