@@ -29,41 +29,15 @@ const orangeIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-// Custom gray marker icon
-const grayIcon = new L.Icon({
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-  className: 'leaflet-gray-icon'
-});
-
 // Add CSS for marker colors and custom grouped marker
 const markerStyles = `
-  .leaflet-gray-icon {
-    filter: grayscale(100%) brightness(0.7);
-  }
-  .custom-grouped-marker .grouped-marker-outer {
-    position: relative;
-    width: 38px;
-    height: 48px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-  }
-  .custom-grouped-marker .grouped-marker-inner {
-    display: none;
-  }
   .custom-grouped-marker .grouped-marker-badge {
     position: absolute;
     top: -4px;
     right: -8px;
     min-width: 22px;
     height: 22px;
-    background: #ff9800;
+    background: #FF8F00;
     color: #fff;
     font-weight: bold;
     font-size: 13px;
@@ -133,7 +107,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
             right: -7px;
             min-width: 22px;
             height: 22px;
-            background: #ff9800;
+            background: #666666;
             color: #fff;
             font-weight: bold;
             font-size: 13px;
@@ -141,7 +115,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px solid #fff3e6;
+            border: 2px solid #ffffff;
             box-shadow: 0 1px 6px rgba(0,0,0,0.23);
             z-index: 2;
             letter-spacing: 0.5px;
@@ -167,10 +141,9 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
       const groups = groupListingsByCoords(listings);
       Object.entries(groups).forEach(([key, group]) => {
         if (group.length === 1) {
-          // Single marker, no offset
+          // Single marker - use orange icon for all markers
           const listing = group[0];
-          const markerIcon = listing.isInterested ? orangeIcon : grayIcon;
-          const marker = L.marker([listing.latitude, listing.longitude], { icon: markerIcon })
+          const marker = L.marker([listing.latitude, listing.longitude], { icon: orangeIcon })
             .addTo(map)
             .bindPopup(`
               <div>
@@ -179,7 +152,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
                 <p>Size: ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • ${listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total</p>
                 <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
                 <button 
-                  style="background-color: #f57c00; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
+                  style="background-color: #FF8F00; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
                   onclick="window.location.href='/listing/${listing.id || listing.listing_id}'"
                 >
                   View Details
@@ -198,7 +171,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
             onListingClick(listing);
           });
         } else {
-          // Multiple listings at same coordinates: show a single thick orange marker with badge
+          // Multiple listings - update the grouped marker style
           const lat = group[0].latitude;
           const lng = group[0].longitude;
           const markerIcon = getGroupedDivIcon(group.length);
@@ -212,7 +185,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
                   ${group.map(listing => `
                     <li style='margin-bottom: 2px;'>
                       <b>$${listing.cost ?? 0}/mo</b>, ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • ${listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total
-                      <a href='/listing/${listing.id || listing.listing_id}' style='color:#f57c00;margin-left:5px;'>View</a>
+                      <a href='/listing/${listing.id || listing.listing_id}' style='color:#FF8F00;margin-left:5px;'>View</a>
                     </li>
                   `).join('')}
                 </ul>
