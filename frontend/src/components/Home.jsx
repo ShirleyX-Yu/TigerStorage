@@ -11,6 +11,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import './Home.css';
+import nassauHallImg from '../assets/nassau_hall.jpg';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -76,53 +77,33 @@ const Home = () => {
     <div className="home-container" style={{ 
       position: 'relative', 
       height: '100vh',
-      background: `linear-gradient(135deg, #FFF8F1 0%, #FDF3EA 100%)`,
+      backgroundImage: `url(${nassauHallImg})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
       overflow: 'hidden'
     }}>
-      {/* Background decorative elements */}
+      {/* Semi-transparent beige overlay */}
       <div style={{
         position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        opacity: 0.4,
+        background: `linear-gradient(135deg, rgba(255, 248, 241, 0.65) 0%, rgba(253, 243, 234, 0.75) 100%)`,
         pointerEvents: 'none',
-        background: `
-          radial-gradient(circle at 10% 20%, #F8B88B 0%, transparent 20%),
-          radial-gradient(circle at 90% 80%, #F8B88B 0%, transparent 20%),
-          radial-gradient(circle at 50% 50%, #F47C2E 0%, transparent 30%),
-          radial-gradient(circle at 80% 10%, #F8B88B 0%, transparent 15%)
-        `
+        zIndex: 1
       }} />
-      {/* Subtle grid pattern overlay */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        opacity: 0.05,
-        pointerEvents: 'none',
-        backgroundImage: `
-          linear-gradient(#4D2E1E 1px, transparent 1px),
-          linear-gradient(90deg, #4D2E1E 1px, transparent 1px)
-        `,
-        backgroundSize: '50px 50px'
-      }} />
-
-      {/* Content container with backdrop blur */}
+      {/* Content container */}
       <div style={{
         position: 'relative',
-        zIndex: 1,
+        zIndex: 2,
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px',
-        backdropFilter: 'blur(60px)',
-        WebkitBackdropFilter: 'blur(60px)'
+        padding: '20px'
       }}>
         <button
           className="home-privacy-button"
@@ -163,7 +144,7 @@ const Home = () => {
               className="home-logo"
               onError={() => setLogoError(true)}
               style={{ 
-                background: '#FFFFFF',
+                background: 'transparent',
                 padding: '25px', 
                 borderRadius: '12px',
                 width: '240px',
