@@ -32,7 +32,7 @@ const orangeIcon = new L.Icon({
 
 // Custom green marker icon
 const greenIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.4/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -47,13 +47,13 @@ const markerStyles = `
     filter: hue-rotate(0deg) saturate(1.2) brightness(1.1);
   }
   .custom-green-marker {
-    filter: hue-rotate(95deg) saturate(1.4) brightness(1.2);
+    filter: hue-rotate(110deg) saturate(0.9) brightness(1.1);
   }
   .custom-grouped-marker {
     filter: hue-rotate(0deg) saturate(1.2) brightness(1.1);
   }
   .custom-grouped-marker.interested {
-    filter: hue-rotate(95deg) saturate(1.4) brightness(1.2);
+    filter: hue-rotate(110deg) saturate(0.9) brightness(1.1);
   }
   .custom-grouped-marker .grouped-marker-badge {
     position: absolute;
@@ -128,7 +128,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
       className: `custom-grouped-marker ${isInterested ? 'interested' : ''}`,
       html: `
         <div style="position: relative; width: 25px; height: 41px;">
-          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${isInterested ? 'green' : 'orange'}.png" style="width: 25px; height: 41px; display: block;" />
+          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${isInterested ? 'blue' : 'orange'}.png" style="width: 25px; height: 41px; display: block;" />
           <div class="grouped-marker-badge" style="
             position: absolute;
             top: -7px;
