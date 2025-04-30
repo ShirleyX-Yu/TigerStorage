@@ -271,8 +271,10 @@ const styles = {
     zIndex: 1,
   },
   welcome: {
-    fontSize: '1.5rem',
-    marginBottom: '3rem',
+    fontSize: '24px',
+    fontWeight: 'bold',
+    marginBottom: '30px',
+    color: '#333',
   },
   section: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',

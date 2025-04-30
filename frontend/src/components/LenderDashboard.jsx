@@ -528,6 +528,45 @@ const LenderDashboard = ({ username }) => {
               </div>
             )}
           </div>
+
+          <div style={styles.section}>
+            <h2 style={{ marginBottom: 16, fontSize: '20px', fontWeight: 'bold', color: '#333' }}>Your Reviews</h2>
+            {reviewsLoading ? <div style={{ fontSize: '16px', color: '#666' }}>Loading reviews...</div> : (
+              lenderReviews.length === 0 ? <div style={{ fontSize: '16px', color: '#666' }}>No reviews yet.</div> : (
+                <>
+                  <div style={{ marginBottom: 16, fontSize: '16px' }}>
+                    <b>Average Rating: </b>
+                    {(
+                      lenderReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / lenderReviews.length
+                    ).toFixed(1)}
+                    <span style={{ color: '#fbc02d', marginLeft: 8 }}>
+                      {[...Array(Math.round(lenderReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / lenderReviews.length))].map((_, i) => <StarIcon key={i} fontSize="small" />)}
+                    </span>
+                  </div>
+                  <div>
+                    {lenderReviews.map((r, i) => (
+                      <div key={i} style={{ background: '#f8f8f8', borderRadius: 6, padding: 16, marginBottom: 14, fontSize: '15px', color: '#333' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <span style={{ color: '#fbc02d' }}>{[...Array(r.rating)].map((_, j) => <StarIcon key={j} fontSize="small" />)}</span>
+                          <span style={{ fontWeight: 600 }}>{r.renter_username}</span>
+                          <span style={{ color: '#888', fontSize: 13 }}>{new Date(r.created_at).toLocaleDateString()}</span>
+                          {r.listing_id && (
+                            <span style={{ marginLeft: 12, fontSize: 13, color: '#333' }}>
+                              for listing:
+                              <a href={`/lender-dashboard/listing/${r.listing_id}`} style={{ color: '#1976d2', textDecoration: 'underline', marginLeft: 4 }}>
+                                {r.location || `Listing #${r.listing_id}`}
+                              </a>
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ marginTop: 4 }}>{r.review_text}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )
+            )}
+          </div>
         </div>
       </div>
       <Dialog 
@@ -619,52 +658,6 @@ const LenderDashboard = ({ username }) => {
           >Approve</Button>
         </DialogActions>
       </Dialog>
-      {/* --- Lender Reviews Section --- */}
-      <div style={{
-        ...styles.section,
-        maxWidth: '1200px',
-        margin: '40px auto 0',
-        fontFamily: 'inherit',
-        width: '100%',
-        boxSizing: 'border-box',
-      }}>
-        <h2 style={{ marginBottom: 16, fontSize: '20px', fontWeight: 'bold', color: '#333' }}>Your Reviews</h2>
-        {reviewsLoading ? <div style={{ fontSize: '16px', color: '#666' }}>Loading reviews...</div> : (
-          lenderReviews.length === 0 ? <div style={{ fontSize: '16px', color: '#666' }}>No reviews yet.</div> : (
-            <>
-              <div style={{ marginBottom: 16, fontSize: '16px' }}>
-                <b>Average Rating: </b>
-                {(
-                  lenderReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / lenderReviews.length
-                ).toFixed(1)}
-                <span style={{ color: '#fbc02d', marginLeft: 8 }}>
-                  {[...Array(Math.round(lenderReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / lenderReviews.length))].map((_, i) => <StarIcon key={i} fontSize="small" />)}
-                </span>
-              </div>
-              <div>
-                {lenderReviews.map((r, i) => (
-                  <div key={i} style={{ background: '#f8f8f8', borderRadius: 6, padding: 16, marginBottom: 14, fontSize: '15px', color: '#333' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      <span style={{ color: '#fbc02d' }}>{[...Array(r.rating)].map((_, j) => <StarIcon key={j} fontSize="small" />)}</span>
-                      <span style={{ fontWeight: 600 }}>{r.renter_username}</span>
-                      <span style={{ color: '#888', fontSize: 13 }}>{new Date(r.created_at).toLocaleDateString()}</span>
-                      {r.listing_id && (
-                        <span style={{ marginLeft: 12, fontSize: 13, color: '#333' }}>
-                          for listing:
-                          <a href={`/lender-dashboard/listing/${r.listing_id}`} style={{ color: '#1976d2', textDecoration: 'underline', marginLeft: 4 }}>
-                            {r.location || `Listing #${r.listing_id}`}
-                          </a>
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ marginTop: 4 }}>{r.review_text}</div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )
-        )}
-      </div>
     </div>
   );
 };
@@ -689,7 +682,7 @@ const styles = {
     zIndex: 0,
   },
   content: {
-    padding: '20px',
+    padding: '40px',
     maxWidth: '1200px',
     margin: '0 auto',
     position: 'relative',
@@ -733,15 +726,17 @@ const styles = {
   dashboardContent: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '30px',
+    gap: '3rem',
+    width: '100%',
   },
   section: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: '8px',
-    padding: '20px',
+    padding: '30px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     position: 'relative',
     zIndex: 1,
+    width: '100%',
   },
   sectionHeader: {
     display: 'flex',
