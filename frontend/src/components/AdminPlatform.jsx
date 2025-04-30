@@ -228,7 +228,7 @@ const AdminPlatform = () => {
 
                   </div>
                   <div style={{ fontSize: 15, margin: '0.5rem 0' }}>
-                    ${listing.cost}/month · {listing.cubic_feet ?? listing_cubic_ft ?? 0} sq ft
+                    ${listing.cost}/month · {listing.cubic_feet ?? listing.cubic_ft ?? 0} sq ft
                   </div>
                   <div style={{ fontSize: 14, color: '#b0b0b0', marginBottom: 10 }}>
                     Created: {listing.created_at ? new Date(listing.created_at).toLocaleDateString() : 'N/A'}
