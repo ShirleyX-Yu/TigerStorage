@@ -107,7 +107,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
             right: -7px;
             min-width: 22px;
             height: 22px;
-            background: #f57c00;
+            background: #e65100;
             color: #fff;
             font-weight: bold;
             font-size: 13px;
