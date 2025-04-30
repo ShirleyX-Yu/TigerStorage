@@ -432,6 +432,11 @@ const RenterListingDetails = () => {
     }
   };
 
+  // Clear reservation error when listing id changes
+  useEffect(() => {
+    setReservationError('');
+  }, [id]);
+
   // Simple render function for error state
   const renderError = () => (
     <div style={styles.errorContainer}>
