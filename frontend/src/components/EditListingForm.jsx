@@ -1,18 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 
 const PRINCETON_HALLS = [
-  'Bloomberg Hall', 'Butler College', 'First College', 'Forbes College', 'Mathey College',
-  'Rockefeller College', 'Whitman College', 'Wilson College', 'Yeh College', 'New College West',
-  '1901 Hall', '1915 Hall', '1937 Hall', '1967 Hall', '1976 Hall', '1981 Hall', '1985 Hall',
-  'Brown Hall', 'Cuyler Hall', 'Dodge-Osborn Hall', 'Edwards Hall', 'Foulke Hall', 'Gauss Hall',
-  'Hargadon Hall', 'Holder Hall', 'Little Hall', 'Lockhart Hall', 'Scully Hall', 'Spelman Hall',
-  'Witherspoon Hall', 'Lauritzen Hall', 'Mannion Hall', 'Murley-Pivirotto Hall', 'Robinson Hall',
-  'Scheide Caldwell House', 'Walker Hall', 'Wright Hall', 'Stanhope Hall', 'Pyne Hall', 'Clapp Hall',
-  'Hamilton Hall', 'Hibben-Magie', 'Lawrence Apartments', 'Graduate College', 'Old Graduate College',
-  'New Graduate College', 'New South', 'Alexander Hall', 'Dillon Court East', 'Dillon Court West',
-  'Elm Hall', 'Maple Hall', 'Oak Hall', 'Spruce Hall', 'Tiger Inn', 'Cannon Club', 'Cottage Club',
-  'Quadrangle Club', 'Tower Club', 'Colonial Club', 'Charter Club', 'Cloister Inn', 'Ivy Club',
-  'Cap & Gown Club', 'Princeton Inn', 'Princeton Tower Club', 'Princeton Terrace Club', 'Princeton Charter Club'
+  '1901 Hall', '1903 Hall', '1915 Hall', '1937 Hall', '1939 Hall', '1967 Hall', '1976 Hall', 'Addy Hall',
+  'Baker Hall', 'Blair Hall', 'Bloomberg Hall', 'Bogle Hall', 'Brown Hall', 'Buyers Hall', 'Campbell Hall',
+  'Class of 1981 Hall', 'Cuyler Hall', 'Dod Hall', 'Edwards Hall', 'Feinberg Hall', 'Feliciano Hall',
+  'Fisher Hall', 'Forbes College', 'Foulke Hall', 'Gauss Hall', 'Graduate College (Old Graduate College)',
+  'Grousbeck Hall', 'Hamilton Hall', 'Hariri Hall', 'Hargadon Hall', 'Henry Hall', 'Holder Hall',
+  'Joline Hall', 'Kwanza Jones Hall', 'Laughlin Hall', 'Lauritzen Hall', 'Lawrence Apartments',
+  'Lakeside Apartments', 'Little Hall', 'Lockhart Hall', 'Madison Hall', 'Mannion Hall', 'Meadows Apartments',
+  'Murley-Pivirotto Family Tower', 'New Graduate College', 'Patton Hall', 'Pivirotto Hall', 'Pyne Hall',
+  'Scully Hall', 'Spelman Hall', 'Walker Hall', 'Wendell Hall', 'Wilf Hall', 'Witherspoon Hall', 'Wright Hall',
+  'Yoseloff Hall'
 ];
 
 const styles = {
@@ -132,6 +131,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
   const [geocodingStatus, setGeocodingStatus] = useState('');
   const [locationType, setLocationType] = useState('on-campus');
   const [uploading, setUploading] = useState(false);
+  const [showAddressConfirm, setShowAddressConfirm] = useState(false);
+  const [pendingAddress, setPendingAddress] = useState(null);
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -146,6 +147,14 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           throw new Error(`Failed to fetch listing details: ${response.status}`);
         }
         const data = await response.json();
+        // Extract hall name if address is in the form '[Hall Name], Princeton, NJ 08544'
+        let hallName = '';
+        if (data.address) {
+          const match = data.address.match(/^(.*?),\s*Princeton,?\s*NJ\s*08544$/i);
+          if (match && match[1]) {
+            hallName = match[1];
+          }
+        }
         const formDataToSet = {
           location: data.location || '',
           address: data.address || '',
@@ -159,7 +168,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           image_url: data.image_url || ''
         };
         setFormData(formDataToSet);
-        setTempAddress(data.address || '');
+        // Prefer hallName if found, else use address or location
+        setTempAddress(hallName || data.address || '');
         const addressToCheck = data.address || data.location || '';
         if (addressToCheck.includes('Hall')) {
           setLocationType('on-campus');
@@ -247,15 +257,38 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       }
       const data = await response.json();
       if (data.length > 0) {
-        const { lat, lon } = data[0];
-        setFormData(prev => ({ ...prev, latitude: lat, longitude: lon, address: addressToGeocode }));
-        setGeocodingStatus('Address geocoded!');
+        const { lat, lon, display_name } = data[0];
+        setPendingAddress({
+          address: display_name,
+          latitude: lat,
+          longitude: lon
+        });
+        setShowAddressConfirm(true);
+        setGeocodingStatus('');
       } else {
         setGeocodingStatus('No results found. Please check the address.');
       }
     } catch (err) {
       setGeocodingStatus('Geocoding failed: ' + err.message);
     }
+  };
+
+  const handleConfirmAddress = () => {
+    if (pendingAddress) {
+      setFormData(prev => ({
+        ...prev,
+        address: pendingAddress.address,
+        latitude: pendingAddress.latitude,
+        longitude: pendingAddress.longitude
+      }));
+    }
+    setShowAddressConfirm(false);
+    setPendingAddress(null);
+  };
+
+  const handleEditAddress = () => {
+    setShowAddressConfirm(false);
+    setPendingAddress(null);
   };
 
   const handleSubmit = async (e) => {
@@ -459,6 +492,46 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           </form>
         )}
       </div>
+      <Dialog 
+        open={showAddressConfirm} 
+        onClose={handleEditAddress} 
+        maxWidth="xs" 
+        fullWidth
+        PaperProps={{
+          style: {
+            borderRadius: 16,
+            minWidth: 340,
+            background: '#fff8f1',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.14)'
+          }
+        }}
+      >
+        <DialogTitle style={{
+          background: '#FF6B00',
+          color: 'white',
+          fontWeight: 700,
+          letterSpacing: 1,
+          padding: '16px 24px',
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16
+        }}>
+          Confirm Address
+        </DialogTitle>
+        <DialogContent style={{ background: '#fff8f1', padding: 28 }}>
+          <div style={{ marginBottom: 16, fontSize: 16, color: '#333' }}>
+            Please confirm the address for your listing:
+          </div>
+          <div style={{ fontWeight: 600, fontSize: 17, color: '#222', marginBottom: 8, background: '#fff', borderRadius: 8, padding: '12px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            {pendingAddress?.address}
+          </div>
+        </DialogContent>
+        <DialogActions style={{ background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, padding: '16px 24px' }}>
+          <Button onClick={handleEditAddress} style={{ color: '#888', fontWeight: 600 }}>Edit</Button>
+          <Button onClick={handleConfirmAddress} variant="contained" style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }}>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
