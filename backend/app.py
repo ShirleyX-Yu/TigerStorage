@@ -1078,12 +1078,10 @@ def get_my_listings():
                     else:
                         # If owner_id is a string type in the database
                         query = f"""
-                            SELECT {select_columns}, 
-                                   CASE WHEN r.status = 'accepted' THEN true ELSE false END as is_reported
-                            FROM storage_listings s
-                            LEFT JOIN reported_listings r ON s.listing_id = r.listing_id AND r.status = 'accepted'
-                            WHERE LOWER(s.owner_id) = %s
-                            ORDER BY s.created_at DESC;
+                            SELECT {select_columns}
+                            FROM storage_listings
+                            WHERE LOWER(owner_id) = %s
+                            ORDER BY created_at DESC;
                         """
                         print(f"Using string owner_id for query: {owner_id}")
                         cur.execute(query, (str(owner_id).lower(),))
@@ -1131,8 +1129,7 @@ def get_my_listings():
                                 "created_at": listing_dict.get('created_at').isoformat() if listing_dict.get('created_at') else None,
                                 "owner_id": listing_dict.get('owner_id', ''),
                                 "remaining_volume": listing_dict.get('remaining_volume', 0),
-                                "is_available": bool(listing_dict.get('is_available', True)) if float(listing_dict.get('remaining_volume', 0)) > 0 else False,
-                                "is_reported": bool(listing_dict.get('is_reported', False))
+                                "is_available": bool(listing_dict.get('is_available', True)) if float(listing_dict.get('remaining_volume', 0)) > 0 else False
                             }
                             formatted_listings.append(formatted_listing)
                         except Exception as e:

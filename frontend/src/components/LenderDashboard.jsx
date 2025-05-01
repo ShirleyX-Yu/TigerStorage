@@ -147,9 +147,7 @@ const LenderDashboard = ({ username }) => {
           endDate: listing.end_date ? formatDate(listing.end_date) : '',
           status: 'Active',
           interestedRenters,
-          remaining_volume: listing.remaining_volume,
-          is_available: listing.is_available,
-          is_reported: listing.is_reported
+          remaining_volume: listing.remaining_volume
         };
       }));
 
@@ -416,7 +414,7 @@ const LenderDashboard = ({ username }) => {
                         </div>
                       </div>
                       <div style={styles.spaceBadge}>
-                        {space.is_reported ? 'Reported' : (space.is_available === false ? 'Inactive' : getStatusLabel(space.status))}
+                        {getStatusLabel(space.status)}
                       </div>
                     </div>
                     <div style={styles.spaceStats}>
