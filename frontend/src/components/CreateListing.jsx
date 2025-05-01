@@ -369,8 +369,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                     setTempAddress(e.target.value);
                     setFormData(prev => ({
                       ...prev,
-                      hall_name: e.target.value,
-                      location: e.target.value // keep location in sync for now
+                      hall_name: e.target.value
                     }));
                     if (e.target.value) {
                       geocodeAddress(e.target.value);
