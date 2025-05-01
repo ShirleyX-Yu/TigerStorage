@@ -817,9 +817,11 @@ const Map = () => {
                   <Typography variant="h5" style={{ color: '#FF6B00', fontWeight: 700, marginBottom: 8 }}>
                     {selectedListing.location}
                   </Typography>
-                  <Typography variant="body2" style={{ fontStyle: 'italic', color: '#888', marginBottom: 8 }}>
-                    {selectedListing.hall_name || selectedListing.location}
-                  </Typography>
+                  {selectedListing.hall_name && (
+                    <Typography variant="body2" style={{ color: '#FF8F00', fontWeight: 500, marginBottom: 8 }}>
+                      Residential Hall: {selectedListing.hall_name}
+                    </Typography>
+                  )}
                   <Typography variant="body1" style={{ marginBottom: 4 }}>
                     <b>${selectedListing.cost ?? 0}/month</b> • {selectedListing.remaining_volume ?? selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} sq ft remaining • {selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} sq ft total
                   </Typography>

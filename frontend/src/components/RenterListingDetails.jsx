@@ -514,6 +514,11 @@ const RenterListingDetails = () => {
 
             <div style={styles.infoSection}>
               <h2 style={styles.location}>{listing.location}</h2>
+              {listing.hall_name && (
+                <div style={{ fontSize: '1.05rem', color: '#FF8F00', fontWeight: 500, marginBottom: 8 }}>
+                  Residential Hall: {listing.hall_name}
+                </div>
+              )}
               
               <div style={styles.listingInfo}>
                 <div className={styles.infoRow}>

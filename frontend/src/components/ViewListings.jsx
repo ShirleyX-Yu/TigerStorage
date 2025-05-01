@@ -325,7 +325,12 @@ const ViewListings = () => {
                           }}
                         />
                         <div style={styles.listingDetails}>
-                          <h3 style={styles.listingTitle}>{listing.hall_name || listing.location}</h3>
+                          <h3 style={styles.listingTitle}>{listing.location}</h3>
+                          {listing.hall_name && (
+                            <div style={{ fontSize: '0.98rem', color: '#FF8F00', fontWeight: 500, marginBottom: 4 }}>
+                              Residential Hall: {listing.hall_name}
+                            </div>
+                          )}
                           <p style={styles.listingInfo}>
                             <strong>${listing.cost}</strong> per month · {listing.remaining_volume ?? listing.cubic_feet} sq ft remaining / {listing.cubic_feet} sq ft total · Available: {formatDate(listing.start_date)} - {formatDate(listing.end_date)}
                           </p>

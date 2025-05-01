@@ -147,7 +147,8 @@ const LenderDashboard = ({ username }) => {
           endDate: listing.end_date ? formatDate(listing.end_date) : '',
           status: 'Active',
           interestedRenters,
-          remaining_volume: listing.remaining_volume
+          remaining_volume: listing.remaining_volume,
+          hall_name: listing.hall_name
         };
       }));
 
@@ -400,6 +401,11 @@ const LenderDashboard = ({ username }) => {
                     <div style={styles.spaceHeader}>
                       <div>
                         <h3 style={styles.spaceTitle}>{space.location || 'No Location Provided'}</h3>
+                        {space.hall_name && (
+                          <div style={{ fontSize: '0.98rem', color: '#FF8F00', fontWeight: 500, marginBottom: 4 }}>
+                            Residential Hall: {space.hall_name}
+                          </div>
+                        )}
                         <p style={styles.spaceDetails}>
                           ${space.cost}/month · {space.cubicFeet} cubic feet
                         </p>
