@@ -516,9 +516,9 @@ const RenterListingDetails = () => {
               <h2 style={styles.location}>{listing.location}</h2>
               
               <div style={styles.listingInfo}>
-                <div style={styles.infoRow}>
+                <div className={styles.infoRow}>
                   <span style={styles.infoLabel}>Location:</span>
-                  <span className={styles.infoValue}>{listing.location}</span>
+                  <span className={styles.infoValue}>{listing.hall_name || listing.location}</span>
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Cost:</span>

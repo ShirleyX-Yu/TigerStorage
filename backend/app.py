@@ -576,6 +576,10 @@ def create_listing():
                 if 'address' in data:
                     column_values['address'] = data['address']
                 
+                # In create_listing, after handling address:
+                if 'hall_name' in data:
+                    column_values['hall_name'] = data['hall_name']
+                
                 # Associate the listing with the current user (lender)
                 if auth.is_authenticated():
                     user_info = session['user_info']
@@ -685,7 +689,7 @@ def get_listings():
                         select_parts.append(col)
                 
                 # Add optional columns if they exist
-                optional_columns = ['latitude', 'longitude', 'start_date', 'end_date', 'image_url', 'address']
+                optional_columns = ['latitude', 'longitude', 'start_date', 'end_date', 'image_url', 'address', 'hall_name']
                 for col in optional_columns:
                     if col in columns:
                         select_parts.append(col)
@@ -744,7 +748,8 @@ def get_listings():
                             "created_at": listing_dict.get('created_at').isoformat() if hasattr(listing_dict.get('created_at'), 'isoformat') else (listing_dict.get('created_at') if listing_dict.get('created_at') else None),
                             "owner_id": listing_dict.get('owner_id', ''),
                             "remaining_volume": listing_dict.get('remaining_volume', 0),
-                            "is_available": bool(listing_dict.get('is_available', True)) if float(listing_dict.get('remaining_volume', 0)) > 0 else False
+                            "is_available": bool(listing_dict.get('is_available', True)) if float(listing_dict.get('remaining_volume', 0)) > 0 else False,
+                            "hall_name": listing_dict.get('hall_name', '')
                         }
 
                         # Ensure latitude and longitude have values for map display
@@ -875,7 +880,8 @@ def get_listing_by_id(listing_id):
                     "start_date": listing_dict.get('start_date').isoformat() if hasattr(listing_dict.get('start_date'), 'isoformat') else (listing_dict.get('start_date') if listing_dict.get('start_date') else None),
                     "end_date": listing_dict.get('end_date').isoformat() if hasattr(listing_dict.get('end_date'), 'isoformat') else (listing_dict.get('end_date') if listing_dict.get('end_date') else None),
                     "updated_at": listing_dict.get('updated_at').isoformat() if hasattr(listing_dict.get('updated_at'), 'isoformat') else (listing_dict.get('updated_at') if listing_dict.get('updated_at') else None),
-                    "remaining_volume": listing_dict.get('remaining_volume', 0)
+                    "remaining_volume": listing_dict.get('remaining_volume', 0),
+                    "hall_name": listing_dict.get('hall_name', '')
                 }
                 
                 return jsonify(formatted_listing), 200
@@ -1031,7 +1037,7 @@ def get_my_listings():
                         select_parts.append(col)
                 
                 # Add optional columns if they exist
-                optional_columns = ['latitude', 'longitude', 'start_date', 'end_date', 'image_url', 'address']
+                optional_columns = ['latitude', 'longitude', 'start_date', 'end_date', 'image_url', 'address', 'hall_name']
                 for col in optional_columns:
                     if col in columns:
                         select_parts.append(col)
@@ -1129,7 +1135,8 @@ def get_my_listings():
                                 "created_at": listing_dict.get('created_at').isoformat() if listing_dict.get('created_at') else None,
                                 "owner_id": listing_dict.get('owner_id', ''),
                                 "remaining_volume": listing_dict.get('remaining_volume', 0),
-                                "is_available": bool(listing_dict.get('is_available', True)) if float(listing_dict.get('remaining_volume', 0)) > 0 else False
+                                "is_available": bool(listing_dict.get('is_available', True)) if float(listing_dict.get('remaining_volume', 0)) > 0 else False,
+                                "hall_name": listing_dict.get('hall_name', '')
                             }
                             formatted_listings.append(formatted_listing)
                         except Exception as e:
@@ -1262,6 +1269,8 @@ def update_listing(listing_id):
                     update_values['end_date'] = data['end_date']
                 if 'image_url' in data:
                     update_values['image_url'] = data['image_url']
+                if 'hall_name' in data:
+                    update_values['hall_name'] = data['hall_name']
 
                 # Admin actions: accept/reject listing
                 if is_admin:
@@ -1776,7 +1785,8 @@ def get_my_interested_listings():
                             il.status,
                             rr.requested_volume,
                             rr.approved_volume,
-                            rr.status as reservation_status
+                            rr.status as reservation_status,
+                            sl.hall_name
                         FROM interested_listings il
                         JOIN storage_listings sl ON il.listing_id = sl.listing_id
                         LEFT JOIN reservation_requests rr ON rr.listing_id = il.listing_id AND rr.renter_username = il.renter_username
@@ -1802,7 +1812,8 @@ def get_my_interested_listings():
                             "requested_volume": row[8],
                             "approved_volume": row[9],
                             "approval_type": row[10],
-                            "nextStep": "Waiting for lender response" if row[7] == 'pending' else "In Discussion"
+                            "nextStep": "Waiting for lender response" if row[7] == 'pending' else "In Discussion",
+                            "hall_name": row[11]
                         })
                     
                     print(f"Found {len(interested_listings)} interested listings for user {renter_username}")

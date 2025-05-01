@@ -2,6 +2,7 @@
 CREATE TABLE storage_listings (
     listing_id BIGSERIAL PRIMARY KEY,
     location TEXT,
+    hall_name VARCHAR(100),
     cost BIGINT,
     cubic_ft BIGINT,
     description TEXT,
@@ -16,6 +17,7 @@ CREATE TABLE storage_listings (
     remaining_volume BIGINT,
     is_available BOOLEAN DEFAULT TRUE
     is_approved BOOLEAN DEFAULT TRUE
+);
 
 -- Create reservation_requests table
 CREATE TABLE IF NOT EXISTS reservation_requests (

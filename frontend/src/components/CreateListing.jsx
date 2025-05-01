@@ -145,6 +145,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const errorRef = useRef(null);
   const [formData, setFormData] = useState({
     location: '',
+    hall_name: '',
     address: '',
     cost: '',
     cubicFeet: '',
@@ -366,6 +367,11 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                   value={tempAddress}
                   onChange={e => {
                     setTempAddress(e.target.value);
+                    setFormData(prev => ({
+                      ...prev,
+                      hall_name: e.target.value,
+                      location: e.target.value // keep location in sync for now
+                    }));
                     if (e.target.value) {
                       geocodeAddress(e.target.value);
                     }

@@ -818,7 +818,7 @@ const Map = () => {
                     {selectedListing.location}
                   </Typography>
                   <Typography variant="body2" style={{ fontStyle: 'italic', color: '#888', marginBottom: 8 }}>
-                    {selectedListing.address}
+                    {selectedListing.hall_name || selectedListing.location}
                   </Typography>
                   <Typography variant="body1" style={{ marginBottom: 4 }}>
                     <b>${selectedListing.cost ?? 0}/month</b> • {selectedListing.remaining_volume ?? selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} sq ft remaining • {selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} sq ft total

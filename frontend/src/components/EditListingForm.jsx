@@ -114,6 +114,7 @@ const styles = {
 const EditListingForm = ({ listingId, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     location: '',
+    hall_name: '',
     address: '',
     cost: '',
     cubicFeet: '',
@@ -160,6 +161,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
         }
         const formDataToSet = {
           location: data.location || '',
+          hall_name: data.hall_name || '',
           address: data.address || '',
           cost: data.cost || '',
           cubicFeet: data.cubic_feet || data.cubicFeet || '',
@@ -171,7 +173,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           image_url: data.image_url || ''
         };
         setFormData(formDataToSet);
-        setTempAddress(hallName || '');
+        setTempAddress(data.hall_name || hallName || '');
         const addressToCheck = data.address || data.location || '';
         if (addressToCheck.includes('Hall')) {
           setLocationType('on-campus');
@@ -400,6 +402,11 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                   value={tempAddress}
                   onChange={e => {
                     setTempAddress(e.target.value);
+                    setFormData(prev => ({
+                      ...prev,
+                      hall_name: e.target.value,
+                      location: e.target.value // keep location in sync for now
+                    }));
                     if (e.target.value) {
                       geocodeAddress(e.target.value);
                     }
