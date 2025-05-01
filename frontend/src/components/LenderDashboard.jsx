@@ -407,13 +407,13 @@ const LenderDashboard = ({ username }) => {
                           </div>
                         )}
                         <p style={styles.spaceDetails}>
-                          ${space.cost}/month · {space.cubicFeet} cubic feet
+                          ${space.cost}/month · {space.cubicFeet} sq ft
                         </p>
                         <p style={styles.spaceDetails}>
                           Start: {space.startDate || 'N/A'} | End: {space.endDate || 'N/A'}
                         </p>
                         <div style={{ marginBottom: 8, color: '#4caf50', fontWeight: 600 }}>
-                          Remaining Volume: {space.remaining_volume} cu ft
+                          Remaining Volume: {space.remaining_volume} sq ft
                         </div>
                       </div>
                       <div style={styles.spaceBadge}>
@@ -457,9 +457,9 @@ const LenderDashboard = ({ username }) => {
                                 <span style={styles.renterStatusBadge}>{getStatusLabel(req.status)}</span>
                               </div>
                               <div style={{ marginTop: 4 }}>
-                                <b>Requested:</b> {req.requested_volume} cu ft
+                                <b>Requested:</b> {req.requested_volume} sq ft
                                 {req.approved_volume && (
-                                  <span style={{ marginLeft: 8 }}><b>Approved:</b> {req.approved_volume} cu ft</span>
+                                  <span style={{ marginLeft: 8 }}><b>Approved:</b> {req.approved_volume} sq ft</span>
                                 )}
                               </div>
                               {req.status === 'pending' && (
@@ -627,11 +627,11 @@ const LenderDashboard = ({ username }) => {
         <DialogContent>
           <div style={{ marginBottom: 12 }}>
             <b>Renter:</b> {partialModal.request?.renter_username}<br />
-            <b>Requested Volume:</b> {partialModal.request?.requested_volume} cu ft<br />
-            <b>Remaining Volume:</b> {listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_volume ?? 0} cu ft
+            <b>Requested Volume:</b> {partialModal.request?.requested_volume} sq ft<br />
+            <b>Remaining Volume:</b> {listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_volume ?? 0} sq ft
           </div>
           <TextField
-            label="Approved Volume (cu ft)"
+            label="Approved Volume (sq ft)"
             type="number"
             fullWidth
             variant="outlined"

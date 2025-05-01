@@ -152,8 +152,8 @@ const RenterDashboard = ({ username }) => {
                       <td style={styles.td}>{space.location}</td>
                       <td style={styles.td}>${space.cost}</td>
                       <td style={styles.td}>{space.lender}</td>
-                      <td style={styles.td}>{space.requested_volume ? `${space.requested_volume} cu ft` : '-'}</td>
-                      <td style={styles.td}>{space.approved_volume ? `${space.approved_volume} cu ft` : '-'}</td>
+                      <td style={styles.td}>{space.requested_volume ? `${space.requested_volume} sq ft` : '-'}</td>
+                      <td style={styles.td}>{space.approved_volume ? `${space.approved_volume} sq ft` : '-'}</td>
                       <td style={styles.td}>{getStatusLabel(space.approval_type)}</td>
                       <td style={styles.td}>
                         <span style={{
@@ -209,8 +209,8 @@ const RenterDashboard = ({ username }) => {
                       <td style={styles.td}>{space.location}</td>
                       <td style={styles.td}>${space.cost}</td>
                       <td style={styles.td}>{space.lender}</td>
-                      <td style={styles.td}>{space.requested_volume ? `${space.requested_volume} cu ft` : '-'}</td>
-                      <td style={styles.td}>{space.approved_volume ? `${space.approved_volume} cu ft` : '-'}</td>
+                      <td style={styles.td}>{space.requested_volume ? `${space.requested_volume} sq ft` : '-'}</td>
+                      <td style={styles.td}>{space.approved_volume ? `${space.approved_volume} sq ft` : '-'}</td>
                       <td style={styles.td}>{getStatusLabel(space.approval_type)}</td>
                       <td style={styles.td}>
                         <span style={{

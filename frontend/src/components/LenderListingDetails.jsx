@@ -303,8 +303,8 @@ const LenderListingDetails = () => {
                         <tr key={req.request_id}>
                           <td style={{ padding: 8, border: '1px solid #eee' }}>{req.renter_username}</td>
                           <td style={{ padding: 8, border: '1px solid #eee' }}>{getStatusLabel(req.status)}</td>
-                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.requested_volume} cu ft</td>
-                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.approved_volume ? `${req.approved_volume} cu ft` : '-'}</td>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.requested_volume} sq ft</td>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.approved_volume ? `${req.approved_volume} sq ft` : '-'}</td>
                           <td style={{ padding: 8, border: '1px solid #eee' }}>
                             {req.status === 'pending' && (
                               <>
@@ -370,11 +370,11 @@ const LenderListingDetails = () => {
           <DialogContent>
             <div style={{ marginBottom: 12 }}>
               <b>Renter:</b> {partialModal.request?.renter_username}<br />
-              <b>Requested Volume:</b> {partialModal.request?.requested_volume} cu ft<br />
+              <b>Requested Volume:</b> {partialModal.request?.requested_volume} sq ft<br />
               <b>Max Allowed:</b> {partialModal.request ? Math.min(partialModal.request.requested_volume, listing.cubicFeet) : 0} sq ft
             </div>
             <TextField
-              label="Approved Volume (cu ft)"
+              label="Approved Volume (sq ft)"
               type="number"
               fullWidth
               variant="outlined"

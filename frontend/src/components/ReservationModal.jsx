@@ -70,7 +70,7 @@ const ReservationModal = ({
             style={{ marginBottom: 16 }}
             fullWidth
           >
-            <ToggleButton value="full" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Full ({maxVolume} cu ft)</ToggleButton>
+            <ToggleButton value="full" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Full ({maxVolume} sq ft)</ToggleButton>
             <ToggleButton value="partial" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Partial</ToggleButton>
           </ToggleButtonGroup>
           <TextField
@@ -85,7 +85,7 @@ const ReservationModal = ({
             style={{ marginBottom: 12, background: 'white', borderRadius: 6 }}
           />
           <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>
-            Max available: {maxVolume} cu ft
+            Max available: {maxVolume} sq ft
           </div>
           {(localError || error) && <Alert severity="error" style={{ marginBottom: 8 }}>{localError || error}</Alert>}
         </DialogContent>
