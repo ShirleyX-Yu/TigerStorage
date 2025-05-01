@@ -145,7 +145,7 @@ const LenderDashboard = ({ username }) => {
           dateCreated: listing.created_at ? formatDate(listing.created_at.split('T')[0]) : '',
           startDate: listing.start_date ? formatDate(listing.start_date) : '',
           endDate: listing.end_date ? formatDate(listing.end_date) : '',
-          status: 'Active',
+          status: listing.is_available ? 'Active' : 'Inactive',
           interestedRenters,
           remaining_volume: listing.remaining_volume
         };
