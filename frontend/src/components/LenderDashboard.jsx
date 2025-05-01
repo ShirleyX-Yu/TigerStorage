@@ -399,10 +399,7 @@ const LenderDashboard = ({ username }) => {
                   <div key={space.id} style={styles.spaceCard}>
                     <div style={styles.spaceHeader}>
                       <div>
-                        <h3 style={styles.spaceTitle}>{space.location || space.address || 'No Location Provided'}</h3>
-                        {space.address && (
-                          <p style={{ ...styles.spaceAddress, fontStyle: 'italic', color: '#666', margin: '0 0 6px 0' }}>{space.address}</p>
-                        )}
+                        <h3 style={styles.spaceTitle}>{space.location || 'No Location Provided'}</h3>
                         <p style={styles.spaceDetails}>
                           ${space.cost}/month · {space.cubicFeet} cubic feet
                         </p>

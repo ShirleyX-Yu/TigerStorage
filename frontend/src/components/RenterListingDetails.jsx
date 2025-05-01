@@ -513,16 +513,12 @@ const RenterListingDetails = () => {
             </div>
 
             <div style={styles.infoSection}>
-              <h2 style={styles.location}>{listing.address || listing.location}</h2>
+              <h2 style={styles.location}>{listing.location}</h2>
               
-              {listing.address && (
-                <div style={{ fontStyle: 'italic', color: '#888', marginBottom: 8 }}>{listing.address}</div>
-              )}
-
               <div style={styles.listingInfo}>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Location:</span>
-                  <span style={styles.infoValue}>{listing.address || listing.location}</span>
+                  <span className={styles.infoValue}>{listing.location}</span>
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Cost:</span>

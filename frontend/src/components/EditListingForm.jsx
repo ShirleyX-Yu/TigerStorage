@@ -152,7 +152,10 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
         if (data.address) {
           const match = data.address.match(/^(.*?),\s*Princeton,?\s*NJ\s*08544$/i);
           if (match && match[1]) {
-            hallName = match[1];
+            hallName = match[1].trim();
+            // Try to match exactly with dropdown options (case and whitespace)
+            const found = PRINCETON_HALLS.find(h => h.toLowerCase() === hallName.toLowerCase());
+            hallName = found || '';
           }
         }
         const formDataToSet = {
@@ -168,8 +171,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           image_url: data.image_url || ''
         };
         setFormData(formDataToSet);
-        // Prefer hallName if found, else use address or location
-        setTempAddress(hallName || data.address || '');
+        setTempAddress(hallName || '');
         const addressToCheck = data.address || data.location || '';
         if (addressToCheck.includes('Hall')) {
           setLocationType('on-campus');
