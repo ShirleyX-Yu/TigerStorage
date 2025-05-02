@@ -140,7 +140,7 @@ const LenderDashboard = ({ username }) => {
           location: listing.location,
           address: listing.address || '',
           cost: listing.cost,
-          cubicFeet: listing.cubic_feet,
+          sq_ft: listing.sq_ft,
           contractLength: listing.contract_length_months || 12,
           dateCreated: listing.created_at ? formatDate(listing.created_at.split('T')[0]) : '',
           startDate: listing.start_date ? formatDate(listing.start_date) : '',
@@ -407,7 +407,7 @@ const LenderDashboard = ({ username }) => {
                           </div>
                         )}
                         <p style={styles.spaceDetails}>
-                          ${space.cost}/month · {space.cubicFeet} sq ft
+                          ${space.cost}/month · {space.sq_ft} sq ft
                         </p>
                         <p style={styles.spaceDetails}>
                           Start: {space.startDate || 'N/A'} | End: {space.endDate || 'N/A'}

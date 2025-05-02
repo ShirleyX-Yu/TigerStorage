@@ -152,7 +152,9 @@ const ViewListings = () => {
     maxSize: '',
     minContract: '',
     maxContract: '',
-    rating: 0 // Added to match map view filters
+    rating: 0, // Added to match map view filters
+    startDate: '',
+    endDate: '',
   });
 
   const handleFilterChange = (e) => {
@@ -163,17 +165,27 @@ const ViewListings = () => {
     }));
   };
 
+  const filterListings = (listings) => {
+    return listings.filter(listing => {
+      return (
+        (!filters.minPrice || listing.cost >= Number(filters.minPrice)) &&
+        (!filters.maxPrice || listing.cost <= Number(filters.maxPrice)) &&
+        (!filters.minSize || listing.sq_ft >= Number(filters.minSize)) &&
+        (!filters.maxSize || listing.sq_ft <= Number(filters.maxSize)) &&
+        (!filters.minContract || listing.contract_length_months >= Number(filters.minContract)) &&
+        (!filters.maxContract || listing.contract_length_months <= Number(filters.maxContract)) &&
+        (!filters.startDate || new Date(listing.start_date) >= new Date(filters.startDate)) &&
+        (!filters.endDate || new Date(listing.end_date) <= new Date(filters.endDate))
+      );
+    });
+  };
+
   // Filter out unavailable listings before rendering
   const filteredListings = listings.filter(
     listing =>
       (listing.is_available === undefined || listing.is_available === true) &&
       Number(listing.remaining_volume) > 0 &&
-      (!filters.minPrice || listing.cost >= Number(filters.minPrice)) &&
-      (!filters.maxPrice || listing.cost <= Number(filters.maxPrice)) &&
-      (!filters.minSize || listing.cubic_feet >= Number(filters.minSize)) &&
-      (!filters.maxSize || listing.cubic_feet <= Number(filters.maxSize)) &&
-      (!filters.minContract || listing.contract_length_months >= Number(filters.minContract)) &&
-      (!filters.maxContract || listing.contract_length_months <= Number(filters.maxContract))
+      filterListings(listings)
   );
 
   // After a reservation is submitted, re-fetch the listings to update remaining_volume.
@@ -332,7 +344,7 @@ const ViewListings = () => {
                             </div>
                           )}
                           <p style={styles.listingInfo}>
-                            <strong>${listing.cost}</strong> per month · {listing.remaining_volume ?? listing.cubic_feet} sq ft remaining / {listing.cubic_feet} sq ft total · Available: {formatDate(listing.start_date)} - {formatDate(listing.end_date)}
+                            <strong>${listing.cost}</strong> per month · {listing.remaining_volume ?? listing.sq_ft} sq ft remaining / {listing.sq_ft} sq ft total · Available: {formatDate(listing.start_date)} - {formatDate(listing.end_date)}
                           </p>
                           <div style={styles.descriptionBox}>
                             <p style={styles.description}>{listing.description || 'No description available'}</p>
@@ -361,7 +373,7 @@ const ViewListings = () => {
                               open={reservationModalOpen}
                               onClose={() => setReservationModalOpen(false)}
                               onSubmit={handleReservationSubmit}
-                              maxVolume={reservationListing ? reservationListing.cubic_feet : 0}
+                              maxVolume={reservationListing ? reservationListing.sq_ft : 0}
                               loading={reservationLoading}
                               error={reservationError}
                             />

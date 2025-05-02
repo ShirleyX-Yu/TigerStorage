@@ -117,7 +117,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
     hall_name: '',
     address: '',
     cost: '',
-    cubicFeet: '',
+    sq_ft: '',
     description: '',
     latitude: '',
     longitude: '',
@@ -164,7 +164,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           hall_name: data.hall_name || '',
           address: data.address || '',
           cost: data.cost || '',
-          cubicFeet: data.cubic_feet || data.cubicFeet || '',
+          sq_ft: data.sq_ft || '',
           description: data.description || '',
           latitude: data.latitude || '',
           longitude: data.longitude || '',
@@ -311,8 +311,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       setError('Cost must be between $0 and $10,000.');
       return;
     }
-    if (Number(formData.cubicFeet) <= 0 || Number(formData.cubicFeet) > 10000) {
-      setError('Cubic feet must be between 1 and 10,000.');
+    if (Number(formData.sq_ft) <= 0 || Number(formData.sq_ft) > 10000) {
+      setError('Square feet must be between 1 and 10,000.');
       return;
     }
     if (!formData.start_date || !formData.end_date) {
@@ -434,12 +434,12 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
               />
             </div>
             <div>
-              <label style={styles.label}>Cubic Feet <span style={{color: '#b00020'}}>*</span></label>
+              <label style={styles.label}>Square Feet <span style={{color: '#b00020'}}>*</span></label>
               <input
                 style={styles.input}
                 type="number"
-                name="cubicFeet"
-                value={formData.cubicFeet}
+                name="sq_ft"
+                value={formData.sq_ft}
                 onChange={handleInputChange}
                 required
                 min={1}

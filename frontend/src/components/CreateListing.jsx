@@ -63,7 +63,6 @@ const styles = {
     borderRadius: '4px',
     fontSize: '1rem',
     minHeight: '100px',
-    fontFamily: 'inherit',
   },
   error: {
     backgroundColor: '#ffebee',
@@ -149,7 +148,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     hall_name: '',
     address: '',
     cost: '',
-    cubicFeet: '',
+    sq_ft: '',
     description: '',
     latitude: '',
     longitude: '',
@@ -290,7 +289,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       setError('Cost must be between $0 and $10,000.');
       return;
     }
-    if (Number(formData.cubicFeet) <= 0 || Number(formData.cubicFeet) > 10000) {
+    if (Number(formData.sq_ft) <= 0 || Number(formData.sq_ft) > 10000) {
       setError('Square feet must be between 1 and 10,000.');
       return;
     }
@@ -302,7 +301,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       setError('End date must be after start date.');
       return;
     }
-    if (!formData.location || !formData.cost || !formData.cubicFeet) {
+    if (!formData.location || !formData.cost || !formData.sq_ft) {
       setError('Please fill in all required fields');
       return;
     }
@@ -404,8 +403,8 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
               <input
                 style={styles.input}
                 type="number"
-                name="cubicFeet"
-                value={formData.cubicFeet}
+                name="sq_ft"
+                value={formData.sq_ft}
                 onChange={handleInputChange}
                 required
                 min={1}

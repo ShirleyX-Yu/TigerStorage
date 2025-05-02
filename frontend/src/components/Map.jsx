@@ -186,7 +186,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
             <div>
               <h3>${listing.location || 'Unknown Location'}</h3>
               <p>Price: $${listing.cost ?? 0}/month</p>
-              <p>Size: ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • ${listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total</p>
+              <p>Size: ${listing.remaining_volume ?? listing.sq_ft ?? 0} sq ft remaining • ${listing.sq_ft ?? 0} sq ft total</p>
               <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
               <button 
                 style="background-color: ${listing.isInterested ? '#ffd700' : '#f57c00'}; color: ${listing.isInterested ? '#000' : '#fff'}; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
@@ -222,7 +222,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
                 <ul style="padding-left: 18px;">
                   ${group.map(listing => `
                     <li style='margin-bottom: 2px;'>
-                      <b>$${listing.cost ?? 0}/mo</b>, ${listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • ${listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total
+                      <b>$${listing.cost ?? 0}/mo</b>, ${listing.remaining_volume ?? listing.sq_ft ?? 0} sq ft remaining • ${listing.sq_ft ?? 0} sq ft total
                       <a href='/listing/${listing.id || listing.listing_id}' style='color:${listing.isInterested ? '#ffd700' : '#FF8F00'};margin-left:5px;'>View</a>
                     </li>
                   `).join('')}
@@ -450,9 +450,8 @@ const Map = () => {
     const costMatches = (filters.minCost === 0 && filters.maxCost === 0) 
       ? listingCost === 0 
       : listingCost >= filters.minCost && listingCost <= filters.maxCost;
-    // Prioritize cubic_ft which is the actual database column
-    const listingSize = listing.cubic_ft !== undefined ? Number(listing.cubic_ft) : 
-                        (listing.cubic_feet !== undefined ? Number(listing.cubic_feet) : 0);
+    // Prioritize sq_ft which is the actual database column
+    const listingSize = listing.sq_ft !== undefined ? Number(listing.sq_ft) : 0;
     const sizeMatches = (filters.minSize === 0 && filters.maxSize === 0)
       ? listingSize === 0
       : listingSize >= filters.minSize && listingSize <= filters.maxSize;
@@ -562,7 +561,7 @@ const Map = () => {
         }
         setShowReservationForm(true);
         setReservationMode('full');
-        setReservationVolume(listing.cubic_ft ?? listing.cubic_feet ?? 0);
+        setReservationVolume(listing.sq_ft ?? 0);
         setReservationLocalError('');
         setInterestLoading(false);
         return;
@@ -689,7 +688,7 @@ const Map = () => {
                       secondary={
                         <>
                           <Typography component="span" variant="body2" color="textPrimary">
-                            ${listing.cost !== undefined ? listing.cost : 0}/month • {listing.remaining_volume ?? listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft remaining • {listing.cubic_ft ?? listing.cubic_feet ?? 0} sq ft total
+                            ${listing.cost !== undefined ? listing.cost : 0}/month • {listing.remaining_volume ?? listing.sq_ft ?? 0} sq ft remaining • {listing.sq_ft ?? 0} sq ft total
                           </Typography>
                           <br />
                           <Typography component="span" variant="body2" color="textSecondary">
@@ -823,7 +822,7 @@ const Map = () => {
                     </Typography>
                   )}
                   <Typography variant="body1" style={{ marginBottom: 4 }}>
-                    <b>${selectedListing.cost ?? 0}/month</b> • {selectedListing.remaining_volume ?? selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} sq ft remaining • {selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} sq ft total
+                    <b>${selectedListing.cost ?? 0}/month</b> • {selectedListing.remaining_volume ?? selectedListing.sq_ft ?? 0} sq ft remaining • {selectedListing.sq_ft ?? 0} sq ft total
                   </Typography>
                   <Typography variant="body2" color="textSecondary" style={{ marginBottom: 8 }}>
                     {selectedListing.distance ? selectedListing.distance.toFixed(1) : 'N/A'} miles from Princeton University
@@ -838,10 +837,10 @@ const Map = () => {
               {showReservationForm && selectedListing && (
                 <form onSubmit={async (e) => {
                   e.preventDefault();
-                  let vol = reservationMode === 'full' ? (selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0) : Number(reservationVolume);
+                  let vol = reservationMode === 'full' ? (selectedListing.sq_ft ?? 0) : Number(reservationVolume);
                   if (reservationMode === 'partial') {
-                    if (!reservationVolume || isNaN(reservationVolume) || vol <= 0 || vol > (selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0)) {
-                      setReservationLocalError(`Enter a valid volume (0 < volume ≤ ${(selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0)})`);
+                    if (!reservationVolume || isNaN(reservationVolume) || vol <= 0 || vol > (selectedListing.sq_ft ?? 0)) {
+                      setReservationLocalError(`Enter a valid volume (0 < volume ≤ ${(selectedListing.sq_ft ?? 0)})`);
                       return;
                     }
                   }
@@ -894,7 +893,7 @@ const Map = () => {
                     onChange={(e, newMode) => {
                       if (newMode) {
                         setReservationMode(newMode);
-                        if (newMode === 'full') setReservationVolume(selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0);
+                        if (newMode === 'full') setReservationVolume(selectedListing.sq_ft ?? 0);
                         else setReservationVolume('');
                         setReservationLocalError('');
                       }
@@ -902,7 +901,7 @@ const Map = () => {
                     style={{ marginBottom: 16 }}
                     fullWidth
                   >
-                    <ToggleButton value="full" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Full ({selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} sq ft)</ToggleButton>
+                    <ToggleButton value="full" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Full ({selectedListing.sq_ft ?? 0} sq ft)</ToggleButton>
                     <ToggleButton value="partial" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Partial</ToggleButton>
                   </ToggleButtonGroup>
                   <TextField
@@ -910,14 +909,14 @@ const Map = () => {
                     type="number"
                     fullWidth
                     variant="outlined"
-                    value={reservationMode === 'full' ? (selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0) : reservationVolume}
+                    value={reservationMode === 'full' ? (selectedListing.sq_ft ?? 0) : reservationVolume}
                     onChange={e => setReservationVolume(e.target.value)}
                     disabled={reservationMode === 'full' || reservationLoading}
-                    inputProps={{ min: 0.1, max: (selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0), step: 0.1 }}
+                    inputProps={{ min: 0.1, max: (selectedListing.sq_ft ?? 0), step: 0.1 }}
                     style={{ marginBottom: 12, background: 'white', borderRadius: 6 }}
                   />
                   <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>
-                    Max available: {selectedListing.cubic_ft ?? selectedListing.cubic_feet ?? 0} sq ft
+                    Max available: {selectedListing.sq_ft ?? 0} sq ft
                   </div>
                   {(reservationLocalError || reservationError) && <Alert severity="error" style={{ marginBottom: 8 }}>{reservationLocalError || reservationError}</Alert>}
                   <DialogActions style={{ padding: '16px 0 0 0', background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
@@ -1134,6 +1133,9 @@ const styles = {
     cursor: 'pointer',
     boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
     color: '#333'
+  },
+  listingInfo: {
+    marginBottom: 8
   }
 };
 

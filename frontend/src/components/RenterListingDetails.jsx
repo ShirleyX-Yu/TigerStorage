@@ -121,7 +121,7 @@ const RenterListingDetails = () => {
           id: data.id || id,
           location: data.location || 'Unknown Location',
           cost: data.cost || 0,
-          cubicFeet: data.cubic_feet || 0,
+          sq_ft: data.sq_ft || 0,
           description: data.description || 'No description available',
           isAvailable: data.is_available !== undefined ? data.is_available : true,
           startDate: data.start_date || '',
@@ -211,7 +211,7 @@ const RenterListingDetails = () => {
         id: data.id || id,
         location: data.location || 'Unknown Location',
         cost: data.cost || 0,
-        cubicFeet: data.cubic_feet || 0,
+        sq_ft: data.sq_ft || 0,
         description: data.description || 'No description available',
         isAvailable: data.is_available !== undefined ? data.is_available : true,
         startDate: data.start_date || '',
@@ -531,7 +531,7 @@ const RenterListingDetails = () => {
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Size:</span>
-                  <span style={styles.infoValue}>{listing.cubicFeet} sq ft</span>
+                  <span style={styles.infoValue}>{listing.sq_ft} sq ft</span>
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Start Date:</span>
@@ -636,7 +636,7 @@ const RenterListingDetails = () => {
                 open={reservationModalOpen}
                 onClose={() => setReservationModalOpen(false)}
                 onSubmit={handleReservationSubmit}
-                maxVolume={listing.cubicFeet}
+                maxVolume={listing.sq_ft}
                 loading={reservationLoading}
                 error={reservationError}
               />

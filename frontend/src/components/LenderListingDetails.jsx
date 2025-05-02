@@ -85,7 +85,7 @@ const LenderListingDetails = () => {
           id: data.id,
           location: data.location,
           cost: data.cost,
-          cubicFeet: data.cubic_feet,
+          sq_ft: data.sq_ft,
           description: data.description,
           contractLength: data.contract_length_months,
           images: Array.isArray(data.images) && data.images.length > 0
@@ -211,7 +211,7 @@ const LenderListingDetails = () => {
   };
   const handlePartialApprove = async () => {
     const req = partialModal.request;
-    const max = Math.min(req.requested_volume, listing.cubicFeet);
+    const max = Math.min(req.requested_volume, listing.sq_ft);
     const vol = Number(partialVolume);
     if (!vol || isNaN(vol) || vol <= 0 || vol > max) {
       setPartialError(`Enter a valid volume (0 < volume ≤ ${max})`);
@@ -279,7 +279,7 @@ const LenderListingDetails = () => {
               <h2 style={styles.location}>{listing.location}</h2>
               <div style={styles.specs}>
                 <div style={styles.specItem}><span style={styles.specLabel}>Cost:</span><span style={styles.specValue}>${listing.cost}/month</span></div>
-                <div style={styles.specItem}><span style={styles.specLabel}>Size:</span><span style={styles.specValue}>{listing.cubicFeet} sq ft</span></div>
+                <div style={styles.specItem}><span style={styles.specLabel}>Size:</span><span style={styles.specValue}>{listing.sq_ft} sq ft</span></div>
               </div>
               <div style={styles.descriptionSection}>
                 <h3>Description</h3>
@@ -371,7 +371,7 @@ const LenderListingDetails = () => {
             <div style={{ marginBottom: 12 }}>
               <b>Renter:</b> {partialModal.request?.renter_username}<br />
               <b>Requested Volume:</b> {partialModal.request?.requested_volume} sq ft<br />
-              <b>Max Allowed:</b> {partialModal.request ? Math.min(partialModal.request.requested_volume, listing.cubicFeet) : 0} sq ft
+              <b>Max Allowed:</b> {partialModal.request ? Math.min(partialModal.request.requested_volume, listing.sq_ft) : 0} sq ft
             </div>
             <TextField
               label="Approved Volume (sq ft)"
@@ -380,7 +380,7 @@ const LenderListingDetails = () => {
               variant="outlined"
               value={partialVolume}
               onChange={e => setPartialVolume(e.target.value)}
-              inputProps={{ min: 0.1, max: partialModal.request ? Math.min(partialModal.request.requested_volume, listing.cubicFeet) : 0, step: 0.1 }}
+              inputProps={{ min: 0.1, max: partialModal.request ? Math.min(partialModal.request.requested_volume, listing.sq_ft) : 0, step: 0.1 }}
               style={{ marginBottom: 12 }}
             />
             {partialError && <div style={{ color: 'red', marginBottom: 8 }}>{partialError}</div>}
