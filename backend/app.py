@@ -639,7 +639,6 @@ def get_listing_by_id(listing_id):
 @app.route('/api/my-listings', methods=['GET'])
 def get_my_listings():
     try:
-        print("Received request for /api/my-listings")
         # Check if user is authenticated
         authenticated = auth.is_authenticated()
         
@@ -682,33 +681,6 @@ def get_my_listings():
         conn = get_db_connection()
         if not conn:
             print("Database connection failed")
-            # In dev mode, return mock data if DB connection fails
-            is_dev = os.environ.get('FLASK_ENV') == 'development' or os.environ.get('DEBUG') == 'true'
-            if is_dev:
-                mock_listings = [
-                    {
-                        "id": 101,
-                        "location": "Butler College Storage",
-                        "cost": 65,
-                        "cubic_feet": 90,
-                        "description": "Secure storage space near Butler College.",
-                        "created_at": "2023-05-01T10:00:00",
-                        "latitude": 40.344,
-                        "longitude": -74.656
-                    },
-                    {
-                        "id": 102,
-                        "location": "Whitman College Basement",
-                        "cost": 55,
-                        "cubic_feet": 75,
-                        "description": "Climate-controlled storage in basement.",
-                        "created_at": "2023-05-05T14:30:00",
-                        "latitude": 40.343,
-                        "longitude": -74.657
-                    }
-                ]
-                print("Returning mock data for development")
-                return jsonify(mock_listings), 200
             return jsonify({"error": "Database connection failed"}), 500
             
         try:
