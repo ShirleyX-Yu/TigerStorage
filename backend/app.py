@@ -36,7 +36,6 @@ app = Flask(
 
 # Configure CORS to allow requests from Render domains
 # --- CORS CONFIGURATION ---
-# Configure CORS to allow requests from Render domains
 CORS(
     app,
     resources={
@@ -83,18 +82,11 @@ CORS(
 # --- SESSION COOKIE CONFIGURATION ---
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 app.config['SESSION_COOKIE_SECURE'] = True
-
-# Remove the add_cors_headers after_request handler since CORS is now handled by the CORS extension
-# ... existing code ...
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 # Load environment variables and set secret key
 dotenv.load_dotenv()
 app.secret_key = os.environ.get("APP_SECRET_KEY", "default-dev-key-replace-in-production")
-
-# Configure session cookie settings for proper cross-domain support
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # String 'None' not Python None
-app.config['SESSION_COOKIE_SECURE'] = True     # Require HTTPS for SameSite=None
-app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 # Determine if this is production based on environment variables
 is_production = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('ENVIRONMENT') == 'production'
@@ -115,256 +107,6 @@ def allowed_file(filename):
 
 # Initialize CAS authentication
 auth.init_auth(app)
-
-# Initialize database tables
-def init_db():
-    """Initialize database tables if they don't exist"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            print("Failed to connect to database for initialization")
-            return
-            
-        try:
-            with conn.cursor() as cur:
-                # Check if storage_listings table exists
-                cur.execute("""
-                    SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_name = 'storage_listings'
-                    );
-                """)
-                table_exists = cur.fetchone()[0]
-                
-                if not table_exists:
-                    print("Creating storage_listings table")
-                    cur.execute("""
-                        CREATE TABLE storage_listings (
-                            listing_id SERIAL PRIMARY KEY,
-                            location VARCHAR(255) NOT NULL,
-                            address VARCHAR(255),
-                            cost NUMERIC,
-                            sq_ft INTEGER,
-                            description TEXT,
-                            latitude FLOAT,
-                            longitude FLOAT,
-                            start_date DATE,
-                            end_date DATE,
-                            image_url VARCHAR(255),
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            owner_id VARCHAR(255)
-                        );
-                    """)
-                    conn.commit()
-                    print("storage_listings table created successfully")
-                else:
-                    print("storage_listings table already exists")
-                    
-                    # Check if contract_start_date column exists and add it if it doesn't
-                    try:
-                        cur.execute("""
-                            SELECT column_name 
-                            FROM information_schema.columns 
-                            WHERE table_name = 'storage_listings' AND column_name = 'contract_start_date';
-                        """)
-                        start_date_exists = cur.fetchone() is not None
-                        
-                        if not start_date_exists:
-                            print("Adding contract_start_date column to storage_listings table")
-                            cur.execute("ALTER TABLE storage_listings ADD COLUMN contract_start_date DATE;")
-                            conn.commit()
-                            print("contract_start_date column added successfully")
-                        else:
-                            print("contract_start_date column already exists")
-                    except Exception as column_err:
-                        print(f"Error checking or adding contract_start_date column: {column_err}")
-                        conn.rollback()
-
-                    # Check if contract_end_date column exists and add it if it doesn't
-                    try:
-                        cur.execute("""
-                            SELECT column_name 
-                            FROM information_schema.columns 
-                            WHERE table_name = 'storage_listings' AND column_name = 'contract_end_date';
-                        """)
-                        end_date_exists = cur.fetchone() is not None
-                        
-                        if not end_date_exists:
-                            print("Adding contract_end_date column to storage_listings table")
-                            cur.execute("ALTER TABLE storage_listings ADD COLUMN contract_end_date DATE;")
-                            conn.commit()
-                            print("contract_end_date column added successfully")
-                        else:
-                            print("contract_end_date column already exists")
-                    except Exception as column_err:
-                        print(f"Error checking or adding contract_end_date column: {column_err}")
-                        conn.rollback()
-
-                    # Check if address column exists and add it if it doesn't
-                    try:
-                        cur.execute("""
-                            SELECT column_name 
-                            FROM information_schema.columns 
-                            WHERE table_name = 'storage_listings' AND column_name = 'address';
-                        """)
-                        address_column_exists = cur.fetchone() is not None
-                        
-                        if not address_column_exists:
-                            print("Adding address column to storage_listings table")
-                            cur.execute("ALTER TABLE storage_listings ADD COLUMN address VARCHAR(255);")
-                            conn.commit()
-                            print("Address column added successfully")
-                        else:
-                            print("Address column already exists")
-                            
-                        # Check if we need to convert contract_length_months to start_date and end_date
-                        cur.execute("""
-                            SELECT column_name 
-                            FROM information_schema.columns 
-                            WHERE table_name = 'storage_listings' 
-                            AND column_name = 'contract_length_months';
-                        """)
-                        contract_length_exists = cur.fetchone() is not None
-                        
-                        if contract_length_exists:
-                            print("Converting contract_length_months to start_date and end_date")
-                            # Add new columns
-                            cur.execute("""
-                                ALTER TABLE storage_listings 
-                                ADD COLUMN start_date DATE,
-                                ADD COLUMN end_date DATE;
-                            """)
-                            # Update existing rows to have default dates
-                            cur.execute("""
-                                UPDATE storage_listings 
-                                SET start_date = CURRENT_DATE,
-                                    end_date = CURRENT_DATE + (contract_length_months || ' months')::interval
-                                WHERE start_date IS NULL;
-                            """)
-                            # Drop the old column
-                            cur.execute("ALTER TABLE storage_listings DROP COLUMN contract_length_months;")
-                            conn.commit()
-                            print("Successfully converted contract_length_months to start_date and end_date")
-                            
-                        # Check and add latitude/longitude columns if they don't exist
-                        cur.execute("""
-                            SELECT column_name 
-                            FROM information_schema.columns 
-                            WHERE table_name = 'storage_listings' 
-                            AND column_name IN ('latitude', 'longitude');
-                        """)
-                        lat_long_columns = [col[0] for col in cur.fetchall()]
-                        
-                        print(f"Existing lat/long columns: {lat_long_columns}")
-                        
-                        if 'latitude' not in lat_long_columns:
-                            print("Adding latitude column to storage_listings")
-                            cur.execute("ALTER TABLE storage_listings ADD COLUMN latitude FLOAT;")
-                            conn.commit()
-                            print("latitude column added successfully")
-                        
-                        if 'longitude' not in lat_long_columns:
-                            print("Adding longitude column to storage_listings")
-                            cur.execute("ALTER TABLE storage_listings ADD COLUMN longitude FLOAT;")
-                            conn.commit()
-                            print("longitude column added successfully")
-                    except Exception as e:
-                        print(f"Error adding latitude/longitude columns: {e}")
-                        conn.rollback()
-
-                # Check if interested_listings table exists
-                cur.execute("""
-                    SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_name = 'interested_listings'
-                    );
-                """)
-                interested_table_exists = cur.fetchone()[0]
-                
-                if not interested_table_exists:
-                    print("Creating interested_listings table")
-                    cur.execute("""
-                        CREATE TABLE interested_listings (
-                            interest_id SERIAL PRIMARY KEY,
-                            listing_id INTEGER REFERENCES storage_listings(listing_id) ON DELETE CASCADE,
-                            lender_username VARCHAR(255) NOT NULL,
-                            renter_username VARCHAR(255) NOT NULL,
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            status VARCHAR(50) DEFAULT 'pending',
-                            UNIQUE(listing_id, renter_username)
-                        );
-                    """)
-                    conn.commit()
-                    print("interested_listings table created successfully")
-                else:
-                    print("interested_listings table already exists")
-                    
-                    # Check if the interested_listings table has all required columns
-                    cur.execute("""
-                        SELECT column_name 
-                        FROM information_schema.columns 
-                        WHERE table_name = 'interested_listings';
-                    """)
-                    interested_columns = [col[0] for col in cur.fetchall()]
-                    print(f"Interested listings columns: {interested_columns}")
-                    
-                    # Check for each required column
-                    required_columns = ['interest_id', 'listing_id', 'lender_username', 'renter_username', 'created_at', 'status']
-                    missing_columns = [col for col in required_columns if col not in interested_columns]
-                    
-                    if missing_columns:
-                        print(f"Missing columns in interested_listings table: {missing_columns}")
-                        # Add missing columns
-                        for col in missing_columns:
-                            if col == 'interest_id':
-                                try:
-                                    cur.execute("ALTER TABLE interested_listings ADD COLUMN interest_id SERIAL PRIMARY KEY;")
-                                    print("Added interest_id column")
-                                except Exception as e:
-                                    print(f"Error adding interest_id column: {e}")
-                                    conn.rollback()
-                            elif col == 'listing_id':
-                                try:
-                                    cur.execute("ALTER TABLE interested_listings ADD COLUMN listing_id INTEGER REFERENCES storage_listings(listing_id) ON DELETE CASCADE;")
-                                    print("Added listing_id column")
-                                except Exception as e:
-                                    print(f"Error adding listing_id column: {e}")
-                                    conn.rollback()
-                            elif col == 'lender_username':
-                                try:
-                                    cur.execute("ALTER TABLE interested_listings ADD COLUMN lender_username VARCHAR(255) NOT NULL;")
-                                    print("Added lender_username column")
-                                except Exception as e:
-                                    print(f"Error adding lender_username column: {e}")
-                                    conn.rollback()
-                            elif col == 'renter_username':
-                                try:
-                                    cur.execute("ALTER TABLE interested_listings ADD COLUMN renter_username VARCHAR(255) NOT NULL;")
-                                    print("Added renter_username column")
-                                except Exception as e:
-                                    print(f"Error adding renter_username column: {e}")
-                                    conn.rollback()
-                            elif col == 'created_at':
-                                try:
-                                    cur.execute("ALTER TABLE interested_listings ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
-                                    print("Added created_at column")
-                                except Exception as e:
-                                    print(f"Error adding created_at column: {e}")
-                                    conn.rollback()
-                            elif col == 'status':
-                                try:
-                                    cur.execute("ALTER TABLE interested_listings ADD COLUMN status VARCHAR(50) DEFAULT 'pending';")
-                                    print("Added status column")
-                                except Exception as e:
-                                    print(f"Error adding status column: {e}")
-                                    conn.rollback()
-                        conn.commit()
-        finally:
-            conn.close()
-    except Exception as e:
-        print(f"Error initializing database: {e}")
-        import traceback
-        traceback.print_exc()
 
 # Add custom URL rule to serve React files from the build directory
 app.add_url_rule(
@@ -1937,8 +1679,6 @@ def get_listings_by_username(username):
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-# Initialize database on startup
-init_db()
 
 # --- RESERVATION REQUEST ENDPOINTS ---
 
