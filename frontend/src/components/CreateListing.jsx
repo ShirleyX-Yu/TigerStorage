@@ -63,6 +63,7 @@ const styles = {
     borderRadius: '4px',
     fontSize: '1rem',
     minHeight: '100px',
+    fontFamily: 'inherit',
   },
   error: {
     backgroundColor: '#ffebee',
