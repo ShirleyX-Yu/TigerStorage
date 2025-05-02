@@ -164,46 +164,6 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const [locationType, setLocationType] = useState('on-campus');
   const [showAddressConfirm, setShowAddressConfirm] = useState(false);
   const [pendingAddress, setPendingAddress] = useState(null);
-  const [addressSuggestions, setAddressSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
-  const searchAddress = async (query) => {
-    if (!query.trim()) {
-      setAddressSuggestions([]);
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=us&limit=5`
-      );
-      if (!response.ok) throw new Error('Failed to fetch suggestions');
-      const data = await response.json();
-      setAddressSuggestions(data);
-      setShowSuggestions(true);
-    } catch (err) {
-      console.error('Error fetching address suggestions:', err);
-      setAddressSuggestions([]);
-    }
-  };
-
-  const handleAddressInputChange = (e) => {
-    const value = e.target.value;
-    setTempAddress(value);
-    searchAddress(value);
-  };
-
-  const handleSuggestionClick = (suggestion) => {
-    setTempAddress(suggestion.display_name);
-    setAddressSuggestions([]);
-    setShowSuggestions(false);
-    setPendingAddress({
-      address: suggestion.display_name,
-      latitude: suggestion.lat,
-      longitude: suggestion.lon
-    });
-    setShowAddressConfirm(true);
-  };
 
   // Scroll to error when it appears
   useEffect(() => {
@@ -219,6 +179,11 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleAddressChange = (e) => {
+    setError('');
+    setTempAddress(e.target.value);
   };
 
   const handleLocationTypeChange = (e) => {
@@ -390,81 +355,34 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                 value={locationType}
                 onChange={handleLocationTypeChange}
                 required
+                disabled
               >
                 <option value="on-campus">On Campus</option>
-                <option value="off-campus">Off Campus</option>
               </select>
             </div>
             <div>
               <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  {locationType === 'on-campus' ? 'Residential Hall' : 'Address'} <span style={{color: '#b00020'}}>*</span>
-                </label>
-                {locationType === 'on-campus' ? (
-                  <select
-                    style={styles.input}
-                    value={tempAddress}
-                    onChange={e => {
-                      setTempAddress(e.target.value);
-                      setFormData(prev => ({
-                        ...prev,
-                        hall_name: e.target.value
-                      }));
-                      if (e.target.value) {
-                        geocodeAddress(e.target.value);
-                      }
-                    }}
-                    required
-                  >
-                    <option value="">Select a hall...</option>
-                    {PRINCETON_HALLS.map(hall => (
-                      <option key={hall} value={hall}>{hall}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type="text"
-                      value={tempAddress}
-                      onChange={handleAddressInputChange}
-                      placeholder="Enter your address"
-                      style={styles.input}
-                      required
-                    />
-                    {showSuggestions && addressSuggestions.length > 0 && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '100%',
-                        left: 0,
-                        right: 0,
-                        backgroundColor: 'white',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                        zIndex: 1000,
-                        maxHeight: '200px',
-                        overflowY: 'auto'
-                      }}>
-                        {addressSuggestions.map((suggestion, index) => (
-                          <div
-                            key={index}
-                            onClick={() => handleSuggestionClick(suggestion)}
-                            style={{
-                              padding: '10px',
-                              cursor: 'pointer',
-                              borderBottom: index < addressSuggestions.length - 1 ? '1px solid #eee' : 'none',
-                              ':hover': {
-                                backgroundColor: '#f5f5f5'
-                              }
-                            }}
-                          >
-                            {suggestion.display_name}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
+                <select
+                  style={styles.input}
+                  value={tempAddress}
+                  onChange={e => {
+                    setTempAddress(e.target.value);
+                    setFormData(prev => ({
+                      ...prev,
+                      hall_name: e.target.value
+                    }));
+                    if (e.target.value) {
+                      geocodeAddress(e.target.value);
+                    }
+                  }}
+                  required
+                >
+                  <option value="">Select a hall...</option>
+                  {PRINCETON_HALLS.map(hall => (
+                    <option key={hall} value={hall}>{hall}</option>
+                  ))}
+                </select>
                 {geocodingStatus && <div style={styles.geocodingStatus || styles.status}>{geocodingStatus}</div>}
               </div>
             </div>
