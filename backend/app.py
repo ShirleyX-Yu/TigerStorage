@@ -253,9 +253,9 @@ def create_listing():
             if field not in data:
                 return jsonify({"error": f"Missing required field: {field}"}), 400
                 
-        # Special check for cubic feet (handle both cubicFeet and cubic_feet)
-        if 'cubicFeet' not in data and 'cubic_feet' not in data:
-            return jsonify({"error": "Missing required field: cubic feet"}), 400
+        # Special check for square feet (handle both squareFeet and sq_ft)
+        if 'squareFeet' not in data and 'sq_ft' not in data:
+            return jsonify({"error": "Missing required field: square feet"}), 400
 
         # Get a fresh connection
         conn = get_db_connection()
@@ -268,16 +268,16 @@ def create_listing():
             # Validation: cost must not be negative
             if cost < 0:
                 return jsonify({"error": "Storage cost cannot be negative."}), 400
-            # Handle both cubicFeet and cubic_feet field names
-            if 'cubicFeet' in data:
-                total_sq_ft = int(data['cubicFeet']) if data['cubicFeet'] else 0
-            elif 'cubic_feet' in data:
-                total_sq_ft = int(data['cubic_feet']) if data['cubic_feet'] else 0
+            # Handle both squareFeet and sq_ft field names
+            if 'squareFeet' in data:
+                total_sq_ft = int(data['squareFeet']) if data['squareFeet'] else 0
+            elif 'sq_ft' in data:
+                total_sq_ft = int(data['sq_ft']) if data['sq_ft'] else 0
             else:
                 total_sq_ft = 0
-            # Validation: cubic feet must be greater than zero
+            # Validation: square feet must be greater than zero
             if total_sq_ft <= 0:
-                return jsonify({"error": "Storage space (cubic feet) must be greater than zero."}), 400
+                return jsonify({"error": "Storage space (square feet) must be greater than zero."}), 400
                 
             latitude = float(data['latitude'])
             longitude = float(data['longitude'])
@@ -303,7 +303,7 @@ def create_listing():
                 # Prepare column values
                 column_values = {
                     'location': data['location'],
-                    'cubic_ft': total_sq_ft,
+                    'sq_ft': total_sq_ft,
                     'cost': cost,
                     'start_date': start_date,
                     'end_date': end_date,
@@ -311,7 +311,7 @@ def create_listing():
                     'longitude': longitude,
                     'description': data['description'],
                     'image_url': image_url,
-                    'remaining_volume': total_sq_ft  # Set remaining_volume to cubic_ft on creation
+                    'remaining_volume': total_sq_ft  # Set remaining_volume to sq_ft on creation
                 }
                 
                 # Add address if provided
@@ -395,7 +395,7 @@ def get_listings():
                             location VARCHAR(255) NOT NULL,
                             address VARCHAR(255),
                             cost NUMERIC,
-                            cubic_ft INTEGER,
+                            sq_ft INTEGER,
                             description TEXT,
                             latitude FLOAT,
                             longitude FLOAT,
@@ -422,7 +422,7 @@ def get_listings():
                 
                 # Build the query dynamically based on available columns
                 select_parts = []
-                essential_columns = ['listing_id', 'location', 'cost', 'cubic_ft', 'description', 
+                essential_columns = ['listing_id', 'location', 'cost', 'sq_ft', 'description', 
                                      'created_at', 'owner_id', 'remaining_volume', 'is_available']
                 
                 # Add all essential columns that exist
@@ -480,7 +480,7 @@ def get_listings():
                             "location": listing_dict.get('location', ''),
                             "address": listing_dict.get('address', ''),
                             "cost": float(listing_dict.get('cost', 0)) if listing_dict.get('cost') is not None else 0,
-                            "cubic_feet": listing_dict.get('cubic_ft', 0),
+                            "sq_ft": listing_dict.get('sq_ft', 0),
                             "description": listing_dict.get('description', ''),
                             "latitude": float(listing_dict.get('latitude', 0)) if listing_dict.get('latitude') is not None else None,
                             "longitude": float(listing_dict.get('longitude', 0)) if listing_dict.get('longitude') is not None else None,
@@ -610,7 +610,7 @@ def get_listing_by_id(listing_id):
                     "location": listing_dict.get('location', ''),
                     "address": listing_dict.get('address', ''),
                     "cost": listing_dict.get('cost', 0),
-                    "cubic_feet": listing_dict.get('cubic_ft', 0),
+                    "sq_ft": listing_dict.get('sq_ft', 0),
                     "description": listing_dict.get('description') or "Storage space available at " + listing_dict.get('location', ''),
                     "is_available": listing_dict.get('is_available', True),
                     "created_at": listing_dict.get('created_at').isoformat() if hasattr(listing_dict.get('created_at'), 'isoformat') else (listing_dict.get('created_at') if listing_dict.get('created_at') else None),
@@ -704,7 +704,7 @@ def get_my_listings():
                             location VARCHAR(255) NOT NULL,
                             address VARCHAR(255),
                             cost NUMERIC,
-                            cubic_ft INTEGER,
+                            sq_ft INTEGER,
                             description TEXT,
                             latitude FLOAT,
                             longitude FLOAT,
@@ -742,7 +742,7 @@ def get_my_listings():
                 
                 # Build the query dynamically based on available columns
                 select_parts = []
-                essential_columns = ['listing_id', 'location', 'cost', 'cubic_ft', 'description', 
+                essential_columns = ['listing_id', 'location', 'cost', 'sq_ft', 'description', 
                                     'created_at', 'owner_id', 'remaining_volume']
                 
                 # Add all essential columns that exist
@@ -784,7 +784,7 @@ def get_my_listings():
                                         "id": 101,
                                         "location": "Butler College Storage",
                                         "cost": 65,
-                                        "cubic_feet": 90,
+                                        "sq_ft": 90,
                                         "description": "Secure storage space near Butler College.",
                                         "created_at": "2023-05-01T10:00:00",
                                         "latitude": 40.344,
@@ -839,7 +839,7 @@ def get_my_listings():
                                 "location": listing_dict.get('location', ''),
                                 "address": listing_dict.get('address', ''),
                                 "cost": float(listing_dict.get('cost', 0)) if listing_dict.get('cost') is not None else 0,
-                                "cubic_feet": listing_dict.get('cubic_ft', 0),
+                                "sq_ft": listing_dict.get('sq_ft', 0),
                                 "description": listing_dict.get('description', ''),
                                 "latitude": float(listing_dict.get('latitude', 0)) if listing_dict.get('latitude') is not None else None,
                                 "longitude": float(listing_dict.get('longitude', 0)) if listing_dict.get('longitude') is not None else None, 
@@ -913,7 +913,7 @@ def update_listing(listing_id):
         # Get the updated data
         data = request.get_json()
 
-        # Validation: Prevent negative cost or cubic feet
+        # Validation: Prevent negative cost or square feet
         if 'cost' in data:
             try:
                 cost_val = float(data['cost'])
@@ -921,20 +921,20 @@ def update_listing(listing_id):
                     return jsonify({"error": "Storage cost cannot be negative."}), 400
             except Exception:
                 return jsonify({"error": "Invalid value for cost."}), 400
-        if 'cubicFeet' in data:
+        if 'squareFeet' in data:
             try:
-                cubic_val = int(data['cubicFeet'])
-                if cubic_val <= 0:
-                    return jsonify({"error": "Storage space (cubic feet) must be greater than zero."}), 400
+                sq_ft_val = int(data['squareFeet'])
+                if sq_ft_val <= 0:
+                    return jsonify({"error": "Storage space (square feet) must be greater than zero."}), 400
             except Exception:
-                return jsonify({"error": "Invalid value for cubic feet."}), 400
-        if 'cubic_feet' in data:
+                return jsonify({"error": "Invalid value for square feet."}), 400
+        if 'sq_ft' in data:
             try:
-                cubic_val = int(data['cubic_feet'])
-                if cubic_val <= 0:
-                    return jsonify({"error": "Storage space (cubic feet) must be greater than zero."}), 400
+                sq_ft_val = int(data['sq_ft'])
+                if sq_ft_val <= 0:
+                    return jsonify({"error": "Storage space (square feet) must be greater than zero."}), 400
             except Exception:
-                return jsonify({"error": "Invalid value for cubic feet."}), 400
+                return jsonify({"error": "Invalid value for square feet."}), 400
 
         # Get a fresh connection
         conn = get_db_connection()
@@ -969,8 +969,8 @@ def update_listing(listing_id):
                     update_values['location'] = data['location']
                 if 'cost' in data:
                     update_values['cost'] = float(data['cost'])
-                if 'cubicFeet' in data:
-                    update_values['cubic_ft'] = int(data['cubicFeet'])
+                if 'squareFeet' in data:
+                    update_values['sq_ft'] = int(data['squareFeet'])
                 if 'description' in data:
                     update_values['description'] = data['description']
                 if 'latitude' in data:
@@ -1022,9 +1022,9 @@ def update_listing(listing_id):
                     )
                     conn.commit()
 
-                # If cubicFeet or cubic_feet was updated, recalculate remaining_volume
-                if 'cubicFeet' in data or 'cubic_feet' in data:
-                    new_cubic_ft = int(data.get('cubicFeet', data.get('cubic_feet')))
+                # If squareFeet or sq_ft was updated, recalculate remaining_volume
+                if 'squareFeet' in data or 'sq_ft' in data:
+                    new_sq_ft = int(data.get('squareFeet', data.get('sq_ft')))
                     # Calculate total reserved volume (pending + approved)
                     cur.execute("""
                         SELECT COALESCE(SUM(requested_volume), 0)
@@ -1032,7 +1032,7 @@ def update_listing(listing_id):
                         WHERE listing_id = %s AND status IN ('pending', 'approved_full', 'approved_partial')
                     """, (listing_id,))
                     reserved = cur.fetchone()[0] or 0
-                    new_remaining = max(new_cubic_ft - reserved, 0)
+                    new_remaining = max(new_sq_ft - reserved, 0)
                     cur.execute("""
                         UPDATE storage_listings SET remaining_volume = %s WHERE listing_id = %s
                     """, (new_remaining, listing_id))
@@ -1597,7 +1597,7 @@ def get_listings_by_username(username):
                 
                 # Get listings by owner_id
                 cur.execute("""
-                    SELECT listing_id, location, cost, cubic_ft, description, latitude, longitude,
+                    SELECT listing_id, location, cost, sq_ft, description, latitude, longitude,
                            start_date, end_date, image_url, created_at, owner_id
                     FROM storage_listings
                     WHERE LOWER(owner_id) = %s
@@ -1619,7 +1619,7 @@ def get_listings_by_username(username):
                             "title": listing[1],
                             "address": listing[2],
                             "cost": float(listing[3]) if listing[3] is not None else 0,
-                            "cubic_feet": listing[4] if listing[4] is not None else 0,
+                            "sq_ft": listing[4] if listing[4] is not None else 0,
                             "description": listing[5] if listing[5] is not None else "",
                             "latitude": float(listing[6]) if listing[6] is not None else None,
                             "longitude": float(listing[7]) if listing[7] is not None else None,
