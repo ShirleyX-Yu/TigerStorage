@@ -529,10 +529,6 @@ const RenterListingDetails = () => {
               )}
               
               <div style={styles.listingInfo}>
-                <div className={styles.infoRow}>
-                  <span style={styles.infoLabel}>Title:</span>
-                  <span style={styles.infoValue}>{listing.title || 'N/A'}</span>
-                </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Cost:</span>
                   <span style={styles.infoValue}>${listing.cost}/month</span>
