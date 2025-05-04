@@ -56,6 +56,7 @@ const styles = {
     border: '1px solid #ddd',
     borderRadius: '4px',
     fontSize: '1rem',
+    fontFamily: 'inherit'
   },
   textarea: {
     width: '100%',

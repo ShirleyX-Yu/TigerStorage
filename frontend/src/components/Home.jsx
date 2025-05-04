@@ -21,6 +21,7 @@ const Home = () => {
   const [errorMessage, setErrorMessage] = useState(null);
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
   const [aboutUsModalOpen, setAboutUsModalOpen] = useState(false);
+  const [howToModalOpen, setHowToModalOpen] = useState(false);
   
   // Check for dashboard redirect flag
   React.useEffect(() => {
@@ -128,13 +129,20 @@ const Home = () => {
           >
             About Us
           </button>
+          <button
+            className="home-privacy-button"
+            onClick={() => setHowToModalOpen(true)}
+            disabled={loading}
+          >
+            How to TigerStorage
+          </button>
           <button 
             className="home-privacy-button"
             onClick={() => setPrivacyModalOpen(true)}
-        disabled={loading}
-      >
+            disabled={loading}
+          >
             Privacy Policy
-      </button>
+          </button>
         </div>
       <div className="home-content">
         {!logoError ? (
@@ -485,6 +493,87 @@ const Home = () => {
         <DialogActions style={{ padding: '16px 24px', background: '#FDF3EA', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
           <Button 
             onClick={() => setAboutUsModalOpen(false)} 
+            style={{ 
+              background: '#F47C2E', 
+              color: '#FFF8F1', 
+              fontWeight: 600,
+              padding: '8px 24px',
+              '&:hover': {
+                background: '#F8B88B'
+              }
+            }}
+            variant="contained"
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* How to TigerStorage Modal */}
+      <Dialog 
+        open={howToModalOpen} 
+        onClose={() => setHowToModalOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ 
+          style: { 
+            borderRadius: 16, 
+            background: '#FDF3EA',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)'
+          } 
+        }}
+      >
+        <DialogTitle style={{ 
+          background: '#F47C2E', 
+          color: '#FFF8F1', 
+          fontWeight: 700, 
+          letterSpacing: 1, 
+          padding: '16px 24px',
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16
+        }}>
+          How to Use TigerStorage
+        </DialogTitle>
+        <DialogContent style={{ padding: '24px 32px', fontSize: '15px', lineHeight: '1.7' }}>
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <section style={{ marginBottom: '32px' }}>
+              <h2 style={{ color: '#4D2E1E', fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>For Renters</h2>
+              <ol style={{ color: '#6B5E54', fontSize: '16px', marginLeft: '1.2em', marginBottom: '20px' }}>
+                <li>Click <b>"I am a space renter"</b> on the home page.</li>
+                <li>Browse available storage spaces by list or map. Filter by hall, price, or size as needed.</li>
+                <li>Click a listing to view details, location, and express interest to the lender.</li>
+                <li>Email the lender to ask questions or arrange a rental. You can request to rent the full space or only part of it (partial approval).</li>
+                <li>If you only need part of a space, specify your requirements in your message. The lender can approve your request for the full or partial space.</li>
+                <li>Once the lender approves your request (fully or partially), you will receive a confirmation. Coordinate move-in and payment details directly with the lender.</li>
+                <li>After your rental period, coordinate move-out and confirm the space is vacated.</li>
+              </ol>
+              <div style={{ color: '#F47C2E', fontWeight: 500, marginBottom: '8px', fontSize: '15px' }}>
+                <b>Partial Approvals:</b> If a space is large enough for multiple renters, lenders can approve requests for only part of the space. You may see listings marked as "partially available" if only some of the space is left.
+              </div>
+            </section>
+            <section>
+              <h2 style={{ color: '#4D2E1E', fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>For Lenders</h2>
+              <ol style={{ color: '#6B5E54', fontSize: '16px', marginLeft: '1.2em', marginBottom: '20px' }}>
+                <li>Click <b>"I am a space lender"</b> on the home page.</li>
+                <li>Go to your dashboard and click <b>"Add Storage Space"</b>.</li>
+                <li>Fill out the listing form with details, location, and an image. Specify the total available space and any restrictions.</li>
+                <li>Submit your listing. It will appear for renters to browse.</li>
+                <li>When renters express interest, review their requests. You can approve requests for the full space or only part of it (partial approval). If you approve partially, the listing will update to show the remaining available space.</li>
+                <li>Respond to requests and emails from interested renters and coordinate rentals. Communicate clearly about move-in, payment, and any house rules.</li>
+                <li>After the rental period, confirm the renter has vacated the space and update your listing if more space becomes available.</li>
+              </ol>
+              <div style={{ color: '#F47C2E', fontWeight: 500, marginBottom: '8px', fontSize: '15px' }}>
+                <b>Partial Approvals:</b> You can approve only part of a renter's request if your space allows. The system will track remaining space and update the listing accordingly.
+              </div>
+            </section>
+            <div style={{ color: '#F47C2E', fontWeight: 500, marginTop: '16px', fontSize: '15px' }}>
+              Need help? Email us at <span style={{ color: '#4D2E1E' }}>cs-tigerstorage@princeton.edu</span>
+            </div>
+          </div>
+        </DialogContent>
+        <DialogActions style={{ padding: '16px 24px', background: '#FDF3EA', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
+          <Button 
+            onClick={() => setHowToModalOpen(false)} 
             style={{ 
               background: '#F47C2E', 
               color: '#FFF8F1', 
