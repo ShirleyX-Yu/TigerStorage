@@ -436,7 +436,15 @@ const EditListing = () => {
               value={formData.description}
               onChange={handleInputChange}
               placeholder="Describe the storage space"
-              style={{...styles.input, minHeight: '100px'}}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '1rem',
+                minHeight: '100px',
+                fontFamily: 'inherit'
+              }}
             />
           </div>
 
