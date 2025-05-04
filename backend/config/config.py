@@ -56,7 +56,21 @@ class Config:
 
         # Load environment variables
         import dotenv
-        dotenv.load_dotenv()
+        dotenv.load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env'))
+        
+        # Debug print environment variables
+        print("Environment variables loaded:")
+        print(f"CLOUDINARY_CLOUD_NAME: {os.getenv('CLOUDINARY_CLOUD_NAME')}")
+        print(f"CLOUDINARY_API_KEY: {os.getenv('CLOUDINARY_API_KEY')}")
+        print(f"CLOUDINARY_API_SECRET: {'***' if os.getenv('CLOUDINARY_API_SECRET') else 'None'}")
+
+        # Initialize Cloudinary
+        import cloudinary
+        cloudinary.config(
+            cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+            api_key=os.getenv('CLOUDINARY_API_KEY'),
+            api_secret=os.getenv('CLOUDINARY_API_SECRET')
+        )
 
         # Set secret key
         app.secret_key = os.environ.get("APP_SECRET_KEY", "default-dev-key-replace-in-production")
