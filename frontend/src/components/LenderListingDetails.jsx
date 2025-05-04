@@ -277,7 +277,6 @@ const LenderListingDetails = () => {
               />
             </div>
             <div style={styles.infoSection}>
-              <h2 style={styles.location}>{listing.title}</h2>
               <div style={styles.specs}>
                 <div style={styles.specItem}><span style={styles.specLabel}>Cost:</span><span style={styles.specValue}>${listing.cost}/month</span></div>
                 <div style={styles.specItem}><span style={styles.specLabel}>Size:</span><span style={styles.specValue}>{listing.sq_ft} sq ft</span></div>
