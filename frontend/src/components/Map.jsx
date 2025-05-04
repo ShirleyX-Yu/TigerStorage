@@ -470,7 +470,7 @@ const Map = () => {
 
   // Use filteredListings for sidebar, checking availability and matchesFilters
   const availableListings = filteredListings.filter(
-    listing => (listing.is_available === undefined || listing.is_available === true) && Number(listing.remaining_volume) > 0 && listing.matchesFilters
+    listing => (listing.is_available === undefined || listing.is_available === true) && Number(listing.remaining_space) > 0 && listing.matchesFilters
   );
 
   // No listings message component
