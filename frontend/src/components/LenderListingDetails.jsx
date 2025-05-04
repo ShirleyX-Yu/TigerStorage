@@ -314,6 +314,9 @@ const LenderListingDetails = () => {
                                 {actionError[req.request_id] && <div style={{ color: 'red', marginTop: 4 }}>{actionError[req.request_id]}</div>}
                               </>
                             )}
+                            {req.status !== 'pending' && (
+                              <span style={{ color: '#888', fontStyle: 'italic' }}>No action to be taken</span>
+                            )}
                           </td>
                         </tr>
                       ))}
