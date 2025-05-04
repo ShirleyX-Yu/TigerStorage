@@ -58,8 +58,8 @@ def allowed_file(filename):
 Config(app)
 
 # Register blueprints
-app.register_blueprint(listings_bp)
-app.register_blueprint(reservations_bp)
+# app.register_blueprint(listings_bp)
+# app.register_blueprint(reservations_bp)
 
 # Add custom URL rule to serve React files from the build directory
 app.add_url_rule(
