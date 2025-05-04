@@ -2,16 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 
 const PRINCETON_HALLS = [
-  '1901 Hall', '1903 Hall', '1915 Hall', '1937 Hall', '1939 Hall', '1967 Hall', '1976 Hall', 'Addy Hall',
-  'Baker Hall', 'Blair Hall', 'Bloomberg Hall', 'Bogle Hall', 'Brown Hall', 'Buyers Hall', 'Campbell Hall',
-  'Class of 1981 Hall', 'Cuyler Hall', 'Dod Hall', 'Edwards Hall', 'Feinberg Hall', 'Feliciano Hall',
-  'Fisher Hall', 'Forbes College', 'Foulke Hall', 'Gauss Hall', 'Graduate College (Old Graduate College)',
-  'Grousbeck Hall', 'Hamilton Hall', 'Hariri Hall', 'Hargadon Hall', 'Henry Hall', 'Holder Hall',
-  'Joline Hall', 'Kwanza Jones Hall', 'Laughlin Hall', 'Lauritzen Hall', 'Lawrence Apartments',
-  'Lakeside Apartments', 'Little Hall', 'Lockhart Hall', 'Madison Hall', 'Mannion Hall', 'Meadows Apartments',
-  'Murley-Pivirotto Family Tower', 'New Graduate College', 'Patton Hall', 'Pivirotto Hall', 'Pyne Hall',
-  'Scully Hall', 'Spelman Hall', 'Walker Hall', 'Wendell Hall', 'Wilf Hall', 'Witherspoon Hall', 'Wright Hall',
-  'Yoseloff Hall'
+  '1901 Hall', '1903 Hall', 'Addy Hall',
+  'Blair Hall', 'Bloomberg Hall', 'Brown Hall', 'Buyers Hall', 'Campbell Hall',
+  'Cuyler Hall', 'Dod Hall', 'Edwards Hall', 'Feinberg Hall', 'Feliciano Hall',
+  'Fisher Hall', 'Forbes College', 'Foulke Hall', 'Graduate College (Old Graduate College)',
+  'Hamilton Hall', 'Henry Hall', 'Holder Hall',
+  'Joline Hall', 'Laughlin Hall', 'Lawrence Apartments',
+  'Little Hall', 'Lockhart Hall', 'Madison Hall', 'New Graduate College', 'Patton Hall', 'Pyne Hall',
+  'Scully Hall', 'Walker Hall', 'Witherspoon Hall', 'Wright Hall'
 ];
 
 const styles = {
