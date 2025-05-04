@@ -1451,8 +1451,8 @@ def get_my_interested_listings():
                             sl.owner_id as lender,
                             il.created_at,
                             il.status,
-                            rr.requested_volume,
-                            rr.approved_volume,
+                            rr.requested_space,
+                            rr.approved_space,
                             rr.status as reservation_status,
                             sl.hall_name
                         FROM interested_listings il
@@ -1477,8 +1477,8 @@ def get_my_interested_listings():
                             "lender": row[5],
                             "dateInterested": row[6].isoformat() if row[6] else None,
                             "status": row[10] if row[10] else row[7],
-                            "requested_volume": row[8],
-                            "approved_volume": row[9],
+                            "requested_space": row[8],
+                            "approved_space": row[9],
                             "approval_type": row[10],
                             "nextStep": "Waiting for lender response" if row[7] == 'pending' else "In Discussion",
                             "hall_name": row[11]
@@ -1622,9 +1622,9 @@ def reserve_space(listing_id):
         if not renter_username:
             return jsonify({'error': 'Not authenticated'}), 401
         data = request.get_json()
-        requested_volume = float(data.get('requested_volume', 0))
-        if requested_volume <= 0:
-            return jsonify({'error': 'Requested volume must be positive'}), 400
+        requested_space = float(data.get('requested_space', 0))
+        if requested_space <= 0:
+            return jsonify({'error': 'Requested space must be positive'}), 400
         conn = get_db_connection()
         try:
             with conn.cursor() as cur:
@@ -1642,13 +1642,13 @@ def reserve_space(listing_id):
                 if not row:
                     return jsonify({'error': 'Listing not found'}), 404
                 remaining_space, is_available = row
-                if not is_available or remaining_space is None or remaining_space < requested_volume:
+                if not is_available or remaining_space is None or remaining_space < requested_space:
                     return jsonify({'error': 'Not enough space available'}), 400
                 # Insert reservation request
                 cur.execute("""
-                    INSERT INTO reservation_requests (listing_id, renter_username, requested_volume, status)
+                    INSERT INTO reservation_requests (listing_id, renter_username, requested_space, status)
                     VALUES (%s, %s, %s, 'pending') RETURNING request_id
-                """, (listing_id, renter_username, requested_volume))
+                """, (listing_id, renter_username, requested_space))
                 request_id = cur.fetchone()[0]
                 conn.commit()
                 return jsonify({'success': True, 'request_id': request_id}), 201
@@ -1681,15 +1681,15 @@ def get_reservation_requests(listing_id):
                     return jsonify({'error': 'Not authorized'}), 403
                 # Get all reservation requests
                 cur.execute("""
-                    SELECT request_id, renter_username, requested_volume, approved_volume, status, created_at, updated_at
+                    SELECT request_id, renter_username, requested_space, approved_space, status, created_at, updated_at
                     FROM reservation_requests WHERE listing_id = %s ORDER BY created_at DESC
                 """, (listing_id,))
                 requests = [
                     {
                         'request_id': r[0],
                         'renter_username': r[1],
-                        'requested_volume': r[2],
-                        'approved_volume': r[3],
+                        'requested_space': r[2],
+                        'approved_space': r[3],
                         'status': r[4],
                         'created_at': r[5].isoformat() if r[5] else None,
                         'updated_at': r[6].isoformat() if r[6] else None
@@ -1717,18 +1717,18 @@ def update_reservation_request(request_id):
             return jsonify({'error': 'Not authenticated'}), 401
         data = request.get_json()
         new_status = data.get('status')
-        approved_volume = data.get('approved_volume')
+        approved_space = data.get('approved_space')
         if new_status not in ['approved_full', 'approved_partial', 'rejected', 'cancelled_by_renter', 'expired']:
             return jsonify({'error': 'Invalid status'}), 400
         conn = get_db_connection()
         try:
             with conn.cursor() as cur:
                 # Get reservation request and listing
-                cur.execute("SELECT listing_id, requested_volume, status, renter_username FROM reservation_requests WHERE request_id = %s", (request_id,))
+                cur.execute("SELECT listing_id, requested_space, status, renter_username FROM reservation_requests WHERE request_id = %s", (request_id,))
                 req = cur.fetchone()
                 if not req:
                     return jsonify({'error': 'Request not found'}), 404
-                listing_id, requested_volume, current_status, renter_username = req
+                listing_id, requested_space, current_status, renter_username = req
                 if current_status not in ['pending']:
                     return jsonify({'error': 'Request already processed'}), 400
                 # Special case: allow renter to cancel their own request
@@ -1748,22 +1748,22 @@ def update_reservation_request(request_id):
                 remaining_space = row[1]
                 # Approve full
                 if new_status == 'approved_full':
-                    if remaining_space < requested_volume:
+                    if remaining_space < requested_space:
                         return jsonify({'error': 'Not enough space for full approval'}), 400
                     cur.execute("""
-                        UPDATE reservation_requests SET status = %s, approved_volume = %s, updated_at = %s WHERE request_id = %s
-                    """, ('approved_full', requested_volume, datetime.utcnow(), request_id))
-                    new_remaining = remaining_space - requested_volume
+                        UPDATE reservation_requests SET status = %s, approved_space = %s, updated_at = %s WHERE request_id = %s
+                    """, ('approved_full', requested_space, datetime.utcnow(), request_id))
+                    new_remaining = remaining_space - requested_space
                     is_available = new_remaining > 0
                     cur.execute("UPDATE storage_listings SET remaining_space = %s, is_available = %s WHERE listing_id = %s", (new_remaining, is_available, listing_id))
                 # Approve partial
                 elif new_status == 'approved_partial':
-                    if not approved_volume or float(approved_volume) <= 0 or float(approved_volume) > remaining_space:
-                        return jsonify({'error': 'Invalid approved volume'}), 400
+                    if not approved_space or float(approved_space) <= 0 or float(approved_space) > remaining_space:
+                        return jsonify({'error': 'Invalid approved space'}), 400
                     cur.execute("""
-                        UPDATE reservation_requests SET status = %s, approved_volume = %s, updated_at = %s WHERE request_id = %s
-                    """, ('approved_partial', approved_volume, datetime.utcnow(), request_id))
-                    new_remaining = remaining_space - float(approved_volume)
+                        UPDATE reservation_requests SET status = %s, approved_space = %s, updated_at = %s WHERE request_id = %s
+                    """, ('approved_partial', approved_space, datetime.utcnow(), request_id))
+                    new_remaining = remaining_space - float(approved_space)
                     is_available = new_remaining > 0
                     cur.execute("UPDATE storage_listings SET remaining_space = %s, is_available = %s WHERE listing_id = %s", (new_remaining, is_available, listing_id))
                 # Reject/cancel/expire (by lender)
@@ -1796,7 +1796,7 @@ def my_reservation_requests():
         try:
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT rr.request_id, rr.listing_id, rr.requested_volume, rr.approved_volume, rr.status, rr.created_at, rr.updated_at,
+                    SELECT rr.request_id, rr.listing_id, rr.requested_space, rr.approved_space, rr.status, rr.created_at, rr.updated_at,
                            sl.end_date, sl.start_date
                     FROM reservation_requests rr
                     JOIN storage_listings sl ON rr.listing_id = sl.listing_id
@@ -1807,8 +1807,8 @@ def my_reservation_requests():
                     {
                         'request_id': r[0],
                         'listing_id': r[1],
-                        'requested_volume': r[2],
-                        'approved_volume': r[3],
+                        'requested_space': r[2],
+                        'approved_space': r[3],
                         'status': r[4],
                         'created_at': r[5].isoformat() if r[5] else None,
                         'updated_at': r[6].isoformat() if r[6] else None,
