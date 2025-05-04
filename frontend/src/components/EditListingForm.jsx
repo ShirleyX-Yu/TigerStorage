@@ -48,7 +48,8 @@ const styles = {
     padding: '9px 12px',
     border: '1px solid #ccc',
     borderRadius: 6,
-    fontSize: 16
+    fontSize: 16,
+    fontFamily: 'inherit'
   },
   textarea: {
     width: '100%',
@@ -57,7 +58,7 @@ const styles = {
     borderRadius: '4px',
     fontSize: '1rem',
     minHeight: '100px',
-    fontFamily: 'inherit',
+    fontFamily: 'inherit'
   },
   error: {
     color: '#b00020',
