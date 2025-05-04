@@ -1,12 +1,11 @@
 from flask import Flask, jsonify, send_from_directory, session, redirect, url_for, request, render_template
-from flask_cors import CORS
+from config import Config
 import dotenv
 import os
 import psycopg2
 import argparse
 import auth
 import json
-import uuid
 from werkzeug.utils import secure_filename
 from decimal import Decimal
 from psycopg2.extras import RealDictCursor
@@ -31,52 +30,7 @@ parser.add_argument(
 app = Flask(
     __name__,
     template_folder=os.path.abspath("templates"),
-    static_folder=os.path.abspath("static"),
-)
-
-# Configure CORS to allow requests from Render domains
-# --- CORS CONFIGURATION ---
-CORS(
-    app,
-    resources={
-        r"/*": {
-            "origins": [
-                "https://tigerstorage-frontend.onrender.com",
-                "http://localhost:5173"
-            ],
-            "supports_credentials": True,
-            "allow_headers": [
-                "Content-Type",
-                "Authorization",
-                "X-Requested-With",
-                "X-User-Type",
-                "X-Username",
-                "Accept",
-                "Cache-Control",
-                "Pragma",
-                "Origin",
-                "X-CSRFToken",
-                "X-Session-Id",
-                "X-Auth-Token"
-            ],
-            "expose_headers": [
-                "Content-Type",
-                "Authorization",
-                "X-Requested-With",
-                "X-User-Type",
-                "X-Username",
-                "Accept",
-                "Cache-Control",
-                "Pragma",
-                "Origin",
-                "X-CSRFToken",
-                "X-Session-Id",
-                "X-Auth-Token"
-            ],
-            "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-            "max_age": 3600
-        }
-    }
+    static_folder=os.path.abspath("static")
 )
 
 # --- SESSION COOKIE CONFIGURATION ---
@@ -105,8 +59,12 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Initialize CAS authentication
-auth.init_auth(app)
+# Initialize configuration
+Config(app)
+
+# Register blueprints
+app.register_blueprint(listings_bp)
+app.register_blueprint(reservations_bp)
 
 # Add custom URL rule to serve React files from the build directory
 app.add_url_rule(
@@ -137,10 +95,7 @@ def debug_session():
             'session_exists': 'session' in globals()
         }), 500
 
-# Add route to serve static files from frontend public directory
-@app.route('/public/<path:filename>')
-def serve_public(filename):
-    return send_from_directory('../frontend/public', filename)
+
 
 def get_asset_path(entry: str) -> str:
     try:
