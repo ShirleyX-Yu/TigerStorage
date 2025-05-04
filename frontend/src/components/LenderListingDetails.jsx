@@ -91,6 +91,7 @@ const LenderListingDetails = () => {
           images: Array.isArray(data.images) && data.images.length > 0
             ? data.images
             : [data.image_url || '/assets/placeholder.jpg'],
+          owner_id: data.owner_id
         });
       } catch (err) {
         setError(err.message);
