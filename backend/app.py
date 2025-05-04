@@ -28,6 +28,10 @@ app = Flask(
     static_folder=os.path.abspath("static")
 )
 
+# Register CAS authentication routes
+import auth
+auth.init_auth(app)
+
 # --- SESSION COOKIE CONFIGURATION ---
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 app.config['SESSION_COOKIE_SECURE'] = True
