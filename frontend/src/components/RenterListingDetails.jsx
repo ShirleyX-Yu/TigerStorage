@@ -119,21 +119,24 @@ const RenterListingDetails = () => {
         // Simple formatted listing with fallbacks for all properties
         const formattedListing = {
           id: data.id || id,
-          location: data.location || 'Unknown Location',
+          title: data.title || 'Unknown Title',
           cost: data.cost || 0,
           sq_ft: data.sq_ft || 0,
-          description: data.description || 'No description available',
-          isAvailable: data.is_available !== undefined ? data.is_available : true,
-          startDate: data.start_date || '',
-          endDate: data.end_date || '',
-          images: Array.isArray(data.images) && data.images.length > 0
-            ? data.images
-            : (data.image_url ? [data.image_url] : []),
+          description: data.description || '',
+          address: data.address || '',
+          latitude: data.latitude || '',
+          longitude: data.longitude || '',
+          start_date: data.start_date || '',
+          end_date: data.end_date || '',
+          image_url: data.image_url || '',
+          hall_name: data.hall_name || '',
+          owner_id: data.owner_id || '',
+          remaining_space: data.remaining_space || 0,
+          is_available: data.is_available,
           lender: {
             name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
             email: 'contact@tigerstorage.com'
           },
-          owner_id: data.owner_id,
           isInterested: isInterested
         };
         
@@ -209,19 +212,24 @@ const RenterListingDetails = () => {
       // ...formatting as before...
       const formattedListing = {
         id: data.id || id,
-        location: data.location || 'Unknown Location',
+        title: data.title || 'Unknown Title',
         cost: data.cost || 0,
         sq_ft: data.sq_ft || 0,
-        description: data.description || 'No description available',
-        isAvailable: data.is_available !== undefined ? data.is_available : true,
-        startDate: data.start_date || '',
-        endDate: data.end_date || '',
-        images: [data.image_url || '/assets/placeholder.jpg'],
+        description: data.description || '',
+        address: data.address || '',
+        latitude: data.latitude || '',
+        longitude: data.longitude || '',
+        start_date: data.start_date || '',
+        end_date: data.end_date || '',
+        image_url: data.image_url || '',
+        hall_name: data.hall_name || '',
+        owner_id: data.owner_id || '',
+        remaining_space: data.remaining_space || 0,
+        is_available: data.is_available,
         lender: {
           name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
           email: 'contact@tigerstorage.com'
         },
-        owner_id: data.owner_id,
         isInterested: false // skip for now
       };
       setListing(formattedListing);
@@ -302,7 +310,7 @@ const RenterListingDetails = () => {
           'X-User-Type': userType,
           'X-Username': storedUsername
         },
-        body: JSON.stringify({ requested_volume: volume })
+        body: JSON.stringify({ requested_space: volume })
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -513,7 +521,7 @@ const RenterListingDetails = () => {
             </div>
 
             <div style={styles.infoSection}>
-              <h2 style={styles.location}>{listing.location}</h2>
+              <h2 style={styles.location}>{listing.title}</h2>
               {listing.hall_name && (
                 <div style={{ fontSize: '1.05rem', color: '#FF8F00', fontWeight: 500, marginBottom: 8 }}>
                   Residential Hall: {listing.hall_name}
@@ -522,8 +530,8 @@ const RenterListingDetails = () => {
               
               <div style={styles.listingInfo}>
                 <div className={styles.infoRow}>
-                  <span style={styles.infoLabel}>Location:</span>
-                  <span style={styles.infoValue}>{listing.hall_name || 'N/A'}</span>
+                  <span style={styles.infoLabel}>Title:</span>
+                  <span style={styles.infoValue}>{listing.title || 'N/A'}</span>
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Cost:</span>

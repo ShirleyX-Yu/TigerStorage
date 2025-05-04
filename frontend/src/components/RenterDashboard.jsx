@@ -136,11 +136,11 @@ const RenterDashboard = ({ username }) => {
               <table style={styles.table}>
                 <thead>
                   <tr>
-                    <th style={styles.th}>Location</th>
+                    <th style={styles.th}>Title</th>
                     <th style={styles.th}>Cost/Month</th>
                     <th style={styles.th}>Lender</th>
-                    <th style={styles.th}>Requested Volume</th>
-                    <th style={styles.th}>Approved Volume</th>
+                    <th style={styles.th}>Requested Space</th>
+                    <th style={styles.th}>Approved Space</th>
                     <th style={styles.th}>Approval Type</th>
                     <th style={styles.th}>Status</th>
                     <th style={styles.th}>Actions</th>
@@ -149,11 +149,11 @@ const RenterDashboard = ({ username }) => {
                 <tbody>
                   {interestedSpaces.filter(space => space.approval_type === 'approved_full' || space.approval_type === 'approved_partial').map(space => (
                     <tr key={space.id}>
-                      <td style={styles.td}>{space.location}</td>
+                      <td style={styles.td}>{space.title}</td>
                       <td style={styles.td}>${space.cost}</td>
                       <td style={styles.td}>{space.lender}</td>
-                      <td style={styles.td}>{space.requested_volume ? `${space.requested_volume} sq ft` : '-'}</td>
-                      <td style={styles.td}>{space.approved_volume ? `${space.approved_volume} sq ft` : '-'}</td>
+                      <td style={styles.td}>{space.requested_space ? `${space.requested_space} sq ft` : '-'}</td>
+                      <td style={styles.td}>{space.approved_space ? `${space.approved_space} sq ft` : '-'}</td>
                       <td style={styles.td}>{getStatusLabel(space.approval_type)}</td>
                       <td style={styles.td}>
                         <span style={{
@@ -193,11 +193,11 @@ const RenterDashboard = ({ username }) => {
               <table style={styles.table}>
                 <thead>
                   <tr>
-                    <th style={styles.th}>Location</th>
+                    <th style={styles.th}>Title</th>
                     <th style={styles.th}>Cost/Month</th>
                     <th style={styles.th}>Lender</th>
-                    <th style={styles.th}>Requested Volume</th>
-                    <th style={styles.th}>Approved Volume</th>
+                    <th style={styles.th}>Requested Space</th>
+                    <th style={styles.th}>Approved Space</th>
                     <th style={styles.th}>Approval Type</th>
                     <th style={styles.th}>Status</th>
                     <th style={styles.th}>Actions</th>
@@ -206,11 +206,11 @@ const RenterDashboard = ({ username }) => {
                 <tbody>
                   {interestedSpaces.filter(space => space.approval_type === 'pending').map(space => (
                     <tr key={space.id}>
-                      <td style={styles.td}>{space.location}</td>
+                      <td style={styles.td}>{space.title}</td>
                       <td style={styles.td}>${space.cost}</td>
                       <td style={styles.td}>{space.lender}</td>
-                      <td style={styles.td}>{space.requested_volume ? `${space.requested_volume} sq ft` : '-'}</td>
-                      <td style={styles.td}>{space.approved_volume ? `${space.approved_volume} sq ft` : '-'}</td>
+                      <td style={styles.td}>{space.requested_space ? `${space.requested_space} sq ft` : '-'}</td>
+                      <td style={styles.td}>{space.approved_space ? `${space.approved_space} sq ft` : '-'}</td>
                       <td style={styles.td}>{getStatusLabel(space.approval_type)}</td>
                       <td style={styles.td}>
                         <span style={{

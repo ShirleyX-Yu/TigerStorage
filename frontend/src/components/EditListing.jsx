@@ -6,10 +6,10 @@ const EditListing = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [formData, setFormData] = useState({
-    location: '', // This will be used as the title field
+    title: '', // This will be used as the title field
     address: '', // Separate address field
     cost: '',
-    cubicFeet: '',
+    squareFeet: '',
     description: '',
     latitude: '',
     longitude: '',
@@ -48,10 +48,10 @@ const EditListing = () => {
         
         // Set the form data from the fetched listing
         const formDataToSet = {
-          location: data.location || '',
+          title: data.title || '',
           address: data.address || '', // Only use the address field, don't fall back to location
           cost: data.cost || '',
-          cubicFeet: data.cubic_feet || data.cubicFeet || '',
+          squareFeet: data.square_feet || data.squareFeet || '',
           description: data.description || '',
           latitude: data.latitude || '',
           longitude: data.longitude || '',
@@ -218,7 +218,7 @@ const EditListing = () => {
       }
 
       // Show more detailed validation errors
-      if (!formData.location) {
+      if (!formData.title) {
         setError('Please enter a title for your listing');
         return;
       }
@@ -226,7 +226,7 @@ const EditListing = () => {
         setError('Please enter a cost');
         return;
       }
-      if (!formData.cubicFeet) {
+      if (!formData.squareFeet) {
         setError('Please enter the square feet');
         return;
       }
@@ -289,12 +289,12 @@ const EditListing = () => {
           ← Back to Dashboard
         </button>
           <div style={styles.formGroup}>
-            <label htmlFor="location" style={styles.label}>Title</label>
+            <label htmlFor="title" style={styles.label}>Title</label>
             <input
               type="text"
-              id="location"
-              name="location"
-              value={formData.location}
+              id="title"
+              name="title"
+              value={formData.title}
               onChange={handleInputChange}
               placeholder="Enter a descriptive title (e.g., 'Butler College Storage')"
               style={styles.input}
@@ -386,12 +386,12 @@ const EditListing = () => {
           </div>
 
           <div style={styles.formGroup}>
-            <label htmlFor="cubicFeet" style={styles.label}>Size (sq ft)</label>
+            <label htmlFor="squareFeet" style={styles.label}>Size (sq ft)</label>
             <input
               type="number"
-              id="cubicFeet"
-              name="cubicFeet"
-              value={formData.cubicFeet}
+              id="squareFeet"
+              name="squareFeet"
+              value={formData.squareFeet}
               onChange={handleInputChange}
               placeholder="Enter size in square feet"
               min="0"

@@ -137,7 +137,7 @@ const LenderDashboard = ({ username }) => {
 
         return {
           id: listing.id,
-          location: listing.location,
+          title: listing.title,
           address: listing.address || '',
           cost: listing.cost,
           sq_ft: listing.sq_ft,
@@ -147,7 +147,7 @@ const LenderDashboard = ({ username }) => {
           endDate: listing.end_date ? formatDate(listing.end_date) : '',
           status: 'Active',
           interestedRenters,
-          remaining_volume: listing.remaining_volume,
+          remaining_space: listing.remaining_space,
           hall_name: listing.hall_name
         };
       }));
@@ -213,10 +213,10 @@ const LenderDashboard = ({ username }) => {
       const reqObj = reservationRequests[listingId]?.find(r => r.request_id === requestId);
       let finalApprovedVolume = approvedVolume;
       if (action === 'approved_full' && reqObj) {
-        finalApprovedVolume = reqObj.requested_volume;
+        finalApprovedVolume = reqObj.requested_space;
       }
       const body = action === 'approved_partial' || action === 'approved_full'
-        ? { status: action, approved_volume: finalApprovedVolume }
+        ? { status: action, approved_space: finalApprovedVolume }
         : { status: action };
       const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/reservation-requests/${requestId}`, {
         method: 'PATCH',
@@ -400,7 +400,7 @@ const LenderDashboard = ({ username }) => {
                   <div key={space.id} style={styles.spaceCard}>
                     <div style={styles.spaceHeader}>
                       <div>
-                        <h3 style={styles.spaceTitle}>{space.location || 'No Location Provided'}</h3>
+                        <h3 style={styles.spaceTitle}>{space.title || 'No Title Provided'}</h3>
                         {space.hall_name && (
                           <div style={{ fontSize: '0.98rem', color: '#FF8F00', fontWeight: 500, marginBottom: 4 }}>
                             Residential Hall: {space.hall_name}
@@ -413,7 +413,7 @@ const LenderDashboard = ({ username }) => {
                           Start: {space.startDate || 'N/A'} | End: {space.endDate || 'N/A'}
                         </p>
                         <div style={{ marginBottom: 8, color: '#4caf50', fontWeight: 600 }}>
-                          Remaining Volume: {space.remaining_volume} sq ft
+                          Remaining Volume: {space.remaining_space} sq ft
                         </div>
                       </div>
                       <div style={styles.spaceBadge}>
@@ -457,9 +457,9 @@ const LenderDashboard = ({ username }) => {
                                 <span style={styles.renterStatusBadge}>{getStatusLabel(req.status)}</span>
                               </div>
                               <div style={{ marginTop: 4 }}>
-                                <b>Requested:</b> {req.requested_volume} sq ft
-                                {req.approved_volume && (
-                                  <span style={{ marginLeft: 8 }}><b>Approved:</b> {req.approved_volume} sq ft</span>
+                                <b>Requested:</b> {req.requested_space} sq ft
+                                {req.approved_space && (
+                                  <span style={{ marginLeft: 8 }}><b>Approved:</b> {req.approved_space} sq ft</span>
                                 )}
                               </div>
                               {req.status === 'pending' && (
@@ -557,7 +557,7 @@ const LenderDashboard = ({ username }) => {
                             <span style={{ marginLeft: 12, fontSize: 13, color: '#333' }}>
                               for listing:
                               <a href={`/lender-dashboard/listing/${r.listing_id}`} style={{ color: '#1976d2', textDecoration: 'underline', marginLeft: 4 }}>
-                                {r.location || `Listing #${r.listing_id}`}
+                                {r.title || `Listing #${r.listing_id}`}
                               </a>
                             </span>
                           )}
@@ -627,8 +627,8 @@ const LenderDashboard = ({ username }) => {
         <DialogContent>
           <div style={{ marginBottom: 12 }}>
             <b>Renter:</b> {partialModal.request?.renter_username}<br />
-            <b>Requested Volume:</b> {partialModal.request?.requested_volume} sq ft<br />
-            <b>Remaining Volume:</b> {listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_volume ?? 0} sq ft
+            <b>Requested Volume:</b> {partialModal.request?.requested_space} sq ft<br />
+            <b>Remaining Volume:</b> {listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_space ?? 0} sq ft
           </div>
           <TextField
             label="Approved Volume (sq ft)"
@@ -637,7 +637,7 @@ const LenderDashboard = ({ username }) => {
             variant="outlined"
             value={partialVolume}
             onChange={e => setPartialVolume(e.target.value)}
-            inputProps={{ min: 0.1, max: Math.min(partialModal.request?.requested_volume || 1000, listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_volume ?? 0), step: 0.1 }}
+            inputProps={{ min: 0.1, max: Math.min(partialModal.request?.requested_space || 1000, listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_space ?? 0), step: 0.1 }}
             style={{ marginBottom: 12 }}
           />
           {partialError && <div style={{ color: 'red', marginBottom: 8 }}>{partialError}</div>}
@@ -647,7 +647,7 @@ const LenderDashboard = ({ username }) => {
           <Button
             onClick={async () => {
               const vol = Number(partialVolume);
-              const maxAllowed = Math.min(partialModal.request?.requested_volume || 0, listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_volume ?? 0);
+              const maxAllowed = Math.min(partialModal.request?.requested_space || 0, listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_space ?? 0);
               if (!partialVolume || isNaN(vol) || vol <= 0 || vol > maxAllowed) {
                 setPartialError(`Enter a valid volume (0 < volume ≤ ${maxAllowed})`);
                 return;

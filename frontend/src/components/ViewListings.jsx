@@ -184,11 +184,11 @@ const ViewListings = () => {
   const filteredListings = listings.filter(
     listing =>
       (listing.is_available === undefined || listing.is_available === true) &&
-      Number(listing.remaining_volume) > 0 &&
+      Number(listing.remaining_space) > 0 &&
       filterListings(listings)
   );
 
-  // After a reservation is submitted, re-fetch the listings to update remaining_volume.
+  // After a reservation is submitted, re-fetch the listings to update remaining_space.
   const handleReservationSubmit = async ({ volume, mode }) => {
     setReservationLoading(true);
     setReservationError('');
@@ -206,7 +206,7 @@ const ViewListings = () => {
           'X-User-Type': userType,
           'X-Username': username
         },
-        body: JSON.stringify({ requested_volume: volume })
+        body: JSON.stringify({ requested_space: volume })
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -337,14 +337,14 @@ const ViewListings = () => {
                           }}
                         />
                         <div style={styles.listingDetails}>
-                          <h3 style={styles.listingTitle}>{listing.location}</h3>
+                          <h3 style={styles.listingTitle}>{listing.title}</h3>
                           {listing.hall_name && (
                             <div style={{ fontSize: '0.98rem', color: '#FF8F00', fontWeight: 500, marginBottom: 4 }}>
                               Residential Hall: {listing.hall_name}
                             </div>
                           )}
                           <p style={styles.listingInfo}>
-                            <strong>${listing.cost}</strong> per month · {listing.remaining_volume ?? listing.sq_ft} sq ft remaining / {listing.sq_ft} sq ft total · Available: {formatDate(listing.start_date)} - {formatDate(listing.end_date)}
+                            <strong>${listing.cost}</strong> per month · {listing.remaining_space ?? listing.sq_ft} sq ft remaining / {listing.sq_ft} sq ft total · Available: {formatDate(listing.start_date)} - {formatDate(listing.end_date)}
                           </p>
                           <div style={styles.descriptionBox}>
                             <p style={styles.description}>{listing.description || 'No description available'}</p>

@@ -83,7 +83,7 @@ const LenderListingDetails = () => {
 
         setListing({
           id: data.id,
-          location: data.location,
+          title: data.title,
           cost: data.cost,
           sq_ft: data.sq_ft,
           description: data.description,
@@ -144,9 +144,9 @@ const LenderListingDetails = () => {
     setActionError(e => ({ ...e, [requestId]: null }));
     try {
       const reqObj = reservationRequests.find(r => r.request_id === requestId);
-      const approvedVolume = (action === 'approved_full' && reqObj) ? reqObj.requested_volume : approvedVolume;
+      const approvedVolume = (action === 'approved_full' && reqObj) ? reqObj.requested_space : approvedVolume;
       const body = action === 'approved_partial' || action === 'approved_full'
-        ? { status: action, approved_volume: approvedVolume }
+        ? { status: action, approved_space: approvedVolume }
         : { status: action };
       const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/reservation-requests/${requestId}`, {
         method: 'PATCH',
@@ -211,7 +211,7 @@ const LenderListingDetails = () => {
   };
   const handlePartialApprove = async () => {
     const req = partialModal.request;
-    const max = Math.min(req.requested_volume, listing.sq_ft);
+    const max = Math.min(req.requested_space, listing.sq_ft);
     const vol = Number(partialVolume);
     if (!vol || isNaN(vol) || vol <= 0 || vol > max) {
       setPartialError(`Enter a valid volume (0 < volume ≤ ${max})`);
@@ -270,13 +270,13 @@ const LenderListingDetails = () => {
             <div style={styles.imageSection}>
               <img
                 src={listing.images[0]}
-                alt={listing.location}
+                alt={listing.title}
                 style={styles.mainImage}
                 onError={(e) => { e.target.src = '/assets/placeholder.jpg'; }}
               />
             </div>
             <div style={styles.infoSection}>
-              <h2 style={styles.location}>{listing.location}</h2>
+              <h2 style={styles.location}>{listing.title}</h2>
               <div style={styles.specs}>
                 <div style={styles.specItem}><span style={styles.specLabel}>Cost:</span><span style={styles.specValue}>${listing.cost}/month</span></div>
                 <div style={styles.specItem}><span style={styles.specLabel}>Size:</span><span style={styles.specValue}>{listing.sq_ft} sq ft</span></div>
@@ -303,8 +303,8 @@ const LenderListingDetails = () => {
                         <tr key={req.request_id}>
                           <td style={{ padding: 8, border: '1px solid #eee' }}>{req.renter_username}</td>
                           <td style={{ padding: 8, border: '1px solid #eee' }}>{getStatusLabel(req.status)}</td>
-                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.requested_volume} sq ft</td>
-                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.approved_volume ? `${req.approved_volume} sq ft` : '-'}</td>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.requested_space} sq ft</td>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.approved_space ? `${req.approved_space} sq ft` : '-'}</td>
                           <td style={{ padding: 8, border: '1px solid #eee' }}>
                             {req.status === 'pending' && (
                               <>
@@ -370,8 +370,8 @@ const LenderListingDetails = () => {
           <DialogContent>
             <div style={{ marginBottom: 12 }}>
               <b>Renter:</b> {partialModal.request?.renter_username}<br />
-              <b>Requested Volume:</b> {partialModal.request?.requested_volume} sq ft<br />
-              <b>Max Allowed:</b> {partialModal.request ? Math.min(partialModal.request.requested_volume, listing.sq_ft) : 0} sq ft
+              <b>Requested Volume:</b> {partialModal.request?.requested_space} sq ft<br />
+              <b>Max Allowed:</b> {partialModal.request ? Math.min(partialModal.request.requested_space, listing.sq_ft) : 0} sq ft
             </div>
             <TextField
               label="Approved Volume (sq ft)"
@@ -380,7 +380,7 @@ const LenderListingDetails = () => {
               variant="outlined"
               value={partialVolume}
               onChange={e => setPartialVolume(e.target.value)}
-              inputProps={{ min: 0.1, max: partialModal.request ? Math.min(partialModal.request.requested_volume, listing.sq_ft) : 0, step: 0.1 }}
+              inputProps={{ min: 0.1, max: partialModal.request ? Math.min(partialModal.request.requested_space, listing.sq_ft) : 0, step: 0.1 }}
               style={{ marginBottom: 12 }}
             />
             {partialError && <div style={{ color: 'red', marginBottom: 8 }}>{partialError}</div>}

@@ -113,7 +113,6 @@ const styles = {
 
 const EditListingForm = ({ listingId, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
-    location: '',
     hall_name: '',
     address: '',
     cost: '',
@@ -123,7 +122,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
     longitude: '',
     start_date: '',
     end_date: '',
-    image_url: ''
+    image_url: '',
+    title: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -160,7 +160,6 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           }
         }
         const formDataToSet = {
-          location: data.location || '',
           hall_name: data.hall_name || '',
           address: data.address || '',
           cost: data.cost || '',
@@ -170,11 +169,12 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           longitude: data.longitude || '',
           start_date: data.start_date ? new Date(data.start_date).toISOString().split('T')[0] : '',
           end_date: data.end_date ? new Date(data.end_date).toISOString().split('T')[0] : '',
-          image_url: data.image_url || ''
+          image_url: data.image_url || '',
+          title: data.title || ''
         };
         setFormData(formDataToSet);
         setTempAddress(data.hall_name || hallName || '');
-        const addressToCheck = data.address || data.location || '';
+        const addressToCheck = data.address || '';
         if (addressToCheck.includes('Hall')) {
           setLocationType('on-campus');
         } else {
@@ -299,7 +299,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
     e.preventDefault();
     setError('');
     setSuccess(false);
-    if (formData.location.length > 100) {
+    if (formData.title.length > 100) {
       setError('Title must be 100 characters or less.');
       return;
     }
@@ -323,7 +323,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       setError('End date must be after start date.');
       return;
     }
-    if (!formData.location) {
+    if (!formData.title) {
       setError('Please enter a title for your listing');
       return;
     }
@@ -371,12 +371,12 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
         ) : (
           <form onSubmit={handleSubmit} style={{ ...styles.form, gap: 18, padding: 24, width: '100%' }}>
             <div>
-              <label style={styles.label}>Location (Title) <span style={{color: '#b00020'}}>*</span></label>
+              <label style={styles.label}>Title <span style={{color: '#b00020'}}>*</span></label>
               <input
                 style={styles.input}
                 type="text"
-                name="location"
-                value={formData.location}
+                name="title"
+                value={formData.title}
                 onChange={handleInputChange}
                 required
                 maxLength={100}

@@ -184,7 +184,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
           .addTo(map)
           .bindPopup(`
             <div>
-              <h3>${listing.location || 'Unknown Location'}</h3>
+              <h3>${listing.title || 'Unknown Title'}</h3>
               <p>Price: $${listing.cost ?? 0}/month</p>
               <p>Size: ${listing.remaining_volume ?? listing.sq_ft ?? 0} sq ft remaining • ${listing.sq_ft ?? 0} sq ft total</p>
               <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
@@ -217,8 +217,8 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
             .addTo(map)
             .bindPopup(`
               <div>
-                <h3>${group[0].location || 'Multiple Listings'}</h3>
-                <p><b>${group.length}</b> storage listings at this location.</p>
+                <h3>${group[0].title || 'Multiple Listings'}</h3>
+                <p><b>${group.length}</b> storage listings at this title.</p>
                 <ul style="padding-left: 18px;">
                   ${group.map(listing => `
                     <li style='margin-bottom: 2px;'>
@@ -684,7 +684,7 @@ const Map = () => {
                       <FontAwesomeIcon icon={listing.isInterested ? ['fas', 'heart'] : ['far', 'heart']} color={listing.isInterested ? '#FF6B00' : '#ccc'} />
                     </span>
                     <ListItemText
-                      primary={listing.location}
+                      primary={listing.title}
                       secondary={
                         <>
                           <Typography component="span" variant="body2" color="textPrimary">
@@ -814,7 +814,7 @@ const Map = () => {
               {selectedListing && (
                 <Box>
                   <Typography variant="h5" style={{ color: '#FF6B00', fontWeight: 700, marginBottom: 8 }}>
-                    {selectedListing.location}
+                    {selectedListing.title}
                   </Typography>
                   {selectedListing.hall_name && (
                     <Typography variant="body2" style={{ color: '#FF8F00', fontWeight: 500, marginBottom: 8 }}>
@@ -861,7 +861,7 @@ const Map = () => {
                         'X-User-Type': userType,
                         'X-Username': username
                       },
-                      body: JSON.stringify({ requested_volume: vol })
+                      body: JSON.stringify({ requested_space: vol })
                     });
                     if (!response.ok) {
                       const errorData = await response.json().catch(() => ({}));

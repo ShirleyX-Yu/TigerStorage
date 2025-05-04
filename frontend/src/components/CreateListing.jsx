@@ -145,7 +145,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const navigate = useNavigate();
   const errorRef = useRef(null);
   const [formData, setFormData] = useState({
-    location: '',
+    title: '',
     hall_name: '',
     address: '',
     cost: '',
@@ -278,7 +278,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       setError('Please upload an image of your storage space.');
       return;
     }
-    if (formData.location.length > 100) {
+    if (formData.title.length > 100) {
       setError('Title must be 100 characters or less.');
       return;
     }
@@ -302,7 +302,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       setError('End date must be after start date.');
       return;
     }
-    if (!formData.location || !formData.cost || !formData.sq_ft) {
+    if (!formData.title || !formData.cost || !formData.sq_ft) {
       setError('Please fill in all required fields');
       return;
     }
@@ -337,12 +337,12 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       {error && <div ref={errorRef} style={styles.error}>{error}</div>}
       <form onSubmit={handleSubmit} style={{ ...styles.form, gap: 18, padding: 24, width: '100%' }}>
         <div>
-            <label style={styles.label}>Location (Title) <span style={{color: '#b00020'}}>*</span></label>
+            <label style={styles.label}>Title <span style={{color: '#b00020'}}>*</span></label>
               <input
                 style={styles.input}
                 type="text"
-                name="location"
-                value={formData.location}
+                name="title"
+                value={formData.title}
                 onChange={handleInputChange}
                 required
                 maxLength={100}

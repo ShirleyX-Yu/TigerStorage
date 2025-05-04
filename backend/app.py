@@ -198,7 +198,7 @@ def create_listing():
         data = request.get_json()
         
         # Validate required fields
-        required_fields = ['location', 'cost', 'description', 'latitude', 'longitude', 'start_date', 'end_date']
+        required_fields = ['title', 'cost', 'description', 'latitude', 'longitude', 'start_date', 'end_date']
         for field in required_fields:
             if field not in data:
                 return jsonify({"error": f"Missing required field: {field}"}), 400
@@ -252,7 +252,7 @@ def create_listing():
             with conn.cursor() as cur:
                 # Prepare column values
                 column_values = {
-                    'location': data['location'],
+                    'title': data['title'],
                     'sq_ft': total_sq_ft,
                     'cost': cost,
                     'start_date': start_date,
@@ -261,7 +261,7 @@ def create_listing():
                     'longitude': longitude,
                     'description': data['description'],
                     'image_url': image_url,
-                    'remaining_volume': total_sq_ft  # Set remaining_volume to sq_ft on creation
+                    'remaining_space': total_sq_ft  # Set remaining_space to sq_ft on creation
                 }
                 
                 # Add address if provided
@@ -342,7 +342,7 @@ def get_listings():
                     cur.execute("""
                         CREATE TABLE storage_listings (
                             listing_id SERIAL PRIMARY KEY,
-                            location VARCHAR(255) NOT NULL,
+                            title VARCHAR(255) NOT NULL,
                             address VARCHAR(255),
                             cost NUMERIC,
                             sq_ft INTEGER,
@@ -372,8 +372,8 @@ def get_listings():
                 
                 # Build the query dynamically based on available columns
                 select_parts = []
-                essential_columns = ['listing_id', 'location', 'cost', 'sq_ft', 'description', 
-                                     'created_at', 'owner_id', 'remaining_volume', 'is_available']
+                essential_columns = ['listing_id', 'title', 'cost', 'sq_ft', 'description', 
+                                     'created_at', 'owner_id', 'remaining_space', 'is_available']
                 
                 # Add all essential columns that exist
                 for col in essential_columns:
@@ -427,7 +427,7 @@ def get_listings():
                         
                         formatted_listing = {
                             "id": listing_dict.get('listing_id'),
-                            "location": listing_dict.get('location', ''),
+                            "title": listing_dict.get('title', ''),
                             "address": listing_dict.get('address', ''),
                             "cost": float(listing_dict.get('cost', 0)) if listing_dict.get('cost') is not None else 0,
                             "sq_ft": listing_dict.get('sq_ft', 0),
@@ -439,8 +439,8 @@ def get_listings():
                             "image_url": listing_dict.get('image_url', '/assets/placeholder.jpg'),
                             "created_at": listing_dict.get('created_at').isoformat() if hasattr(listing_dict.get('created_at'), 'isoformat') else (listing_dict.get('created_at') if listing_dict.get('created_at') else None),
                             "owner_id": listing_dict.get('owner_id', ''),
-                            "remaining_volume": listing_dict.get('remaining_volume', 0),
-                            "is_available": bool(listing_dict.get('is_available', True)) if float(listing_dict.get('remaining_volume', 0)) > 0 else False,
+                            "remaining_space": listing_dict.get('remaining_space', 0),
+                            "is_available": bool(listing_dict.get('is_available', True)) if float(listing_dict.get('remaining_space', 0)) > 0 else False,
                             "hall_name": listing_dict.get('hall_name', '')
                         }
 
@@ -557,11 +557,11 @@ def get_listing_by_id(listing_id):
                 formatted_listing = {
                     "id": listing_id,  # Use the requested listing_id for consistency
                     "listing_id": listing_dict.get('listing_id'),  # Also include the original listing_id
-                    "location": listing_dict.get('location', ''),
+                    "title": listing_dict.get('title', ''),
                     "address": listing_dict.get('address', ''),
                     "cost": listing_dict.get('cost', 0),
                     "sq_ft": listing_dict.get('sq_ft', 0),
-                    "description": listing_dict.get('description') or "Storage space available at " + listing_dict.get('location', ''),
+                    "description": listing_dict.get('description') or "Storage space available at " + listing_dict.get('title', ''),
                     "is_available": listing_dict.get('is_available', True),
                     "created_at": listing_dict.get('created_at').isoformat() if hasattr(listing_dict.get('created_at'), 'isoformat') else (listing_dict.get('created_at') if listing_dict.get('created_at') else None),
                     "contract_length_months": listing_dict.get('contract_length_months', 12),
@@ -572,7 +572,7 @@ def get_listing_by_id(listing_id):
                     "start_date": listing_dict.get('start_date').isoformat() if hasattr(listing_dict.get('start_date'), 'isoformat') else (listing_dict.get('start_date') if listing_dict.get('start_date') else None),
                     "end_date": listing_dict.get('end_date').isoformat() if hasattr(listing_dict.get('end_date'), 'isoformat') else (listing_dict.get('end_date') if listing_dict.get('end_date') else None),
                     "updated_at": listing_dict.get('updated_at').isoformat() if hasattr(listing_dict.get('updated_at'), 'isoformat') else (listing_dict.get('updated_at') if listing_dict.get('updated_at') else None),
-                    "remaining_volume": listing_dict.get('remaining_volume', 0),
+                    "remaining_space": listing_dict.get('remaining_space', 0),
                     "hall_name": listing_dict.get('hall_name', '')
                 }
                 
@@ -651,7 +651,7 @@ def get_my_listings():
                     cur.execute("""
                         CREATE TABLE storage_listings (
                             listing_id SERIAL PRIMARY KEY,
-                            location VARCHAR(255) NOT NULL,
+                            title VARCHAR(255) NOT NULL,
                             address VARCHAR(255),
                             cost NUMERIC,
                             sq_ft INTEGER,
@@ -692,8 +692,8 @@ def get_my_listings():
                 
                 # Build the query dynamically based on available columns
                 select_parts = []
-                essential_columns = ['listing_id', 'location', 'cost', 'sq_ft', 'description', 
-                                    'created_at', 'owner_id', 'remaining_volume']
+                essential_columns = ['listing_id', 'title', 'cost', 'sq_ft', 'description', 
+                                    'created_at', 'owner_id', 'remaining_space']
                 
                 # Add all essential columns that exist
                 for col in essential_columns:
@@ -732,7 +732,7 @@ def get_my_listings():
                                 mock_listings = [
                                     {
                                         "id": 101,
-                                        "location": "Butler College Storage",
+                                        "title": "Butler College Storage",
                                         "cost": 65,
                                         "sq_ft": 90,
                                         "description": "Secure storage space near Butler College.",
@@ -786,7 +786,7 @@ def get_my_listings():
                             
                             formatted_listing = {
                                 "id": listing_dict.get('listing_id'),
-                                "location": listing_dict.get('location', ''),
+                                "title": listing_dict.get('title', ''),
                                 "address": listing_dict.get('address', ''),
                                 "cost": float(listing_dict.get('cost', 0)) if listing_dict.get('cost') is not None else 0,
                                 "sq_ft": listing_dict.get('sq_ft', 0),
@@ -798,8 +798,8 @@ def get_my_listings():
                                 "image_url": listing_dict.get('image_url', '/assets/placeholder.jpg'),
                                 "created_at": listing_dict.get('created_at').isoformat() if listing_dict.get('created_at') else None,
                                 "owner_id": listing_dict.get('owner_id', ''),
-                                "remaining_volume": listing_dict.get('remaining_volume', 0),
-                                "is_available": bool(listing_dict.get('is_available', True)) if float(listing_dict.get('remaining_volume', 0)) > 0 else False,
+                                "remaining_space": listing_dict.get('remaining_space', 0),
+                                "is_available": bool(listing_dict.get('is_available', True)) if float(listing_dict.get('remaining_space', 0)) > 0 else False,
                                 "hall_name": listing_dict.get('hall_name', '')
                             }
                             formatted_listings.append(formatted_listing)
@@ -915,8 +915,8 @@ def update_listing(listing_id):
                 update_values = {}
 
                 # Only update fields that are provided
-                if 'location' in data:
-                    update_values['location'] = data['location']
+                if 'title' in data:
+                    update_values['title'] = data['title']
                 if 'cost' in data:
                     update_values['cost'] = float(data['cost'])
                 if 'squareFeet' in data:
@@ -972,7 +972,7 @@ def update_listing(listing_id):
                     )
                     conn.commit()
 
-                # If squareFeet or sq_ft was updated, recalculate remaining_volume
+                # If squareFeet or sq_ft was updated, recalculate remaining_space
                 if 'squareFeet' in data or 'sq_ft' in data:
                     new_sq_ft = int(data.get('squareFeet', data.get('sq_ft')))
                     # Calculate total reserved volume (pending + approved)
@@ -984,10 +984,10 @@ def update_listing(listing_id):
                     reserved = cur.fetchone()[0] or 0
                     new_remaining = max(new_sq_ft - reserved, 0)
                     cur.execute("""
-                        UPDATE storage_listings SET remaining_volume = %s WHERE listing_id = %s
+                        UPDATE storage_listings SET remaining_space = %s WHERE listing_id = %s
                     """, (new_remaining, listing_id))
                     conn.commit()
-                    print(f"Updated remaining_volume for listing {listing_id} to {new_remaining}")
+                    print(f"Updated remaining_space for listing {listing_id} to {new_remaining}")
                 
                 return jsonify({"success": True, "message": "Listing updated successfully"}), 200
         finally:
@@ -1441,7 +1441,7 @@ def get_my_interested_listings():
                         SELECT 
                             il.interest_id,
                             sl.listing_id,
-                            sl.location,
+                            sl.title,
                             sl.cost,
                             sl.address,
                             sl.owner_id as lender,
@@ -1467,7 +1467,7 @@ def get_my_interested_listings():
                     for row in rows:
                         interested_listings.append({
                             "id": row[1],  # listing_id
-                            "location": row[2],
+                            "title": row[2],
                             "cost": row[3],
                             "address": row[4],
                             "lender": row[5],
@@ -1547,7 +1547,7 @@ def get_listings_by_username(username):
                 
                 # Get listings by owner_id
                 cur.execute("""
-                    SELECT listing_id, location, cost, sq_ft, description, latitude, longitude,
+                    SELECT listing_id, title, cost, sq_ft, description, latitude, longitude,
                            start_date, end_date, image_url, created_at, owner_id
                     FROM storage_listings
                     WHERE LOWER(owner_id) = %s
@@ -1632,13 +1632,13 @@ def reserve_space(listing_id):
                 """, (listing_id, renter_username))
                 if cur.fetchone():
                     return jsonify({'error': 'You already have a pending reservation request for this listing.'}), 400
-                # Get listing and check remaining_volume
-                cur.execute("SELECT remaining_volume, is_available FROM storage_listings WHERE listing_id = %s", (listing_id,))
+                # Get listing and check remaining_space
+                cur.execute("SELECT remaining_space, is_available FROM storage_listings WHERE listing_id = %s", (listing_id,))
                 row = cur.fetchone()
                 if not row:
                     return jsonify({'error': 'Listing not found'}), 404
-                remaining_volume, is_available = row
-                if not is_available or remaining_volume is None or remaining_volume < requested_volume:
+                remaining_space, is_available = row
+                if not is_available or remaining_space is None or remaining_space < requested_volume:
                     return jsonify({'error': 'Not enough space available'}), 400
                 # Insert reservation request
                 cur.execute("""
@@ -1737,31 +1737,31 @@ def update_reservation_request(request_id):
                     conn.commit()
                     return jsonify({'success': True}), 200
                 # Check ownership (lender actions)
-                cur.execute("SELECT owner_id, remaining_volume FROM storage_listings WHERE listing_id = %s", (listing_id,))
+                cur.execute("SELECT owner_id, remaining_space FROM storage_listings WHERE listing_id = %s", (listing_id,))
                 row = cur.fetchone()
                 if not row or row[0] != owner_id:
                     return jsonify({'error': 'Not authorized'}), 403
-                remaining_volume = row[1]
+                remaining_space = row[1]
                 # Approve full
                 if new_status == 'approved_full':
-                    if remaining_volume < requested_volume:
+                    if remaining_space < requested_volume:
                         return jsonify({'error': 'Not enough space for full approval'}), 400
                     cur.execute("""
                         UPDATE reservation_requests SET status = %s, approved_volume = %s, updated_at = %s WHERE request_id = %s
                     """, ('approved_full', requested_volume, datetime.utcnow(), request_id))
-                    new_remaining = remaining_volume - requested_volume
+                    new_remaining = remaining_space - requested_volume
                     is_available = new_remaining > 0
-                    cur.execute("UPDATE storage_listings SET remaining_volume = %s, is_available = %s WHERE listing_id = %s", (new_remaining, is_available, listing_id))
+                    cur.execute("UPDATE storage_listings SET remaining_space = %s, is_available = %s WHERE listing_id = %s", (new_remaining, is_available, listing_id))
                 # Approve partial
                 elif new_status == 'approved_partial':
-                    if not approved_volume or float(approved_volume) <= 0 or float(approved_volume) > remaining_volume:
+                    if not approved_volume or float(approved_volume) <= 0 or float(approved_volume) > remaining_space:
                         return jsonify({'error': 'Invalid approved volume'}), 400
                     cur.execute("""
                         UPDATE reservation_requests SET status = %s, approved_volume = %s, updated_at = %s WHERE request_id = %s
                     """, ('approved_partial', approved_volume, datetime.utcnow(), request_id))
-                    new_remaining = remaining_volume - float(approved_volume)
+                    new_remaining = remaining_space - float(approved_volume)
                     is_available = new_remaining > 0
-                    cur.execute("UPDATE storage_listings SET remaining_volume = %s, is_available = %s WHERE listing_id = %s", (new_remaining, is_available, listing_id))
+                    cur.execute("UPDATE storage_listings SET remaining_space = %s, is_available = %s WHERE listing_id = %s", (new_remaining, is_available, listing_id))
                 # Reject/cancel/expire (by lender)
                 else:
                     cur.execute("""
@@ -1941,7 +1941,7 @@ def get_lender_reviews(lender_username):
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute("""
             SELECT lr.rating, lr.review_text, lr.created_at, lr.renter_username,
-                   sl.listing_id, sl.location
+                   sl.listing_id, sl.title
             FROM lender_reviews lr
             JOIN reservation_requests rr ON lr.request_id = rr.request_id
             JOIN storage_listings sl ON rr.listing_id = sl.listing_id

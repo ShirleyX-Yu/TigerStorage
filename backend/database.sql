@@ -3,10 +3,10 @@
 -- Storage Listings Table
 CREATE TABLE IF NOT EXISTS storage_listings (
     listing_id SERIAL PRIMARY KEY,
-    location VARCHAR(255) NOT NULL,
+    title VARCHAR(255) NOT NULL,
     address VARCHAR(255),
     cost NUMERIC,
-    cubic_ft INTEGER,
+    sq_ft INTEGER,
     description TEXT,
     latitude FLOAT,
     longitude FLOAT,
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS storage_listings (
     image_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     owner_id VARCHAR(255),
-    remaining_volume INTEGER,
+    remaining_space INTEGER,
     is_available BOOLEAN DEFAULT TRUE,
     hall_name VARCHAR(255)
 );
@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS interested_listings (
     listing_id INTEGER REFERENCES storage_listings(listing_id) ON DELETE CASCADE,
     lender_username VARCHAR(255) NOT NULL,
     renter_username VARCHAR(255) NOT NULL,
+    square_feet INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(50) DEFAULT 'pending',
     UNIQUE(listing_id, renter_username)
@@ -36,8 +37,8 @@ CREATE TABLE IF NOT EXISTS reservation_requests (
     request_id SERIAL PRIMARY KEY,
     listing_id INTEGER REFERENCES storage_listings(listing_id) ON DELETE CASCADE,
     renter_username VARCHAR(255) NOT NULL,
-    requested_volume INTEGER NOT NULL,
-    approved_volume INTEGER,
+    requested_space INTEGER NOT NULL,
+    approved_space INTEGER,
     status VARCHAR(50) DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP
