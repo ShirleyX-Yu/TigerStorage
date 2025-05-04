@@ -52,11 +52,12 @@ const styles = {
   },
   textarea: {
     width: '100%',
-    padding: '9px 12px',
-    border: '1px solid #ccc',
-    borderRadius: 6,
-    fontSize: 16,
-    minHeight: 60
+    padding: '0.75rem',
+    border: '1px solid #ddd',
+    borderRadius: '4px',
+    fontSize: '1rem',
+    minHeight: '100px',
+    fontFamily: 'inherit',
   },
   error: {
     color: '#b00020',
