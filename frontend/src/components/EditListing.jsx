@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
+import { HALL_COORDINATES } from '../utils/hallCoordinates';
 
 const EditListing = () => {
   const navigate = useNavigate();
@@ -143,17 +144,13 @@ const EditListing = () => {
       setGeocodingStatus('Please enter an address');
       return;
     }
-    
     // Provide guidance based on location type
     if (locationType === 'on-campus' && !tempAddress.includes('Hall')) {
       setGeocodingStatus('Tip: For on-campus locations, use format "[Hall Name] Hall"');
     }
-    
     try {
       setGeocodingStatus('Geocoding address...');
-      
       let searchAddress;
-      
       if (locationType === 'on-campus') {
         // For on-campus locations, use the residential college format
         searchAddress = tempAddress.includes('Princeton, NJ 08544') ? tempAddress : `${tempAddress}, Princeton, NJ 08544`;
@@ -161,24 +158,28 @@ const EditListing = () => {
         // For off-campus, use the full address as provided
         searchAddress = tempAddress;
       }
-      
-      console.log('Search address for geocoding:', searchAddress);
-      
-      // Using the Nominatim OpenStreetMap API (free and doesn't require API key)
+      // Check manual mapping first for on-campus
+      if (locationType === 'on-campus' && HALL_COORDINATES[tempAddress]) {
+        const { lat, lng } = HALL_COORDINATES[tempAddress];
+        const updatedFormData = {
+          ...formData,
+          address: tempAddress,
+          latitude: lat,
+          longitude: lng
+        };
+        setFormData(updatedFormData);
+        setGeocodingStatus('Coordinates found from hall mapping!');
+        return;
+      }
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
       );
-      
       if (!response.ok) {
         throw new Error('Failed to fetch coordinates');
       }
-      
       const data = await response.json();
-      console.log('Geocoding response:', data);
-      
       if (data.length > 0) {
         const { lat, lon } = data[0];
-        
         // Update form data with the coordinates and address
         const updatedFormData = {
           ...formData,
@@ -186,15 +187,23 @@ const EditListing = () => {
           latitude: lat,
           longitude: lon
         };
-        console.log('Updating form data after geocoding:', updatedFormData);
         setFormData(updatedFormData);
-        
         setGeocodingStatus('Address found!');
+      } else if (locationType === 'on-campus' && HALL_COORDINATES[tempAddress]) {
+        // Fallback to manual mapping if not found by API
+        const { lat, lng } = HALL_COORDINATES[tempAddress];
+        const updatedFormData = {
+          ...formData,
+          address: tempAddress,
+          latitude: lat,
+          longitude: lng
+        };
+        setFormData(updatedFormData);
+        setGeocodingStatus('Coordinates found from hall mapping!');
       } else {
         setGeocodingStatus('Address not found. Try being more specific.');
       }
     } catch (err) {
-      console.error('Geocoding error:', err);
       setGeocodingStatus('Error looking up address. Please try again.');
     }
   };

@@ -6,6 +6,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
+import { HALL_COORDINATES } from '../utils/hallCoordinates';
 
 const PRINCETON_HALLS = [
   '1901 Hall', '1903 Hall', '1915 Hall', '1937 Hall', '1939 Hall', '1967 Hall', '1976 Hall', 'Addy Hall',
@@ -200,6 +201,18 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       return;
     }
     setGeocodingStatus('Looking up coordinates...');
+    // Check manual mapping first for on-campus
+    if (locationType === 'on-campus' && HALL_COORDINATES[addressToGeocode]) {
+      const { lat, lng } = HALL_COORDINATES[addressToGeocode];
+      setFormData(prev => ({
+        ...prev,
+        address: addressToGeocode,
+        latitude: lat,
+        longitude: lng
+      }));
+      setGeocodingStatus('Coordinates found from hall mapping!');
+      return;
+    }
     try {
       const searchAddress =
         locationType === 'on-campus'
@@ -219,6 +232,16 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         });
         setShowAddressConfirm(true);
         setGeocodingStatus('');
+      } else if (locationType === 'on-campus' && HALL_COORDINATES[addressToGeocode]) {
+        // Fallback to manual mapping if not found by API
+        const { lat, lng } = HALL_COORDINATES[addressToGeocode];
+        setFormData(prev => ({
+          ...prev,
+          address: addressToGeocode,
+          latitude: lat,
+          longitude: lng
+        }));
+        setGeocodingStatus('Coordinates found from hall mapping!');
       } else {
         setGeocodingStatus('Address not found. Try being more specific.');
       }
