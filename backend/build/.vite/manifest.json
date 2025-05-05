@@ -1,50 +1,23 @@
 {
-  "_axios-DHQ92rat.js": {
-    "file": "assets/axios-DHQ92rat.js",
+  "_axios-CNEYavaU.js": {
+    "file": "assets/axios-CNEYavaU.js",
     "name": "axios"
   },
-  "_axios-legacy-CTKXhbhI.js": {
-    "file": "assets/axios-legacy-CTKXhbhI.js",
-    "name": "axios"
-  },
-  "_vendor-DdUScfsp.js": {
-    "file": "assets/vendor-DdUScfsp.js",
+  "_vendor-DXz791ki.js": {
+    "file": "assets/vendor-DXz791ki.js",
     "name": "vendor"
-  },
-  "_vendor-legacy-CgkrBcCA.js": {
-    "file": "assets/vendor-legacy-CgkrBcCA.js",
-    "name": "vendor"
-  },
-  "index-legacy.html": {
-    "file": "assets/index-legacy-CzNVz_Zb.js",
-    "name": "index",
-    "src": "index-legacy.html",
-    "isEntry": true,
-    "imports": [
-      "_vendor-legacy-CgkrBcCA.js",
-      "_axios-legacy-CTKXhbhI.js"
-    ],
-    "assets": [
-      "assets/tiger_storage_logo-BD_Wiy9c.png",
-      "assets/cindyt-6k8CiyuY.jpeg",
-      "assets/diya-BjqEO1eH.jpeg",
-      "assets/shirley-BZIGhFV1.jpeg",
-      "assets/nassau_hall-sln4gqmc.jpg",
-      "assets/boxes-Ca7zy5aF.jpg",
-      "assets/dorm_image-V6iSIcxt.jpg"
-    ]
   },
   "index.html": {
-    "file": "assets/index-BgoPqh-r.js",
+    "file": "assets/index-BH_46Zkr.js",
     "name": "index",
     "src": "index.html",
     "isEntry": true,
     "imports": [
-      "_vendor-DdUScfsp.js",
-      "_axios-DHQ92rat.js"
+      "_vendor-DXz791ki.js",
+      "_axios-CNEYavaU.js"
     ],
     "css": [
-      "assets/index-CwJE83st.css"
+      "assets/index-CnJC1MZ9.css"
     ],
     "assets": [
       "assets/tiger_storage_logo-BD_Wiy9c.png",
@@ -83,11 +56,5 @@
   "src/assets/tiger_storage_logo.png": {
     "file": "assets/tiger_storage_logo-BD_Wiy9c.png",
     "src": "src/assets/tiger_storage_logo.png"
-  },
-  "vite/legacy-polyfills-legacy": {
-    "file": "assets/polyfills-legacy-Dqcax0s5.js",
-    "name": "polyfills",
-    "src": "vite/legacy-polyfills-legacy",
-    "isEntry": true
   }
 }
