@@ -27,7 +27,7 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: 'dist',
+    outDir: '../backend/build',
     emptyOutDir: true,
     manifest: true,
     rollupOptions: {

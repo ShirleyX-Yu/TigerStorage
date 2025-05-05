@@ -13,6 +13,7 @@ from datetime import datetime, date
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+from flask_cas import CAS, login_required
 
 
 
@@ -72,6 +73,23 @@ app.add_url_rule(
     view_func=lambda filename: send_from_directory("build", filename),
 )
 
+# Serve static files from the build directory
+@app.route('/build/<path:filename>')
+def serve_static(filename):
+    return send_from_directory('build', filename)
+
+# Catch-all route for React Router (serves index.html for any unknown route)
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all(path):
+    # If the path is a file in the build directory, serve it
+    import os
+    file_path = os.path.join('build', path)
+    if path != "" and os.path.exists(file_path):
+        return send_from_directory('build', path)
+    # Otherwise, serve index.html (for React Router)
+    return send_from_directory('build', 'index.html')
+
 @app.route('/api/debug-session')
 def debug_session():
     """Debug endpoint to check session state and cookies"""
@@ -121,9 +139,20 @@ def index():
         auth_status=auth_status
     )
 
+# Initialize flask-cas
+cas = CAS(app)
+app.config['CAS_SERVER'] = 'https://fed.princeton.edu/cas'
+app.config['CAS_AFTER_LOGIN'] = 'catch_all'  # or your main route function name
+
 @app.route('/map')
+@login_required
 def map():
-    auth.authenticate()  # This will redirect to CAS if not authenticated
+    # Assign user type if not already set
+    if 'user_type' not in session:
+        if cas.username == 'cs-tigerstorage':
+            session['user_type'] = 'admin'
+        else:
+            session['user_type'] = 'lender'
     asset_path = get_asset_path("main")
     return render_template(
         "index.html",
@@ -133,8 +162,14 @@ def map():
     )
 
 @app.route('/welcome')
+@login_required
 def welcome():
-    auth.authenticate()  # This will redirect to CAS if not authenticated
+    # Assign user type if not already set
+    if 'user_type' not in session:
+        if cas.username == 'cs-tigerstorage':
+            session['user_type'] = 'admin'
+        else:
+            session['user_type'] = 'lender'
     asset_path = get_asset_path("main")
     return render_template(
         "index.html",

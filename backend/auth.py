@@ -1,3 +1,7 @@
+# CAS authentication is now handled by flask-cas in app.py
+# This file previously contained custom CAS logic, which has been removed.
+# Keep any non-CAS utility functions here if needed.
+
 import urllib.request
 import urllib.parse
 import re
