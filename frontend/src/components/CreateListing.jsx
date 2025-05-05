@@ -8,6 +8,14 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import { HALL_COORDINATES } from '../utils/hallCoordinates';
 
+const US_STATES = [
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+];
+
 const PRINCETON_HALLS = [
   '1901 Hall', '1903 Hall', 'Addy Hall',
   'Blair Hall', 'Bloomberg Hall', 'Brown Hall', 'Buyers Hall', 'Campbell Hall',
@@ -382,32 +390,108 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                 <option value="off-campus">Off Campus</option>
               </select>
             </div>
-            <div>
+            {locationType === 'on-campus' ? (
+              <div>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
+                  <select
+                    style={styles.input}
+                    value={tempAddress}
+                    onChange={e => {
+                      setTempAddress(e.target.value);
+                      setFormData(prev => ({
+                        ...prev,
+                        hall_name: e.target.value
+                      }));
+                      if (e.target.value) {
+                        geocodeAddress(e.target.value);
+                      }
+                    }}
+                    required
+                  >
+                    <option value="">Select a hall...</option>
+                    {PRINCETON_HALLS.map(hall => (
+                      <option key={hall} value={hall}>{hall}</option>
+                    ))}
+                  </select>
+                  {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
+                </div>
+              </div>
+            ) : (
               <div style={styles.formGroup}>
-                <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
-                <select
+                <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
+                <input
                   style={styles.input}
-                  value={tempAddress}
-                  onChange={e => {
-                    setTempAddress(e.target.value);
+                  type="text"
+                  value={formData.street_address || ''}
+                  onChange={(e) => {
                     setFormData(prev => ({
                       ...prev,
-                      hall_name: e.target.value
+                      street_address: e.target.value
                     }));
-                    if (e.target.value) {
-                      geocodeAddress(e.target.value);
-                    }
                   }}
+                  placeholder="Enter street address"
                   required
+                />
+                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={styles.label}>City <span style={{color: '#b00020'}}>*</span></label>
+                    <input
+                      style={styles.input}
+                      type="text"
+                      value={formData.city || ''}
+                      onChange={(e) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          city: e.target.value
+                        }));
+                      }}
+                      placeholder="Enter city"
+                      required
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={styles.label}>State <span style={{color: '#b00020'}}>*</span></label>
+                    <select
+                      style={styles.input}
+                      value={formData.state || ''}
+                      onChange={(e) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          state: e.target.value
+                        }));
+                      }}
+                      required
+                    >
+                      <option value="">Select state...</option>
+                      {US_STATES.map(state => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ marginTop: '10px' }}>
+                  <label style={styles.label}>Country</label>
+                  <input
+                    style={styles.input}
+                    type="text"
+                    value="USA"
+                    disabled
+                  />
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    const fullAddress = `${formData.street_address}, ${formData.city}, ${formData.state}, USA`;
+                    geocodeAddress(fullAddress);
+                  }}
+                  style={styles.geocodeButton}
                 >
-                  <option value="">Select a hall...</option>
-                  {PRINCETON_HALLS.map(hall => (
-                    <option key={hall} value={hall}>{hall}</option>
-                  ))}
-                </select>
-                {geocodingStatus && <div style={styles.geocodingStatus || styles.status}>{geocodingStatus}</div>}
+                  Geocode Address
+                </button>
+                {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
               </div>
-            </div>
+            )}
             <div>
               <label style={styles.label}>Cost per Month ($) <span style={{color: '#b00020'}}>*</span></label>
               <input
