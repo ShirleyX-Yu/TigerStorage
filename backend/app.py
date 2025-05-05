@@ -1,10 +1,10 @@
 from flask import Flask, jsonify, send_from_directory, session, redirect, url_for, request, render_template, abort, after_this_request
-from config.config import Config
+from backend.config.config import Config
 import dotenv
 import os
 import psycopg2
 import argparse
-import auth
+import backend.auth as auth
 import json
 from werkzeug.utils import secure_filename
 from decimal import Decimal
