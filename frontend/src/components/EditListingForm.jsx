@@ -309,7 +309,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           setShowAddressConfirm(true);
           setGeocodingStatus('');
         } else {
-          setGeocodingStatus('Address not found. Try being more specific.');
+          setGeocodingStatus('');
         }
       } catch {
         setGeocodingStatus('Error looking up address. Please try again.');

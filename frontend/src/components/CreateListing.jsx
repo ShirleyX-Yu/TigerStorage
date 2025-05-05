@@ -245,7 +245,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
           setShowAddressConfirm(true);
           setGeocodingStatus('');
         } else {
-          setGeocodingStatus('Address not found. Try being more specific.');
+          setGeocodingStatus('');
         }
       } catch {
         setGeocodingStatus('Error looking up address. Please try again.');
