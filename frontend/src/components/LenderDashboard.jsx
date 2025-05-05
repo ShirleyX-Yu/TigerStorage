@@ -106,25 +106,20 @@ const LenderDashboard = ({ username }) => {
         }
       });
 
-      if (!response.ok) {
-        throw new Error(`Unable to load your listings (${response.status}): ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const data = response.data;
 
       const formattedListings = await Promise.all(data.map(async listing => {
-        const rentersResponse = await axiosInstance.get(`/api/listings/${listing.id}/interested-renters`, {
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache',
-            'X-User-Type': userType,
-            'X-Username': storedUsername
-          }
-        });
-
         let interestedRenters = [];
-        if (rentersResponse.ok) {
-          const rentersData = await rentersResponse.json();
+        try {
+          const rentersResponse = await axiosInstance.get(`/api/listings/${listing.id}/interested-renters`, {
+            headers: {
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache',
+              'X-User-Type': userType,
+              'X-Username': storedUsername
+            }
+          });
+          const rentersData = rentersResponse.data;
           interestedRenters = rentersData.map(renter => ({
             id: renter.id,
             name: renter.username,
@@ -132,6 +127,8 @@ const LenderDashboard = ({ username }) => {
             dateInterested: renter.dateInterested,
             status: renter.status
           }));
+        } catch (e) {
+          // ignore
         }
 
         return {
@@ -190,10 +187,8 @@ const LenderDashboard = ({ username }) => {
           'X-Username': storedUsername
         }
       });
-      if (resp.ok) {
-        const data = await resp.json();
-        setReservationRequests(r => ({ ...r, [listingId]: data }));
-      }
+      const data = resp.data;
+      setReservationRequests(r => ({ ...r, [listingId]: data }));
     } catch (err) {
       // ignore
     } finally {
@@ -225,10 +220,7 @@ const LenderDashboard = ({ username }) => {
           'X-Username': storedUsername
         }
       });
-      if (!resp.ok) {
-        const errData = await resp.json().catch(() => ({}));
-        throw new Error(errData.error || 'Failed to update request');
-      }
+      // If no error thrown, success
       fetchReservationRequests(listingId);
       fetchListings();
       // Set success message
@@ -272,10 +264,7 @@ const LenderDashboard = ({ username }) => {
         }
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to delete listing (${response.status}): ${response.statusText}`);
-      }
-
+      // If no error thrown, success
       setListedSpaces(prev => prev.filter(space => space.id !== listingId));
       setDeleteSuccess(true);
       setTimeout(() => setDeleteSuccess(false), 3000);
@@ -294,10 +283,8 @@ const LenderDashboard = ({ username }) => {
       setReviewsLoading(true);
       try {
         const resp = await axiosInstance.get('/api/lender-reviews/' + username);
-        if (resp.ok) {
-          const data = await resp.json();
-          setLenderReviews(data);
-        }
+        const data = resp.data;
+        setLenderReviews(data);
       } catch (err) {
         setLenderReviews([]);
       } finally {

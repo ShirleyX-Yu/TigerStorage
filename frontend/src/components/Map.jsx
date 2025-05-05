@@ -344,13 +344,11 @@ const Map = () => {
 
       console.log('Listings response status:', response.status);
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error fetching listings:', errorText);
-        throw new Error(`Failed to fetch listings: ${response.status} ${response.statusText} - ${errorText}`);
+      // Axios does not have .ok/.text()/.json(), use response.data
+      const data = response.data;
+      if (!Array.isArray(data)) {
+        throw new Error('Unexpected data format from API');
       }
-
-      const data = await response.json();
       console.log(`Received ${data.length} listings:`, data);
       
       // Validate coordinates
