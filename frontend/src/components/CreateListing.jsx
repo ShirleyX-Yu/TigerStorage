@@ -9,6 +9,14 @@ import Button from '@mui/material/Button';
 import { HALL_COORDINATES } from '../utils/hallCoordinates';
 import { axiosInstance } from '../utils/auth';
 
+const US_STATES = [
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+];
+
 const PRINCETON_HALLS = [
   '1901 Hall', '1903 Hall', 'Addy Hall',
   'Blair Hall', 'Bloomberg Hall', 'Brown Hall', 'Buyers Hall', 'Campbell Hall',
@@ -101,14 +109,15 @@ const styles = {
     fontSize: '1rem',
   },
   geocodeButton: {
-    padding: '10px 15px',
-    backgroundColor: '#FF8F00',
+    backgroundColor: '#f57c00',
     color: 'white',
     border: 'none',
-    borderRadius: '4px',
+    borderRadius: 6,
+    padding: '10px 0',
+    fontSize: 17,
+    fontWeight: 600,
     cursor: 'pointer',
-    fontSize: '0.875rem',
-    fontWeight: 'bold',
+    width: '100%',
   },
   geocodingStatus: {
     marginTop: '5px',
@@ -165,6 +174,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const [locationType, setLocationType] = useState('on-campus');
   const [showAddressConfirm, setShowAddressConfirm] = useState(false);
   const [pendingAddress, setPendingAddress] = useState(null);
+  const [addressNotFound, setAddressNotFound] = useState(false);
 
   // Scroll to error when it appears
   useEffect(() => {
@@ -194,59 +204,62 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     setGeocodingStatus('');
   };
 
-  const geocodeAddress = async (addressOverride) => {
-    const addressToGeocode = addressOverride || tempAddress;
-    if (!addressToGeocode.trim()) {
-      setGeocodingStatus('Please enter an address');
-      return;
-    }
-    setGeocodingStatus('Looking up coordinates...');
-    // Check manual mapping first for on-campus
-    if (locationType === 'on-campus' && HALL_COORDINATES[addressToGeocode]) {
-      const { lat, lng } = HALL_COORDINATES[addressToGeocode];
-      setFormData(prev => ({
-        ...prev,
-        address: addressToGeocode,
-        latitude: lat,
-        longitude: lng
-      }));
-      setGeocodingStatus('Coordinates found from hall mapping!');
-      return;
-    }
-    try {
-      const searchAddress =
-        locationType === 'on-campus'
-          ? `${addressToGeocode}, Princeton, NJ 08544`
-          : addressToGeocode;
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
-      );
-      if (!response.ok) throw new Error('Failed to fetch coordinates');
-      const data = await response.json();
-      if (data.length > 0) {
-        const { lat, lon, display_name } = data[0];
-        setPendingAddress({
-          address: display_name,
-          latitude: lat,
-          longitude: lon
-        });
-        setShowAddressConfirm(true);
-        setGeocodingStatus('');
-      } else if (locationType === 'on-campus' && HALL_COORDINATES[addressToGeocode]) {
-        // Fallback to manual mapping if not found by API
-        const { lat, lng } = HALL_COORDINATES[addressToGeocode];
+  const geocodeAddress = async (addressComponents) => {
+    if (locationType === 'on-campus') {
+      if (!tempAddress.trim()) {
+        setGeocodingStatus('Please enter an address');
+        setAddressNotFound(false);
+        return;
+      }
+      setGeocodingStatus('Looking up coordinates...');
+      setAddressNotFound(false);
+      // Check manual mapping first for on-campus
+      if (HALL_COORDINATES[tempAddress]) {
+        const { lat, lng } = HALL_COORDINATES[tempAddress];
         setFormData(prev => ({
           ...prev,
-          address: addressToGeocode,
+          address: tempAddress,
           latitude: lat,
           longitude: lng
         }));
         setGeocodingStatus('Coordinates found from hall mapping!');
-      } else {
-        setGeocodingStatus('Address not found. Try being more specific.');
+        setAddressNotFound(false);
+        return;
       }
-    } catch {
-      setGeocodingStatus('Error looking up address. Please try again.');
+    } else {
+      // For off-campus addresses
+      if (!addressComponents.street || !addressComponents.city || !addressComponents.state) {
+        setGeocodingStatus('Please fill in all address fields');
+        setAddressNotFound(false);
+        return;
+      }
+      setGeocodingStatus('Looking up coordinates...');
+      setAddressNotFound(false);
+      try {
+        const searchAddress = `${addressComponents.street}, ${addressComponents.city}, ${addressComponents.state}, ${addressComponents.country}`;
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
+        );
+        if (!response.ok) throw new Error('Failed to fetch coordinates');
+        const data = await response.json();
+        if (data.length > 0) {
+          const { lat, lon, display_name } = data[0];
+          setPendingAddress({
+            address: display_name,
+            latitude: lat,
+            longitude: lon
+          });
+          setShowAddressConfirm(true);
+          setGeocodingStatus('');
+          setAddressNotFound(false);
+        } else {
+          setGeocodingStatus('');
+          setAddressNotFound(true);
+        }
+      } catch {
+        setGeocodingStatus('');
+        setAddressNotFound(true);
+      }
     }
   };
 
@@ -370,37 +383,126 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                 value={locationType}
                 onChange={handleLocationTypeChange}
                 required
-                disabled
               >
                 <option value="on-campus">On Campus</option>
+                <option value="off-campus">Off Campus</option>
               </select>
             </div>
-            <div>
+            {locationType === 'on-campus' ? (
+              <div>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
+                  <select
+                    style={styles.input}
+                    value={tempAddress}
+                    onChange={e => {
+                      setTempAddress(e.target.value);
+                      setFormData(prev => ({
+                        ...prev,
+                        hall_name: e.target.value
+                      }));
+                      if (e.target.value) {
+                        geocodeAddress({});
+                      }
+                    }}
+                    required
+                  >
+                    <option value="">Select a hall...</option>
+                    {PRINCETON_HALLS.map(hall => (
+                      <option key={hall} value={hall}>{hall}</option>
+                    ))}
+                  </select>
+                  {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
+                </div>
+              </div>
+            ) : (
               <div style={styles.formGroup}>
-                <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
-                <select
+                <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
+                {addressNotFound && (
+                  <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
+                    No location matching address found. Check values entered.
+                  </div>
+                )}
+                <input
                   style={styles.input}
-                  value={tempAddress}
-                  onChange={e => {
-                    setTempAddress(e.target.value);
+                  type="text"
+                  value={formData.street_address || ''}
+                  onChange={(e) => {
                     setFormData(prev => ({
                       ...prev,
-                      hall_name: e.target.value
+                      street_address: e.target.value
                     }));
-                    if (e.target.value) {
-                      geocodeAddress(e.target.value);
-                    }
+                    if (addressNotFound) setAddressNotFound(false);
                   }}
+                  placeholder="Enter street address"
                   required
+                />
+                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={styles.label}>City <span style={{color: '#b00020'}}>*</span></label>
+                    <input
+                      style={styles.input}
+                      type="text"
+                      value={formData.city || ''}
+                      onChange={(e) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          city: e.target.value
+                        }));
+                        if (addressNotFound) setAddressNotFound(false);
+                      }}
+                      placeholder="Enter city"
+                      required
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={styles.label}>State <span style={{color: '#b00020'}}>*</span></label>
+                    <select
+                      style={styles.input}
+                      value={formData.state || ''}
+                      onChange={(e) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          state: e.target.value
+                        }));
+                        if (addressNotFound) setAddressNotFound(false);
+                      }}
+                      required
+                    >
+                      <option value="">Select state...</option>
+                      {US_STATES.map(state => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ marginTop: '10px' }}>
+                  <label style={styles.label}>Country</label>
+                  <input
+                    style={styles.input}
+                    type="text"
+                    value="USA"
+                    disabled
+                  />
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    const addressComponents = {
+                      street: formData.street_address,
+                      city: formData.city,
+                      state: formData.state,
+                      country: 'USA'
+                    };
+                    geocodeAddress(addressComponents);
+                  }}
+                  style={{...styles.geocodeButton, marginTop: '20px'}}
                 >
-                  <option value="">Select a hall...</option>
-                  {PRINCETON_HALLS.map(hall => (
-                    <option key={hall} value={hall}>{hall}</option>
-                  ))}
-                </select>
-                {geocodingStatus && <div style={styles.geocodingStatus || styles.status}>{geocodingStatus}</div>}
+                  Locate Address
+                </button>
+                {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
               </div>
-            </div>
+            )}
             <div>
               <label style={styles.label}>Cost per Month ($) <span style={{color: '#b00020'}}>*</span></label>
               <input
@@ -481,7 +583,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                 />
               )}
             </div>
-            <button type="submit" style={styles.submitButton} disabled={uploading}>
+            <button type="submit" style={{...styles.submitButton, marginTop: '20px'}} disabled={uploading}>
               {uploading ? 'Uploading...' : 'Create Listing'}
             </button>
         </form>
