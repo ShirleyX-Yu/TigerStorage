@@ -1989,6 +1989,15 @@ def get_lender_reviews(lender_username):
         reviews = cur.fetchall()
     return jsonify(reviews)
 
+@app.route('/debug-list-assets')
+def debug_list_assets():
+    import os
+    asset_dir = os.path.join(os.path.dirname(__file__), 'build', 'assets')
+    if not os.path.exists(asset_dir):
+        return "No assets directory found!", 404
+    files = os.listdir(asset_dir)
+    return "<br>".join(files)
+
 if __name__ == "__main__":
     args = parser.parse_args()
     app.debug = not args.production
