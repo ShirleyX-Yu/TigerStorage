@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser(description="Run Flask app")
 parser.add_argument(
     "--production", action="store_true", help="Run in production mode (disables debug)"
 )
-
+ 
 app = Flask(
     __name__,
     template_folder=os.path.abspath("templates"),
@@ -30,7 +30,7 @@ app = Flask(
 )
 
 # Register CAS authentication routes
-backend.auth.init_auth(app)
+auth.init_auth(app)
 
 # --- SESSION COOKIE CONFIGURATION ---
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
