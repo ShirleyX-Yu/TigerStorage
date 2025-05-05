@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, send_from_directory, session, redirect, url_for, request, render_template
-from config import Config
+from backend.config import Config
 import dotenv
 import os
 import psycopg2
