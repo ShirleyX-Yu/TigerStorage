@@ -288,7 +288,14 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       setGeocodingStatus('Looking up coordinates...');
       setAddressNotFound(false);
       try {
-        const searchAddress = `${addressComponents.street}, ${addressComponents.city}, ${addressComponents.state}, ${addressComponents.country}`;
+        // Add ZIP code for Princeton addresses
+        let zip = '';
+        if (addressComponents.city && addressComponents.city.trim().toLowerCase() === 'princeton') {
+          zip = '08544';
+        }
+        const searchAddress = zip
+          ? `${addressComponents.street}, ${addressComponents.city}, ${addressComponents.state} ${zip}, ${addressComponents.country}`
+          : `${addressComponents.street}, ${addressComponents.city}, ${addressComponents.state}, ${addressComponents.country}`;
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
         );
