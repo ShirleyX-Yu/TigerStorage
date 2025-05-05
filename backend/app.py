@@ -1997,7 +1997,18 @@ def handle_csrf_error(e):
 # Add CSP header to all responses for XSS protection
 @app.after_request
 def set_csp_headers(response):
-    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: https://res.cloudinary.com; "  # Allow Cloudinary images
+        "font-src 'self' data:; "
+        "connect-src 'self' https://res.cloudinary.com; "    # Allow Cloudinary API if needed
+        "object-src 'none'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self';"
+    )
     return response
 
 if __name__ == "__main__":

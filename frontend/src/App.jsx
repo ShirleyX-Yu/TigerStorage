@@ -344,6 +344,14 @@ const AdminProtectedRoute = ({ component: Component }) => {
 };
 
 function App() {
+  // Move redirectPath logic from inline script to here for CSP compliance
+  useEffect(() => {
+    const redirectPath = sessionStorage.getItem('redirectPath');
+    if (redirectPath && redirectPath !== window.location.pathname) {
+      sessionStorage.removeItem('redirectPath');
+      window.history.replaceState(null, null, redirectPath);
+    }
+  }, []);
   return (
     <Router>
       <div className="App">
