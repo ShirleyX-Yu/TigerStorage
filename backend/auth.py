@@ -9,6 +9,7 @@ import json
 import flask
 import ssl
 import os
+from urllib.parse import urlparse
 
 _CAS_URL = "https://fed.princeton.edu/cas/"
 
@@ -119,6 +120,11 @@ def authenticate():
 def is_authenticated():
     return "user_info" in flask.session
 
+def is_safe_redirect_url(target):
+    ref_url = urlparse(flask.request.host_url)
+    test_url = urlparse(target)
+    return not test_url.netloc or test_url.netloc == ref_url.netloc
+
 def init_auth(app):
     @app.route("/api/logoutcas", methods=["GET"])
     def logoutcas():
@@ -142,9 +148,11 @@ def init_auth(app):
     def logout():
         """Logout route that clears the session and redirects to CAS logout"""
         flask.session.clear()
-        # Always use backend URL for service
         backend_url = flask.request.url_root.rstrip('/')
-        cas_logout_url = f"{_CAS_URL}logout?service={backend_url}"
+        redirect_uri = flask.request.args.get('redirectUri', '/')
+        if not is_safe_redirect_url(redirect_uri):
+            redirect_uri = '/'
+        cas_logout_url = f"{_CAS_URL}logout?service={backend_url}{redirect_uri}"
         return flask.redirect(cas_logout_url)
 
     @app.route('/api/auth/status', methods=['GET', 'OPTIONS'])
@@ -169,7 +177,8 @@ def init_auth(app):
             flask.session['user_type'] = user_type
             flask.session.permanent = True
         if is_authenticated():
-            # Always redirect to backend root
-            backend_url = flask.request.url_root.rstrip('/')
-            return flask.redirect(backend_url)
+            redirect_uri = flask.request.args.get('redirectUri', '/')
+            if not is_safe_redirect_url(redirect_uri):
+                redirect_uri = '/'
+            return flask.redirect(redirect_uri)
         return authenticate()
