@@ -573,7 +573,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
               />
             </div>
             <div>
-              <label style={styles.label}>Square Feet <span style={{color: '#b00020'}}>*</span></label>
+              <label style={styles.label}>Square Feet (ft^2) <span style={{color: '#b00020'}}>*</span></label>
               <input
                 style={styles.input}
                 type="number"
