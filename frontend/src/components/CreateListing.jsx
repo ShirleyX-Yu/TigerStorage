@@ -202,59 +202,54 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     setGeocodingStatus('');
   };
 
-  const geocodeAddress = async (addressOverride) => {
-    const addressToGeocode = addressOverride || tempAddress;
-    if (!addressToGeocode.trim()) {
-      setGeocodingStatus('Please enter an address');
-      return;
-    }
-    setGeocodingStatus('Looking up coordinates...');
-    // Check manual mapping first for on-campus
-    if (locationType === 'on-campus' && HALL_COORDINATES[addressToGeocode]) {
-      const { lat, lng } = HALL_COORDINATES[addressToGeocode];
-      setFormData(prev => ({
-        ...prev,
-        address: addressToGeocode,
-        latitude: lat,
-        longitude: lng
-      }));
-      setGeocodingStatus('Coordinates found from hall mapping!');
-      return;
-    }
-    try {
-      const searchAddress =
-        locationType === 'on-campus'
-          ? `${addressToGeocode}, Princeton, NJ 08544`
-          : addressToGeocode;
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
-      );
-      if (!response.ok) throw new Error('Failed to fetch coordinates');
-      const data = await response.json();
-      if (data.length > 0) {
-        const { lat, lon, display_name } = data[0];
-        setPendingAddress({
-          address: display_name,
-          latitude: lat,
-          longitude: lon
-        });
-        setShowAddressConfirm(true);
-        setGeocodingStatus('');
-      } else if (locationType === 'on-campus' && HALL_COORDINATES[addressToGeocode]) {
-        // Fallback to manual mapping if not found by API
-        const { lat, lng } = HALL_COORDINATES[addressToGeocode];
+  const geocodeAddress = async (addressComponents) => {
+    if (locationType === 'on-campus') {
+      if (!tempAddress.trim()) {
+        setGeocodingStatus('Please enter an address');
+        return;
+      }
+      setGeocodingStatus('Looking up coordinates...');
+      // Check manual mapping first for on-campus
+      if (HALL_COORDINATES[tempAddress]) {
+        const { lat, lng } = HALL_COORDINATES[tempAddress];
         setFormData(prev => ({
           ...prev,
-          address: addressToGeocode,
+          address: tempAddress,
           latitude: lat,
           longitude: lng
         }));
         setGeocodingStatus('Coordinates found from hall mapping!');
-      } else {
-        setGeocodingStatus('Address not found. Try being more specific.');
+        return;
       }
-    } catch {
-      setGeocodingStatus('Error looking up address. Please try again.');
+    } else {
+      // For off-campus addresses
+      if (!addressComponents.street || !addressComponents.city || !addressComponents.state) {
+        setGeocodingStatus('Please fill in all address fields');
+        return;
+      }
+      setGeocodingStatus('Looking up coordinates...');
+      try {
+        const searchAddress = `${addressComponents.street}, ${addressComponents.city}, ${addressComponents.state}, ${addressComponents.country}`;
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
+        );
+        if (!response.ok) throw new Error('Failed to fetch coordinates');
+        const data = await response.json();
+        if (data.length > 0) {
+          const { lat, lon, display_name } = data[0];
+          setPendingAddress({
+            address: display_name,
+            latitude: lat,
+            longitude: lon
+          });
+          setShowAddressConfirm(true);
+          setGeocodingStatus('');
+        } else {
+          setGeocodingStatus('Address not found. Try being more specific.');
+        }
+      } catch {
+        setGeocodingStatus('Error looking up address. Please try again.');
+      }
     }
   };
 
@@ -405,7 +400,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                         hall_name: e.target.value
                       }));
                       if (e.target.value) {
-                        geocodeAddress(e.target.value);
+                        geocodeAddress({});
                       }
                     }}
                     required
@@ -483,8 +478,13 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                 <button 
                   type="button" 
                   onClick={() => {
-                    const fullAddress = `${formData.street_address}, ${formData.city}, ${formData.state}, USA`;
-                    geocodeAddress(fullAddress);
+                    const addressComponents = {
+                      street: formData.street_address,
+                      city: formData.city,
+                      state: formData.state,
+                      country: 'USA'
+                    };
+                    geocodeAddress(addressComponents);
                   }}
                   style={{...styles.geocodeButton, marginTop: '20px'}}
                 >
