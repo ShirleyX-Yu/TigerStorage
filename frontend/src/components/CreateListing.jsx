@@ -416,6 +416,11 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             ) : (
               <div style={styles.formGroup}>
                 <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
+                {geocodingStatus === 'Address not found. Try being more specific.' && (
+                  <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
+                    No location matching address found. Check values entered.
+                  </div>
+                )}
                 <input
                   style={styles.input}
                   type="text"
@@ -425,6 +430,10 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                       ...prev,
                       street_address: e.target.value
                     }));
+                    // Clear error message when user starts typing
+                    if (geocodingStatus === 'Address not found. Try being more specific.') {
+                      setGeocodingStatus('');
+                    }
                   }}
                   placeholder="Enter street address"
                   required
