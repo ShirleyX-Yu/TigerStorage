@@ -11,6 +11,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import EditListingForm from './EditListingForm';
 import StarIcon from '@mui/icons-material/Star';
 import dorm_image from '../assets/dorm_image.jpg';
+import { axiosInstance } from '../utils/auth';
 
 // Modal wrapper for CreateListing to allow passing onClose/onSuccess
 const CreateListingModal = ({ onClose, onSuccess }) => {
@@ -96,8 +97,7 @@ const LenderDashboard = ({ username }) => {
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'lender';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || username || 'lender';
 
-      const response = await fetch(`${apiUrl}/api/my-listings`, {
-        credentials: 'include',
+      const response = await axiosInstance.get('/api/my-listings', {
         headers: {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
@@ -113,8 +113,7 @@ const LenderDashboard = ({ username }) => {
       const data = await response.json();
 
       const formattedListings = await Promise.all(data.map(async listing => {
-        const rentersResponse = await fetch(`${apiUrl}/api/listings/${listing.id}/interested-renters`, {
-          credentials: 'include',
+        const rentersResponse = await axiosInstance.get(`/api/listings/${listing.id}/interested-renters`, {
           headers: {
             'Accept': 'application/json',
             'Cache-Control': 'no-cache',
@@ -183,8 +182,7 @@ const LenderDashboard = ({ username }) => {
       }
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'lender';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || username || 'lender';
-      const resp = await fetch(`${apiUrl}/api/listings/${listingId}/reservation-requests`, {
-        credentials: 'include',
+      const resp = await axiosInstance.get(`/api/listings/${listingId}/reservation-requests`, {
         headers: {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
@@ -218,17 +216,14 @@ const LenderDashboard = ({ username }) => {
       const body = action === 'approved_partial' || action === 'approved_full'
         ? { status: action, approved_space: finalApprovedVolume }
         : { status: action };
-      const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/reservation-requests/${requestId}`, {
-        method: 'PATCH',
-        credentials: 'include',
+      const resp = await axiosInstance.patch(`/api/reservation-requests/${requestId}`, body, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
           'X-User-Type': userType,
           'X-Username': storedUsername
-        },
-        body: JSON.stringify(body)
+        }
       });
       if (!resp.ok) {
         const errData = await resp.json().catch(() => ({}));
@@ -268,9 +263,7 @@ const LenderDashboard = ({ username }) => {
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'lender';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || username || 'lender';
 
-      const response = await fetch(`${apiUrl}/api/listings/${listingId}`, {
-        method: 'DELETE',
-        credentials: 'include',
+      const response = await axiosInstance.delete(`/api/listings/${listingId}`, {
         headers: {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
@@ -300,7 +293,7 @@ const LenderDashboard = ({ username }) => {
       if (!username) return;
       setReviewsLoading(true);
       try {
-        const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lender-reviews/${username}`);
+        const resp = await axiosInstance.get('/api/lender-reviews/' + username);
         if (resp.ok) {
           const data = await resp.json();
           setLenderReviews(data);

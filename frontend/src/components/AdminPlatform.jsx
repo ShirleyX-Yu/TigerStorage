@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import EditListingForm from './EditListingForm';
 import CreateListing from './CreateListing';
-import { logout } from '../utils/auth';
+import { logout, axiosInstance } from '../utils/auth';
 
 const styles = {
   container: {
@@ -70,27 +70,7 @@ const AdminPlatform = () => {
     setLoadingReportId(reportId);
     setActionType('accept');
     try {
-      let apiUrl = import.meta.env.VITE_API_URL;
-      if (!apiUrl && typeof window !== 'undefined') {
-        apiUrl = window.location.origin;
-      } else if (!apiUrl) {
-        apiUrl = 'http://localhost:8000';
-      }
-      const response = await fetch(`${apiUrl}/api/listings/${listingId}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-          'X-User-Type': 'admin',
-          'X-Username': 'admin',
-        },
-        body: JSON.stringify({ admin_action: 'accept', report_id: reportId })
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to accept listing (${response.status}): ${response.statusText}`);
-      }
+      const response = await axiosInstance.put(`/listings/${listingId}`, { admin_action: 'accept', report_id: reportId });
       // Refresh listings
       setRefreshKey(k => k + 1);
     } catch (err) {
@@ -105,27 +85,7 @@ const AdminPlatform = () => {
     setLoadingReportId(reportId);
     setActionType('reject');
     try {
-      let apiUrl = import.meta.env.VITE_API_URL;
-      if (!apiUrl && typeof window !== 'undefined') {
-        apiUrl = window.location.origin;
-      } else if (!apiUrl) {
-        apiUrl = 'http://localhost:8000';
-      }
-      const response = await fetch(`${apiUrl}/api/listings/${listingId}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-          'X-User-Type': 'admin',
-          'X-Username': 'admin',
-        },
-        body: JSON.stringify({ admin_action: 'reject', report_id: reportId })
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to reject listing (${response.status}): ${response.statusText}`);
-      }
+      const response = await axiosInstance.put(`/listings/${listingId}`, { admin_action: 'reject', report_id: reportId });
       // Refresh listings
       setRefreshKey(k => k + 1);
     } catch (err) {
@@ -141,25 +101,8 @@ const AdminPlatform = () => {
     try {
       setLoading(true);
       setError(null);
-      let apiUrl = import.meta.env.VITE_API_URL;
-      if (!apiUrl && typeof window !== 'undefined') {
-        apiUrl = window.location.origin;
-      } else if (!apiUrl) {
-        apiUrl = 'http://localhost:8000';
-      }
-      const response = await fetch(`${apiUrl}/api/reported-listings`, {
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-          'X-User-Type': 'admin',
-          'X-Username': 'admin',
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`Unable to load reported listings (${response.status}): ${response.statusText}`);
-      }
-      const data = await response.json();
+      const response = await axiosInstance.get('/reported-listings');
+      const data = await response.data;
       setListings(data);
     } catch (err) {
       setError(err.message);

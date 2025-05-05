@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, send_from_directory, session, redirect, url_for, request, render_template, abort
+from flask import Flask, jsonify, send_from_directory, session, redirect, url_for, request, render_template, abort, after_this_request
 from backend.config import Config
 import dotenv
 import os
@@ -14,6 +14,7 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 from flask_cas import CAS, login_required
+from flask_wtf.csrf import CSRFProtect, CSRFError, csrf_exempt
 
 
 
@@ -1089,6 +1090,7 @@ def delete_listing(listing_id):
 
 # API to handle interest in a listing
 @app.route('/api/listings/<int:listing_id>/interest', methods=['POST', 'DELETE', 'OPTIONS'])
+@csrf_exempt
 def handle_interest(listing_id):
     # Handle OPTIONS requests for CORS preflight
     if request.method == 'OPTIONS':
@@ -1978,6 +1980,22 @@ def debug_list_assets():
 @app.route('/assets/<path:filename>')
 def serve_assets(filename):
     return send_from_directory(os.path.join('build', 'assets'), filename)
+
+# Add a CSRF error handler for API endpoints
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    response = jsonify({'error': 'CSRF token missing or invalid', 'description': e.description})
+    response.status_code = 400
+    # Add CORS headers for API clients
+    response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
+
+# Add CSP header to all responses for XSS protection
+@app.after_request
+def set_csp_headers(response):
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+    return response
 
 if __name__ == "__main__":
     args = parser.parse_args()

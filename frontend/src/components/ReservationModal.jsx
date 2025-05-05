@@ -8,6 +8,7 @@ import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Alert from '@mui/material/Alert';
+import { axiosInstance } from '../utils/auth';
 
 const ReservationModal = ({
   open,
@@ -38,7 +39,7 @@ const ReservationModal = ({
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     let vol = mode === 'full' ? maxVolume : Number(volume);
     if (mode === 'partial') {
@@ -48,7 +49,16 @@ const ReservationModal = ({
       }
     }
     setLocalError('');
-    onSubmit && onSubmit({ volume: vol, mode });
+    try {
+      const res = await axiosInstance.post(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}/reserve`, { requested_space: volume }, {
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = res.data;
+      onSuccess ? onSuccess() : setSuccess(true);
+    } catch (err) {
+      setLocalError(err.response?.data?.error || 'An error occurred');
+    }
   };
 
   return (

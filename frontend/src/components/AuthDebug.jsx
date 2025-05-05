@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { checkAuthStatus } from '../utils/auth';
+import { checkAuthStatus, axiosInstance } from '../utils/auth';
 import axios from 'axios';
 
 const AuthDebug = () => {

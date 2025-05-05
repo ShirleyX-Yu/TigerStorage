@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartBar } from '@fortawesome/free-solid-svg-icons';
 import { Box, Typography, List, ListItem, ListItemText, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button, Alert, TextField, ToggleButton, ToggleButtonGroup, Select, MenuItem } from '@mui/material';
 import Header from './Header';
-import { logout } from '../utils/auth';
+import { logout, axiosInstance } from '../utils/auth';
 import { Link } from 'react-router-dom';
 
 // Fix for Leaflet marker icons
@@ -314,15 +314,8 @@ const Map = () => {
   const fetchAndSyncInterest = useCallback(async (listingsData) => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/api/my-interested-listings`, {
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch interest');
-      const interested = await response.json();
+      const response = await axiosInstance.get('/api/my-interested-listings');
+      const interested = response.data;
       const interestedIds = new Set(interested.map(l => l.id));
       return listingsData.map(l => ({ ...l, isInterested: interestedIds.has(l.listing_id || l.id) }));
     } catch (err) {
@@ -342,15 +335,11 @@ const Map = () => {
       
       console.log('Using auth headers - User type:', userType, 'Username:', username);
       
-      const response = await fetch(fetchUrl, {
-        method: 'GET',
+      const response = await axiosInstance.get('/api/listings', {
         headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
           'X-User-Type': userType,
           'X-Username': username
         },
-        credentials: 'include'
       });
 
       console.log('Listings response status:', response.status);
@@ -502,31 +491,23 @@ const Map = () => {
       if (listing.isInterested) {
         // Remove interest AND cancel pending reservation request if it exists
         // 1. Fetch my pending reservation requests for this listing
-        const resp = await fetch(`${apiUrl}/api/my-reservation-requests`, {
-          credentials: 'include',
+        const resp = await axiosInstance.get('/api/my-reservation-requests', {
           headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache',
             'X-User-Type': userType,
             'X-Username': username
           }
         });
-        if (resp.ok) {
-          const all = await resp.json();
-          const pending = all.find(r => (String(r.listing_id) === String(listing.listing_id || listing.id)) && r.status === 'pending');
+        if (resp.data.length > 0) {
+          const pending = resp.data.find(r => (String(r.listing_id) === String(listing.listing_id || listing.id)) && r.status === 'pending');
           if (pending) {
             // Cancel the reservation request
-            const cancelResp = await fetch(`${apiUrl}/api/reservation-requests/${pending.request_id}`, {
-              method: 'PATCH',
-              credentials: 'include',
+            const cancelResp = await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}/status`, {
+              status: 'cancelled_by_renter'
+            }, {
               headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Cache-Control': 'no-cache',
                 'X-User-Type': userType,
                 'X-Username': username
-              },
-              body: JSON.stringify({ status: 'cancelled_by_renter' })
+              }
             });
             if (!cancelResp.ok) {
               const errData = await cancelResp.json().catch(() => ({}));
@@ -535,14 +516,11 @@ const Map = () => {
           }
         }
         // Remove interest
-        const response = await fetch(`${apiUrl}/api/listings/${listing.listing_id || listing.id}/interest`, {
-          method: 'DELETE',
+        const response = await axiosInstance.delete(`/api/listings/${listing.listing_id || listing.id}/interest`, {
           headers: {
-            'Content-Type': 'application/json',
             'X-User-Type': userType,
             'X-Username': username,
           },
-          credentials: 'include',
         });
         if (!response.ok) {
           const errorText = await response.text();
@@ -851,28 +829,22 @@ const Map = () => {
                     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
                     const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
                     const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-                    const response = await fetch(`${apiUrl}/api/listings/${selectedListing.listing_id || selectedListing.id}/reserve`, {
-                      method: 'POST',
-                      credentials: 'include',
+                    const response = await axiosInstance.post(`/api/listings/${selectedListing.listing_id || selectedListing.id}/reserve`, {
+                      requested_space: vol
+                    }, {
                       headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'Cache-Control': 'no-cache',
                         'X-User-Type': userType,
                         'X-Username': username
-                      },
-                      body: JSON.stringify({ requested_space: vol })
+                      }
                     });
                     if (!response.ok) {
                       const errorData = await response.json().catch(() => ({}));
                       throw new Error(errorData.error || 'Failed to request reservation');
                     }
                     // Also record interest so the pin/heart updates
-                    await fetch(`${apiUrl}/api/listings/${selectedListing.listing_id || selectedListing.id}/interest`, {
-                      method: 'POST',
-                      credentials: 'include',
+                    await axiosInstance.post(`/api/listings/${selectedListing.listing_id || selectedListing.id}/interest`, {
                       headers: {
-                        'Content-Type': 'application/json',
                         'X-User-Type': userType,
                         'X-Username': username
                       }
@@ -1036,16 +1008,11 @@ const Map = () => {
                   const listing_id = selectedListing?.listing_id || selectedListing?.id;
                   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
                   try {
-                    const response = await fetch(`${apiUrl}/api/report-listing`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      credentials: 'include',
-                      body: JSON.stringify({
-                        listing_id,
-                        lender_id,
-                        renter_id,
-                        reason: reportReason
-                      })
+                    const response = await axiosInstance.post('/api/report-listing', {
+                      listing_id,
+                      lender_id,
+                      renter_id,
+                      reason: reportReason
                     });
                     if (response.ok) {
                       setReportSuccess(true);

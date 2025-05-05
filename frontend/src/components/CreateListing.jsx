@@ -7,6 +7,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import { HALL_COORDINATES } from '../utils/hallCoordinates';
+import { axiosInstance } from '../utils/auth';
 
 const PRINCETON_HALLS = [
   '1901 Hall', '1903 Hall', 'Addy Hall',
@@ -278,13 +279,11 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     try {
       const form = new FormData();
       form.append('file', file);
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/upload`, {
-        method: 'POST',
-        body: form,
-        credentials: 'include'
+      const res = await axiosInstance.post(`${import.meta.env.VITE_API_URL}/api/upload`, form, {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      if (!res.ok) throw new Error();
-      const result = await res.json();
+      const result = res.data;
       setFormData(prev => ({ ...prev, image_url: result.url }));
     } catch {
       setError('Failed to upload image');
@@ -329,17 +328,11 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       return;
     }
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/listings`, {
-        method: 'POST',
+      const res = await axiosInstance.post(`${import.meta.env.VITE_API_URL}/api/listings`, formData, {
+        withCredentials: true,
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(formData),
       });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || 'Failed to create listing');
-      }
-      const data = await res.json();
+      const data = res.data;
       onSuccess ? onSuccess() : navigate(`/listing/${data.listing_id}`);
     } catch (err) {
       setError(err.message);

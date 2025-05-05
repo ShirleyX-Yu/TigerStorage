@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { axiosInstance } from '../utils/auth';
 
 const PRINCETON_HALLS = [
   '1901 Hall', '1903 Hall', 'Addy Hall',
@@ -141,13 +142,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       try {
         setLoading(true);
         setError('');
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}`, {
-          credentials: 'include'
-        });
-        if (!response.ok) {
-          throw new Error(`Failed to fetch listing details: ${response.status}`);
-        }
-        const data = await response.json();
+        const response = await axiosInstance.get(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}`);
+        const data = response.data;
         // Extract hall name if address is in the form '[Hall Name], Princeton, NJ 08544'
         let hallName = '';
         if (data.address) {
@@ -224,15 +220,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
     try {
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/upload`, {
-        method: 'POST',
-        body: formDataUpload,
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to upload image');
-      }
-      const data = await response.json();
+      const response = await axiosInstance.post(`${import.meta.env.VITE_API_URL}/api/upload`, formDataUpload);
+      const data = response.data;
       setFormData(prev => ({ ...prev, image_url: data.url }));
     } catch (err) {
       setError('Failed to upload image: ' + err.message);
@@ -336,22 +325,9 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       return;
     }
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(formData)
-      });
-      if (response.ok) {
-        setSuccess(true);
-        if (onSuccess) onSuccess();
-        setTimeout(() => {
-          if (onClose) onClose();
-        }, 1500);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        setError(`Failed to update listing: ${errorData.error || response.statusText}`);
-      }
+      const res = await axiosInstance.put(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}`, formData);
+      const data = res.data;
+      onSuccess ? onSuccess() : navigate(`/listing/${listingId}`);
     } catch (err) {
       setError(`Error updating listing: ${err.message}`);
     }

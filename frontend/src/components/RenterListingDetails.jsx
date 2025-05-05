@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
-import { checkAuthStatus } from '../utils/auth';
+import { checkAuthStatus, axiosInstance } from '../utils/auth';
 import ReservationModal from './ReservationModal';
 import StarIcon from '@mui/icons-material/Star';
 
@@ -74,8 +74,7 @@ const RenterListingDetails = () => {
         const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
         const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
         
-        const response = await fetch(apiUrl, {
-          credentials: 'include',
+        const response = await axiosInstance.get(apiUrl, {
           headers: {
             'Accept': 'application/json',
             'Cache-Control': 'no-cache',
@@ -96,8 +95,7 @@ const RenterListingDetails = () => {
         let isInterested = false;
         if (isAuthenticated) {
           try {
-            const interestResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/my-interested-listings`, {
-              credentials: 'include',
+            const interestResponse = await axiosInstance.get('/api/my-interested-listings', {
               headers: {
                 'Accept': 'application/json',
                 'Cache-Control': 'no-cache',
@@ -165,8 +163,7 @@ const RenterListingDetails = () => {
       try {
         const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
         const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-        const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/my-reservation-requests`, {
-          credentials: 'include',
+        const resp = await axiosInstance.get('/api/my-reservation-requests', {
           headers: {
             'Accept': 'application/json',
             'Cache-Control': 'no-cache',
@@ -195,8 +192,7 @@ const RenterListingDetails = () => {
       const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/listings/${id}`;
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-      const response = await fetch(apiUrl, {
-        credentials: 'include',
+      const response = await axiosInstance.get(apiUrl, {
         headers: {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
@@ -254,9 +250,7 @@ const RenterListingDetails = () => {
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
       if (listing.isInterested) {
         // Remove interest
-        const response = await fetch(`${apiUrl}/api/listings/${listing.id}/interest`, {
-          method: 'DELETE',
-          credentials: 'include',
+        const response = await axiosInstance.delete(`${apiUrl}/api/listings/${listing.id}/interest`, {
           headers: {
             'Content-Type': 'application/json',
             'X-User-Type': userType,
@@ -272,8 +266,7 @@ const RenterListingDetails = () => {
         return;
       }
       // After changing interest, re-fetch interest state for this listing
-      const interestResponse = await fetch(`${apiUrl}/api/my-interested-listings`, {
-        credentials: 'include',
+      const interestResponse = await axiosInstance.get('/api/my-interested-listings', {
         headers: {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
@@ -300,17 +293,14 @@ const RenterListingDetails = () => {
       const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/listings/${listing.id}/reserve`;
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        credentials: 'include',
+      const response = await axiosInstance.post(apiUrl, { requested_space: volume }, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
           'X-User-Type': userType,
           'X-Username': storedUsername
-        },
-        body: JSON.stringify({ requested_space: volume })
+        }
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -319,8 +309,7 @@ const RenterListingDetails = () => {
       setReservationModalOpen(false);
       setMessage({ type: 'success', text: 'Reservation request submitted!' });
       // After reservation, mark as interested
-      const interestResponse = await fetch(`${apiUrl}/api/my-interested-listings`, {
-        credentials: 'include',
+      const interestResponse = await axiosInstance.post('/api/my-interested-listings', {}, {
         headers: {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
@@ -347,7 +336,7 @@ const RenterListingDetails = () => {
     const fetchReviews = async () => {
       try {
         setReviewLoading(true);
-        const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lender-reviews/${listing.owner_id}`);
+        const resp = await axiosInstance.get(`/api/lender-reviews/${listing.owner_id}`);
         if (resp.ok) {
           const data = await resp.json();
           setReviews(data);
@@ -390,7 +379,7 @@ const RenterListingDetails = () => {
     // Check if already reviewed
     const checkReviewed = async () => {
       try {
-        const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lender-reviews/${listing.owner_id}`);
+        const resp = await axiosInstance.get(`/api/lender-reviews/${listing.owner_id}`);
         if (resp.ok) {
           const data = await resp.json();
           const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
@@ -413,15 +402,13 @@ const RenterListingDetails = () => {
     setReviewError('');
     setReviewSuccess('');
     try {
-      const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lender-reviews`, {
-        method: 'POST',
+      const resp = await axiosInstance.post('/api/lender-reviews', {
+        request_id: myRequestId,
+        rating: reviewRating,
+        review_text: reviewText
+      }, {
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          request_id: myRequestId,
-          rating: reviewRating,
-          review_text: reviewText
-        })
+        credentials: 'include'
       });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Failed to submit review');
@@ -431,7 +418,7 @@ const RenterListingDetails = () => {
       setReviewRating(0);
       setReviewText('');
       // Refresh reviews
-      const reviewsResp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lender-reviews/${listing.owner_id}`);
+      const reviewsResp = await axiosInstance.get('/api/lender-reviews/'+listing.owner_id);
       if (reviewsResp.ok) setReviews(await reviewsResp.json());
     } catch (err) {
       setReviewError(err.message);

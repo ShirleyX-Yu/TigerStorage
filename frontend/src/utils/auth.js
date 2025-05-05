@@ -49,6 +49,29 @@ const getBackendUrl = () => {
   return API_URL;
 };
 
+// CSRF token helper
+function getCSRFToken() {
+  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+// Create a custom axios instance
+const axiosInstance = axios.create();
+
+// Add a request interceptor to attach CSRF token to mutating requests
+axiosInstance.interceptors.request.use((config) => {
+  const method = config.method && config.method.toUpperCase();
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    const csrfToken = getCSRFToken();
+    if (csrfToken) {
+      config.headers['X-CSRFToken'] = csrfToken;
+    }
+  }
+  return config;
+}, (error) => Promise.reject(error));
+
+export { axiosInstance };
+
 export const login = (userType) => {
   console.log(`auth.js - login called with userType: ${userType}`);
   

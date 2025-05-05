@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 import boxes from '../assets/boxes.jpg';
+import { axiosInstance } from '../utils/auth';
 
 const getStatusLabel = (status) => {
   if (!status) return '';
@@ -67,9 +68,7 @@ const RenterDashboard = ({ username }) => {
         const userType = sessionStorage.getItem('userType') || 'renter';
         console.log('Using username:', username, 'User type:', userType);
         
-        const response = await fetch(`${apiUrl}/api/my-interested-listings`, {
-          method: 'GET',
-          credentials: 'include',
+        const response = await axiosInstance.get('/api/my-interested-listings', {
           headers: {
             'Accept': 'application/json',
             'Cache-Control': 'no-cache',
