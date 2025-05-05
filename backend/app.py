@@ -1,10 +1,10 @@
 from flask import Flask, jsonify, send_from_directory, session, redirect, url_for, request, render_template, abort, after_this_request
-from backend.config import Config
+from config.config import Config
 import dotenv
 import os
 import psycopg2
 import argparse
-import backend.auth as auth
+import auth
 import json
 from werkzeug.utils import secure_filename
 from decimal import Decimal
@@ -138,22 +138,6 @@ def map():
             session['user_type'] = 'lender'
     return send_from_directory('build', 'index.html')
 
-@app.route('/welcome')
-@login_required
-def welcome():
-    # Assign user type if not already set
-    if 'user_type' not in session:
-        if cas.username == 'cs-tigerstorage':
-            session['user_type'] = 'admin'
-        else:
-            session['user_type'] = 'lender'
-    asset_path = get_asset_path("main")
-    return render_template(
-        "index.html",
-        app_name="main",
-        debug=app.debug,
-        asset_path=asset_path
-    )
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
@@ -2001,9 +1985,9 @@ def set_csp_headers(response):
         "default-src 'self'; "
         "script-src 'self'; "
         "style-src 'self' 'unsafe-inline'; "
-        "img-src 'self' data: https://res.cloudinary.com; "  # Allow Cloudinary images
+        "img-src 'self' data: https://res.cloudinary.com https://*.cloudinary.com https://images.unsplash.com https://cdn.jsdelivr.net; "  # Add more hosts as needed
         "font-src 'self' data:; "
-        "connect-src 'self' https://res.cloudinary.com; "    # Allow Cloudinary API if needed
+        "connect-src 'self' https://res.cloudinary.com https://*.cloudinary.com https://images.unsplash.com https://cdn.jsdelivr.net; "
         "object-src 'none'; "
         "frame-ancestors 'none'; "
         "base-uri 'self'; "
