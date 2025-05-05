@@ -173,6 +173,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const [locationType, setLocationType] = useState('on-campus');
   const [showAddressConfirm, setShowAddressConfirm] = useState(false);
   const [pendingAddress, setPendingAddress] = useState(null);
+  const [addressNotFound, setAddressNotFound] = useState(false);
 
   // Scroll to error when it appears
   useEffect(() => {
@@ -206,9 +207,11 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     if (locationType === 'on-campus') {
       if (!tempAddress.trim()) {
         setGeocodingStatus('Please enter an address');
+        setAddressNotFound(false);
         return;
       }
       setGeocodingStatus('Looking up coordinates...');
+      setAddressNotFound(false);
       // Check manual mapping first for on-campus
       if (HALL_COORDINATES[tempAddress]) {
         const { lat, lng } = HALL_COORDINATES[tempAddress];
@@ -219,15 +222,18 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
           longitude: lng
         }));
         setGeocodingStatus('Coordinates found from hall mapping!');
+        setAddressNotFound(false);
         return;
       }
     } else {
       // For off-campus addresses
       if (!addressComponents.street || !addressComponents.city || !addressComponents.state) {
         setGeocodingStatus('Please fill in all address fields');
+        setAddressNotFound(false);
         return;
       }
       setGeocodingStatus('Looking up coordinates...');
+      setAddressNotFound(false);
       try {
         const searchAddress = `${addressComponents.street}, ${addressComponents.city}, ${addressComponents.state}, ${addressComponents.country}`;
         const response = await fetch(
@@ -244,11 +250,14 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
           });
           setShowAddressConfirm(true);
           setGeocodingStatus('');
+          setAddressNotFound(false);
         } else {
           setGeocodingStatus('');
+          setAddressNotFound(true);
         }
       } catch {
-        setGeocodingStatus('Error looking up address. Please try again.');
+        setGeocodingStatus('');
+        setAddressNotFound(true);
       }
     }
   };
@@ -416,7 +425,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             ) : (
               <div style={styles.formGroup}>
                 <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
-                {geocodingStatus === 'Address not found. Try being more specific.' && (
+                {addressNotFound && (
                   <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
                     No location matching address found. Check values entered.
                   </div>
@@ -430,10 +439,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                       ...prev,
                       street_address: e.target.value
                     }));
-                    // Clear error message when user starts typing
-                    if (geocodingStatus === 'Address not found. Try being more specific.') {
-                      setGeocodingStatus('');
-                    }
+                    if (addressNotFound) setAddressNotFound(false);
                   }}
                   placeholder="Enter street address"
                   required
@@ -450,6 +456,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                           ...prev,
                           city: e.target.value
                         }));
+                        if (addressNotFound) setAddressNotFound(false);
                       }}
                       placeholder="Enter city"
                       required
@@ -465,6 +472,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                           ...prev,
                           state: e.target.value
                         }));
+                        if (addressNotFound) setAddressNotFound(false);
                       }}
                       required
                     >

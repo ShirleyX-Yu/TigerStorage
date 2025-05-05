@@ -156,6 +156,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
   const [uploading, setUploading] = useState(false);
   const [showAddressConfirm, setShowAddressConfirm] = useState(false);
   const [pendingAddress, setPendingAddress] = useState(null);
+  const [addressNotFound, setAddressNotFound] = useState(false);
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -270,9 +271,11 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
     if (locationType === 'on-campus') {
       if (!tempAddress.trim()) {
         setGeocodingStatus('Please enter an address');
+        setAddressNotFound(false);
         return;
       }
       setGeocodingStatus('Looking up coordinates...');
+      setAddressNotFound(false);
       // Check manual mapping first for on-campus
       if (HALL_COORDINATES[tempAddress]) {
         const { lat, lng } = HALL_COORDINATES[tempAddress];
@@ -283,15 +286,18 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           longitude: lng
         }));
         setGeocodingStatus('Coordinates found from hall mapping!');
+        setAddressNotFound(false);
         return;
       }
     } else {
       // For off-campus addresses
       if (!addressComponents.street || !addressComponents.city || !addressComponents.state) {
         setGeocodingStatus('Please fill in all address fields');
+        setAddressNotFound(false);
         return;
       }
       setGeocodingStatus('Looking up coordinates...');
+      setAddressNotFound(false);
       try {
         const searchAddress = `${addressComponents.street}, ${addressComponents.city}, ${addressComponents.state}, ${addressComponents.country}`;
         const response = await fetch(
@@ -308,11 +314,14 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           });
           setShowAddressConfirm(true);
           setGeocodingStatus('');
+          setAddressNotFound(false);
         } else {
           setGeocodingStatus('');
+          setAddressNotFound(true);
         }
       } catch {
-        setGeocodingStatus('Error looking up address. Please try again.');
+        setGeocodingStatus('');
+        setAddressNotFound(true);
       }
     }
   };
@@ -464,7 +473,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
             ) : (
               <div style={styles.formGroup}>
                 <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
-                {geocodingStatus === 'Address not found. Try being more specific.' && (
+                {addressNotFound && (
                   <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
                     No location matching address found. Check values entered.
                   </div>
@@ -478,10 +487,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                       ...prev,
                       street_address: e.target.value
                     }));
-                    // Clear error message when user starts typing
-                    if (geocodingStatus === 'Address not found. Try being more specific.') {
-                      setGeocodingStatus('');
-                    }
+                    if (addressNotFound) setAddressNotFound(false);
                   }}
                   placeholder="Enter street address"
                   required
@@ -498,6 +504,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                           ...prev,
                           city: e.target.value
                         }));
+                        if (addressNotFound) setAddressNotFound(false);
                       }}
                       placeholder="Enter city"
                       required
@@ -513,6 +520,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                           ...prev,
                           state: e.target.value
                         }));
+                        if (addressNotFound) setAddressNotFound(false);
                       }}
                       required
                     >
