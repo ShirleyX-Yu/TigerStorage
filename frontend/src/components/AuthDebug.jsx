@@ -50,20 +50,19 @@ const AuthDebug = () => {
   }, []);
 
   const handleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/auth/login?userType=lender`;
+    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const redirectUri = encodeURIComponent('/lender-dashboard');
+    window.location.href = `${backendUrl}/api/auth/login?userType=lender&redirectUri=${redirectUri}`;
   };
   
   const fixSession = async () => {
     try {
       // This will force a new login with the lender user type
       const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const frontendUrl = window.location.origin;
-      const redirectUri = encodeURIComponent(`${frontendUrl}/lender-dashboard`);
-      
+      const redirectUri = encodeURIComponent('/lender-dashboard');
       // Store the user type before redirecting
       sessionStorage.setItem('userType', 'lender');
       localStorage.setItem('userType', 'lender');
-      
       // Redirect to login with explicit type and redirect
       window.location.href = `${backendUrl}/api/auth/login?userType=lender&redirectUri=${redirectUri}`;
     } catch (err) {

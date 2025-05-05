@@ -72,8 +72,8 @@ export const login = (userType) => {
     } else if (userType === 'admin') {
       redirectPath = '/admin';
     }
-    const frontendUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-    const redirectUri = encodeURIComponent(`${frontendUrl}${redirectPath}`);
+    // Use only the relative path for redirectUri
+    const redirectUri = encodeURIComponent(redirectPath);
     const casLoginUrl = `${backendUrl}/api/auth/login?userType=${userType}&redirectUri=${redirectUri}`;
     
     console.log(`auth.js - Production environment, redirecting to CAS: ${casLoginUrl}`);
@@ -123,7 +123,7 @@ export const logout = () => {
   // Add redirect for production
   if (isProduction()) {
     // Redirect to the login page (root '/') after logout
-    const redirectUri = encodeURIComponent(window.location.origin + '/');
+    const redirectUri = encodeURIComponent('/');
     logoutUrl += `?redirectUri=${redirectUri}`;
   }
   

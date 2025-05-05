@@ -364,8 +364,7 @@ const LenderDashboard = ({ username }) => {
                         sessionStorage.setItem('returnTo', '/lender-dashboard');
                         sessionStorage.setItem('userType', 'lender');
                         localStorage.setItem('userType', 'lender');
-                        const frontendUrl = window.location.origin;
-                        const redirectUri = encodeURIComponent(`${frontendUrl}/lender-dashboard`);
+                        const redirectUri = encodeURIComponent('/lender-dashboard');
                         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
                         const loginUrl = `${apiUrl}/api/auth/login?userType=lender&redirectUri=${redirectUri}`;
                         window.location.href = loginUrl;
