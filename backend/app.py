@@ -1998,6 +1998,10 @@ def debug_list_assets():
     files = os.listdir(asset_dir)
     return "<br>".join(files)
 
+@app.route('/assets/<path:filename>')
+def serve_assets(filename):
+    return send_from_directory(os.path.join('build', 'assets'), filename)
+
 if __name__ == "__main__":
     args = parser.parse_args()
     app.debug = not args.production
