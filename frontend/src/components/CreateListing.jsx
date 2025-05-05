@@ -485,9 +485,9 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                     const fullAddress = `${formData.street_address}, ${formData.city}, ${formData.state}, USA`;
                     geocodeAddress(fullAddress);
                   }}
-                  style={styles.geocodeButton}
+                  style={{...styles.geocodeButton, marginTop: '20px'}}
                 >
-                  Geocode Address
+                  Locate Address
                 </button>
                 {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
               </div>
