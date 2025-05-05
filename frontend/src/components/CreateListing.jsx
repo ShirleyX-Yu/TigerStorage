@@ -377,9 +377,9 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                 value={locationType}
                 onChange={handleLocationTypeChange}
                 required
-                disabled
               >
                 <option value="on-campus">On Campus</option>
+                <option value="off-campus">Off Campus</option>
               </select>
             </div>
             <div>
