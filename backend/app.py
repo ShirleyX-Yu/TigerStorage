@@ -4,7 +4,7 @@ import dotenv
 import os
 import psycopg2
 import argparse
-import auth
+import backend.auth as auth
 import json
 from werkzeug.utils import secure_filename
 from decimal import Decimal
@@ -30,8 +30,7 @@ app = Flask(
 )
 
 # Register CAS authentication routes
-import auth
-auth.init_auth(app)
+backend.auth.init_auth(app)
 
 # --- SESSION COOKIE CONFIGURATION ---
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
