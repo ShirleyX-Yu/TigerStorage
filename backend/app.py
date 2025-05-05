@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, send_from_directory, session, redirect, url_for, request, render_template
+from flask import Flask, jsonify, send_from_directory, session, redirect, url_for, request, render_template, abort
 from backend.config import Config
 import dotenv
 import os
@@ -81,12 +81,8 @@ def serve_static(filename):
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def catch_all(path):
-    # If the path is a file in the build directory, serve it
-    import os
-    file_path = os.path.join('build', path)
-    if path != "" and os.path.exists(file_path):
-        return send_from_directory('build', path)
-    # Otherwise, serve index.html (for React Router)
+    if path.startswith('api/') or path.startswith('build/'):
+        abort(404)
     return send_from_directory('build', 'index.html')
 
 @app.route('/api/debug-session')
@@ -123,20 +119,7 @@ def get_asset_path(entry: str) -> str:
 
 @app.route('/')
 def index():
-    auth_status = {'authenticated': False}
-    if auth.is_authenticated():
-        auth_status = {
-            'authenticated': True,
-            'username': session['user_info']['user']
-        }
-    asset_path = get_asset_path("main")
-    return render_template(
-        "index.html",
-        app_name="main",
-        debug=app.debug,
-        asset_path=asset_path,
-        auth_status=auth_status
-    )
+    return send_from_directory('build', 'index.html')
 
 # Initialize flask-cas
 cas = CAS(app)
@@ -152,13 +135,7 @@ def map():
             session['user_type'] = 'admin'
         else:
             session['user_type'] = 'lender'
-    asset_path = get_asset_path("main")
-    return render_template(
-        "index.html",
-        app_name="main",
-        debug=app.debug,
-        asset_path=asset_path
-    )
+    return send_from_directory('build', 'index.html')
 
 @app.route('/welcome')
 @login_required
