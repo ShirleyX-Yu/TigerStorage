@@ -14,7 +14,7 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 from flask_cas import CAS, login_required
-from flask_wtf.csrf import CSRFProtect, CSRFError, csrf_exempt
+from flask_wtf.csrf import CSRFProtect, CSRFError
 
 
 
@@ -1088,9 +1088,12 @@ def delete_listing(listing_id):
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+# Initialize CSRF protection
+csrf = CSRFProtect(app)
+
 # API to handle interest in a listing
 @app.route('/api/listings/<int:listing_id>/interest', methods=['POST', 'DELETE', 'OPTIONS'])
-@csrf_exempt
+@csrf.exempt
 def handle_interest(listing_id):
     # Handle OPTIONS requests for CORS preflight
     if request.method == 'OPTIONS':
