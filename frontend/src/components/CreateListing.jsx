@@ -108,14 +108,15 @@ const styles = {
     fontSize: '1rem',
   },
   geocodeButton: {
-    padding: '10px 15px',
-    backgroundColor: '#FF8F00',
+    backgroundColor: '#f57c00',
     color: 'white',
     border: 'none',
-    borderRadius: '4px',
+    borderRadius: 6,
+    padding: '10px 0',
+    fontSize: 17,
+    fontWeight: 600,
     cursor: 'pointer',
-    fontSize: '0.875rem',
-    fontWeight: 'bold',
+    width: '100%',
   },
   geocodingStatus: {
     marginTop: '5px',
@@ -572,7 +573,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                 />
               )}
             </div>
-            <button type="submit" style={styles.submitButton} disabled={uploading}>
+            <button type="submit" style={{...styles.submitButton, marginTop: '20px'}} disabled={uploading}>
               {uploading ? 'Uploading...' : 'Create Listing'}
             </button>
         </form>

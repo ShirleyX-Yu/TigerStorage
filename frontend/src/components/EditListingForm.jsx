@@ -85,7 +85,7 @@ const styles = {
     fontSize: 17,
     fontWeight: 600,
     cursor: 'pointer',
-    marginTop: 12
+    width: '100%',
   },
   imagePreview: {
     width: 120,
@@ -126,7 +126,7 @@ const styles = {
     fontSize: 17,
     fontWeight: 600,
     cursor: 'pointer',
-    marginTop: 12
+    width: '100%',
   },
 };
 
@@ -595,7 +595,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                 <img src={formData.image_url} alt="Preview" style={styles.imagePreview} />
               )}
             </div>
-            <button type="submit" style={styles.button} disabled={uploading || loading}>
+            <button type="submit" style={{...styles.button, marginTop: '20px'}} disabled={uploading || loading}>
               {uploading ? 'Uploading...' : loading ? 'Saving...' : 'Save Changes'}
             </button>
           </form>
