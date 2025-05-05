@@ -122,77 +122,40 @@ def is_authenticated():
 def init_auth(app):
     @app.route("/api/logoutcas", methods=["GET"])
     def logoutcas():
+        # Always use backend URL for service
+        backend_url = flask.request.url_root.rstrip('/')
         logout_url = (
             _CAS_URL
             + "logout?service="
-            + urllib.parse.quote(re.sub("logoutcas", "logoutapp", flask.request.url))
+            + urllib.parse.quote(backend_url + "/api/logoutapp")
         )
         flask.abort(flask.redirect(logout_url))
 
     @app.route("/api/logoutapp", methods=["GET"])
     def logoutapp():
         flask.session.clear()
-        
-        # Determine the frontend URL based on request origin or environment variable
-        frontend_url = os.environ.get('FRONTEND_URL')
-        
-        # If FRONTEND_URL is not set, try to determine it from the request origin
-        if not frontend_url:
-            # Get the origin (scheme + host + port) from where the request came 
-            # Check Referer header first (more likely to be present in logout context)
-            referer = flask.request.headers.get('Referer')
-            if referer:
-                # Extract origin from referer
-                from urllib.parse import urlparse
-                parsed_uri = urlparse(referer)
-                frontend_url = f"{parsed_uri.scheme}://{parsed_uri.netloc}"
-            else:
-                # Try Origin header as fallback
-                origin = flask.request.headers.get('Origin')
-                if origin:
-                    frontend_url = origin
-                else:
-                    # Default to localhost:5173 if we can't determine the origin
-                    frontend_url = 'http://localhost:5173'
-        
-        # Remove trailing slash if present
-        frontend_url = frontend_url.rstrip('/')
-        
-        print(f"Logging out and redirecting to: {frontend_url}")
-        return flask.redirect(frontend_url)
+        # Always redirect to backend root
+        backend_url = flask.request.url_root.rstrip('/')
+        return flask.redirect(backend_url)
 
     @app.route('/api/auth/logout')
     def logout():
         """Logout route that clears the session and redirects to CAS logout"""
-        # Clear the session
         flask.session.clear()
-        
-        # Get the redirect URI from the request
-        redirect_uri = flask.request.args.get('redirectUri', '')
-        
-        # If we're in production, use CAS logout
-        if not flask.current_app.debug:
-            # Construct the CAS logout URL with the redirect URI
-            cas_logout_url = f"{_CAS_URL}logout?service={redirect_uri}"
-            # Redirect to CAS logout
-            return flask.redirect(cas_logout_url)
-        else:
-            # In development, just redirect to the home page
-            return flask.redirect(redirect_uri or '/')
+        # Always use backend URL for service
+        backend_url = flask.request.url_root.rstrip('/')
+        cas_logout_url = f"{_CAS_URL}logout?service={backend_url}"
+        return flask.redirect(cas_logout_url)
 
     @app.route('/api/auth/status', methods=['GET', 'OPTIONS'])
     def auth_status():
         """Check if the user is authenticated"""
-        # Handle OPTIONS request for CORS preflight
         if flask.request.method == 'OPTIONS':
             return '', 204
-
-        # Check if user is authenticated
         authenticated = is_authenticated()
         user_info = flask.session.get('user_info', {})
         username = user_info.get('user', '')
         user_type = flask.session.get('user_type', '')
-
         return flask.jsonify({
             'authenticated': authenticated,
             'username': username,
@@ -201,16 +164,12 @@ def init_auth(app):
 
     @app.route('/api/auth/login')
     def login():
-        # Store user type in session if provided
         user_type = flask.request.args.get('userType')
         if user_type:
             flask.session['user_type'] = user_type
             flask.session.permanent = True
-
-        # If already authenticated, redirect to the redirectUri
         if is_authenticated():
-            redirect_uri = flask.request.args.get('redirectUri', '/')
-            return flask.redirect(redirect_uri)
-
-        # Otherwise, authenticate (this will handle CAS redirect)
+            # Always redirect to backend root
+            backend_url = flask.request.url_root.rstrip('/')
+            return flask.redirect(backend_url)
         return authenticate()
