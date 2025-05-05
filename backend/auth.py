@@ -65,22 +65,39 @@ def authenticate():
 
     # Check for CAS ticket in URL
     ticket = flask.request.args.get("ticket")
+    redirect_uri = flask.request.args.get("redirectUri", "/")
     if ticket is None:
-        print("No CAS ticket found, redirecting to CAS login")
-        # If no ticket, redirect to CAS login
-        login_url = _CAS_URL + "login?service=" + urllib.parse.quote(flask.request.url)
+        # If no ticket, redirect to CAS login, preserving redirectUri in service param
+        backend_url = flask.request.url_root.rstrip('/')
+        service_url = backend_url + flask.request.path
+        # Rebuild query string, preserving redirectUri and userType
+        query_params = []
+        user_type = flask.request.args.get("userType")
+        if user_type:
+            query_params.append(f"userType={urllib.parse.quote(user_type)}")
+        if redirect_uri:
+            query_params.append(f"redirectUri={urllib.parse.quote(redirect_uri)}")
+        if query_params:
+            service_url += "?" + "&".join(query_params)
+        login_url = _CAS_URL + "login?service=" + urllib.parse.quote(service_url)
         flask.abort(flask.redirect(login_url))
 
     # If we have a ticket, validate it
     print(f"Validating CAS ticket: {ticket[:10]}...")
     user_info = validate(ticket)
     if user_info is None:
-        print("CAS ticket validation failed, redirecting to CAS login")
-        login_url = (
-            _CAS_URL
-            + "login?service="
-            + urllib.parse.quote(strip_ticket(flask.request.url))
-        )
+        backend_url = flask.request.url_root.rstrip('/')
+        service_url = backend_url + flask.request.path
+        # Rebuild query string, preserving redirectUri and userType
+        query_params = []
+        user_type = flask.request.args.get("userType")
+        if user_type:
+            query_params.append(f"userType={urllib.parse.quote(user_type)}")
+        if redirect_uri:
+            query_params.append(f"redirectUri={urllib.parse.quote(redirect_uri)}")
+        if query_params:
+            service_url += "?" + "&".join(query_params)
+        login_url = _CAS_URL + "login?service=" + urllib.parse.quote(service_url)
         flask.abort(flask.redirect(login_url))
 
     # Normalize NetID to lowercase
@@ -108,14 +125,10 @@ def authenticate():
         flask.session["user_type"] = user_type
         flask.session.modified = True
     
-    # Redirect to clean URL without ticket
-    clean_url = strip_ticket(flask.request.url)
-    print(f"Redirecting to: {clean_url}")
-    flask.abort(flask.redirect(clean_url))
-
-    # This line won't be reached due to the abort above,
-    # but it's here to make the function's intent clear
-    return user_info.get('user', '')
+    # After CAS login, redirect to the original redirectUri if safe
+    if not is_safe_redirect_url(redirect_uri):
+        redirect_uri = "/"
+    return flask.redirect(redirect_uri)
 
 def is_authenticated():
     return "user_info" in flask.session
@@ -181,4 +194,5 @@ def init_auth(app):
             if not is_safe_redirect_url(redirect_uri):
                 redirect_uri = '/'
             return flask.redirect(redirect_uri)
+        # Always pass redirectUri through to authenticate
         return authenticate()
