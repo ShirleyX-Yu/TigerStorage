@@ -147,6 +147,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
     street_address: '',
     city: '',
     state: '',
+    zip_code: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -193,6 +194,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           street_address: data.street_address || '',
           city: data.city || '',
           state: data.state || '',
+          zip_code: data.zip_code || '',
         };
         setFormData(formDataToSet);
         setTempAddress(data.hall_name || hallName || '');
@@ -288,11 +290,10 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       setGeocodingStatus('Looking up coordinates...');
       setAddressNotFound(false);
       try {
-        // Add ZIP code for Princeton addresses
-        let zip = '';
-        if (addressComponents.city && addressComponents.city.trim().toLowerCase() === 'princeton') {
-          zip = '08544';
-        }
+        // Use user-entered ZIP code if provided, otherwise use Princeton default for Princeton addresses
+        let zip = addressComponents.zip_code && addressComponents.zip_code.trim() !== ''
+          ? addressComponents.zip_code.trim()
+          : (addressComponents.city && addressComponents.city.trim().toLowerCase() === 'princeton' ? '08544' : '');
         const searchAddress = zip
           ? `${addressComponents.street}, ${addressComponents.city}, ${addressComponents.state} ${zip}, ${addressComponents.country}`
           : `${addressComponents.street}, ${addressComponents.city}, ${addressComponents.state}, ${addressComponents.country}`;
@@ -515,6 +516,22 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                   </div>
                 </div>
                 <div style={{ marginTop: '10px' }}>
+                  <label style={styles.label}>ZIP Code</label>
+                  <input
+                    style={styles.input}
+                    type="text"
+                    value={formData.zip_code || ''}
+                    onChange={(e) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        zip_code: e.target.value
+                      }));
+                      if (addressNotFound) setAddressNotFound(false);
+                    }}
+                    placeholder="Enter ZIP code (optional)"
+                  />
+                </div>
+                <div style={{ marginTop: '10px' }}>
                   <label style={styles.label}>Country</label>
                   <input
                     style={styles.input}
@@ -530,7 +547,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                       street: formData.street_address,
                       city: formData.city,
                       state: formData.state,
-                      country: 'USA'
+                      country: 'USA',
+                      zip_code: formData.zip_code,
                     };
                     geocodeAddress(addressComponents);
                   }}
