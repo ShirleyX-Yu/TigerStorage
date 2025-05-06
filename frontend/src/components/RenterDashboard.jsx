@@ -80,9 +80,9 @@ const RenterDashboard = ({ username }) => {
         console.log('Interested spaces response status:', response.status);
         
         const data = response.data;
-        if (!response.ok) { throw new Error(`Failed to fetch interested spaces: ${response.status} ${data.error || 'Unknown error'}`); }
-        
-        console.log('Fetched interested spaces:', data);
+        if (data && data.error) {
+          throw new Error(data.error);
+        }
         setInterestedSpaces(data);
       } catch (err) {
         console.error('Error fetching interested spaces:', err);

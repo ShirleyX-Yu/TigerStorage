@@ -595,6 +595,20 @@ def get_listing_by_id(listing_id):
                     "hall_name": listing_dict.get('hall_name', '')
                 }
                 
+                # In get_listing_by_id, after fetching listing_dict and before returning formatted_listing:
+                # Fetch lender_avg_rating for this owner_id (lowercased)
+                lender_avg_rating = None
+                try:
+                    with get_db_connection().cursor() as cur2:
+                        cur2.execute("""
+                            SELECT AVG(rating)::float FROM lender_reviews WHERE LOWER(lender_username) = %s
+                        """, (str(listing_dict.get('owner_id', '')).lower(),))
+                        row = cur2.fetchone()
+                        if row and row[0] is not None:
+                            lender_avg_rating = float(row[0])
+                except Exception as e:
+                    print(f"Error fetching lender_avg_rating for owner_id {listing_dict.get('owner_id')}: {e}")
+                
                 return jsonify(formatted_listing), 200
         finally:
             conn.close()
