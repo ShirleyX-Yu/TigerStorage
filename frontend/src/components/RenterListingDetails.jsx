@@ -265,7 +265,7 @@ const RenterListingDetails = () => {
         return;
       }
       // After changing interest, re-fetch interest state for this listing
-      const interestResponse = await axiosInstance.get('/api/my-interested-listings', {
+      await axiosInstance.get('/api/my-interested-listings', {
         headers: {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
@@ -314,7 +314,7 @@ const RenterListingDetails = () => {
       setReservationModalOpen(false);
       setMessage({ type: 'success', text: 'Reservation request submitted!' });
       // After reservation, mark as interested
-      await axiosInstance.post('/api/my-interested-listings', {}, {
+      await axiosInstance.get('/api/my-interested-listings', {
         headers: {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
