@@ -275,8 +275,8 @@ def create_listing():
                 # Associate the listing with the current user (lender)
                 if auth.is_authenticated():
                     user_info = session['user_info']
-                    column_values['owner_id'] = user_info.get('user', 'unknown')
-                    print(f"Setting owner_id to {user_info.get('user', 'unknown')}")
+                    column_values['owner_id'] = user_info.get('user', 'unknown').lower()
+                    print(f"Setting owner_id to {user_info.get('user', 'unknown').lower()}")
                 
                 # Build the SQL query dynamically
                 columns_str = ', '.join(column_values.keys())
@@ -409,14 +409,14 @@ def get_listings():
                 for listing in listings:
                     idx = column_names.index('owner_id') if 'owner_id' in column_names else None
                     if idx is not None and listing[idx]:
-                        owner_ids.add(listing[idx])
+                        owner_ids.add(listing[idx].lower())
                 lender_avg_ratings = {}
                 if owner_ids:
                     cur.execute("""
-                        SELECT lender_username, AVG(rating)::float AS avg_rating
+                        SELECT LOWER(lender_username), AVG(rating)::float AS avg_rating
                         FROM lender_reviews
-                        WHERE lender_username = ANY(%s)
-                        GROUP BY lender_username
+                        WHERE LOWER(lender_username) = ANY(%s)
+                        GROUP BY LOWER(lender_username)
                     """, (list(owner_ids),))
                     for row in cur.fetchall():
                         lender_avg_ratings[row[0]] = float(row[1]) if row[1] is not None else None
