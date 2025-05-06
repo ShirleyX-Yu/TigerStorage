@@ -330,10 +330,7 @@ const RenterListingDetails = () => {
       try {
         setReviewLoading(true);
         const resp = await axiosInstance.get(`/api/lender-reviews/${listing.owner_id}`);
-        if (resp.ok) {
-          const data = await resp.json();
-          setReviews(data);
-        }
+        setReviews(resp.data);
       } catch (err) {
         // ignore
       } finally {
@@ -373,13 +370,11 @@ const RenterListingDetails = () => {
     const checkReviewed = async () => {
       try {
         const resp = await axiosInstance.get(`/api/lender-reviews/${listing.owner_id}`);
-        if (resp.ok) {
-          const data = await resp.json();
-          const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
-          const found = data.find(r => r.renter_username === storedUsername && r.request_id === eligible.request_id);
-          setHasReviewed(!!found);
-          setCanReview(!found);
-        }
+        const data = resp.data;
+        const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
+        const found = data.find(r => r.renter_username === storedUsername && r.request_id === eligible.request_id);
+        setHasReviewed(!!found);
+        setCanReview(!found);
       } catch (err) {
         setHasReviewed(false);
         setCanReview(true);
@@ -403,8 +398,8 @@ const RenterListingDetails = () => {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
       });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Failed to submit review');
+      const data = resp.data;
+      if (data && data.error) throw new Error(data.error || 'Failed to submit review');
       setReviewSuccess('Review submitted!');
       setHasReviewed(true);
       setCanReview(false);
@@ -412,7 +407,7 @@ const RenterListingDetails = () => {
       setReviewText('');
       // Refresh reviews
       const reviewsResp = await axiosInstance.get('/api/lender-reviews/'+listing.owner_id);
-      if (reviewsResp.ok) setReviews(await reviewsResp.json());
+      setReviews(reviewsResp.data);
     } catch (err) {
       setReviewError(err.message);
     } finally {
