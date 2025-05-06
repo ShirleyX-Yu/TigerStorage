@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import ReservationModal from './ReservationModal';
+import { getCSRFToken } from '../utils/csrf';
 
 const getStatusLabel = (status) => {
   if (!status) return '';
@@ -27,12 +28,6 @@ function formatDate(dateStr) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-// Helper to get CSRF token from cookie
-function getCSRFToken() {
-  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/);
-  return match ? decodeURIComponent(match[1]) : null;
 }
 
 const ViewListings = () => {
@@ -202,6 +197,7 @@ const ViewListings = () => {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+      const csrfToken = getCSRFToken();
       const response = await fetch(`${apiUrl}/api/listings/${reservationListing?.id}/reserve`, {
         method: 'POST',
         credentials: 'include',
@@ -210,7 +206,8 @@ const ViewListings = () => {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
           'X-User-Type': userType,
-          'X-Username': username
+          'X-Username': username,
+          ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {})
         },
         body: JSON.stringify({ requested_space: volume })
       });
