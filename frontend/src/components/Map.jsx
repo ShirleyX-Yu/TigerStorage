@@ -289,10 +289,10 @@ const Map = () => {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     minCost: 0,
-    maxCost: 1000,
+    maxCost: 100,
     minSize: 0,
-    maxSize: 1000,
-    maxDistance: 10,
+    maxSize: 500,
+    maxDistance: 50,
     minRating: 1
   });
   const mapRef = useRef(null);
