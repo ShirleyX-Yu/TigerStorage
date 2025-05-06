@@ -130,7 +130,8 @@ const RenterListingDetails = () => {
             name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
             email: 'contact@tigerstorage.com'
           },
-          isInterested: isInterested
+          isInterested: isInterested,
+          lender_avg_rating: data.lender_avg_rating,
         };
         
         console.log('Formatted listing:', formattedListing);
@@ -217,7 +218,8 @@ const RenterListingDetails = () => {
           name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
           email: 'contact@tigerstorage.com'
         },
-        isInterested: false // skip for now
+        isInterested: false, // skip for now
+        lender_avg_rating: data.lender_avg_rating,
       };
       setListing(formattedListing);
     } catch (err) {
@@ -517,11 +519,11 @@ const RenterListingDetails = () => {
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Start Date:</span>
-                  <span style={styles.infoValue}>{listing.startDate ? formatDate(listing.startDate) : 'N/A'}</span>
+                  <span style={styles.infoValue}>{listing.start_date ? formatDate(listing.start_date) : 'N/A'}</span>
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>End Date:</span>
-                  <span style={styles.infoValue}>{listing.endDate ? formatDate(listing.endDate) : 'N/A'}</span>
+                  <span style={styles.infoValue}>{listing.end_date ? formatDate(listing.end_date) : 'N/A'}</span>
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>Lender NetID:</span>
