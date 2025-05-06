@@ -223,8 +223,6 @@ const ViewListings = () => {
     maxSize: 500,
     maxDistance: 50,
     minRating: 1,
-    startDate: '',
-    endDate: '',
   });
 
   const handleFilterChange = (key, value) => {
@@ -239,8 +237,6 @@ const ViewListings = () => {
       maxSize: 500,
       maxDistance: 50,
       minRating: 1,
-      startDate: '',
-      endDate: '',
     });
   };
 
@@ -257,9 +253,7 @@ const ViewListings = () => {
         cost >= filters.minCost && cost <= filters.maxCost &&
         size >= filters.minSize && size <= filters.maxSize &&
         distance <= filters.maxDistance &&
-        rating >= filters.minRating &&
-        (!filters.startDate || new Date(listing.start_date) >= new Date(filters.startDate)) &&
-        (!filters.endDate || new Date(listing.end_date) <= new Date(filters.endDate))
+        rating >= filters.minRating
       );
     });
   };
@@ -273,7 +267,7 @@ const ViewListings = () => {
   );
 
   // After a reservation is submitted, re-fetch the listings to update remaining_space.
-  const handleReservationSubmit = async ({ volume, mode }) => {
+  const handleReservationSubmit = async ({ space, mode }) => {
     setReservationLoading(true);
     setReservationError('');
     try {
@@ -282,7 +276,7 @@ const ViewListings = () => {
       const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
       
       // Use axiosInstance for consistency with other components
-      const requested_space = mode === 'full' ? Number(reservationListing.sq_ft) : Number(volume);
+      const requested_space = mode === 'full' ? Number(reservationListing.sq_ft) : Number(space);
       
       await axiosInstance.post(`/api/listings/${reservationListing?.id}/reserve`, 
         { requested_space }, 
@@ -432,26 +426,6 @@ const ViewListings = () => {
                       <span style={{ marginLeft: 8 }}>{filters.minRating} star{filters.minRating > 1 ? 's' : ''} & up</span>
                     </div>
                   </div>
-                  <div style={styles.filterGroup}>
-                    <label style={styles.filterLabel}>Start Date</label>
-                    <input
-                      type="date"
-                      name="startDate"
-                      value={filters.startDate}
-                      onChange={e => handleFilterChange('startDate', e.target.value)}
-                      style={styles.input}
-                    />
-                  </div>
-                  <div style={styles.filterGroup}>
-                    <label style={styles.filterLabel}>End Date</label>
-                    <input
-                      type="date"
-                      name="endDate"
-                      value={filters.endDate}
-                      onChange={e => handleFilterChange('endDate', e.target.value)}
-                      style={styles.input}
-                    />
-                  </div>
                 </div>
                 <button onClick={handleReset} style={{ marginTop: 16, width: '100%', padding: '0.75rem', borderRadius: 4, border: '1px solid #FF6B00', color: '#FF6B00', background: '#fff', fontWeight: 600, cursor: 'pointer' }}>Reset Filters</button>
                 {/* Responsive styles for filter grid */}
@@ -551,7 +525,7 @@ const ViewListings = () => {
                               open={reservationModalOpen}
                               onClose={() => setReservationModalOpen(false)}
                               onSubmit={handleReservationSubmit}
-                              maxVolume={reservationListing ? reservationListing.sq_ft : 0}
+                              maxSpace={reservationListing ? reservationListing.sq_ft : 0}
                               loading={reservationLoading}
                               error={reservationError}
                             />

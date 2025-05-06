@@ -14,42 +14,42 @@ const ReservationModal = ({
   open,
   onClose,
   onSubmit,
-  maxVolume = 0,
-  defaultVolume = '',
+  maxSpace = 0,
+  defaultSpace = '',
   loading = false,
   error = '',
   mode: initialMode = 'full', // 'full' or 'partial'
 }) => {
   const [mode, setMode] = useState(initialMode);
-  const [volume, setVolume] = useState(defaultVolume);
+  const [space, setSpace] = useState(defaultSpace);
   const [localError, setLocalError] = useState('');
 
   useEffect(() => {
     setMode(initialMode);
-    setVolume(defaultVolume);
+    setSpace(defaultSpace);
     setLocalError('');
-  }, [open, initialMode, defaultVolume]);
+  }, [open, initialMode, defaultSpace]);
 
   const handleModeChange = (event, newMode) => {
     if (newMode) {
       setMode(newMode);
-      if (newMode === 'full') setVolume(maxVolume);
-      else setVolume('');
+      if (newMode === 'full') setSpace(maxSpace);
+      else setSpace('');
       setLocalError('');
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    let vol = mode === 'full' ? maxVolume : Number(volume);
+    let sp = mode === 'full' ? maxSpace : Number(space);
     if (mode === 'partial') {
-      if (!volume || isNaN(volume) || vol <= 0 || vol > maxVolume) {
-        setLocalError(`Enter a valid volume (0 < volume ≤ ${maxVolume})`);
+      if (!space || isNaN(space) || sp <= 0 || sp > maxSpace) {
+        setLocalError(`Enter a valid space (0 < space ≤ ${maxSpace})`);
         return;
       }
     }
     setLocalError('');
-    onSubmit({ volume: vol, mode });
+    onSubmit({ space: sp, mode });
   };
 
   return (
@@ -71,22 +71,22 @@ const ReservationModal = ({
             style={{ marginBottom: 16 }}
             fullWidth
           >
-            <ToggleButton value="full" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Full ({maxVolume} sq ft)</ToggleButton>
+            <ToggleButton value="full" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Full ({maxSpace} sq ft)</ToggleButton>
             <ToggleButton value="partial" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Partial</ToggleButton>
           </ToggleButtonGroup>
           <TextField
-            label="Volume (sq ft)"
+            label="Space (sq ft)"
             type="number"
             fullWidth
             variant="outlined"
-            value={mode === 'full' ? maxVolume : volume}
-            onChange={e => setVolume(e.target.value)}
+            value={mode === 'full' ? maxSpace : space}
+            onChange={e => setSpace(e.target.value)}
             disabled={mode === 'full' || loading}
-            inputProps={{ min: 0.1, max: maxVolume, step: 0.1 }}
+            inputProps={{ min: 0.1, max: maxSpace, step: 0.1 }}
             style={{ marginBottom: 12, background: 'white', borderRadius: 6 }}
           />
           <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>
-            Max available: {maxVolume} sq ft
+            Max available: {maxSpace} sq ft
           </div>
           {(localError || error) && <Alert severity="error" style={{ marginBottom: 8 }}>{localError || error}</Alert>}
         </DialogContent>
