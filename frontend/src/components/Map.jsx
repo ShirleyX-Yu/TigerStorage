@@ -500,34 +500,8 @@ const Map = () => {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-      if (listing.isInterested) {
-        // Remove interest AND cancel pending reservation request if it exists
-        // 1. Fetch my pending reservation requests for this listing
-        const resp = await axiosInstance.get('/api/my-reservation-requests', {
-          headers: {
-            'X-User-Type': userType,
-            'X-Username': username
-          }
-        });
-        if (resp.data.length > 0) {
-          const pending = resp.data.find(r => (String(r.listing_id) === String(listing.listing_id || listing.id)) && r.status === 'pending');
-          if (pending) {
-            // Cancel the reservation request
-            const cancelResp = await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
-              status: 'cancelled_by_renter'
-            }, {
-              headers: {
-                'X-User-Type': userType,
-                'X-Username': username,
-                'X-CSRFToken': getCSRFToken()
-              }
-            });
-            if (!cancelResp.ok) {
-              const errorText = cancelResp.data && cancelResp.data.error ? cancelResp.data.error : 'Unknown error';
-              throw new Error(errorText || 'Failed to cancel reservation request');
-            }
-          }
-        }
+      const isInterested = interestedListings.some(l => l.id === (listing.listing_id || listing.id));
+      if (isInterested) {
         // Remove interest
         const response = await axiosInstance.delete(`/api/listings/${listing.listing_id || listing.id}/interest`, {
           headers: {
@@ -537,10 +511,14 @@ const Map = () => {
         });
         if (!response.ok) {
           const errorText = response.data && response.data.error ? response.data.error : 'Unknown error';
+          setInterestError(errorText || 'Failed to remove interest');
+          setTimeout(() => setInterestError(null), 2000);
           throw new Error(errorText || 'Failed to remove interest');
         }
         setInterestSuccess(true);
         setLastInterestAction('remove');
+        setTimeout(() => setInterestSuccess(false), 2000);
+        await refreshInterestedListings();
       } else {
         // Add interest (show reservation form if needed)
         const isAuthenticated = !!(sessionStorage.getItem('username') || localStorage.getItem('username'));
@@ -559,9 +537,9 @@ const Map = () => {
       }
       // Always re-fetch listings after interest change
       await fetchListings();
-      await refreshInterestedListings();
     } catch (err) {
       setInterestError(err.message);
+      setTimeout(() => setInterestError(null), 2000);
     } finally {
       setInterestLoading(false);
     }
@@ -892,6 +870,7 @@ const Map = () => {
                     setShowReservationForm(false);
                     setInterestSuccess(true);
                     setLastInterestAction('add');
+                    setTimeout(() => setInterestSuccess(false), 2000);
                     await fetchListings();
                     await refreshInterestedListings();
                   } catch (error) {
@@ -967,17 +946,17 @@ const Map = () => {
               <Button
                 onClick={() => handleToggleInterest(selectedListing)}
                 style={{
-                  background: selectedListing && selectedListing.isInterested ? '#fff' : '#FF6B00',
-                  color: selectedListing && selectedListing.isInterested ? '#FF6B00' : 'white',
-                  border: selectedListing && selectedListing.isInterested ? '1.5px solid #FF6B00' : 'none',
+                  background: selectedListing && interestedListings.some(l => l.id === (selectedListing.listing_id || selectedListing.id)) ? '#fff' : '#FF6B00',
+                  color: selectedListing && interestedListings.some(l => l.id === (selectedListing.listing_id || selectedListing.id)) ? '#FF6B00' : 'white',
+                  border: selectedListing && interestedListings.some(l => l.id === (selectedListing.listing_id || selectedListing.id)) ? '1.5px solid #FF6B00' : 'none',
                   fontWeight: 600
                 }}
-                variant={selectedListing && selectedListing.isInterested ? 'outlined' : 'contained'}
+                variant={selectedListing && interestedListings.some(l => l.id === (selectedListing.listing_id || selectedListing.id)) ? 'outlined' : 'contained'}
                 disabled={interestLoading}
               >
                 {interestLoading
                   ? "Processing..."
-                  : selectedListing && selectedListing.isInterested
+                  : selectedListing && interestedListings.some(l => l.id === (selectedListing.listing_id || selectedListing.id))
                     ? "Remove Interest"
                     : "Show Interest"}
               </Button>

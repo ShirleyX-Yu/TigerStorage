@@ -40,7 +40,7 @@ const RenterListingDetails = () => {
   const [canReview, setCanReview] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
   const [myRequestId, setMyRequestId] = useState(null);
-  const { refreshInterestedListings } = useRenterInterest();
+  const { interestedListings, refreshInterestedListings } = useRenterInterest();
 
   useEffect(() => {
     // Check authentication status
@@ -159,6 +159,14 @@ const RenterListingDetails = () => {
     };
   }, [id, isAuthenticated]);
 
+  useEffect(() => {
+    if (listing) {
+      const isInterested = interestedListings.some(l => l.id === listing.id);
+      setListing(l => l ? { ...l, isInterested } : l);
+    }
+    // eslint-disable-next-line
+  }, [interestedListings, listing?.id]);
+
   // Fetch reservation requests for this listing (auto-refresh on refreshKey)
   useEffect(() => {
     if (!listing || !isAuthenticated) return;
@@ -262,28 +270,18 @@ const RenterListingDetails = () => {
           throw new Error('Failed to remove interest');
         }
         await refreshInterestedListings();
+        setMessage({ type: 'success', text: 'Interest removed!' });
+        setTimeout(() => setMessage(null), 2000);
       } else {
         // Add interest (show reservation modal)
         setReservationModalOpen(true);
         return;
       }
-      // After changing interest, re-fetch interest state for this listing
-      await axiosInstance.get('/api/my-interested-listings', {
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-          'X-User-Type': userType,
-          'X-Username': storedUsername
-        }
-      });
-      let isInterested = false;
-      if (interestResponse.ok) {
-        const interestedListings = await interestResponse.json();
-        isInterested = interestedListings.some(l => l.id === listing.id);
-      }
-      setListing(l => l ? { ...l, isInterested } : l);
+      // No need to manually update local state, useEffect will sync it
     } catch (err) {
       setError(err.message);
+      setMessage({ type: 'error', text: err.message });
+      setTimeout(() => setMessage(null), 2000);
     }
   };
 
@@ -316,6 +314,7 @@ const RenterListingDetails = () => {
       // Success: response.data contains the result
       setReservationModalOpen(false);
       setMessage({ type: 'success', text: 'Reservation request submitted!' });
+      setTimeout(() => setMessage(null), 2000);
       await refreshInterestedListings();
       // After reservation, mark as interested
       await axiosInstance.get('/api/my-interested-listings', {
