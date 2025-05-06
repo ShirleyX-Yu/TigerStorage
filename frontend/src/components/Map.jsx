@@ -10,6 +10,7 @@ import { Box, Typography, List, ListItem, ListItemText, Divider, Dialog, DialogT
 import Header from './Header';
 import { logout, axiosInstance } from '../utils/auth';
 import { Link } from 'react-router-dom';
+import { getCSRFToken } from '../utils/csrf';
 
 // Fix for Leaflet marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -509,17 +510,18 @@ const Map = () => {
           const pending = resp.data.find(r => (String(r.listing_id) === String(listing.listing_id || listing.id)) && r.status === 'pending');
           if (pending) {
             // Cancel the reservation request
-            const cancelResp = await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}/status`, {
+            const cancelResp = await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
               status: 'cancelled_by_renter'
             }, {
               headers: {
                 'X-User-Type': userType,
-                'X-Username': username
+                'X-Username': username,
+                'X-CSRFToken': getCSRFToken()
               }
             });
             if (!cancelResp.ok) {
-              const errData = await cancelResp.json().catch(() => ({}));
-              throw new Error(errData.error || 'Failed to cancel reservation request');
+              const errorText = cancelResp.data && cancelResp.data.error ? cancelResp.data.error : 'Unknown error';
+              throw new Error(errorText || 'Failed to cancel reservation request');
             }
           }
         }
@@ -872,7 +874,8 @@ const Map = () => {
                       headers: {
                         'Content-Type': 'application/json',
                         'X-User-Type': userType,
-                        'X-Username': username
+                        'X-Username': username,
+                        'X-CSRFToken': getCSRFToken()
                       }
                     });
                     // Success: response.data contains the result

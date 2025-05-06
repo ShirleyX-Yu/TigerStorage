@@ -4,6 +4,7 @@ import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import { checkAuthStatus, axiosInstance } from '../utils/auth';
+import { getCSRFToken } from '../utils/csrf';
 import ReservationModal from './ReservationModal';
 import StarIcon from '@mui/icons-material/Star';
 
@@ -305,7 +306,8 @@ const RenterListingDetails = () => {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
           'X-User-Type': userType,
-          'X-Username': storedUsername
+          'X-Username': storedUsername,
+          'X-CSRFToken': getCSRFToken()
         }
       });
       // Success: response.data contains the result
