@@ -153,7 +153,17 @@ async function fetchListings() {
   }
 }
 window.fetchListings = fetchListings;
-fetchListings();
+
+async function ensureCSRFToken() {
+  try {
+    await fetch(`${window.location.origin}/api/csrf-token`, { credentials: 'include' });
+  } catch (err) {
+    // Silent fail
+  }
+}
+
+// Call on page load
+ensureCSRFToken();
 
 function applyFilters() {
   const size = document.getElementById('sizeSelect').value;

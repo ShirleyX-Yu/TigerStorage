@@ -55,6 +55,11 @@ const RenterListingDetails = () => {
   }, []);
 
   useEffect(() => {
+    // Ensure CSRF token is set on mount
+    fetch(`${import.meta.env.VITE_API_URL}/api/csrf-token`, { credentials: 'include' });
+  }, []);
+
+  useEffect(() => {
     console.log('ListingDetails component mounted with ID:', id);
     
     const fetchListingDetails = async () => {

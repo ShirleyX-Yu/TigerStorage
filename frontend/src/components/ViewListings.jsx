@@ -29,6 +29,12 @@ function formatDate(dateStr) {
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+// Helper to get CSRF token from cookie
+function getCSRFToken() {
+  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 const ViewListings = () => {
   const navigate = useNavigate();
   const [listings, setListings] = useState([]);
@@ -113,12 +119,13 @@ const ViewListings = () => {
     if (isInterested) {
       // Remove interest as before
       try {
+        const csrfToken = getCSRFToken();
+        const headers = { 'Content-Type': 'application/json' };
+        if (csrfToken) headers['X-CSRFToken'] = csrfToken;
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}/interest`, {
           method: 'DELETE',
           credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+          headers
         });
         if (!response.ok) {
           throw new Error(`Failed to remove interest`);
@@ -220,6 +227,11 @@ const ViewListings = () => {
       setReservationLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Ensure CSRF token is set on mount
+    fetch(`${import.meta.env.VITE_API_URL}/api/csrf-token`, { credentials: 'include' });
+  }, []);
 
   return (
     <div style={styles.container}>

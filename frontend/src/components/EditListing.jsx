@@ -3,6 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import { HALL_COORDINATES } from '../utils/hallCoordinates';
 
+// Helper to get CSRF token from cookie
+function getCSRFToken() {
+  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 const EditListing = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -254,6 +260,7 @@ const EditListing = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
         },
         credentials: 'include',
         body: JSON.stringify(formData),

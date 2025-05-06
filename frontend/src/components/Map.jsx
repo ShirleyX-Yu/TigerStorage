@@ -394,6 +394,11 @@ const Map = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    // Ensure CSRF token is set on mount
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/csrf-token`, { credentials: 'include' });
+  }, []);
+
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };

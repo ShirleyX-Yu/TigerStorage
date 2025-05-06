@@ -29,6 +29,12 @@ const getStatusLabel = (status) => {
   }
 };
 
+// Helper to get CSRF token from cookie
+function getCSRFToken() {
+  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 const LenderListingDetails = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const fetchListingDetailsRef = useRef(null);
@@ -156,6 +162,7 @@ const LenderListingDetails = () => {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
+          'X-CSRFToken': getCSRFToken()
         },
         body: JSON.stringify(body)
       });

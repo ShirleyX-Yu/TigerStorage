@@ -14,7 +14,7 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 from flask_cas import CAS, login_required
-from flask_wtf.csrf import CSRFProtect, CSRFError
+from flask_wtf.csrf import CSRFProtect, CSRFError, generate_csrf
 
 
 
@@ -2034,6 +2034,20 @@ def set_csp_headers(response):
         "frame-ancestors 'none'; "
         "base-uri 'self'; "
         "form-action 'self';"
+    )
+    return response
+
+@app.route('/api/csrf-token', methods=['GET'])
+def get_csrf_token():
+    token = generate_csrf()
+    response = jsonify({'csrf_token': token})
+    response.set_cookie(
+        'csrf_token',
+        token,
+        secure=True,
+        samesite='None',
+        httponly=False,  # Must be readable by JS
+        domain='.onrender.com' if is_production else None
     )
     return response
 
