@@ -102,7 +102,7 @@ const AdminPlatform = () => {
       setLoading(true);
       setError(null);
       console.log('Fetching reported listings...');
-      const response = await axiosInstance.get('/reported-listings');
+      const response = await axiosInstance.get('/api/reported-listings');
       console.log('API Response:', response);
       const data = response.data;
       console.log('Reported listings data:', data);
