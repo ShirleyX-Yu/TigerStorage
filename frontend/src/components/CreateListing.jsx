@@ -540,7 +540,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                 onChange={handleInputChange}
                 required
                 min={1}
-                max={100}
+                max={500}
               />
             </div>
             <div>
