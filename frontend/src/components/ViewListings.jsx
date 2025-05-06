@@ -208,8 +208,6 @@ const ViewListings = () => {
     maxPrice: '',
     minSize: '',
     maxSize: '',
-    minContract: '',
-    maxContract: '',
     rating: 0, // Added to match map view filters
     startDate: '',
     endDate: '',
@@ -230,8 +228,6 @@ const ViewListings = () => {
         (!filters.maxPrice || listing.cost <= Number(filters.maxPrice)) &&
         (!filters.minSize || listing.sq_ft >= Number(filters.minSize)) &&
         (!filters.maxSize || listing.sq_ft <= Number(filters.maxSize)) &&
-        (!filters.minContract || listing.contract_length_months >= Number(filters.minContract)) &&
-        (!filters.maxContract || listing.contract_length_months <= Number(filters.maxContract)) &&
         (!filters.startDate || new Date(listing.start_date) >= new Date(filters.startDate)) &&
         (!filters.endDate || new Date(listing.end_date) <= new Date(filters.endDate))
       );
@@ -371,25 +367,24 @@ const ViewListings = () => {
                     </div>
                   </div>
                   <div style={styles.filterGroup}>
-                    <label style={styles.filterLabel}>Contract Length (months)</label>
-                    <div style={styles.rangeInputs}>
-                      <input
-                        type="number"
-                        name="minContract"
-                        placeholder="Min"
-                        value={filters.minContract}
-                        onChange={handleFilterChange}
-                        style={styles.input}
-                      />
-                      <input
-                        type="number"
-                        name="maxContract"
-                        placeholder="Max"
-                        value={filters.maxContract}
-                        onChange={handleFilterChange}
-                        style={styles.input}
-                      />
-                    </div>
+                    <label style={styles.filterLabel}>Start Date</label>
+                    <input
+                      type="date"
+                      name="startDate"
+                      value={filters.startDate}
+                      onChange={handleFilterChange}
+                      style={styles.input}
+                    />
+                  </div>
+                  <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>End Date</label>
+                    <input
+                      type="date"
+                      name="endDate"
+                      value={filters.endDate}
+                      onChange={handleFilterChange}
+                      style={styles.input}
+                    />
                   </div>
                 </div>
               </div>
