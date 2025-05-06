@@ -1645,6 +1645,7 @@ def get_listings_by_username(username):
 @app.route('/api/listings/<int:listing_id>/reserve', methods=['POST'])
 def reserve_space(listing_id):
     try:
+        print(f"[RESERVE] Incoming reservation request for listing_id={listing_id}")
         authenticated = auth.is_authenticated()
         renter_username = None
         if authenticated:
@@ -1652,11 +1653,15 @@ def reserve_space(listing_id):
             renter_username = user_info.get('user', '').lower()
         else:
             renter_username = request.headers.get('X-Username', '').lower()
+        print(f"[RESERVE] Authenticated: {authenticated}, Renter Username: {renter_username}")
         if not renter_username:
+            print("[RESERVE] No renter_username provided")
             return jsonify({'error': 'Not authenticated'}), 401
         data = request.get_json()
+        print(f"[RESERVE] Payload: {data}")
         requested_space = float(data.get('requested_space', 0))
         if requested_space <= 0:
+            print(f"[RESERVE] Invalid requested_space: {requested_space}")
             return jsonify({'error': 'Requested space must be positive'}), 400
         conn = get_db_connection()
         try:
@@ -1668,14 +1673,18 @@ def reserve_space(listing_id):
                     LIMIT 1
                 """, (listing_id, renter_username))
                 if cur.fetchone():
+                    print(f"[RESERVE] Duplicate pending reservation for {renter_username} on listing {listing_id}")
                     return jsonify({'error': 'You already have a pending reservation request for this listing.'}), 400
                 # Get listing and check remaining_space
                 cur.execute("SELECT remaining_space, is_available FROM storage_listings WHERE listing_id = %s", (listing_id,))
                 row = cur.fetchone()
                 if not row:
+                    print(f"[RESERVE] Listing {listing_id} not found")
                     return jsonify({'error': 'Listing not found'}), 404
                 remaining_space, is_available = row
+                print(f"[RESERVE] Listing remaining_space: {remaining_space}, is_available: {is_available}")
                 if not is_available or remaining_space is None or remaining_space < requested_space:
+                    print(f"[RESERVE] Not enough space: requested {requested_space}, available {remaining_space}")
                     return jsonify({'error': 'Not enough space available'}), 400
                 # Insert reservation request
                 cur.execute("""
@@ -1684,11 +1693,12 @@ def reserve_space(listing_id):
                 """, (listing_id, renter_username, requested_space))
                 request_id = cur.fetchone()[0]
                 conn.commit()
+                print(f"[RESERVE] Reservation created: request_id={request_id}")
                 return jsonify({'success': True, 'request_id': request_id}), 201
         finally:
             conn.close()
     except Exception as e:
-        print('Error in reserve_space:', e)
+        print('[RESERVE] Error in reserve_space:', e)
         return jsonify({'error': str(e)}), 500
 
 # 2. Lender views all reservation requests for their listing
