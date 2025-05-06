@@ -52,14 +52,11 @@ const ViewListings = () => {
           credentials: 'include' // Include cookies for authentication
         });
         
-        let errorText = 'Unknown error';
-        try { errorText = (await response.json()).error || errorText; } catch {}
+        const data = await response.json().catch(() => ({}));
         
         if (!response.ok) {
-          throw new Error(`Failed to fetch listings: ${response.status} ${errorText}`);
+          throw new Error(data.error || 'Unknown error');
         }
-        
-        const data = await response.json();
         
         if (!Array.isArray(data)) {
           throw new Error('Unexpected data format from API');

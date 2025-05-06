@@ -79,15 +79,9 @@ const RenterDashboard = ({ username }) => {
         
         console.log('Interested spaces response status:', response.status);
         
-        let errorText = 'Unknown error';
-        try { errorText = (await response.json()).error || errorText; } catch {}
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) { throw new Error(`Failed to fetch interested spaces: ${response.status} ${data.error || 'Unknown error'}`); }
         
-        if (!response.ok) {
-          console.error('Error details:', errorText);
-          throw new Error(`Failed to fetch interested spaces: ${response.status} ${errorText}`);
-        }
-        
-        const data = await response.json();
         console.log('Fetched interested spaces:', data);
         setInterestedSpaces(data);
       } catch (err) {
