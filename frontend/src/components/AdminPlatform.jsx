@@ -161,7 +161,8 @@ const AdminPlatform = () => {
             <div style={{ color: '#f44336', textAlign: 'center', padding: '2rem' }}>{error}</div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '2rem', marginTop: '2rem' }}>
-              {listings.map(listing => (
+              {Array.isArray(listings) && listings.length > 0 ? (
+                listings.map(listing => (
                 <div key={listing.report_id || listing.listing_id || listing.id} style={{ background: '#232526', borderRadius: 12, padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.13)', color: '#fff', minHeight: 260 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
@@ -274,7 +275,12 @@ const AdminPlatform = () => {
                     </button>
                   </div>
                 </div>
-              ))}
+                ))
+              ) : (
+                <div style={{ color: '#bbb', textAlign: 'center', padding: '2rem', gridColumn: '1 / -1' }}>
+                  No listings found. Check back later or refresh the page.
+                </div>
+              )}
             </div>
           )}
           {/* Edit modal */}
