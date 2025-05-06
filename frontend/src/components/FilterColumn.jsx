@@ -20,10 +20,11 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
 
   const handleReset = () => {
     onFilterChange('minCost', 0);
-    onFilterChange('maxCost', 1000);
+    onFilterChange('maxCost', 100);
     onFilterChange('minSize', 0);
-    onFilterChange('maxSize', 1000);
-    onFilterChange('maxDistance', 10);
+    onFilterChange('maxSize', 500);
+    onFilterChange('minDistance', 0);
+    onFilterChange('maxDistance', 50);
   };
 
   return (
@@ -46,7 +47,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           onChange={handleSliderChange('price')}
           valueLabelDisplay="auto"
           min={0}
-          max={1000}
+          max={100}
           step={1}
           sx={{
             color: '#FF6B00',
@@ -89,7 +90,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           onChange={handleSliderChange('size')}
           valueLabelDisplay="auto"
           min={0}
-          max={1000}
+          max={500}
           step={1}
           sx={{
             color: '#FF6B00',
