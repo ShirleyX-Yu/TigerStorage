@@ -204,30 +204,47 @@ const ViewListings = () => {
 
   // Use the same filter structure as the map view
   const [filters, setFilters] = useState({
-    minPrice: '',
-    maxPrice: '',
-    minSize: '',
-    maxSize: '',
-    rating: 0, // Added to match map view filters
+    minCost: 0,
+    maxCost: 100,
+    minSize: 0,
+    maxSize: 500,
+    maxDistance: 50,
+    minRating: 1,
     startDate: '',
     endDate: '',
   });
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
   };
 
+  const handleReset = () => {
+    setFilters({
+      minCost: 0,
+      maxCost: 100,
+      minSize: 0,
+      maxSize: 500,
+      maxDistance: 50,
+      minRating: 1,
+      startDate: '',
+      endDate: '',
+    });
+  };
+
+  // Live updating filter logic
   const filterListings = (listings) => {
     return listings.filter(listing => {
+      const cost = listing.cost ?? 0;
+      const size = Number(listing.sq_ft) ?? 0;
+      const distance = listing.latitude && listing.longitude
+        ? calculateDistance(40.3437, -74.6517, listing.latitude, listing.longitude)
+        : 0;
+      const rating = listing.lender_avg_rating ?? 0;
       return (
-        (!filters.minPrice || listing.cost >= Number(filters.minPrice)) &&
-        (!filters.maxPrice || listing.cost <= Number(filters.maxPrice)) &&
-        (!filters.minSize || listing.sq_ft >= Number(filters.minSize)) &&
-        (!filters.maxSize || listing.sq_ft <= Number(filters.maxSize)) &&
+        cost >= filters.minCost && cost <= filters.maxCost &&
+        size >= filters.minSize && size <= filters.maxSize &&
+        distance <= filters.maxDistance &&
+        rating >= filters.minRating &&
         (!filters.startDate || new Date(listing.start_date) >= new Date(filters.startDate)) &&
         (!filters.endDate || new Date(listing.end_date) <= new Date(filters.endDate))
       );
@@ -323,47 +340,83 @@ const ViewListings = () => {
             <div>
               <div style={styles.filtersSection}>
                 <h3 style={styles.filtersTitle}>Filters</h3>
-                <div style={styles.filterGrid}>
+                <div className="responsive-filter-grid" style={styles.filterGrid}>
                   <div style={styles.filterGroup}>
                     <label style={styles.filterLabel}>Price Range ($/month)</label>
-                    <div style={styles.rangeInputs}>
-                      <input
-                        type="number"
-                        name="minPrice"
-                        placeholder="Min"
-                        value={filters.minPrice}
-                        onChange={handleFilterChange}
-                        style={styles.input}
-                      />
-                      <input
-                        type="number"
-                        name="maxPrice"
-                        placeholder="Max"
-                        value={filters.maxPrice}
-                        onChange={handleFilterChange}
-                        style={styles.input}
-                      />
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={filters.minCost}
+                      onChange={e => handleFilterChange('minCost', Number(e.target.value))}
+                      style={{ width: '100%' }}
+                    />
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={filters.maxCost}
+                      onChange={e => handleFilterChange('maxCost', Number(e.target.value))}
+                      style={{ width: '100%' }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                      <span>Min: ${filters.minCost}</span>
+                      <span>Max: ${filters.maxCost}</span>
                     </div>
                   </div>
                   <div style={styles.filterGroup}>
                     <label style={styles.filterLabel}>Size Range (sq ft)</label>
-                    <div style={styles.rangeInputs}>
-                      <input
-                        type="number"
-                        name="minSize"
-                        placeholder="Min"
-                        value={filters.minSize}
-                        onChange={handleFilterChange}
-                        style={styles.input}
-                      />
-                      <input
-                        type="number"
-                        name="maxSize"
-                        placeholder="Max"
-                        value={filters.maxSize}
-                        onChange={handleFilterChange}
-                        style={styles.input}
-                      />
+                    <input
+                      type="range"
+                      min={0}
+                      max={500}
+                      value={filters.minSize}
+                      onChange={e => handleFilterChange('minSize', Number(e.target.value))}
+                      style={{ width: '100%' }}
+                    />
+                    <input
+                      type="range"
+                      min={0}
+                      max={500}
+                      value={filters.maxSize}
+                      onChange={e => handleFilterChange('maxSize', Number(e.target.value))}
+                      style={{ width: '100%' }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                      <span>Min: {filters.minSize} sq ft</span>
+                      <span>Max: {filters.maxSize} sq ft</span>
+                    </div>
+                  </div>
+                  <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>Distance from Campus (miles)</label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={50}
+                      step={0.1}
+                      value={filters.maxDistance}
+                      onChange={e => handleFilterChange('maxDistance', Number(e.target.value))}
+                      style={{ width: '100%' }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', fontSize: 12 }}>
+                      <span>Max: {filters.maxDistance} mi</span>
+                    </div>
+                  </div>
+                  <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>Minimum Lender Rating</label>
+                    <input
+                      type="range"
+                      min={1}
+                      max={5}
+                      value={filters.minRating}
+                      onChange={e => handleFilterChange('minRating', Number(e.target.value))}
+                      style={{ width: '100%' }}
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                      {[1,2,3,4,5].map(star => (
+                        <span key={star} style={{ color: filters.minRating >= star ? '#fbc02d' : '#ccc', fontSize: 18 }}>★</span>
+                      ))}
+                      <span style={{ marginLeft: 8 }}>{filters.minRating} star{filters.minRating > 1 ? 's' : ''} & up</span>
                     </div>
                   </div>
                   <div style={styles.filterGroup}>
@@ -372,7 +425,7 @@ const ViewListings = () => {
                       type="date"
                       name="startDate"
                       value={filters.startDate}
-                      onChange={handleFilterChange}
+                      onChange={e => handleFilterChange('startDate', e.target.value)}
                       style={styles.input}
                     />
                   </div>
@@ -382,11 +435,36 @@ const ViewListings = () => {
                       type="date"
                       name="endDate"
                       value={filters.endDate}
-                      onChange={handleFilterChange}
+                      onChange={e => handleFilterChange('endDate', e.target.value)}
                       style={styles.input}
                     />
                   </div>
                 </div>
+                <button onClick={handleReset} style={{ marginTop: 16, width: '100%', padding: '0.75rem', borderRadius: 4, border: '1px solid #FF6B00', color: '#FF6B00', background: '#fff', fontWeight: 600, cursor: 'pointer' }}>Reset Filters</button>
+                {/* Responsive styles for filter grid */}
+                <style>{`
+                  @media (max-width: 700px) {
+                    .responsive-filter-grid {
+                      display: flex !important;
+                      flex-direction: column !important;
+                      gap: 1rem !important;
+                    }
+                  }
+                  @media (min-width: 701px) {
+                    .responsive-filter-grid {
+                      display: grid !important;
+                      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+                      gap: 1.5rem !important;
+                    }
+                  }
+                  .responsive-filter-grid input[type='number'],
+                  .responsive-filter-grid input[type='date'] {
+                    font-size: 1rem;
+                    padding: 0.75rem;
+                    border-radius: 4px;
+                    border: 1px solid #ddd;
+                  }
+                `}</style>
               </div>
 
               {filteredListings.length === 0 ? (
@@ -638,14 +716,10 @@ const styles = {
     fontWeight: '500',
   },
   actionButton: {
-    padding: '0.75rem 1.5rem',
-    backgroundColor: '#f57c00',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '1rem',
-    fontWeight: '500',
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginTop: '15px',
+    gap: '10px',
   },
   viewButton: {
     flex: 1,
