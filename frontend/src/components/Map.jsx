@@ -1015,7 +1015,7 @@ const Map = () => {
                   ? "Processing..."
                   : selectedListing && interestedListings.some(l => l.id === (selectedListing.listing_id || selectedListing.id))
                     ? "Remove Request"
-                    : "Request"}
+                    : "Request Space"}
               </Button>
 
             </DialogActions>
