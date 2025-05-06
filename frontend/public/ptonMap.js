@@ -219,8 +219,20 @@ async function toggleInterest(listingId) {
       credentials: 'include',
       headers
     });
+
+    // Robust error handling and logging
+    if (!response || typeof response.json !== 'function') {
+      console.error('toggleInterest: response is not a Response object:', response);
+      throw new Error('Unexpected error: response is not a valid Response object');
+    }
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      let errorData = {};
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        // If response is not JSON, ignore
+      }
       throw new Error(errorData.error || `Failed to ${isInterested ? 'remove' : 'add'} interest`);
     }
     if (isInterested) {
