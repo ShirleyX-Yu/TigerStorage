@@ -259,42 +259,49 @@ const RenterListingDetails = () => {
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
       if (listing.isInterested) {
         // Cancel pending reservation request if it exists
-        const resp = await axiosInstance.get('/api/my-reservation-requests', {
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache',
-            'X-User-Type': userType,
-            'X-Username': storedUsername
+        try {
+          const resp = await axiosInstance.get('/api/my-reservation-requests', {
+            headers: {
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache',
+              'X-User-Type': userType,
+              'X-Username': storedUsername
+            }
+          });
+          if (resp.data && Array.isArray(resp.data)) {
+            const pending = resp.data.find(r => (String(r.listing_id) === String(listing.id)) && r.status === 'pending');
+            if (pending) {
+              await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
+                status: 'cancelled_by_renter'
+              }, {
+                headers: {
+                  'X-User-Type': userType,
+                  'X-Username': storedUsername,
+                  'X-CSRFToken': getCSRFToken()
+                }
+              });
+            }
           }
-        });
-        if (resp.data && Array.isArray(resp.data)) {
-          const pending = resp.data.find(r => (String(r.listing_id) === String(listing.id)) && r.status === 'pending');
-          if (pending) {
-            await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
-              status: 'cancelled_by_renter'
-            }, {
-              headers: {
-                'X-User-Type': userType,
-                'X-Username': storedUsername,
-                'X-CSRFToken': getCSRFToken()
-              }
-            });
-          }
+          
+          // Remove interest
+          await axiosInstance.delete(`${apiUrl}/api/listings/${listing.id}/interest`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-User-Type': userType,
+              'X-Username': storedUsername
+            }
+          });
+          
+          await refreshInterestedListings();
+          setMessage({ type: 'success', text: 'Interest removed!' });
+          setTimeout(() => setMessage(null), 2000);
+        } catch (error) {
+          const errorMessage = error.response?.data?.error || 'Failed to remove interest';
+          setError(errorMessage);
+          setMessage({ type: 'error', text: errorMessage });
+          setTimeout(() => setMessage(null), 2000);
+          throw error; // Rethrow to be caught by outer catch
         }
-        // Remove interest
-        const response = await axiosInstance.delete(`${apiUrl}/api/listings/${listing.id}/interest`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-User-Type': userType,
-            'X-Username': storedUsername
-          }
-        });
-        if (!response.ok) {
-          throw new Error('Failed to remove interest');
-        }
-        await refreshInterestedListings();
-        setMessage({ type: 'success', text: 'Interest removed!' });
-        setTimeout(() => setMessage(null), 2000);
       } else {
         // Add interest (show reservation modal)
         setReservationModalOpen(true);
@@ -302,9 +309,13 @@ const RenterListingDetails = () => {
       }
       // No need to manually update local state, useEffect will sync it
     } catch (err) {
-      setError(err.message);
-      setMessage({ type: 'error', text: err.message });
-      setTimeout(() => setMessage(null), 2000);
+      console.error('Toggle interest error:', err);
+      // Don't set error message if it was already set in the inner catch
+      if (!message) {
+        setError(err.message);
+        setMessage({ type: 'error', text: err.message });
+        setTimeout(() => setMessage(null), 2000);
+      }
     }
   };
 

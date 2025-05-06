@@ -503,22 +503,24 @@ const Map = () => {
       const isInterested = interestedListings.some(l => l.id === (listing.listing_id || listing.id));
       if (isInterested) {
         // Remove interest
-        const response = await axiosInstance.delete(`/api/listings/${listing.listing_id || listing.id}/interest`, {
-          headers: {
-            'X-User-Type': userType,
-            'X-Username': username,
-          },
-        });
-        if (!response.ok) {
-          const errorText = response.data && response.data.error ? response.data.error : 'Unknown error';
-          setInterestError(errorText || 'Failed to remove interest');
+        try {
+          await axiosInstance.delete(`/api/listings/${listing.listing_id || listing.id}/interest`, {
+            headers: {
+              'X-User-Type': userType,
+              'X-Username': username,
+            },
+          });
+          // Success - no need to check .ok as axios will throw on error status codes
+          setInterestSuccess(true);
+          setLastInterestAction('remove');
+          setTimeout(() => setInterestSuccess(false), 2000);
+          await refreshInterestedListings();
+        } catch (error) {
+          const errorText = error.response?.data?.error || 'Failed to remove interest';
+          setInterestError(errorText);
           setTimeout(() => setInterestError(null), 2000);
-          throw new Error(errorText || 'Failed to remove interest');
+          throw new Error(errorText);
         }
-        setInterestSuccess(true);
-        setLastInterestAction('remove');
-        setTimeout(() => setInterestSuccess(false), 2000);
-        await refreshInterestedListings();
       } else {
         // Add interest (show reservation form if needed)
         const isAuthenticated = !!(sessionStorage.getItem('username') || localStorage.getItem('username'));
@@ -538,8 +540,12 @@ const Map = () => {
       // Always re-fetch listings after interest change
       await fetchListings();
     } catch (err) {
-      setInterestError(err.message);
-      setTimeout(() => setInterestError(null), 2000);
+      console.error('Interest toggle error:', err);
+      // Don't override more specific errors set above
+      if (!interestError) {
+        setInterestError(err.message);
+        setTimeout(() => setInterestError(null), 2000);
+      }
     } finally {
       setInterestLoading(false);
     }
@@ -1049,22 +1055,18 @@ const Map = () => {
                   const listing_id = selectedListing?.listing_id || selectedListing?.id;
                   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
                   try {
-                    const response = await axiosInstance.post('/api/report-listing', {
+                    await axiosInstance.post('/api/report-listing', {
                       listing_id,
                       lender_id,
                       renter_id,
                       reason: reportReason
                     });
-                    if (response.ok) {
-                      setReportSuccess(true);
-                    } else {
-                      // Optionally handle error
-                      setReportSuccess(false);
-                      alert('Failed to submit report.');
-                    }
+                    // Success - axios will throw on error
+                    setReportSuccess(true);
                   } catch (err) {
+                    console.error('Report error:', err);
                     setReportSuccess(false);
-                    alert('Error submitting report.');
+                    alert(err.response?.data?.error || 'Error submitting report.');
                   }
                 }}
                 color="success"
