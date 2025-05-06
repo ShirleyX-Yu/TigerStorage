@@ -258,6 +258,29 @@ const RenterListingDetails = () => {
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
       if (listing.isInterested) {
+        // Cancel pending reservation request if it exists
+        const resp = await axiosInstance.get('/api/my-reservation-requests', {
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType,
+            'X-Username': storedUsername
+          }
+        });
+        if (resp.data && Array.isArray(resp.data)) {
+          const pending = resp.data.find(r => (String(r.listing_id) === String(listing.id)) && r.status === 'pending');
+          if (pending) {
+            await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
+              status: 'cancelled_by_renter'
+            }, {
+              headers: {
+                'X-User-Type': userType,
+                'X-Username': storedUsername,
+                'X-CSRFToken': getCSRFToken()
+              }
+            });
+          }
+        }
         // Remove interest
         const response = await axiosInstance.delete(`${apiUrl}/api/listings/${listing.id}/interest`, {
           headers: {

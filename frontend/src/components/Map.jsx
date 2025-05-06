@@ -550,6 +550,26 @@ const Map = () => {
     setLastInterestAction(null);
   }, [groupedListings, groupedIndex]);
 
+  useEffect(() => {
+    if (selectedListingId) {
+      // Find the updated listing from the listings array (which is synced with interest context)
+      const updated = listings.find(l => (l.listing_id || l.id) === selectedListingId);
+      if (updated) {
+        // If using groupedListings, update the group as well
+        if (groupedListings && groupedListings.length > 0) {
+          const updatedGroup = groupedListings.map(l => {
+            const match = listings.find(x => (x.listing_id || x.id) === (l.listing_id || l.id));
+            return match ? match : l;
+          });
+          setGroupedListings(updatedGroup);
+        }
+        // This will force the modal to re-render with the new interest state
+        setSelectedListingId(updated.listing_id || updated.id);
+      }
+    }
+    // eslint-disable-next-line
+  }, [interestedListings]);
+
   if (error) {
     return (
       <div style={{ 
