@@ -282,7 +282,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       }
     } else {
       // For off-campus addresses
-      if (!addressComponents.street || !addressComponents.city || !addressComponents.state) {
+      if (!addressComponents.street || !addressComponents.city || !addressComponents.zip_code) {
         setGeocodingStatus('Please fill in all address fields');
         setAddressNotFound(false);
         return;
@@ -290,13 +290,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       setGeocodingStatus('Looking up coordinates...');
       setAddressNotFound(false);
       try {
-        // Use user-entered ZIP code if provided, otherwise use Princeton default for Princeton addresses
-        let zip = addressComponents.zip_code && addressComponents.zip_code.trim() !== ''
-          ? addressComponents.zip_code.trim()
-          : (addressComponents.city && addressComponents.city.trim().toLowerCase() === 'princeton' ? '08544' : '');
-        const searchAddress = zip
-          ? `${addressComponents.street}, ${addressComponents.city}, ${addressComponents.state} ${zip}, ${addressComponents.country}`
-          : `${addressComponents.street}, ${addressComponents.city}, ${addressComponents.state}, ${addressComponents.country}`;
+        const searchAddress = `${addressComponents.street}, ${addressComponents.city}, NJ ${addressComponents.zip_code}, USA`;
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
         );
@@ -535,7 +529,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                     const addressComponents = {
                       street: formData.street_address,
                       city: formData.city,
-                      state: formData.state,
+                      state: 'NJ',
                       country: 'USA',
                       zip_code: formData.zip_code,
                     };

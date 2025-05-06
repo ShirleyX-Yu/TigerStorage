@@ -228,7 +228,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       }
     } else {
       // For off-campus addresses
-      if (!addressComponents.street || !addressComponents.city || !addressComponents.state) {
+      if (!addressComponents.street || !addressComponents.city || !addressComponents.zip_code) {
         setGeocodingStatus('Please fill in all address fields');
         setAddressNotFound(false);
         return;
@@ -236,7 +236,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       setGeocodingStatus('Looking up coordinates...');
       setAddressNotFound(false);
       try {
-        const searchAddress = `${addressComponents.street}, ${addressComponents.city}, ${addressComponents.state}, ${addressComponents.country}`;
+        const searchAddress = `${addressComponents.street}, ${addressComponents.city}, NJ ${addressComponents.zip_code}, USA`;
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
         );
@@ -501,8 +501,9 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                     const addressComponents = {
                       street: formData.street_address,
                       city: formData.city,
-                      state: formData.state,
-                      country: 'USA'
+                      state: 'NJ',
+                      country: 'USA',
+                      zip_code: formData.zip_code,
                     };
                     geocodeAddress(addressComponents);
                   }}
