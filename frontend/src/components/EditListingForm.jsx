@@ -291,7 +291,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       setGeocodingStatus('Looking up coordinates...');
       setAddressNotFound(false);
       try {
-        const searchAddress = `${addressComponents.street}, ${addressComponents.city}, NJ ${addressComponents.zip_code}, USA`;
+        const searchAddress = `${formData.street_address}, ${formData.city}, NJ ${formData.zip_code}, USA`;
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
         );
@@ -532,17 +532,18 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                 <div style={{ marginTop: '10px', color: '#888', fontSize: '0.95em' }}>
                   <b>Geocoding string:</b> {`${formData.street_address || ''}, ${formData.city || ''}, NJ ${formData.zip_code || ''}, USA`}
                 </div>
+                {addressNotFound && lastGeocodeResult && Array.isArray(lastGeocodeResult) && lastGeocodeResult.length === 0 && (
+                  <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
+                    <div>No location matching address found. geolocator.geocode() returned None for:</div>
+                    <pre style={{ color: '#b00020', fontSize: '12px', background: '#fff4f4', padding: '6px', borderRadius: '4px', overflowX: 'auto' }}>
+                      {`${formData.street_address || ''}, ${formData.city || ''}, NJ ${formData.zip_code || ''}, USA`}
+                    </pre>
+                  </div>
+                )}
                 <button 
                   type="button" 
                   onClick={() => {
-                    const addressComponents = {
-                      street: formData.street_address,
-                      city: formData.city,
-                      state: 'NJ',
-                      country: 'USA',
-                      zip_code: formData.zip_code,
-                    };
-                    geocodeAddress(addressComponents);
+                    geocodeAddress({});
                   }}
                   style={{...styles.geocodeButton, marginTop: '20px'}}
                 >
