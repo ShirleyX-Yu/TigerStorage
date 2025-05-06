@@ -404,6 +404,23 @@ def get_listings():
                 # Get column names from cursor description
                 column_names = [desc[0] for desc in cur.description]
                 
+                # --- Fetch average ratings for all lenders in one query ---
+                owner_ids = set()
+                for listing in listings:
+                    idx = column_names.index('owner_id') if 'owner_id' in column_names else None
+                    if idx is not None and listing[idx]:
+                        owner_ids.add(listing[idx])
+                lender_avg_ratings = {}
+                if owner_ids:
+                    cur.execute("""
+                        SELECT lender_username, AVG(rating)::float AS avg_rating
+                        FROM lender_reviews
+                        WHERE lender_username = ANY(%s)
+                        GROUP BY lender_username
+                    """, (list(owner_ids),))
+                    for row in cur.fetchall():
+                        lender_avg_ratings[row[0]] = float(row[1]) if row[1] is not None else None
+                
                 # Convert to list of dictionaries
                 formatted_listings = []
                 for listing in listings:
@@ -441,7 +458,9 @@ def get_listings():
                             "owner_id": listing_dict.get('owner_id', ''),
                             "remaining_space": listing_dict.get('remaining_space', 0),
                             "is_available": bool(listing_dict.get('is_available', True)) if float(listing_dict.get('remaining_space', 0)) > 0 else False,
-                            "hall_name": listing_dict.get('hall_name', '')
+                            "hall_name": listing_dict.get('hall_name', ''),
+                            # --- Add average lender rating ---
+                            "lender_avg_rating": lender_avg_ratings.get(listing_dict.get('owner_id'))
                         }
 
                         # Ensure latitude and longitude have values for map display

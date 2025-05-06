@@ -290,7 +290,8 @@ const Map = () => {
     maxCost: 1000,
     minSize: 0,
     maxSize: 1000,
-    maxDistance: 10
+    maxDistance: 10,
+    minRating: 1
   });
   const mapRef = useRef(null);
   const navigate = useNavigate();
@@ -403,7 +404,8 @@ const Map = () => {
       maxCost: 1000,
       minSize: 0,
       maxSize: 1000,
-      maxDistance: 10
+      maxDistance: 10,
+      minRating: 1
     });
   };
 
@@ -449,9 +451,12 @@ const Map = () => {
       listing.longitude
     );
     const distanceMatches = distance <= filters.maxDistance;
+    // --- Rating filter ---
+    const rating = listing.lender_avg_rating;
+    const ratingMatches = (filters.minRating <= 1) ? true : (rating === undefined || rating === null ? false : rating >= filters.minRating);
     return {
       ...listing,
-      matchesFilters: costMatches && sizeMatches && distanceMatches
+      matchesFilters: costMatches && sizeMatches && distanceMatches && ratingMatches
     };
   });
 
@@ -670,6 +675,21 @@ const Map = () => {
                           <Typography component="span" variant="body2" color="textSecondary">
                             {listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles from Princeton University
                           </Typography>
+                          <br />
+                          <Typography component="span" variant="body2" color="textSecondary">
+                            Lender Rating: {typeof listing.lender_avg_rating === 'number' ? (
+                              <span style={{ color: '#fbc02d', fontWeight: 600 }}>
+                                {[1,2,3,4,5].map(star => (
+                                  <span key={star} style={{ color: listing.lender_avg_rating >= star ? '#fbc02d' : '#ccc', fontSize: 16 }}>★</span>
+                                ))}
+                                <span style={{ color: '#333', marginLeft: 4, fontSize: 14 }}>
+                                  {listing.lender_avg_rating.toFixed(1)}
+                                </span>
+                              </span>
+                            ) : (
+                              <span style={{ color: '#888', fontSize: 14 }}>N/A</span>
+                            )}
+                          </Typography>
                         </>
                       }
                     />
@@ -802,6 +822,20 @@ const Map = () => {
                   </Typography>
                   <Typography variant="body2" color="textSecondary" style={{ marginBottom: 8 }}>
                     {selectedListing.distance ? selectedListing.distance.toFixed(1) : 'N/A'} miles from Princeton University
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" style={{ marginBottom: 8 }}>
+                    Lender Rating: {typeof selectedListing.lender_avg_rating === 'number' ? (
+                      <span style={{ color: '#fbc02d', fontWeight: 600 }}>
+                        {[1,2,3,4,5].map(star => (
+                          <span key={star} style={{ color: selectedListing.lender_avg_rating >= star ? '#fbc02d' : '#ccc', fontSize: 18 }}>★</span>
+                        ))}
+                        <span style={{ color: '#333', marginLeft: 4, fontSize: 15 }}>
+                          {selectedListing.lender_avg_rating.toFixed(1)}
+                        </span>
+                      </span>
+                    ) : (
+                      <span style={{ color: '#888', fontSize: 15 }}>N/A</span>
+                    )}
                   </Typography>
                   {selectedListing.description && (
                     <Typography variant="body2" style={{ marginBottom: 8 }}>
