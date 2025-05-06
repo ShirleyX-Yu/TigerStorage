@@ -132,7 +132,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           onChange={handleSliderChange('distance')}
           valueLabelDisplay="auto"
           min={0}
-          max={10}
+          max={50}
           step={0.1}
           sx={{
             color: '#FF6B00',
