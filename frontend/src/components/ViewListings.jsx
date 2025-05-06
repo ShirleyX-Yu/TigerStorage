@@ -4,6 +4,7 @@ import Header from './Header';
 import ReservationModal from './ReservationModal';
 import { getCSRFToken } from '../utils/csrf';
 import { useRenterInterest } from '../context/RenterInterestContext';
+import { axiosInstance } from '../utils/auth';
 
 const getStatusLabel = (status) => {
   if (!status) return '';
@@ -91,24 +92,56 @@ const ViewListings = () => {
 
   // Function to toggle interest in a listing
   const toggleInterest = async (listingId) => {
-    const isInterested = interestedListings && interestedListings.some(l => l.id === listingId);
+    const isInterested = interestedListings.some(l => l.id === listingId);
     if (isInterested) {
-      // Remove interest as before
+      // Remove interest after cancelling any pending reservations
       try {
-        const csrfToken = getCSRFToken();
-        const headers = { 'Content-Type': 'application/json' };
-        if (csrfToken) headers['X-CSRFToken'] = csrfToken;
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}/interest`, {
-          method: 'DELETE',
-          credentials: 'include',
-          headers
+        const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+        const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+
+        // First, check for and cancel any pending reservation requests
+        const resp = await axiosInstance.get('/api/my-reservation-requests', {
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType,
+            'X-Username': username
+          }
         });
-        if (!response.ok) {
-          throw new Error(`Failed to remove interest`);
+        
+        if (resp.data && Array.isArray(resp.data)) {
+          const pending = resp.data.find(r => 
+            (String(r.listing_id) === String(listingId)) && 
+            r.status === 'pending'
+          );
+          
+          if (pending) {
+            console.log(`Cancelling pending reservation request ID: ${pending.request_id}`);
+            await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
+              status: 'cancelled_by_renter'
+            }, {
+              headers: {
+                'X-User-Type': userType,
+                'X-Username': username,
+                'X-CSRFToken': getCSRFToken()
+              }
+            });
+          }
         }
+        
+        // Then remove interest
+        await axiosInstance.delete(`/api/listings/${listingId}/interest`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Type': userType,
+            'X-Username': username,
+            'X-CSRFToken': getCSRFToken()
+          }
+        });
+        
         await refreshInterestedListings(); // update after removal
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.error || err.message);
       }
     } else {
       // Show reservation modal for new interest

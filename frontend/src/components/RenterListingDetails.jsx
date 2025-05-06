@@ -162,7 +162,9 @@ const RenterListingDetails = () => {
   useEffect(() => {
     if (listing) {
       const isInterested = interestedListings.some(l => l.id === listing.id);
-      setListing(l => l ? { ...l, isInterested } : l);
+      if (isInterested !== listing.isInterested) {
+        setListing(l => l ? { ...l, isInterested } : l);
+      }
     }
     // eslint-disable-next-line
   }, [interestedListings, listing?.id]);
@@ -350,17 +352,9 @@ const RenterListingDetails = () => {
       setMessage({ type: 'success', text: 'Reservation request submitted!' });
       setTimeout(() => setMessage(null), 2000);
       await refreshInterestedListings();
-      // After reservation, mark as interested
-      await axiosInstance.get('/api/my-interested-listings', {
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-          'X-User-Type': userType,
-          'X-Username': storedUsername
-        }
-      });
-      let isInterested = true;
-      setListing(l => l ? { ...l, isInterested } : l);
+      
+      // Make sure isInterested stays true locally, not relying only on context sync
+      setListing(l => l ? { ...l, isInterested: true } : l);
     } catch (error) {
       const errorData = error.response?.data || {};
       setReservationError(errorData.error || 'Failed to request reservation');
