@@ -177,7 +177,7 @@ const AdminPlatform = () => {
                 <div key={listing.report_id || listing.listing_id || listing.id} style={{ background: '#232526', borderRadius: 12, padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.13)', color: '#fff', minHeight: 260 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{listing.location || 'No Location'}</h2>
+                      <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{listing.title}</h2>
                     </div>
 
                   </div>
@@ -250,7 +250,7 @@ const AdminPlatform = () => {
                               : 'pointer',
                         fontWeight: 600
                       }}
-                      onClick={() => setConfirmModal({ open: true, reportId: listing.report_id, listingId: listing.listing_id, action: 'accept', listingName: listing.location || 'this listing' })}
+                      onClick={() => setConfirmModal({ open: true, reportId: listing.report_id, listingId: listing.listing_id, action: 'accept', listingName: listing.title})}
                       disabled={listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected' || loadingReportId === listing.report_id || completedActions[listing.report_id]}
                     >
                       {loadingReportId === listing.report_id && actionType === 'accept' ? 'Approving...' : (completedActions[listing.report_id] ? 'Approved' : 'Approve')}
