@@ -534,21 +534,7 @@ const RenterListingDetails = () => {
               <div style={styles.lenderInfo}>
                 <h3>Lender Information</h3>
                 <p><strong>NetID:</strong> {listing.lender?.username || listing.lender?.netid || listing.owner_id || 'Unknown'}</p>
-                <p><strong>Email:</strong> {(listing.lender?.username || listing.lender?.netid || listing.owner_id) ? `${listing.lender?.username || listing.lender?.netid || listing.owner_id}@princeton.edu` : 'cs-tigerstorage@princeton.edu'}</p>
-                <div style={{marginTop:8}}>
-                  <strong>Lender Rating:</strong> {typeof listing.lender_avg_rating === 'number' ? (
-                    <span style={{ color: '#fbc02d', fontWeight: 600 }}>
-                      {[1,2,3,4,5].map(star => (
-                        <span key={star} style={{ color: listing.lender_avg_rating >= star ? '#fbc02d' : '#ccc', fontSize: 16 }}>★</span>
-                      ))}
-                      <span style={{ color: '#333', marginLeft: 4, fontSize: 14 }}>
-                        {listing.lender_avg_rating.toFixed(1)}
-                      </span>
-                    </span>
-                  ) : (
-                    <span style={{ color: '#888', fontSize: 14 }}>N/A</span>
-                  )}
-                </div>
+                <p><strong>Email:</strong> {(listing.lender?.username || listing.lender?.netid || listing.owner_id) ? `${listing.lender?.username || listing.lender?.netid || listing.owner_id}@princeton.edu` : 'cs-tigerstorage@princeton.edu'}</p>\
                 <div style={styles.actionSection}>
                   <button
                     style={{
