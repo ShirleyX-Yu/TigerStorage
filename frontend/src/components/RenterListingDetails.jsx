@@ -259,9 +259,11 @@ const RenterListingDetails = () => {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+
       if (listing.isInterested) {
-        // Cancel pending reservation request if it exists
+        // Remove interest after cancelling any pending reservations
         try {
+          // First, check for and cancel any pending reservation requests
           const resp = await axiosInstance.get('/api/my-reservation-requests', {
             headers: {
               'Accept': 'application/json',
@@ -270,9 +272,15 @@ const RenterListingDetails = () => {
               'X-Username': storedUsername
             }
           });
+          
           if (resp.data && Array.isArray(resp.data)) {
-            const pending = resp.data.find(r => (String(r.listing_id) === String(listing.id)) && r.status === 'pending');
+            const pending = resp.data.find(r => 
+              (String(r.listing_id) === String(listing.id)) && 
+              r.status === 'pending'
+            );
+            
             if (pending) {
+              console.log(`Cancelling pending reservation request ID: ${pending.request_id}`);
               await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
                 status: 'cancelled_by_renter'
               }, {
@@ -285,7 +293,7 @@ const RenterListingDetails = () => {
             }
           }
           
-          // Remove interest
+          // Then remove interest
           await axiosInstance.delete(`${apiUrl}/api/listings/${listing.id}/interest`, {
             headers: {
               'Content-Type': 'application/json',
@@ -294,9 +302,12 @@ const RenterListingDetails = () => {
             }
           });
           
+          // Update global context and refresh the listing details
           await refreshInterestedListings();
           setMessage({ type: 'success', text: 'Interest removed!' });
           setTimeout(() => setMessage(null), 2000);
+          
+          // Local state will be synced via the useEffect that watches interestedListings
         } catch (error) {
           const errorMessage = error.response?.data?.error || 'Failed to remove interest';
           setError(errorMessage);
@@ -305,11 +316,47 @@ const RenterListingDetails = () => {
           throw error; // Rethrow to be caught by outer catch
         }
       } else {
-        // Add interest (show reservation modal)
-        setReservationModalOpen(true);
+        // Before showing interest, check if there's an existing pending request
+        try {
+          const resp = await axiosInstance.get('/api/my-reservation-requests', {
+            headers: {
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache',
+              'X-User-Type': userType,
+              'X-Username': storedUsername
+            }
+          });
+          
+          if (resp.data && Array.isArray(resp.data)) {
+            const pending = resp.data.find(r => 
+              (String(r.listing_id) === String(listing.id)) && 
+              r.status === 'pending'
+            );
+            
+            if (pending) {
+              // Cancel the existing request before adding interest
+              console.log(`Cancelling existing pending reservation request ID: ${pending.request_id}`);
+              await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
+                status: 'cancelled_by_renter'
+              }, {
+                headers: {
+                  'X-User-Type': userType,
+                  'X-Username': storedUsername,
+                  'X-CSRFToken': getCSRFToken()
+                }
+              });
+            }
+          }
+          
+          // Now show the reservation modal
+          setReservationModalOpen(true);
+        } catch (error) {
+          console.error('Error checking for pending requests:', error);
+          // Continue with showing the modal anyway
+          setReservationModalOpen(true);
+        }
         return;
       }
-      // No need to manually update local state, useEffect will sync it
     } catch (err) {
       console.error('Toggle interest error:', err);
       // Don't set error message if it was already set in the inner catch
@@ -337,7 +384,7 @@ const RenterListingDetails = () => {
         return;
       }
       console.log('Submitting reservation:', { requested_space, mode, listing });
-      const response = await axiosInstance.post(apiUrl, { requested_space }, {
+      await axiosInstance.post(apiUrl, { requested_space }, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -347,15 +394,22 @@ const RenterListingDetails = () => {
           'X-CSRFToken': getCSRFToken()
         }
       });
-      // Success: response.data contains the result
+      
+      // Success: close the modal and show a success message
       setReservationModalOpen(false);
       setMessage({ type: 'success', text: 'Reservation request submitted!' });
       setTimeout(() => setMessage(null), 2000);
+      
+      // Update both local and global state
+      setListing(l => l ? { ...l, isInterested: true } : l);
+      
+      // Make sure the global context is updated for all components
       await refreshInterestedListings();
       
-      // Make sure isInterested stays true locally, not relying only on context sync
-      setListing(l => l ? { ...l, isInterested: true } : l);
+      // Trigger a refetch of the listing details to get updated data
+      fetchListing();
     } catch (error) {
+      console.error('Reservation error:', error);
       const errorData = error.response?.data || {};
       setReservationError(errorData.error || 'Failed to request reservation');
     } finally {

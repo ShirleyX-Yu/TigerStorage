@@ -144,17 +144,61 @@ const ViewListings = () => {
         setError(err.response?.data?.error || err.message);
       }
     } else {
-      // Show reservation modal for new interest
-      const isAuthenticated = !!(sessionStorage.getItem('username') || localStorage.getItem('username'));
-      if (!isAuthenticated) {
-        sessionStorage.setItem('returnTo', `/listing/${listingId}`);
-        navigate('/');
-        return;
+      // Before showing interest, check if there's an existing pending request
+      try {
+        const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+        const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+        
+        // Check authentication
+        const isAuthenticated = !!(sessionStorage.getItem('username') || localStorage.getItem('username'));
+        if (!isAuthenticated) {
+          sessionStorage.setItem('returnTo', `/listing/${listingId}`);
+          navigate('/');
+          return;
+        }
+        
+        // Check for existing pending requests
+        const resp = await axiosInstance.get('/api/my-reservation-requests', {
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType,
+            'X-Username': username
+          }
+        });
+        
+        if (resp.data && Array.isArray(resp.data)) {
+          const pending = resp.data.find(r => 
+            (String(r.listing_id) === String(listingId)) && 
+            r.status === 'pending'
+          );
+          
+          if (pending) {
+            // Cancel the existing request before adding interest
+            console.log(`Cancelling existing pending reservation request ID: ${pending.request_id}`);
+            await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
+              status: 'cancelled_by_renter'
+            }, {
+              headers: {
+                'X-User-Type': userType,
+                'X-Username': username,
+                'X-CSRFToken': getCSRFToken()
+              }
+            });
+          }
+        }
+        
+        // Now show reservation modal for new interest
+        const listing = listings.find(l => l.id === listingId);
+        setReservationListing(listing);
+        setReservationModalOpen(true);
+      } catch (error) {
+        console.error('Error checking for pending requests:', error);
+        // Continue with showing the modal anyway
+        const listing = listings.find(l => l.id === listingId);
+        setReservationListing(listing);
+        setReservationModalOpen(true);
       }
-      const listing = listings.find(l => l.id === listingId);
-      setReservationListing(listing);
-      setReservationModalOpen(true);
-      // After successful reservation, refreshInterestedListings will be called in handleReservationSubmit
     }
   };
 
@@ -210,28 +254,43 @@ const ViewListings = () => {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-      const csrfToken = getCSRFToken();
-      const response = await fetch(`${apiUrl}/api/listings/${reservationListing?.id}/reserve`, {
-        method: 'POST',
-        credentials: 'include',
+      
+      // Use axiosInstance for consistency with other components
+      const requested_space = mode === 'full' ? Number(reservationListing.sq_ft) : Number(volume);
+      
+      await axiosInstance.post(`/api/listings/${reservationListing?.id}/reserve`, 
+        { requested_space }, 
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType,
+            'X-Username': username,
+            'X-CSRFToken': getCSRFToken()
+          }
+        }
+      );
+      
+      setReservationModalOpen(false);
+      await refreshInterestedListings(); // ensure state is up to date
+      
+      // Fetch the updated listings to show the new remaining space
+      const response = await axiosInstance.get('/api/listings', {
         headers: {
-          'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
           'X-User-Type': userType,
-          'X-Username': username,
-          ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {})
-        },
-        body: JSON.stringify({ requested_space: volume })
+          'X-Username': username
+        }
       });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to request reservation');
+      
+      if (Array.isArray(response.data)) {
+        setListings(response.data);
       }
-      setReservationModalOpen(false);
-      await refreshInterestedListings(); // ensure state is up to date
     } catch (err) {
-      setReservationError(err.message);
+      console.error('Reservation error:', err);
+      setReservationError(err.response?.data?.error || err.message);
     } finally {
       setReservationLoading(false);
     }
