@@ -3,6 +3,7 @@ import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 import boxes from '../assets/boxes.jpg';
 import { axiosInstance } from '../utils/auth';
+import { useRenterInterest } from '../context/RenterInterestContext';
 
 const getStatusLabel = (status) => {
   if (!status) return '';
@@ -49,51 +50,11 @@ const getStatusColor = (status) => {
 
 const RenterDashboard = ({ username }) => {
   const navigate = useNavigate();
-  const [interestedSpaces, setInterestedSpaces] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { interestedListings: interestedSpaces, loading, error, refreshInterestedListings } = useRenterInterest();
   
   const openMap = () => {
     navigate('/map');
   };
-
-  useEffect(() => {
-    const fetchInterestedSpaces = async () => {
-      try {
-        // Use the API URL from environment variable with a fallback
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-        console.log(`Fetching interested spaces from: ${apiUrl}/api/my-interested-listings`);
-        
-        // Get user information to include in headers
-        const userType = sessionStorage.getItem('userType') || 'renter';
-        console.log('Using username:', username, 'User type:', userType);
-        
-        const response = await axiosInstance.get('/api/my-interested-listings', {
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache',
-            'X-User-Type': userType,
-            'X-Username': username || ''
-          }
-        });
-        
-        console.log('Interested spaces response status:', response.status);
-        
-        const data = response.data;
-        if (data && data.error) {
-          throw new Error(data.error);
-        }
-        setInterestedSpaces(data);
-      } catch (err) {
-        console.error('Error fetching interested spaces:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInterestedSpaces();
-  }, [username]);
 
   return (
     <div style={styles.container}>

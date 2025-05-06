@@ -16,6 +16,7 @@ import { checkAuthStatus, login } from './utils/auth';
 import { setCSRFToken } from './utils/csrf';
 import './App.css';
 import './index.css';
+import { RenterInterestProvider } from './context/RenterInterestContext';
 
 const ProtectedRoute = ({ component: Component, allowedUserType }) => {
   const [loading, setLoading] = useState(true);
@@ -363,31 +364,33 @@ function App() {
   }, []);
 
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/dashboard" element={<RedirectToUserDashboard />} />
-          
-          {/* Renter routes */}
-          <Route path="/map" element={<ProtectedRoute component={<Map />} allowedUserType="renter" />} />
-          <Route path="/renter-dashboard" element={<ProtectedRoute component={<RenterDashboard />} allowedUserType="renter" />} />
-          <Route path="/listing/:id" element={<ProtectedRoute component={<RenterListingDetails />} allowedUserType="renter" />} />
-          
-          {/* Lender routes */}
-          <Route path="/lender-dashboard" element={<ProtectedRoute component={<LenderDashboard />} allowedUserType="lender" />} />
-          <Route path="/create-listing" element={<ProtectedRoute component={<CreateListing />} allowedUserType="lender" />} />
-          <Route path="/edit-listing/:id" element={<ProtectedRoute component={<EditListing />} allowedUserType="lender" />} />
-          <Route path="/view-listings" element={<ProtectedRoute component={<ViewListings />} allowedUserType="renter" />} />
-          <Route path="/lender-dashboard/listing/:id" element={<ProtectedRoute component={<LenderListingDetails />} allowedUserType="lender" />} />
-          
-          {/* Public routes */}
-          <Route path="/admin" element={<AdminProtectedRoute component={<AdminPlatform />} />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/debug" element={<AuthDebug />} />
-        </Routes>
-      </div>
-    </Router>
+    <RenterInterestProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/dashboard" element={<RedirectToUserDashboard />} />
+            
+            {/* Renter routes */}
+            <Route path="/map" element={<ProtectedRoute component={<Map />} allowedUserType="renter" />} />
+            <Route path="/renter-dashboard" element={<ProtectedRoute component={<RenterDashboard />} allowedUserType="renter" />} />
+            <Route path="/listing/:id" element={<ProtectedRoute component={<RenterListingDetails />} allowedUserType="renter" />} />
+            
+            {/* Lender routes */}
+            <Route path="/lender-dashboard" element={<ProtectedRoute component={<LenderDashboard />} allowedUserType="lender" />} />
+            <Route path="/create-listing" element={<ProtectedRoute component={<CreateListing />} allowedUserType="lender" />} />
+            <Route path="/edit-listing/:id" element={<ProtectedRoute component={<EditListing />} allowedUserType="lender" />} />
+            <Route path="/view-listings" element={<ProtectedRoute component={<ViewListings />} allowedUserType="renter" />} />
+            <Route path="/lender-dashboard/listing/:id" element={<ProtectedRoute component={<LenderListingDetails />} allowedUserType="lender" />} />
+            
+            {/* Public routes */}
+            <Route path="/admin" element={<AdminProtectedRoute component={<AdminPlatform />} />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/debug" element={<AuthDebug />} />
+          </Routes>
+        </div>
+      </Router>
+    </RenterInterestProvider>
   );
 }
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import ReservationModal from './ReservationModal';
 import { getCSRFToken } from '../utils/csrf';
+import { useRenterInterest } from '../context/RenterInterestContext';
 
 const getStatusLabel = (status) => {
   if (!status) return '';
@@ -35,11 +36,13 @@ const ViewListings = () => {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [interestedListings, setInterestedListings] = useState(new Set());
   const [reservationModalOpen, setReservationModalOpen] = useState(false);
   const [reservationLoading, setReservationLoading] = useState(false);
   const [reservationError, setReservationError] = useState('');
   const [reservationListing, setReservationListing] = useState(null);
+
+  // Use context for interested listings
+  const { interestedListings, refreshInterestedListings } = useRenterInterest();
 
   const openMap = () => {
     navigate('/map');
@@ -86,31 +89,9 @@ const ViewListings = () => {
     fetchListings();
   }, []);
 
-  // Fetch interested listings when component mounts
-  useEffect(() => {
-    const fetchInterestedListings = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/my-interested-listings`, {
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch interested listings');
-        }
-        
-        const data = await response.json();
-        setInterestedListings(new Set(data.map(listing => listing.id)));
-      } catch (err) {
-        console.error('Error fetching interested listings:', err);
-      }
-    };
-
-    fetchInterestedListings();
-  }, []);
-
   // Function to toggle interest in a listing
   const toggleInterest = async (listingId) => {
-    const isInterested = interestedListings.has(listingId);
+    const isInterested = interestedListings && interestedListings.some(l => l.id === listingId);
     if (isInterested) {
       // Remove interest as before
       try {
@@ -125,9 +106,7 @@ const ViewListings = () => {
         if (!response.ok) {
           throw new Error(`Failed to remove interest`);
         }
-        const newInterestedListings = new Set(interestedListings);
-        newInterestedListings.delete(listingId);
-        setInterestedListings(newInterestedListings);
+        await refreshInterestedListings(); // update after removal
       } catch (err) {
         setError(err.message);
       }
@@ -142,6 +121,7 @@ const ViewListings = () => {
       const listing = listings.find(l => l.id === listingId);
       setReservationListing(listing);
       setReservationModalOpen(true);
+      // After successful reservation, refreshInterestedListings will be called in handleReservationSubmit
     }
   };
 
@@ -216,8 +196,7 @@ const ViewListings = () => {
         throw new Error(errorData.error || 'Failed to request reservation');
       }
       setReservationModalOpen(false);
-      setInterestedListings(new Set([...interestedListings, reservationListing.id]));
-      await fetchInterestedListings(); // ensure state is up to date
+      await refreshInterestedListings(); // ensure state is up to date
     } catch (err) {
       setReservationError(err.message);
     } finally {
@@ -330,8 +309,7 @@ const ViewListings = () => {
               ) : (
                 <div style={styles.listingsGrid}>
                   {filteredListings.map(listing => {
-                    // Only use React state for interest
-                    const isInterested = interestedListings.has(listing.id);
+                    const isInterested = interestedListings && interestedListings.some(l => l.id === listing.id);
                     
                     return (
                       <div key={listing.id} style={styles.listingCard}>

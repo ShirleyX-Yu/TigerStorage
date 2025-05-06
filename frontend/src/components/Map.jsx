@@ -11,6 +11,7 @@ import Header from './Header';
 import { logout, axiosInstance } from '../utils/auth';
 import { Link } from 'react-router-dom';
 import { getCSRFToken } from '../utils/csrf';
+import { useRenterInterest } from '../context/RenterInterestContext';
 
 // Fix for Leaflet marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -313,6 +314,8 @@ const Map = () => {
     ? groupedListings[groupedIndex]
     : listings.find(l => (l.listing_id || l.id) === selectedListingId) || null;
 
+  const { interestedListings, refreshInterestedListings } = useRenterInterest();
+
   const fetchAndSyncInterest = useCallback(async (listingsData) => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -556,6 +559,7 @@ const Map = () => {
       }
       // Always re-fetch listings after interest change
       await fetchListings();
+      await refreshInterestedListings();
     } catch (err) {
       setInterestError(err.message);
     } finally {
@@ -889,6 +893,7 @@ const Map = () => {
                     setInterestSuccess(true);
                     setLastInterestAction('add');
                     await fetchListings();
+                    await refreshInterestedListings();
                   } catch (error) {
                     const errorData = error.response?.data || {};
                     setReservationError(errorData.error || 'Failed to request reservation');

@@ -7,6 +7,7 @@ import { checkAuthStatus, axiosInstance } from '../utils/auth';
 import { getCSRFToken } from '../utils/csrf';
 import ReservationModal from './ReservationModal';
 import StarIcon from '@mui/icons-material/Star';
+import { useRenterInterest } from '../context/RenterInterestContext';
 
 console.log('ListingDetails component loaded');
 
@@ -39,6 +40,7 @@ const RenterListingDetails = () => {
   const [canReview, setCanReview] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
   const [myRequestId, setMyRequestId] = useState(null);
+  const { refreshInterestedListings } = useRenterInterest();
 
   useEffect(() => {
     // Check authentication status
@@ -259,6 +261,7 @@ const RenterListingDetails = () => {
         if (!response.ok) {
           throw new Error('Failed to remove interest');
         }
+        await refreshInterestedListings();
       } else {
         // Add interest (show reservation modal)
         setReservationModalOpen(true);
@@ -313,6 +316,7 @@ const RenterListingDetails = () => {
       // Success: response.data contains the result
       setReservationModalOpen(false);
       setMessage({ type: 'success', text: 'Reservation request submitted!' });
+      await refreshInterestedListings();
       // After reservation, mark as interested
       await axiosInstance.get('/api/my-interested-listings', {
         headers: {
