@@ -1110,7 +1110,6 @@ csrf = CSRFProtect(app)
 
 # API to handle interest in a listing
 @app.route('/api/listings/<int:listing_id>/interest', methods=['POST', 'DELETE', 'OPTIONS'])
-@csrf.exempt
 def handle_interest(listing_id):
     # Handle OPTIONS requests for CORS preflight
     if request.method == 'OPTIONS':

@@ -196,10 +196,18 @@ async function toggleInterest(listingId) {
   try {
     const isInterested = interestedLocations.has(listingId);
     const method = isInterested ? 'DELETE' : 'POST';
+    // Get CSRF token from cookie
+    function getCSRFToken() {
+      const match = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/);
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+    const csrfToken = getCSRFToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (csrfToken) headers['X-CSRFToken'] = csrfToken;
     const response = await fetch(`${window.location.origin}/api/listings/${listingId}/interest`, {
       method,
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' }
+      headers
     });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
