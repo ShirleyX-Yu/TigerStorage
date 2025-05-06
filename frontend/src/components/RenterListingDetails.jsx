@@ -286,7 +286,14 @@ const RenterListingDetails = () => {
       const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/listings/${listing.id}/reserve`;
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-      const response = await axiosInstance.post(apiUrl, { requested_space: volume }, {
+      // Always send full sq_ft for 'full', user-entered for 'partial'
+      const requested_space = mode === 'full' ? listing.sq_ft : Number(volume);
+      if (!requested_space || requested_space <= 0) {
+        setReservationError('Please enter a valid space amount.');
+        setReservationLoading(false);
+        return;
+      }
+      const response = await axiosInstance.post(apiUrl, { requested_space }, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -534,7 +541,7 @@ const RenterListingDetails = () => {
               <div style={styles.lenderInfo}>
                 <h3>Lender Information</h3>
                 <p><strong>NetID:</strong> {listing.lender?.username || listing.lender?.netid || listing.owner_id || 'Unknown'}</p>
-                <p><strong>Email:</strong> {(listing.lender?.username || listing.lender?.netid || listing.owner_id) ? `${listing.lender?.username || listing.lender?.netid || listing.owner_id}@princeton.edu` : 'cs-tigerstorage@princeton.edu'}</p>\
+                <p><strong>Email:</strong> {(listing.lender?.username || listing.lender?.netid || listing.owner_id) ? `${listing.lender?.username || listing.lender?.netid || listing.owner_id}@princeton.edu` : 'cs-tigerstorage@princeton.edu'}</p>
                 <div style={styles.actionSection}>
                   <button
                     style={{
