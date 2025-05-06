@@ -101,11 +101,22 @@ const AdminPlatform = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('Fetching reported listings...');
       const response = await axiosInstance.get('/reported-listings');
-      const data = await response.data;
-      setListings(data);
+      console.log('API Response:', response);
+      const data = response.data;
+      console.log('Reported listings data:', data);
+      if (!Array.isArray(data)) {
+        console.error('Expected an array of listings but got:', typeof data);
+        setError('Invalid data format received from server');
+        setListings([]);
+      } else {
+        setListings(data);
+      }
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching reported listings:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to load reported listings');
+      setListings([]);
     } finally {
       setLoading(false);
     }
