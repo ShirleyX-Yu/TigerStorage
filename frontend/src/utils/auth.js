@@ -1,6 +1,7 @@
 // Authentication utility functions
 
 import axios from 'axios';
+import { getCSRFToken } from './csrf';
 
 // Get the API URL from environment variables with a fallback
 const getApiUrl = () => {
@@ -48,12 +49,6 @@ const recordBackendError = () => {
 const getBackendUrl = () => {
   return API_URL;
 };
-
-// CSRF token helper
-function getCSRFToken() {
-  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/);
-  return match ? decodeURIComponent(match[1]) : null;
-}
 
 // Create a custom axios instance
 const axiosInstance = axios.create();

@@ -13,6 +13,7 @@ import AuthDebug from './components/AuthDebug';
 import Map from './components/Map';
 import AdminPlatform from './components/AdminPlatform';
 import { checkAuthStatus, login } from './utils/auth';
+import { setCSRFToken } from './utils/csrf';
 import './App.css';
 import './index.css';
 
@@ -352,6 +353,15 @@ function App() {
       window.history.replaceState(null, null, redirectPath);
     }
   }, []);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/api/csrf-token`, { credentials: 'include' })
+      .then(res => res.json())
+      .then(data => {
+        if (data.csrf_token) setCSRFToken(data.csrf_token);
+      });
+  }, []);
+
   return (
     <Router>
       <div className="App">

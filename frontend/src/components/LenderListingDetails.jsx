@@ -9,6 +9,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import StarIcon from '@mui/icons-material/Star';
+import { getCSRFToken } from '../utils/csrf';
 
 const getStatusLabel = (status) => {
   switch (status) {
@@ -28,12 +29,6 @@ const getStatusLabel = (status) => {
       return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 };
-
-// Helper to get CSRF token from cookie
-function getCSRFToken() {
-  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/);
-  return match ? decodeURIComponent(match[1]) : null;
-}
 
 const LenderListingDetails = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);

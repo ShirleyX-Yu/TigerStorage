@@ -2,12 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import { HALL_COORDINATES } from '../utils/hallCoordinates';
-
-// Helper to get CSRF token from cookie
-function getCSRFToken() {
-  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/);
-  return match ? decodeURIComponent(match[1]) : null;
-}
+import { getCSRFToken } from '../utils/csrf';
 
 const EditListing = () => {
   const navigate = useNavigate();
