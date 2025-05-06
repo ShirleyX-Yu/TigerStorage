@@ -621,46 +621,48 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             </div>
         </form>
         {/* Address Confirmation Modal */}
-        <Dialog 
-          open={showAddressConfirm} 
-          onClose={handleEditAddress} 
-          maxWidth="xs" 
-          fullWidth
-          PaperProps={{
-            style: {
-              borderRadius: 16,
-              minWidth: 340,
-              background: '#fff8f1',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.14)'
-            }
-          }}
-        >
-          <DialogTitle style={{
-            background: '#FF6B00',
-            color: 'white',
-            fontWeight: 700,
-            letterSpacing: 1,
-            padding: '16px 24px',
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16
-          }}>
-            Confirm Address
-          </DialogTitle>
-          <DialogContent style={{ background: '#fff8f1', padding: 28 }}>
-            <div style={{ marginBottom: 16, fontSize: 16, color: '#333' }}>
-              Please confirm the address for your listing:
-            </div>
-            <div style={{ fontWeight: 600, fontSize: 17, color: '#222', marginBottom: 8, background: '#fff', borderRadius: 8, padding: '12px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-              {pendingAddress?.address}
-            </div>
-          </DialogContent>
-          <DialogActions style={{ background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, padding: '16px 24px' }}>
-            <Button onClick={handleEditAddress} style={{ color: '#888', fontWeight: 600 }}>Edit</Button>
-            <Button onClick={handleConfirmAddress} variant="contained" style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }}>
-              Confirm
-            </Button>
-          </DialogActions>
-        </Dialog>
+        {showAddressConfirm && (
+          <Dialog 
+            open={showAddressConfirm} 
+            onClose={handleEditAddress} 
+            maxWidth="xs" 
+            fullWidth
+            PaperProps={{
+              style: {
+                borderRadius: 16,
+                minWidth: 340,
+                background: '#fff8f1',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.14)'
+              }
+            }}
+          >
+            <DialogTitle style={{
+              background: '#FF6B00',
+              color: 'white',
+              fontWeight: 700,
+              letterSpacing: 1,
+              padding: '16px 24px',
+              borderTopLeftRadius: 16,
+              borderTopRightRadius: 16
+            }}>
+              Confirm Address
+            </DialogTitle>
+            <DialogContent style={{ background: '#fff8f1', padding: 28 }}>
+              <div style={{ marginBottom: 16, fontSize: 16, color: '#333' }}>
+                Please confirm the address for your listing:
+              </div>
+              <div style={{ fontWeight: 600, fontSize: 17, color: '#222', marginBottom: 8, background: '#fff', borderRadius: 8, padding: '12px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                {pendingAddress?.address}
+              </div>
+            </DialogContent>
+            <DialogActions style={{ background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, padding: '16px 24px' }}>
+              <Button onClick={handleEditAddress} style={{ color: '#888', fontWeight: 600 }}>Edit</Button>
+              <Button onClick={handleConfirmAddress} variant="contained" style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }}>
+                Confirm
+              </Button>
+            </DialogActions>
+          </Dialog>
+        )}
     </div>
   );
 }
