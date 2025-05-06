@@ -66,11 +66,11 @@ const AdminPlatform = () => {
   const [confirmModal, setConfirmModal] = useState({ open: false, reportId: null, listingId: null, action: null, listingName: '' });
   const [completedActions, setCompletedActions] = useState({});
 
-  const handleAccept = async (reportId, listingId) => {
+  const handleAccept = async (listingId, reportId) => {
     setLoadingReportId(reportId);
     setActionType('accept');
     try {
-      const response = await axiosInstance.put(`/listings/${listingId}`, { admin_action: 'accept', report_id: reportId });
+      const response = await axiosInstance.put(`/api/listings/${listingId}`, { admin_action: 'accept', report_id: reportId });
       // Refresh listings
       setRefreshKey(k => k + 1);
     } catch (err) {
@@ -81,11 +81,11 @@ const AdminPlatform = () => {
     }
   };
 
-  const handleReject = async (reportId, listingId) => {
+  const handleReject = async (listingId, reportId) => {
     setLoadingReportId(reportId);
     setActionType('reject');
     try {
-      const response = await axiosInstance.put(`/listings/${listingId}`, { admin_action: 'reject', report_id: reportId });
+      const response = await axiosInstance.put(`/api/listings/${listingId}`, { admin_action: 'reject', report_id: reportId });
       // Refresh listings
       setRefreshKey(k => k + 1);
     } catch (err) {
@@ -95,7 +95,6 @@ const AdminPlatform = () => {
       setActionType(null);
     }
   };
-
 
   const fetchListings = useCallback(async () => {
     try {
@@ -228,38 +227,44 @@ const AdminPlatform = () => {
                     {/* Admin approve/reject actions could go here */}
                     <button
                       style={{
-                        background: completedActions[listing.report_id] || loadingReportId !== null
+                        background: completedActions[listing.report_id] || loadingReportId !== null || listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected'
                           ? '#888'
-                          : listing.report_status === 'accepted'
-                            ? '#4caf50'
-                            : '#4caf50',
+                          : '#2196f3',
                         color: '#fff',
                         border: 'none',
                         padding: '8px 14px',
                         borderRadius: 5,
-                        cursor: completedActions[listing.report_id] || loadingReportId !== null ? 'not-allowed' : 'pointer',
-                        fontWeight: 600
+                        cursor: completedActions[listing.report_id] || loadingReportId !== null || listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected' 
+                          ? 'not-allowed' 
+                          : 'pointer',
+                        fontWeight: 600,
+                        opacity: completedActions[listing.report_id] || loadingReportId !== null || listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected' 
+                          ? 0.7 
+                          : 1
                       }}
-                      onClick={() => setConfirmModal({ open: true, reportId: listing.report_id, listingId: listing.listing_id, action: 'accept', listingName: listing.title})}
+                      onClick={() => setConfirmModal({ open: true, listingId: listing.listing_id, reportId: listing.report_id, action: 'accept', listingName: listing.title})}
                       disabled={listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected' || loadingReportId !== null || completedActions[listing.report_id]}
                     >
                       {loadingReportId === listing.report_id && actionType === 'accept' ? 'Approving...' : (completedActions[listing.report_id] ? 'Approved' : 'Approve')}
                     </button>
                     <button
                       style={{
-                        background: completedActions[listing.report_id] || loadingReportId !== null
+                        background: completedActions[listing.report_id] || loadingReportId !== null || listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected'
                           ? '#888'
-                          : listing.report_status === 'rejected'
-                            ? '#f44336'
-                            : '#f44336',
+                          : '#f44336',
                         color: '#fff',
                         border: 'none',
                         padding: '8px 14px',
                         borderRadius: 5,
-                        cursor: completedActions[listing.report_id] || loadingReportId !== null ? 'not-allowed' : 'pointer',
-                        fontWeight: 600
+                        cursor: completedActions[listing.report_id] || loadingReportId !== null || listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected' 
+                          ? 'not-allowed' 
+                          : 'pointer',
+                        fontWeight: 600,
+                        opacity: completedActions[listing.report_id] || loadingReportId !== null || listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected' 
+                          ? 0.7 
+                          : 1
                       }}
-                      onClick={() => setConfirmModal({ open: true, reportId: listing.report_id, listingId: listing.listing_id, action: 'reject', listingName: listing.title })}
+                      onClick={() => setConfirmModal({ open: true, listingId: listing.listing_id, reportId: listing.report_id, action: 'reject', listingName: listing.title })}
                       disabled={listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected' || loadingReportId !== null || completedActions[listing.report_id]}
                     >
                       {loadingReportId === listing.report_id && actionType === 'reject' ? 'Rejecting...' : (completedActions[listing.report_id] ? 'Rejected' : 'Reject')}
