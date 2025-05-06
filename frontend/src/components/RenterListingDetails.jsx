@@ -286,13 +286,14 @@ const RenterListingDetails = () => {
       const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/listings/${listing.id}/reserve`;
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-      // Always send full sq_ft for 'full', user-entered for 'partial'
-      const requested_space = mode === 'full' ? listing.sq_ft : Number(volume);
+      // Always send full sq_ft for 'full', user-entered for 'partial', as a number
+      const requested_space = mode === 'full' ? Number(listing.sq_ft) : Number(volume);
       if (!requested_space || requested_space <= 0) {
         setReservationError('Please enter a valid space amount.');
         setReservationLoading(false);
         return;
       }
+      console.log('Submitting reservation:', { requested_space, mode, listing });
       const response = await axiosInstance.post(apiUrl, { requested_space }, {
         headers: {
           'Content-Type': 'application/json',
