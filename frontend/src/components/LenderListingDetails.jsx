@@ -66,7 +66,7 @@ const LenderListingDetails = () => {
 
         const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/listings/${id}`;
         const response = await fetch(apiUrl, { credentials: 'include' });
-        if (!response.ok) throw new Error(await response.text());
+        if (response.status < 200 || response.status >= 300) throw new Error(response.data && response.data.error ? response.data.error : 'Unknown error');
         const data = await response.json();
 
         // Fetch reservation requests for this listing

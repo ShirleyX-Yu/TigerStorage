@@ -52,8 +52,10 @@ const ViewListings = () => {
           credentials: 'include' // Include cookies for authentication
         });
         
+        let errorText = 'Unknown error';
+        try { errorText = (await response.json()).error || errorText; } catch {}
+        
         if (!response.ok) {
-          const errorText = await response.text();
           throw new Error(`Failed to fetch listings: ${response.status} ${errorText}`);
         }
         
@@ -343,6 +345,20 @@ const ViewListings = () => {
                               Residential Hall: {listing.hall_name}
                             </div>
                           )}
+                          <div style={{ margin: '4px 0 8px 0' }}>
+                            <strong>Lender Rating:</strong> {typeof listing.lender_avg_rating === 'number' ? (
+                              <span style={{ color: '#fbc02d', fontWeight: 600 }}>
+                                {[1,2,3,4,5].map(star => (
+                                  <span key={star} style={{ color: listing.lender_avg_rating >= star ? '#fbc02d' : '#ccc', fontSize: 16 }}>★</span>
+                                ))}
+                                <span style={{ color: '#333', marginLeft: 4, fontSize: 14 }}>
+                                  {listing.lender_avg_rating.toFixed(1)}
+                                </span>
+                              </span>
+                            ) : (
+                              <span style={{ color: '#888', fontSize: 14 }}>N/A</span>
+                            )}
+                          </div>
                           <p style={styles.listingInfo}>
                             <strong>${listing.cost}</strong> per month · {listing.remaining_space ?? listing.sq_ft} sq ft remaining / {listing.sq_ft} sq ft total · Available: {formatDate(listing.start_date)} - {formatDate(listing.end_date)}
                           </p>

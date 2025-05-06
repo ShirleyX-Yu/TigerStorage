@@ -526,7 +526,7 @@ const Map = () => {
           },
         });
         if (!response.ok) {
-          const errorText = await response.text();
+          const errorText = response.data && response.data.error ? response.data.error : 'Unknown error';
           throw new Error(errorText || 'Failed to remove interest');
         }
         setInterestSuccess(true);
