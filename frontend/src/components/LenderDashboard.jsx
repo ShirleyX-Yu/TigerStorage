@@ -405,13 +405,13 @@ const LenderDashboard = ({ username }) => {
                         <span style={styles.statValue}>{space.dateCreated}</span>
                       </div>
                       <div style={styles.statItem}>
-                        <span style={styles.statLabel}>Interested Renters</span>
+                        <span style={styles.statLabel}>Reservation Requests</span>
                         <span style={styles.statValue}>{space.interestedRenters.length}</span>
                       </div>
                     </div>
                     {reservationRequests[space.id] && reservationRequests[space.id].length > 0 && (
                       <div style={styles.rentersList}>
-                        <h4 style={styles.rentersTitle}>Interested Renters</h4>
+                        <h4 style={styles.rentersTitle}>Reservation Requests</h4>
                         {reservationRequests[space.id].map(req => {
                           let formattedDate = '';
                           let formattedTime = '';

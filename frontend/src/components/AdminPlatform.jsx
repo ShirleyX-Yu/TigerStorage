@@ -201,13 +201,13 @@ const AdminPlatform = () => {
                   {/* Interested renters section (optional, admin view) */}
                   {listing.interested_renters && listing.interested_renters.length > 0 && (
                     <div style={{ margin: '0.7rem 0 1rem 0' }}>
-                      <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>Interested Renters</div>
+                      <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>Reservation Requests</div>
                       {listing.interested_renters.map(renter => (
                         <div key={renter.id} style={{ background: '#181818', borderRadius: 6, padding: '7px 12px', marginBottom: 5, display: 'flex', flexDirection: 'column', gap: 2 }}>
                           <span style={{ fontWeight: 500 }}>{renter.username}</span>
                           <span style={{ fontSize: 13, color: '#b0b0b0' }}>{renter.email || renter.username + '@princeton.edu'}</span>
                           <span style={{ fontSize: 12, color: '#b0b0b0' }}>Status: {renter.status}</span>
-                          <span style={{ fontSize: 12, color: '#b0b0b0' }}>Interested: {renter.dateInterested ? new Date(renter.dateInterested).toLocaleString() : ''}</span>
+                          <span style={{ fontSize: 12, color: '#b0b0b0' }}>Requested: {renter.dateInterested ? new Date(renter.dateInterested).toLocaleString() : ''}</span>
                         </div>
                       ))}
                     </div>

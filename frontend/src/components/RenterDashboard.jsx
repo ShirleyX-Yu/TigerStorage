@@ -138,7 +138,7 @@ const RenterDashboard = ({ username }) => {
           )}
         </div>
         <div style={styles.section}>
-          <h2>My Interested Spaces</h2>
+          <h2>My Requested Spaces</h2>
           {loading ? (
             <div style={styles.placeholder}>Loading...</div>
           ) : error ? (
@@ -190,7 +190,7 @@ const RenterDashboard = ({ username }) => {
             </div>
           ) : (
             <div style={styles.placeholder}>
-              You haven't shown interest in any storage spaces yet.
+              You haven't made any storage space requests yet.
             </div>
           )}
         </div>

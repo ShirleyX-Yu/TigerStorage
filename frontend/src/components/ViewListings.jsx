@@ -459,7 +459,7 @@ const ViewListings = () => {
                               onClick={() => toggleInterest(listing.id)}
                             >
                               <i className={`fas ${isInterested ? 'fa-check' : 'fa-heart'}`}></i>
-                              {isInterested ? 'Interested' : 'Show Interest'}
+                              {isInterested ? 'Requested' : 'Request'}
                             </button>
                             <ReservationModal
                               open={reservationModalOpen}
