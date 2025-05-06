@@ -502,14 +502,45 @@ const Map = () => {
       const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
       const isInterested = interestedListings.some(l => l.id === (listing.listing_id || listing.id));
       if (isInterested) {
-        // Remove interest
         try {
+          // First check for and cancel any pending reservation requests
+          const resp = await axiosInstance.get('/api/my-reservation-requests', {
+            headers: {
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache',
+              'X-User-Type': userType,
+              'X-Username': username
+            }
+          });
+          
+          if (resp.data && Array.isArray(resp.data)) {
+            const pending = resp.data.find(r => 
+              (String(r.listing_id) === String(listing.listing_id || listing.id)) && 
+              r.status === 'pending'
+            );
+            
+            if (pending) {
+              console.log(`Cancelling pending reservation request ID: ${pending.request_id}`);
+              await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
+                status: 'cancelled_by_renter'
+              }, {
+                headers: {
+                  'X-User-Type': userType,
+                  'X-Username': username,
+                  'X-CSRFToken': getCSRFToken()
+                }
+              });
+            }
+          }
+          
+          // Then remove interest
           await axiosInstance.delete(`/api/listings/${listing.listing_id || listing.id}/interest`, {
             headers: {
               'X-User-Type': userType,
               'X-Username': username,
             },
           });
+          
           // Success - no need to check .ok as axios will throw on error status codes
           setInterestSuccess(true);
           setLastInterestAction('remove');
