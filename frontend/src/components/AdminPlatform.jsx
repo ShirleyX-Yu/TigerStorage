@@ -251,36 +251,32 @@ const AdminPlatform = () => {
                         fontWeight: 600
                       }}
                       onClick={() => setConfirmModal({ open: true, reportId: listing.report_id, listingId: listing.listing_id, action: 'accept', listingName: listing.title})}
-                      disabled={listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected' || loadingReportId === listing.report_id || completedActions[listing.report_id]}
+                      disabled={listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected' || loadingReportId !== null || completedActions[listing.report_id]}
                     >
                       {loadingReportId === listing.report_id && actionType === 'accept' ? 'Approving...' : (completedActions[listing.report_id] ? 'Approved' : 'Approve')}
                     </button>
                     <button
                       style={{
                         background:
-                          listing.report_status === 'rejected'
-                            ? '#f44336'
-                            : listing.report_status === 'accepted'
-                              ? '#888'
-                              : (loadingReportId === listing.report_id && actionType === 'reject')
-                                ? '#f44336'
-                                : (loadingReportId === listing.report_id && actionType === 'accept')
-                                  ? '#888'
-                                  : '#f44336',
+                          listing.report_status === 'rejected' || completedActions[listing.report_id]
+                            ? '#888'
+                            : loadingReportId === listing.report_id && actionType === 'reject'
+                              ? '#f44336'
+                              : loadingReportId === listing.report_id && actionType === 'accept'
+                                ? '#888'
+                                : '#f44336',
                         color: '#fff',
                         border: 'none',
                         padding: '8px 14px',
                         borderRadius: 5,
                         cursor:
-                          listing.report_status !== 'pending'
+                          listing.report_status !== 'pending' || loadingReportId !== null || completedActions[listing.report_id]
                             ? 'not-allowed'
-                            : (loadingReportId === listing.report_id)
-                              ? (actionType === 'reject' ? 'pointer' : 'not-allowed')
-                              : 'pointer',
+                            : 'pointer',
                         fontWeight: 600
                       }}
-                      onClick={() => setConfirmModal({ open: true, reportId: listing.report_id, listingId: listing.listing_id, action: 'reject', listingName: listing.location || 'this listing' })}
-                      disabled={listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected' || loadingReportId === listing.report_id || completedActions[listing.report_id]}
+                      onClick={() => setConfirmModal({ open: true, reportId: listing.report_id, listingId: listing.listing_id, action: 'reject', listingName: listing.title })}
+                      disabled={listing.report_status !== 'pending' || listing.status === 'accepted' || listing.status === 'rejected' || loadingReportId !== null || completedActions[listing.report_id]}
                     >
                       {loadingReportId === listing.report_id && actionType === 'reject' ? 'Rejecting...' : (completedActions[listing.report_id] ? 'Rejected' : 'Reject')}
                     </button>
