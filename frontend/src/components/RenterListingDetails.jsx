@@ -308,14 +308,11 @@ const RenterListingDetails = () => {
           'X-Username': storedUsername
         }
       });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to request reservation');
-      }
+      // Success: response.data contains the result
       setReservationModalOpen(false);
       setMessage({ type: 'success', text: 'Reservation request submitted!' });
       // After reservation, mark as interested
-      const interestResponse = await axiosInstance.post('/api/my-interested-listings', {}, {
+      await axiosInstance.post('/api/my-interested-listings', {}, {
         headers: {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
@@ -323,14 +320,11 @@ const RenterListingDetails = () => {
           'X-Username': storedUsername
         }
       });
-      let isInterested = false;
-      if (interestResponse.ok) {
-        const interestedListings = await interestResponse.json();
-        isInterested = interestedListings.some(l => l.id === listing.id);
-      }
+      let isInterested = true;
       setListing(l => l ? { ...l, isInterested } : l);
-    } catch (err) {
-      setReservationError(err.message);
+    } catch (error) {
+      const errorData = error.response?.data || {};
+      setReservationError(errorData.error || 'Failed to request reservation');
     } finally {
       setReservationLoading(false);
     }

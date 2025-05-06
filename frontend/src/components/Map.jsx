@@ -875,11 +875,7 @@ const Map = () => {
                         'X-Username': username
                       }
                     });
-                    if (!response.ok) {
-                      const errorData = await response.json().catch(() => ({}));
-                      throw new Error(errorData.error || 'Failed to request reservation');
-                    }
-                    // Also record interest so the pin/heart updates
+                    // Success: response.data contains the result
                     await axiosInstance.post(`/api/listings/${selectedListing.listing_id || selectedListing.id}/interest`, {
                       headers: {
                         'X-User-Type': userType,
@@ -890,8 +886,9 @@ const Map = () => {
                     setInterestSuccess(true);
                     setLastInterestAction('add');
                     await fetchListings();
-                  } catch (err) {
-                    setReservationError(err.message);
+                  } catch (error) {
+                    const errorData = error.response?.data || {};
+                    setReservationError(errorData.error || 'Failed to request reservation');
                   } finally {
                     setReservationLoading(false);
                   }

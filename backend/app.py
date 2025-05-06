@@ -1010,7 +1010,7 @@ def update_listing(listing_id):
                     new_sq_ft = int(data.get('squareFeet', data.get('sq_ft')))
                     # Calculate total reserved volume (pending + approved)
                     cur.execute("""
-                        SELECT COALESCE(SUM(requested_volume), 0)
+                        SELECT COALESCE(SUM(requested_space), 0)
                         FROM reservation_requests
                         WHERE listing_id = %s AND status IN ('pending', 'approved_full', 'approved_partial')
                     """, (listing_id,))
