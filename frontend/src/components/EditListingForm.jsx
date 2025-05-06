@@ -159,6 +159,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
   const [showAddressConfirm, setShowAddressConfirm] = useState(false);
   const [pendingAddress, setPendingAddress] = useState(null);
   const [addressNotFound, setAddressNotFound] = useState(false);
+  const [lastGeocodeResult, setLastGeocodeResult] = useState(null);
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -296,6 +297,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
         );
         if (!response.ok) throw new Error('Failed to fetch coordinates');
         const data = await response.json();
+        setLastGeocodeResult(data);
         if (data.length > 0) {
           const { lat, lon, display_name } = data[0];
           setPendingAddress({
@@ -310,9 +312,10 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           setGeocodingStatus('');
           setAddressNotFound(true);
         }
-      } catch {
+      } catch (err) {
         setGeocodingStatus('');
         setAddressNotFound(true);
+        setLastGeocodeResult({ error: err.message });
       }
     }
   };
@@ -453,7 +456,10 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                 <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
                 {addressNotFound && (
                   <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
-                    No location matching address found. Check values entered.
+                    <div>No location matching address found. Geolocator/geocode output:</div>
+                    <pre style={{ color: '#b00020', fontSize: '12px', background: '#fff4f4', padding: '6px', borderRadius: '4px', overflowX: 'auto' }}>
+                      {lastGeocodeResult ? JSON.stringify(lastGeocodeResult, null, 2) : 'No response'}
+                    </pre>
                   </div>
                 )}
                 <input
