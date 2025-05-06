@@ -199,19 +199,19 @@ const AdminPlatform = () => {
                       : listing.report_status}
                   </div>
                   {/* Interested renters section (optional, admin view) */}
-                  {listing.interested_renters && listing.interested_renters.length > 0 && (
+                  {Array.isArray(listing.interested_renters) && listing.interested_renters.length > 0 ? (
                     <div style={{ margin: '0.7rem 0 1rem 0' }}>
                       <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>Reservation Requests</div>
                       {listing.interested_renters.map(renter => (
                         <div key={renter.id} style={{ background: '#181818', borderRadius: 6, padding: '7px 12px', marginBottom: 5, display: 'flex', flexDirection: 'column', gap: 2 }}>
                           <span style={{ fontWeight: 500 }}>{renter.username}</span>
-                          <span style={{ fontSize: 13, color: '#b0b0b0' }}>{renter.email || renter.username + '@princeton.edu'}</span>
-                          <span style={{ fontSize: 12, color: '#b0b0b0' }}>Status: {renter.status}</span>
-                          <span style={{ fontSize: 12, color: '#b0b0b0' }}>Requested: {renter.dateInterested ? new Date(renter.dateInterested).toLocaleString() : ''}</span>
+                          <span style={{ fontSize: 13, color: '#b0b0b0' }}>{renter.email || (renter.username ? `${renter.username}@princeton.edu` : '')}</span>
+                          <span style={{ fontSize: 12, color: '#b0b0b0' }}>Status: {renter.status || 'N/A'}</span>
+                          <span style={{ fontSize: 12, color: '#b0b0b0' }}>Requested: {renter.dateInterested ? new Date(renter.dateInterested).toLocaleString() : 'N/A'}</span>
                         </div>
                       ))}
                     </div>
-                  )}
+                  ) : null}
                   <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
                     {/* Admin approve/reject actions could go here */}
                     <button
