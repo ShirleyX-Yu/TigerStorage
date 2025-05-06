@@ -340,6 +340,10 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       setError('Please fill in all required fields');
       return;
     }
+    if (locationType === 'off-campus' && !formData.zip_code) {
+      setError('ZIP code is required for off-campus addresses.');
+      return;
+    }
     try {
       const res = await axiosInstance.post(`${import.meta.env.VITE_API_URL}/api/listings`, formData, {
         withCredentials: true,
@@ -477,12 +481,20 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                   </div>
                 </div>
                 <div style={{ marginTop: '10px' }}>
-                  <label style={styles.label}>Country</label>
+                  <label style={styles.label}>ZIP Code <span style={{color: '#b00020'}}>*</span></label>
                   <input
                     style={styles.input}
                     type="text"
-                    value="USA"
-                    disabled
+                    value={formData.zip_code || ''}
+                    onChange={(e) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        zip_code: e.target.value
+                      }));
+                      if (addressNotFound) setAddressNotFound(false);
+                    }}
+                    placeholder="Enter ZIP code"
+                    required
                   />
                 </div>
                 <button 
