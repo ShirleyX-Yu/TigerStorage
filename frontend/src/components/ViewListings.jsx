@@ -45,6 +45,103 @@ function formatDate(dateStr) {
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+// Custom dual-thumb slider component for min/max range
+function RangeSlider({ min, max, value, onChange, step = 1, label, unit = '', color = '#FF6B00' }) {
+  // value: [minValue, maxValue]
+  const [minValue, maxValue] = value;
+  const handleMinChange = (e) => {
+    const newMin = Math.min(Number(e.target.value), maxValue - step);
+    onChange([newMin, maxValue]);
+  };
+  const handleMaxChange = (e) => {
+    const newMax = Math.max(Number(e.target.value), minValue + step);
+    onChange([minValue, newMax]);
+  };
+  return (
+    <div style={{ width: '100%', marginBottom: 12 }}>
+      <label style={{ fontWeight: 500, color: '#555', marginBottom: 4, display: 'block' }}>{label}</label>
+      <div style={{ position: 'relative', height: 36, display: 'flex', alignItems: 'center' }}>
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={minValue}
+          onChange={handleMinChange}
+          style={{
+            position: 'absolute',
+            width: '100%',
+            pointerEvents: 'auto',
+            zIndex: 2,
+            accentColor: color,
+            background: 'transparent',
+            height: 0,
+          }}
+        />
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={maxValue}
+          onChange={handleMaxChange}
+          style={{
+            position: 'absolute',
+            width: '100%',
+            pointerEvents: 'auto',
+            zIndex: 1,
+            accentColor: color,
+            background: 'transparent',
+            height: 0,
+          }}
+        />
+        {/* Track and range highlight */}
+        <div style={{ position: 'absolute', width: '100%', height: 6, background: '#FFF3E6', borderRadius: 3, zIndex: 0 }} />
+        <div style={{
+          position: 'absolute',
+          left: `${((minValue - min) / (max - min)) * 100}%`,
+          width: `${((maxValue - minValue) / (max - min)) * 100}%`,
+          height: 6,
+          background: color,
+          borderRadius: 3,
+          zIndex: 1,
+        }} />
+        {/* Dots */}
+        <div style={{
+          position: 'absolute',
+          left: `${((minValue - min) / (max - min)) * 100}%`,
+          top: -6,
+          width: 18,
+          height: 18,
+          background: color,
+          borderRadius: '50%',
+          border: '2px solid #fff',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
+          transform: 'translate(-50%, 0)',
+          zIndex: 3,
+        }} />
+        <div style={{
+          position: 'absolute',
+          left: `${((maxValue - min) / (max - min)) * 100}%`,
+          top: -6,
+          width: 18,
+          height: 18,
+          background: color,
+          borderRadius: '50%',
+          border: '2px solid #fff',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
+          transform: 'translate(-50%, 0)',
+          zIndex: 3,
+        }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 2 }}>
+        <span>Min: {minValue}{unit}</span>
+        <span>Max: {maxValue}{unit}</span>
+      </div>
+    </div>
+  );
+}
+
 const ViewListings = () => {
   const navigate = useNavigate();
   const [listings, setListings] = useState([]);
@@ -332,9 +429,18 @@ const ViewListings = () => {
         <div style={styles.section}>
           <div style={styles.sectionHeader}>
             <h2>Storage Listings</h2>
-            <button onClick={openMap} style={styles.actionButton}>
-              View Map
-            </button>
+            <button onClick={openMap} style={{
+              background: '#FF6B00',
+              color: 'white',
+              border: 'none',
+              borderRadius: 4,
+              padding: '0.75rem 1.5rem',
+              fontWeight: 600,
+              fontSize: '1rem',
+              cursor: 'pointer',
+              boxShadow: '0 2px 4px rgba(255,111,0,0.08)',
+              transition: 'background 0.2s',
+            }}>View Map</button>
           </div>
           
           {loading ? (
@@ -348,52 +454,24 @@ const ViewListings = () => {
               <div style={styles.filtersSection}>
                 <h3 style={styles.filtersTitle}>Filters</h3>
                 <div className="responsive-filter-grid" style={styles.filterGrid}>
-                  <div style={styles.filterGroup}>
-                    <label style={styles.filterLabel}>Price Range ($/month)</label>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={filters.minCost}
-                      onChange={e => handleFilterChange('minCost', Number(e.target.value))}
-                      style={{ width: '100%' }}
-                    />
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={filters.maxCost}
-                      onChange={e => handleFilterChange('maxCost', Number(e.target.value))}
-                      style={{ width: '100%' }}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                      <span>Min: ${filters.minCost}</span>
-                      <span>Max: ${filters.maxCost}</span>
-                    </div>
-                  </div>
-                  <div style={styles.filterGroup}>
-                    <label style={styles.filterLabel}>Size Range (sq ft)</label>
-                    <input
-                      type="range"
-                      min={0}
-                      max={500}
-                      value={filters.minSize}
-                      onChange={e => handleFilterChange('minSize', Number(e.target.value))}
-                      style={{ width: '100%' }}
-                    />
-                    <input
-                      type="range"
-                      min={0}
-                      max={500}
-                      value={filters.maxSize}
-                      onChange={e => handleFilterChange('maxSize', Number(e.target.value))}
-                      style={{ width: '100%' }}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                      <span>Min: {filters.minSize} sq ft</span>
-                      <span>Max: {filters.maxSize} sq ft</span>
-                    </div>
-                  </div>
+                  <RangeSlider
+                    min={0}
+                    max={100}
+                    value={[filters.minCost, filters.maxCost]}
+                    onChange={([min, max]) => setFilters(f => ({ ...f, minCost: min, maxCost: max }))}
+                    label="Price Range ($/month)"
+                    unit="$"
+                    color="#FF6B00"
+                  />
+                  <RangeSlider
+                    min={0}
+                    max={500}
+                    value={[filters.minSize, filters.maxSize]}
+                    onChange={([min, max]) => setFilters(f => ({ ...f, minSize: min, maxSize: max }))}
+                    label="Size Range (sq ft)"
+                    unit=" sq ft"
+                    color="#FF6B00"
+                  />
                   <div style={styles.filterGroup}>
                     <label style={styles.filterLabel}>Distance from Campus (miles)</label>
                     <input
@@ -402,8 +480,8 @@ const ViewListings = () => {
                       max={50}
                       step={0.1}
                       value={filters.maxDistance}
-                      onChange={e => handleFilterChange('maxDistance', Number(e.target.value))}
-                      style={{ width: '100%' }}
+                      onChange={e => setFilters(f => ({ ...f, maxDistance: Number(e.target.value) }))}
+                      style={{ width: '100%', accentColor: '#FF6B00' }}
                     />
                     <div style={{ display: 'flex', justifyContent: 'flex-end', fontSize: 12 }}>
                       <span>Max: {filters.maxDistance} mi</span>
@@ -416,8 +494,8 @@ const ViewListings = () => {
                       min={1}
                       max={5}
                       value={filters.minRating}
-                      onChange={e => handleFilterChange('minRating', Number(e.target.value))}
-                      style={{ width: '100%' }}
+                      onChange={e => setFilters(f => ({ ...f, minRating: Number(e.target.value) }))}
+                      style={{ width: '100%', accentColor: '#FF6B00' }}
                     />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
                       {[1,2,3,4,5].map(star => (
