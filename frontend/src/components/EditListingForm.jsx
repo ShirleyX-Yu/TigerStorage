@@ -496,23 +496,12 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={styles.label}>State <span style={{color: '#b00020'}}>*</span></label>
-                    <select
+                    <input
                       style={styles.input}
-                      value={formData.state || ''}
-                      onChange={(e) => {
-                        setFormData(prev => ({
-                          ...prev,
-                          state: e.target.value
-                        }));
-                        if (addressNotFound) setAddressNotFound(false);
-                      }}
-                      required
-                    >
-                      <option value="">Select state...</option>
-                      {US_STATES.map(state => (
-                        <option key={state} value={state}>{state}</option>
-                      ))}
-                    </select>
+                      type="text"
+                      value="NJ"
+                      disabled
+                    />
                   </div>
                 </div>
                 <div style={{ marginTop: '10px' }}>

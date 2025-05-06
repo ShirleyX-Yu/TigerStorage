@@ -10,7 +10,7 @@ import { HALL_COORDINATES } from '../utils/hallCoordinates';
 import { axiosInstance } from '../utils/auth';
 
 const US_STATES = [
-  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA',
   'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
   'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
   'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
@@ -461,23 +461,12 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={styles.label}>State <span style={{color: '#b00020'}}>*</span></label>
-                    <select
+                    <input
                       style={styles.input}
-                      value={formData.state || ''}
-                      onChange={(e) => {
-                        setFormData(prev => ({
-                          ...prev,
-                          state: e.target.value
-                        }));
-                        if (addressNotFound) setAddressNotFound(false);
-                      }}
-                      required
-                    >
-                      <option value="">Select state...</option>
-                      {US_STATES.map(state => (
-                        <option key={state} value={state}>{state}</option>
-                      ))}
-                    </select>
+                      type="text"
+                      value="NJ"
+                      disabled
+                    />
                   </div>
                 </div>
                 <div style={{ marginTop: '10px' }}>
@@ -495,6 +484,15 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                     }}
                     placeholder="Enter ZIP code"
                     required
+                  />
+                </div>
+                <div style={{ marginTop: '10px' }}>
+                  <label style={styles.label}>Country</label>
+                  <input
+                    style={styles.input}
+                    type="text"
+                    value="USA"
+                    disabled
                   />
                 </div>
                 <button 
@@ -595,9 +593,28 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                 />
               )}
             </div>
-            <button type="submit" style={{...styles.submitButton, marginTop: '20px'}} disabled={uploading}>
-              {uploading ? 'Uploading...' : 'Create Listing'}
-            </button>
+            <div style={{ marginTop: '2rem' }}>
+              <button
+                type="submit"
+                style={styles.submitButton}
+                disabled={uploading}
+              >
+                {uploading ? 'Creating...' : 'Create Listing'}
+              </button>
+              {!modalMode && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  style={{
+                    ...styles.submitButton,
+                    backgroundColor: '#666',
+                    marginTop: '1rem'
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
         </form>
         {/* Address Confirmation Modal */}
         <Dialog 
