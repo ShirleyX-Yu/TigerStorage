@@ -333,9 +333,9 @@ const AdminPlatform = () => {
                 onClick={() => {
                   setConfirmModal({ ...confirmModal, open: false });
                   if (confirmModal.action === 'accept') {
-                    handleAccept(confirmModal.reportId, confirmModal.listingId);
+                    handleAccept(confirmModal.listingId, confirmModal.reportId);
                   } else {
-                    handleReject(confirmModal.reportId, confirmModal.listingId);
+                    handleReject(confirmModal.listingId, confirmModal.reportId);
                   }
                 }}
               >Confirm</button>
