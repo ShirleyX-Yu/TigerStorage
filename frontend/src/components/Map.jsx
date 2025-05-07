@@ -1069,17 +1069,6 @@ const Map = () => {
             <DialogActions style={{ padding: '16px' }}>
               <Button
                 onClick={() => {
-                  setSelectedListingId(null);
-                  setGroupedListings(null);
-                  setShowReservationForm(false);
-                  setInterestSuccess(false);
-                  setLastInterestAction(null);
-                }}
-                style={{ color: '#888' }}>
-                Close
-              </Button>
-              <Button
-                onClick={() => {
                   if (selectedListing) navigate(`/listing/${selectedListing.listing_id || selectedListing.id}`);
                 }}
                 style={{ background: '#FF6B00', color: 'white', fontWeight: 600 }}
