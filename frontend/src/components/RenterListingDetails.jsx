@@ -249,12 +249,12 @@ const RenterListingDetails = () => {
           
           // Update global context and refresh the listing details
           await refreshInterestedListings();
-          setMessage({ type: 'success', text: 'Interest removed!' });
+          setMessage({ type: 'success', text: 'Request cancelled!' });
           setTimeout(() => setMessage(null), 2000);
           
           // Local state will be synced via the useEffect that watches interestedListings
         } catch (error) {
-          const errorMessage = error.response?.data?.error || 'Failed to remove interest';
+          const errorMessage = error.response?.data?.error || 'Failed to cancel request';
           setError(errorMessage);
           setMessage({ type: 'error', text: errorMessage });
           setTimeout(() => setMessage(null), 2000);
@@ -361,18 +361,18 @@ const RenterListingDetails = () => {
       setListing(prev => prev ? { ...prev, isInterested: true } : prev);
       
       // Show success message
-      setMessage({ type: 'success', text: 'Reservation request submitted!' });
+      setMessage({ type: 'success', text: 'Space request submitted!' });
       setTimeout(() => setMessage(null), 2000);
       
-      // Refresh global interest state
+      // Refresh global interest state and wait for it to complete
       await refreshInterestedListings();
       
-      // Fetch updated listing details
+      // Fetch updated listing details after interest refresh
       await fetchListing();
     } catch (error) {
       console.error('Reservation error:', error);
       const errorData = error.response?.data || {};
-      setReservationError(errorData.error || 'Failed to request reservation');
+      setReservationError(errorData.error || 'Failed to request space');
     } finally {
       setReservationLoading(false);
     }
@@ -599,8 +599,8 @@ const RenterListingDetails = () => {
                     onClick={handleToggleInterest}
                   >
                     {isAuthenticated
-                      ? (listing.isInterested ? '✓ Interested' : '+ Show Interest')
-                      : 'Login to Show Interest'}
+                      ? (listing.isInterested ? '✓ Space Requested' : '+ Request Space')
+                      : 'Login to Request Space'}
                   </button>
                 </div>
               </div>
