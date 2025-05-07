@@ -280,9 +280,27 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
 
   const handleConfirmAddress = () => {
     if (pendingAddress) {
+      // Parse the display_name to extract address, city, and zip code
+      const displayName = pendingAddress.address || '';
+      // Example: '2600 Woodbridge Avenue, Nixon, Edison, Middlesex County, New Jersey, 08818, United States'
+      const parts = displayName.split(',').map(s => s.trim());
+      let street = '';
+      let city = '';
+      let zip = '';
+      // Try to find the street, city, and zip code
+      if (parts.length > 0) street = parts[0];
+      // Find the first part that looks like a 5-digit zip code
+      for (let i = 0; i < parts.length; i++) {
+        if (/^\d{5}$/.test(parts[i])) zip = parts[i];
+      }
+      // Find the first part that matches the entered city (case-insensitive), fallback to the third part
+      city = parts.find(p => p.toLowerCase() === formData.city.toLowerCase()) || parts[2] || '';
       setFormData(prev => ({
         ...prev,
         address: pendingAddress.address,
+        street_address: street,
+        city: city,
+        zip_code: zip,
         latitude: pendingAddress.latitude,
         longitude: pendingAddress.longitude
       }));
