@@ -1193,7 +1193,7 @@ def handle_interest(listing_id):
                     existing_interest = cur.fetchone()
                     if existing_interest:
                         print(f"User {renter_username} has already shown interest in listing {listing_id}")
-                        return jsonify({"error": "You have already shown interest in this listing"}), 400
+                        return jsonify({"error": "You have already requested this space"}), 400
                     
                     # Check if interested_listings table exists
                     cur.execute("""
@@ -1234,7 +1234,7 @@ def handle_interest(listing_id):
                         # Create response with CORS headers
                         response = jsonify({
                             "success": True,
-                            "message": "Interest recorded successfully"
+                            "message": "Space request submitted successfully"
                         })
                         
                         # Add CORS headers with specific origin
@@ -1252,7 +1252,7 @@ def handle_interest(listing_id):
                         conn.rollback()
                         import traceback
                         traceback.print_exc()
-                        return jsonify({"error": f"Failed to record interest: {str(insert_error)}"}), 500
+                        return jsonify({"error": f"Failed to submit space request: {str(insert_error)}"}), 500
                 elif request.method == 'DELETE':
                     # Remove interest in listing
                     print(f"Removing interest for listing {listing_id}, renter {renter_username}")
@@ -1266,7 +1266,7 @@ def handle_interest(listing_id):
                     # Create response with CORS headers
                     response = jsonify({
                         "success": True,
-                        "message": "Interest removed successfully"
+                        "message": "Space request cancelled successfully"
                     })
                     
                     # Add CORS headers with specific origin
