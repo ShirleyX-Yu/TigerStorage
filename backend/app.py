@@ -95,7 +95,7 @@ def catch_all(path=''):
     if 'CAS_USERNAME' in session:
         username = session.get('CAS_USERNAME')
         # Set user type based on username
-        if username == 'cs-tigerstorage':
+        if username in ['cs-tigerstorage', 'jiaweim', 'cs-rdondero']:
             session['user_type'] = 'admin'
             # If accessing root, redirect admin to admin dashboard
             if not path:
