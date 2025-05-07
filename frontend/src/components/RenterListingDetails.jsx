@@ -364,10 +364,10 @@ const RenterListingDetails = () => {
       setMessage({ type: 'success', text: 'Reservation request submitted!' });
       setTimeout(() => setMessage(null), 2000);
       
-      // Refresh global interest state
+      // Refresh global interest state and wait for it to complete
       await refreshInterestedListings();
       
-      // Fetch updated listing details
+      // Fetch updated listing details after interest refresh
       await fetchListing();
     } catch (error) {
       console.error('Reservation error:', error);
