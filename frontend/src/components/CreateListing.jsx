@@ -207,26 +207,42 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
 
   const geocodeAddress = async (addressComponents) => {
     if (locationType === 'on-campus') {
-      // No need to prompt for address on-campus, just return if not selected
+      // For on-campus locations
       if (!tempAddress.trim()) {
-        setGeocodingStatus('');
+        setGeocodingStatus('Please select a hall');
         setAddressNotFound(false);
         return;
       }
       setGeocodingStatus('Looking up coordinates...');
       setAddressNotFound(false);
-      // Check manual mapping first for on-campus
-      if (HALL_COORDINATES[tempAddress]) {
-        const { lat, lng } = HALL_COORDINATES[tempAddress];
-        setFormData(prev => ({
-          ...prev,
-          address: tempAddress,
-          latitude: lat,
-          longitude: lng
-        }));
-        setGeocodingStatus('Coordinates found from hall mapping!');
-        setAddressNotFound(false);
-        return;
+      try {
+        // Format the address to include Princeton campus details
+        const searchAddress = `${tempAddress}, Princeton University, Princeton, NJ 08544, USA`;
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
+        );
+        if (!response.ok) throw new Error('Failed to fetch coordinates');
+        const data = await response.json();
+        
+        if (data.length > 0) {
+          const { lat, lon, display_name } = data[0];
+          setPendingAddress({
+            address: display_name,
+            latitude: lat,
+            longitude: lon
+          });
+          setShowAddressConfirm(true);
+          setGeocodingStatus('');
+          setAddressNotFound(false);
+        } else {
+          setGeocodingStatus('');
+          setAddressNotFound(true);
+          setCustomAddressError('Could not find this hall on Princeton campus. Please try being more specific.');
+        }
+      } catch (err) {
+        setGeocodingStatus('');
+        setAddressNotFound(true);
+        setCustomAddressError('Error looking up address. Please try again.');
       }
     } else {
       // For off-campus addresses
@@ -238,26 +254,15 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       setGeocodingStatus('Looking up coordinates...');
       setAddressNotFound(false);
       try {
-        const searchAddress = `${addressComponents.street}, ${addressComponents.city}, NJ ${addressComponents.zip_code}, USA`;
+        const searchAddress = `${formData.street_address}, ${formData.city}, NJ ${formData.zip_code}, USA`;
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
         );
         if (!response.ok) throw new Error('Failed to fetch coordinates');
         const data = await response.json();
-        setCustomAddressError('');
+        
         if (data.length > 0) {
           const { lat, lon, display_name } = data[0];
-          const userAddress = `${addressComponents.street}, ${addressComponents.city}, NJ ${addressComponents.zip_code}, USA`;
-          const geocodeResult = display_name || '';
-          const distance = stringDistance(userAddress.toLowerCase(), geocodeResult.toLowerCase());
-
-          if (distance > 10) {
-            setGeocodingStatus('');
-            setAddressNotFound(true);
-            setCustomAddressError('No location found. Check that you entered the correct address.');
-            return;
-          }
-
           setPendingAddress({
             address: display_name,
             latitude: lat,
@@ -271,10 +276,10 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
           setAddressNotFound(true);
           setCustomAddressError('No location found. Check that you entered the correct address.');
         }
-      } catch {
+      } catch (err) {
         setGeocodingStatus('');
         setAddressNotFound(true);
-        setCustomAddressError('No location found. Check that you entered the correct address.');
+        setCustomAddressError('Error looking up address. Please try again.');
       }
     }
   };
