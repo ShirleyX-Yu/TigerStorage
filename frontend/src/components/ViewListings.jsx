@@ -653,7 +653,7 @@ const ViewListings = () => {
                               }}
                               onClick={() => toggleInterest(listing.id)}
                             >
-                              {listing.isInterested ? 'Remove Request' : '+ Request Space'}
+                              {listing.isInterested ? 'Cancel Request' : '+ Request Space'}
                             </button>
                             <ReservationModal
                               open={reservationModalOpen}

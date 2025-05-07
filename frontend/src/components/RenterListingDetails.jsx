@@ -578,7 +578,7 @@ const RenterListingDetails = () => {
                     onClick={handleToggleInterest}
                   >
                     {isAuthenticated
-                      ? (listing.isInterested ? 'Remove Request' : '+ Request Space')
+                      ? (listing.isInterested ? 'Cancel Request' : '+ Request Space')
                       : 'Login to Request Space'}
                   </button>
                 </div>

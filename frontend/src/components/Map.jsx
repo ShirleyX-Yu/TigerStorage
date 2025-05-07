@@ -1068,7 +1068,7 @@ const Map = () => {
                 {interestLoading
                   ? "Processing..."
                   : selectedListing && selectedListing.isInterested
-                    ? "Remove Request"
+                    ? "Cancel Request"
                     : "Request Space"}
               </Button>
 
