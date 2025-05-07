@@ -7,17 +7,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import { axiosInstance } from '../utils/auth';
-
-const PRINCETON_HALLS = [
-  '1901 Hall', '1903 Hall', 'Addy Hall',
-  'Blair Hall', 'Bloomberg Hall', 'Brown Hall', 'Buyers Hall', 'Campbell Hall',
-  'Cuyler Hall', 'Dod Hall', 'Edwards Hall', 'Feinberg Hall', 'Feliciano Hall',
-  'Fisher Hall', 'Forbes College', 'Foulke Hall', 'Graduate College (Old Graduate College)',
-  'Hamilton Hall', 'Henry Hall', 'Holder Hall', 'Joline Hall', 'Laughlin Hall',
-  'Lawrence Apartments', 'Little Hall', 'Lockhart Hall', 'Madison Hall',
-  'New Graduate College', 'Patton Hall', 'Pyne Hall', 'Scully Hall',
-  'Walker Hall', 'Witherspoon Hall', 'Wright Hall'
-];
+import { HALL_COORDINATES } from '../utils/hallCoordinates';
 
 const styles = {
   container: {
@@ -444,7 +434,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                 required
               >
                 <option value="">Select a hall...</option>
-                {PRINCETON_HALLS.map(hall => (
+                {Object.keys(HALL_COORDINATES).map(hall => (
                   <option key={hall} value={hall}>{hall}</option>
                 ))}
               </select>
