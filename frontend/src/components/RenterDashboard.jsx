@@ -3,6 +3,7 @@ import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 import boxes from '../assets/boxes.jpg';
 import { axiosInstance } from '../utils/auth';
+import { getCSRFToken } from '../utils/csrf';
 
 const getStatusLabel = (status) => {
   if (!status) return '';
@@ -47,9 +48,47 @@ const getStatusColor = (status) => {
   }
 };
 
+// Helper to format YYYY-MM-DD as MM/DD/YYYY
+function formatDate(dateStr) {
+  if (!dateStr) return 'N/A';
+  const [year, month, day] = dateStr.split('-');
+  return `${month}/${day}/${year}`;
+}
+
 const RenterDashboard = ({ username }) => {
   const navigate = useNavigate();
   const [removing, setRemoving] = useState(false);
+  const [myRequests, setMyRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Fetch all reservation requests
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        setLoading(true);
+        const response = await axiosInstance.get('/api/my-reservation-requests', {
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        if (response.data && Array.isArray(response.data)) {
+          setMyRequests(response.data);
+        } else {
+          setError('Unexpected response format from server');
+        }
+      } catch (err) {
+        console.error('Error fetching reservation requests:', err);
+        setError(err.message || 'Failed to load your spaces');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchRequests();
+  }, []);
   
   const openMap = () => {
     navigate('/map');
@@ -80,6 +119,18 @@ const RenterDashboard = ({ username }) => {
               'X-CSRFToken': getCSRFToken()
             }
           });
+          
+          // Refresh the list after cancellation
+          const updatedResponse = await axiosInstance.get('/api/my-reservation-requests', {
+            headers: {
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache'
+            }
+          });
+          
+          if (updatedResponse.data && Array.isArray(updatedResponse.data)) {
+            setMyRequests(updatedResponse.data);
+          }
         } else {
           console.warn(`No pending reservation request found for listing ${listingId}`);
         }
@@ -90,6 +141,13 @@ const RenterDashboard = ({ username }) => {
       setRemoving(false);
     }
   };
+
+  // Filter requests by status
+  const approvedRequests = myRequests.filter(req => 
+    req.status === 'approved_full' || req.status === 'approved_partial');
+  
+  const pendingRequests = myRequests.filter(req => 
+    req.status === 'pending');
 
   return (
     <div style={styles.container}>
@@ -117,15 +175,141 @@ const RenterDashboard = ({ username }) => {
 
         <div style={styles.section}>
           <h2>My Approved Spaces</h2>
-          <div style={styles.placeholder}>
-            Loading...
-          </div>
+          {loading ? (
+            <div style={styles.placeholder}>
+              Loading...
+            </div>
+          ) : error ? (
+            <div style={styles.error}>
+              Error loading approved spaces: {error}
+            </div>
+          ) : approvedRequests.length > 0 ? (
+            <div style={styles.tableContainer}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Space</th>
+                    <th style={styles.th}>Lender</th>
+                    <th style={styles.th}>Cost</th>
+                    <th style={styles.th}>Size</th>
+                    <th style={styles.th}>Dates</th>
+                    <th style={styles.th}>Status</th>
+                    <th style={styles.th}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {approvedRequests.map(request => (
+                    <tr key={request.request_id}>
+                      <td style={styles.td}>{request.title || 'Unnamed Listing'}</td>
+                      <td style={styles.td}>{request.lender_username}</td>
+                      <td style={styles.td}>${request.cost}/month</td>
+                      <td style={styles.td}>
+                        {request.status === 'approved_partial' 
+                          ? `${request.approved_space}/${request.requested_space} sq ft` 
+                          : `${request.requested_space} sq ft`}
+                      </td>
+                      <td style={styles.td}>
+                        {request.start_date && request.end_date 
+                          ? `${formatDate(request.start_date)} - ${formatDate(request.end_date)}`
+                          : 'Dates not specified'}
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{
+                          ...styles.status,
+                          backgroundColor: getStatusColor(request.status)
+                        }}>
+                          {getStatusLabel(request.status)}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <div style={styles.actionButtons}>
+                          <button 
+                            style={styles.viewButton}
+                            onClick={() => navigate(`/listing/${request.listing_id}`)}
+                          >
+                            View Details
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div style={styles.placeholder}>
+              You don't have any approved spaces yet.
+            </div>
+          )}
         </div>
+        
         <div style={styles.section}>
           <h2>My Requested Spaces</h2>
-          <div style={styles.placeholder}>
-            Loading...
-          </div>
+          {loading ? (
+            <div style={styles.placeholder}>
+              Loading...
+            </div>
+          ) : error ? (
+            <div style={styles.error}>
+              Error loading requested spaces: {error}
+            </div>
+          ) : pendingRequests.length > 0 ? (
+            <div style={styles.tableContainer}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Space</th>
+                    <th style={styles.th}>Lender</th>
+                    <th style={styles.th}>Cost</th>
+                    <th style={styles.th}>Requested Size</th>
+                    <th style={styles.th}>Date Requested</th>
+                    <th style={styles.th}>Status</th>
+                    <th style={styles.th}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingRequests.map(request => (
+                    <tr key={request.request_id}>
+                      <td style={styles.td}>{request.title || 'Unnamed Listing'}</td>
+                      <td style={styles.td}>{request.lender_username}</td>
+                      <td style={styles.td}>${request.cost}/month</td>
+                      <td style={styles.td}>{request.requested_space} sq ft</td>
+                      <td style={styles.td}>{new Date(request.created_at).toLocaleDateString()}</td>
+                      <td style={styles.td}>
+                        <span style={{
+                          ...styles.status,
+                          backgroundColor: getStatusColor(request.status)
+                        }}>
+                          {getStatusLabel(request.status)}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <div style={styles.actionButtons}>
+                          <button 
+                            style={styles.viewButton}
+                            onClick={() => navigate(`/listing/${request.listing_id}`)}
+                          >
+                            View Details
+                          </button>
+                          <button 
+                            style={styles.removeButton}
+                            onClick={() => removeRequest(request.listing_id)}
+                            disabled={removing}
+                          >
+                            {removing ? 'Cancelling...' : 'Cancel Request'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div style={styles.placeholder}>
+              You don't have any pending space requests.
+            </div>
+          )}
         </div>
       </div>
     </div>
