@@ -48,17 +48,34 @@ const getStatusColor = (status) => {
   }
 };
 
-// Helper to format YYYY-MM-DD as MM/DD/YYYY
+// Helper to format dates, handling multiple formats
 function formatDate(dateStr) {
   if (!dateStr) return 'N/A';
+  
   try {
-    // Handle ISO format dates
-    const [year, month, day] = dateStr.split('-');
-    if (year && month && day) {
-      return `${month}/${day}/${year}`;
+    // Log date for debugging
+    console.log('Formatting date:', dateStr, 'Type:', typeof dateStr);
+    
+    // Handle ISO format dates (YYYY-MM-DD)
+    if (typeof dateStr === 'string' && dateStr.includes('-')) {
+      const parts = dateStr.split('T')[0].split('-');
+      if (parts.length === 3) {
+        const [year, month, day] = parts;
+        if (year && month && day) {
+          return `${month}/${day}/${year}`;
+        }
+      }
     }
-    // Fallback to default date formatting
-    return new Date(dateStr).toLocaleDateString();
+    
+    // Handle non-standard formats
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) {
+      // Valid date object
+      return date.toLocaleDateString();
+    }
+    
+    // Fallback
+    return dateStr;
   } catch (e) {
     console.error('Error formatting date:', e, dateStr);
     return 'Invalid date';
@@ -77,7 +94,13 @@ const RenterDashboard = ({ username }) => {
     const fetchRequests = async () => {
       try {
         setLoading(true);
-        const response = await axiosInstance.get('/api/my-reservation-requests', {
+        console.log('Fetching reservation requests...');
+        
+        // Make sure we have the API URL
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        console.log('Using API URL:', apiUrl);
+        
+        const response = await axiosInstance.get(`${apiUrl}/api/my-reservation-requests`, {
           headers: {
             'Accept': 'application/json',
             'Cache-Control': 'no-cache'
@@ -98,10 +121,34 @@ const RenterDashboard = ({ username }) => {
               ? parseFloat(req.approved_space) 
               : req.approved_space || 0;
             
+            // Handle different date formats and locations in API response
+            let start_date = null;
+            let end_date = null;
+            
+            // Direct dates from request
+            if (req.start_date) {
+              start_date = req.start_date;
+            }
+            if (req.end_date) {
+              end_date = req.end_date;
+            }
+            
+            // Dates might be in the listing object for some endpoints
+            if (!start_date && req.listing && req.listing.start_date) {
+              start_date = req.listing.start_date;
+            }
+            if (!end_date && req.listing && req.listing.end_date) {
+              end_date = req.listing.end_date;
+            }
+            
             // Debug the date values
             console.log(`Request ${req.request_id} dates:`, { 
-              start_date: req.start_date, 
-              end_date: req.end_date
+              start_date, 
+              end_date,
+              original_start: req.start_date,
+              original_end: req.end_date,
+              listing_start: req.listing?.start_date,
+              listing_end: req.listing?.end_date
             });
             
             return {
@@ -111,11 +158,11 @@ const RenterDashboard = ({ username }) => {
               approved_space,
               // Ensure these string fields exist
               title: req.title || 'Unnamed Space',
-              lender_username: req.lender_username || 'Unknown Lender',
+              lender_username: req.lender_username || req.owner_id || 'Unknown Lender',
               status: req.status || 'unknown',
-              // Make sure we have the start_date and end_date even if they're nested in the API response
-              start_date: req.start_date || (req.listing && req.listing.start_date) || null,
-              end_date: req.end_date || (req.listing && req.listing.end_date) || null
+              // Use our processed dates
+              start_date,
+              end_date
             };
           });
           
@@ -272,6 +319,10 @@ const RenterDashboard = ({ username }) => {
                       <td style={styles.td}>
                         {request.start_date && request.end_date ? (
                           `${formatDate(request.start_date)} - ${formatDate(request.end_date)}`
+                        ) : request.start_date ? (
+                          `From: ${formatDate(request.start_date)}`
+                        ) : request.end_date ? (
+                          `Until: ${formatDate(request.end_date)}`
                         ) : (
                           <span style={{ color: '#888', fontStyle: 'italic' }}>Dates not specified</span>
                         )}

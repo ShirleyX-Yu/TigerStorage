@@ -188,6 +188,8 @@ const RenterListingDetails = () => {
         };
         
         console.log('Formatted listing:', formattedListing);
+        console.log('Image URL:', formattedListing.image_url);
+        console.log('Full image path:', `${import.meta.env.VITE_API_URL || ''}${formattedListing.image_url}`);
         setListing(formattedListing);
       } catch (err) {
         console.error('Error fetching listing details:', err);
@@ -471,6 +473,26 @@ const RenterListingDetails = () => {
     setError(null);
   }, [id]);
 
+  // Check if image is properly rendered once component is mounted
+  useEffect(() => {
+    const debugImageRendering = () => {
+      if (listing && listing.image_url) {
+        console.log('Debugging image rendering:');
+        console.log('- Image URL:', listing.image_url);
+        console.log('- Image element in DOM:', document.querySelector('.image-debug') !== null);
+        
+        // Get all images on the page for debugging
+        const allImages = document.querySelectorAll('img');
+        console.log('- Total images on page:', allImages.length);
+        console.log('- All image sources:', Array.from(allImages).map(img => img.src));
+      }
+    };
+    
+    // Run debugging after a short delay to ensure DOM is updated
+    const timer = setTimeout(debugImageRendering, 1000);
+    return () => clearTimeout(timer);
+  }, [listing]);
+
   // Simple render function for error state
   const renderError = () => (
     <div style={styles.errorContainer}>
@@ -508,9 +530,21 @@ const RenterListingDetails = () => {
       <div style={styles.content}>
         <button 
           style={styles.backButton} 
-          onClick={() => navigate('/view-listings')}
+          onClick={() => {
+            // Determine where to navigate back to based on the referrer
+            const referrer = document.referrer;
+            console.log('Referrer URL:', referrer);
+            
+            if (referrer.includes('renter-dashboard')) {
+              navigate('/renter-dashboard');
+            } else if (referrer.includes('map')) {
+              navigate('/map');
+            } else {
+              navigate('/view-listings');
+            }
+          }}
         >
-          ← Back to Listings
+          ← Back
         </button>
 
         {/* Message notification */}
@@ -530,10 +564,16 @@ const RenterListingDetails = () => {
             <div style={styles.imageSection}>
               {listing.image_url ? (
                 <img
-                  src={listing.image_url}
+                  className="image-debug"
+                  src={listing.image_url.startsWith('http') 
+                    ? listing.image_url 
+                    : listing.image_url.startsWith('/') 
+                      ? `${import.meta.env.VITE_API_URL || ''}${listing.image_url}`
+                      : `/assets/${listing.image_url}`}
                   alt="Storage Space"
                   style={styles.mainImage}
                   onError={(e) => {
+                    console.error('Image failed to load:', listing.image_url);
                     e.target.onerror = null;
                     e.target.src = '/assets/placeholder.jpg';
                   }}
