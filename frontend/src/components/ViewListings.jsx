@@ -338,6 +338,9 @@ const ViewListings = () => {
     });
   };
 
+  // Debug: log filter values on every render
+  console.log('Current filters:', filters);
+
   // Live updating filter logic
   const filterListings = (listings) => {
     return listings.filter(listing => {
