@@ -394,6 +394,7 @@ const ViewListings = () => {
       // Use axiosInstance for consistency with other components
       const requested_space = mode === 'full' ? Number(reservationListing.sq_ft) : Number(space);
       
+      // First submit the reservation request
       await axiosInstance.post(`/api/listings/${reservationListing?.id}/reserve`, 
         { requested_space }, 
         {
@@ -408,14 +409,26 @@ const ViewListings = () => {
         }
       );
       
+      // Then add interest
+      await axiosInstance.post(`/api/listings/${reservationListing?.id}/interest`, {}, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-User-Type': userType,
+          'X-Username': username,
+          'X-CSRFToken': getCSRFToken()
+        }
+      });
+      
       // Close modal first
       setReservationModalOpen(false);
       
-      // Update the listing's interest state in the current view
+      // Update local state immediately
       setListings(prevListings => 
         prevListings.map(l => 
           l.id === reservationListing.id 
-            ? { ...l, isInterested: true } 
+            ? { ...l, isInterested: true, remaining_space: l.remaining_space - requested_space } 
             : l
         )
       );
@@ -423,7 +436,7 @@ const ViewListings = () => {
       // Refresh global interest state to sync across components
       await refreshInterestedListings();
       
-      // Fetch updated listings to get new remaining space
+      // Fetch updated listings to get new remaining space and sync all states
       const response = await axiosInstance.get('/api/listings', {
         headers: {
           'Accept': 'application/json',
@@ -434,11 +447,10 @@ const ViewListings = () => {
       });
       
       if (Array.isArray(response.data)) {
-        // Preserve interest state while updating listings
+        // Update listings while preserving interest state
         const updatedListings = response.data.map(newListing => ({
           ...newListing,
-          isInterested: newListing.id === reservationListing.id ? true : 
-            listings.find(l => l.id === newListing.id)?.isInterested || false
+          isInterested: interestedListings.some(l => String(l.id) === String(newListing.id))
         }));
         setListings(updatedListings);
       }
