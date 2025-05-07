@@ -263,7 +263,16 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         // Parse the display_name to extract address components
         const displayName = pendingAddress.address || '';
         const parts = displayName.split(',').map(s => s.trim());
-        let street = parts[0] || formData.street_address;
+        
+        // Extract street number and name from the first part
+        const firstPart = parts[0] || '';
+        const streetMatch = firstPart.match(/^(\d+)\s+(.+)$/);
+        let street = firstPart;
+        if (streetMatch) {
+          // Reformat as "Street Name Number"
+          street = `${streetMatch[2]} ${streetMatch[1]}`;
+        }
+        
         let city = parts.find(p => p.toLowerCase() === formData.city.toLowerCase()) || formData.city;
         let zip = parts.find(p => /^\d{5}$/.test(p)) || formData.zip_code;
         
