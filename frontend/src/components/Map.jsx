@@ -595,7 +595,7 @@ const Map = () => {
               // Show success message inside the modal
               setInterestSuccess(true);
               setLastInterestAction('remove');
-              setTimeout(() => setInterestSuccess(false), 2000);
+              setTimeout(() => setInterestSuccess(false), 3000);
             }
           }
         }
@@ -987,7 +987,7 @@ const Map = () => {
                     // Update UI
                     setInterestSuccess(true);
                     setLastInterestAction('add');
-                    setTimeout(() => setInterestSuccess(false), 2000);
+                    setTimeout(() => setInterestSuccess(false), 3000);
                     
                     // Update the listings immediately
                     setListings(currentListings => 

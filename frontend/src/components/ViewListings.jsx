@@ -306,8 +306,8 @@ const ViewListings = () => {
             });
             
             // Show success message
-            setMessage({ type: 'success', text: 'Reservation request cancelled!' });
-            setTimeout(() => setMessage(null), 2000);
+            setMessage({ type: 'success', text: 'Space request cancelled!' });
+            setTimeout(() => setMessage(null), 3000);
             
             // Update the UI immediately
             setListings(currentListings => 
@@ -326,7 +326,7 @@ const ViewListings = () => {
     } catch (error) {
       console.error('Error toggling interest:', error);
       setMessage({ type: 'error', text: error.response?.data?.error || 'Error updating request' });
-      setTimeout(() => setMessage(null), 2000);
+      setTimeout(() => setMessage(null), 3000);
     }
   };
 
@@ -420,8 +420,8 @@ const ViewListings = () => {
       setReservationModalOpen(false);
       
       // Show success message
-      setMessage({ type: 'success', text: 'Reservation request submitted!' });
-      setTimeout(() => setMessage(null), 2000);
+      setMessage({ type: 'success', text: 'Space requested!' });
+      setTimeout(() => setMessage(null), 3000);
       
       // Update the UI immediately
       if (reservationListing) {

@@ -284,8 +284,8 @@ const RenterListingDetails = () => {
           setListing(prev => ({...prev, isInterested: false}));
           
           // Show success message
-          setMessage({ type: 'success', text: 'Reservation request cancelled!' });
-          setTimeout(() => setMessage(null), 2000);
+          setMessage({ type: 'success', text: 'Space request cancelled!' });
+          setTimeout(() => setMessage(null), 3000);
           
           // Update myRequests state to reflect the cancellation
           setMyRequests(prev => 
@@ -342,8 +342,8 @@ const RenterListingDetails = () => {
       setShowReservationModal(false);
       
       // Show success message
-      setMessage({ type: 'success', text: 'Reservation request submitted!' });
-      setTimeout(() => setMessage(null), 2000);
+      setMessage({ type: 'success', text: 'Space requested!' });
+      setTimeout(() => setMessage(null), 3000);
       
       // Refresh reservation requests
       const response = await axiosInstance.get(`${apiUrl}/api/my-reservation-requests`, {
