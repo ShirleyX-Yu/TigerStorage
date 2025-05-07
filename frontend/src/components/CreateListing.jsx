@@ -262,10 +262,29 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       if (locationType === 'off-campus') {
         // Parse the display_name to extract address components
         const displayName = pendingAddress.address || '';
+        console.log('Display Name:', displayName);
         const parts = displayName.split(',').map(s => s.trim());
-        let street = parts[0] || formData.street_address;
+        console.log('Parts:', parts);
+        
+        // Extract street number and name from the first part
+        const firstPart = parts[0] || '';
+        console.log('First Part:', firstPart);
+        
+        // Updated regex to handle various address formats
+        const streetMatch = firstPart.match(/^(\d+)(?:\s+|\s*,\s*)(.+)$/);
+        console.log('Street Match:', streetMatch);
+        
+        let street = firstPart;
+        if (streetMatch) {
+          // Reformat as "Street Name Number"
+          street = `${streetMatch[2].trim()} ${streetMatch[1]}`;
+          console.log('Formatted Street:', street);
+        }
+        
         let city = parts.find(p => p.toLowerCase() === formData.city.toLowerCase()) || formData.city;
         let zip = parts.find(p => /^\d{5}$/.test(p)) || formData.zip_code;
+        
+        console.log('Final Street Address:', street);
         
         setFormData(prev => ({
           ...prev,
