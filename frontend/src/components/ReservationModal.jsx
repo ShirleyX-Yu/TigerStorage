@@ -61,7 +61,27 @@ const ReservationModal = ({
       PaperProps={{ style: { boxShadow: '0 8px 32px rgba(0,0,0,0.18)', borderRadius: 16, background: '#fff8f1' } }}
       BackdropProps={{ style: { backgroundColor: 'transparent' } }}
     >
-      <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: '16px 24px' }}>Reserve Space</DialogTitle>
+      <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: '16px 24px', position: 'relative' }}>
+        Reserve Space
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: 12,
+            right: 16,
+            background: 'none',
+            border: 'none',
+            color: 'white',
+            fontSize: 22,
+            cursor: 'pointer',
+            fontWeight: 700,
+            lineHeight: 1
+          }}
+          aria-label="Close"
+        >
+          &times;
+        </button>
+      </DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent style={{ padding: 24, background: '#fff8f1' }}>
           <ToggleButtonGroup
@@ -91,7 +111,6 @@ const ReservationModal = ({
           {(localError || error) && <Alert severity="error" style={{ marginBottom: 8 }}>{localError || (error ? error.replace(/Error:\s*/, '') : '')}</Alert>}
         </DialogContent>
         <DialogActions style={{ padding: '16px 24px', background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
-          <Button onClick={onClose} disabled={loading} style={{ color: '#888', fontWeight: 600 }}>Cancel</Button>
           <Button type="submit" variant="contained" style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }} disabled={loading}>
             {loading ? 'Sending...' : 'Send Request'}
           </Button>
