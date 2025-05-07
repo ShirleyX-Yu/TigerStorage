@@ -252,7 +252,7 @@ def create_listing():
             with conn.cursor() as cur:
                 # Prepare column values
                 column_values = {
-                    'title': data['title'],
+                    'title': data.get('title', data.get('location', '')),  # Support both title and location fields
                     'sq_ft': total_sq_ft,
                     'cost': cost,
                     'start_date': start_date,
@@ -268,7 +268,7 @@ def create_listing():
                 if 'address' in data:
                     column_values['address'] = data['address']
                 
-                # In create_listing, after handling address:
+                # Add hall_name if provided
                 if 'hall_name' in data:
                     column_values['hall_name'] = data['hall_name']
                 
