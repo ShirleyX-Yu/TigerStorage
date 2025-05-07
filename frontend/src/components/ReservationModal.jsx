@@ -93,7 +93,7 @@ const ReservationModal = ({
         <DialogActions style={{ padding: '16px 24px', background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
           <Button onClick={onClose} disabled={loading} style={{ color: '#888', fontWeight: 600 }}>Cancel</Button>
           <Button type="submit" variant="contained" style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }} disabled={loading}>
-            {loading ? 'Submitting...' : 'Submit'}
+            {loading ? 'Sending...' : 'Send Request'}
           </Button>
         </DialogActions>
       </form>
