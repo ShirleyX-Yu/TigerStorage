@@ -314,7 +314,10 @@ const AdminProtectedRoute = ({ component: Component }) => {
           setUsername(currentUsername || 'Unknown');
 
           if (!isAuthenticated) {
-            navigate('/');
+            // Store the current path for post-login redirect
+            sessionStorage.setItem('redirectPath', '/admin');
+            // Initiate CAS login for admin
+            login('admin');
           } else if (currentUserType !== 'admin' || currentUsername !== 'cs-tigerstorage') {
             // Not the admin NetID
             setError('Access denied: Only verified admins can access the admin dashboard.');
@@ -327,7 +330,10 @@ const AdminProtectedRoute = ({ component: Component }) => {
         if (isMounted) {
           setAuthenticated(false);
           setLoading(false);
-          navigate('/');
+          // Store the current path for post-login redirect
+          sessionStorage.setItem('redirectPath', '/admin');
+          // Initiate CAS login for admin
+          login('admin');
         }
       }
     };
