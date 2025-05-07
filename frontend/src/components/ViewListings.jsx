@@ -360,11 +360,10 @@ const ViewListings = () => {
   };
 
   // Filter out unavailable listings before rendering
-  const filteredListings = listings.filter(
+  const filteredListings = filterListings(listings).filter(
     listing =>
       (listing.is_available === undefined || listing.is_available === true) &&
-      Number(listing.remaining_space) > 0 &&
-      filterListings(listings)
+      Number(listing.remaining_space) > 0
   );
 
   // After a reservation is submitted, re-fetch the listings to update remaining_space.
