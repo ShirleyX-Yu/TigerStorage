@@ -190,7 +190,7 @@ const MapContent = ({ listings, onListingClick, selectedListing }) => {
               <p>Size: ${listing.remaining_space ?? listing.sq_ft ?? 0} sq ft remaining • ${listing.sq_ft ?? 0} sq ft total</p>
               <p>Distance from Princeton: ${listing.distance ? listing.distance.toFixed(1) : 'N/A'} miles</p>
               <button 
-                style="background-color: ${listing.isInterested ? '#ffd700' : '#f57c00'}; color: ${listing.isInterested ? '#000' : '#fff'}; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
+                style="background-color: ${listing.isInterested ? '#f44336' : '#f57c00'}; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 8px;"
                 onclick="window.location.href='/listing/${listing.id || listing.listing_id}'"
               >
                 View Details
@@ -1033,17 +1033,17 @@ const Map = () => {
               <Button
                 onClick={() => handleToggleInterest(selectedListing)}
                 style={{
-                  background: selectedListing && false ? '#fff' : '#FF6B00',
-                  color: selectedListing && false ? '#FF6B00' : 'white',
-                  border: selectedListing && false ? '1.5px solid #FF6B00' : 'none',
+                  background: selectedListing && selectedListing.isInterested ? '#f44336' : '#FF6B00',
+                  color: 'white',
+                  border: 'none',
                   fontWeight: 600
                 }}
-                variant={selectedListing && false ? 'outlined' : 'contained'}
+                variant="contained"
                 disabled={interestLoading}
               >
                 {interestLoading
                   ? "Processing..."
-                  : selectedListing && false
+                  : selectedListing && selectedListing.isInterested
                     ? "Remove Request"
                     : "Request Space"}
               </Button>

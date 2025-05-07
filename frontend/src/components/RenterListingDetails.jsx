@@ -613,7 +613,7 @@ const RenterListingDetails = () => {
                   <button
                     style={{
                       ...styles.interestButton,
-                      backgroundColor: '#f57c00'
+                      backgroundColor: listing.isInterested ? '#f44336' : '#f57c00'
                     }}
                     onClick={handleToggleInterest}
                   >

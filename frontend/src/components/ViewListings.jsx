@@ -245,47 +245,65 @@ const ViewListings = () => {
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
       
-      // Check for existing pending requests
-      const resp = await axiosInstance.get('/api/my-reservation-requests', {
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-          'X-User-Type': userType,
-          'X-Username': username
-        }
-      });
+      // Find the current listing
+      const listing = listings.find(l => l.id === listingId);
+      if (!listing) return;
       
-      if (resp.data && Array.isArray(resp.data)) {
-        const pending = resp.data.find(r => 
-          (String(r.listing_id) === String(listingId)) && 
-          r.status === 'pending'
-        );
+      // Check if already interested or not
+      const isInterested = listing.isInterested;
+      
+      if (isInterested) {
+        // If already interested, try to cancel the pending request
+        const resp = await axiosInstance.get('/api/my-reservation-requests', {
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType,
+            'X-Username': username
+          }
+        });
         
-        if (pending) {
-          // Cancel the existing request before adding interest
-          console.log(`Cancelling existing pending reservation request ID: ${pending.request_id}`);
-          await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
-            status: 'cancelled_by_renter'
-          }, {
-            headers: {
-              'X-User-Type': userType,
-              'X-Username': username,
-              'X-CSRFToken': getCSRFToken()
-            }
-          });
+        if (resp.data && Array.isArray(resp.data)) {
+          const pending = resp.data.find(r => 
+            (String(r.listing_id) === String(listingId)) && 
+            r.status === 'pending'
+          );
+          
+          if (pending) {
+            // Cancel the existing request
+            console.log(`Cancelling pending reservation request ID: ${pending.request_id}`);
+            await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
+              status: 'cancelled_by_renter'
+            }, {
+              headers: {
+                'X-User-Type': userType,
+                'X-Username': username,
+                'X-CSRFToken': getCSRFToken()
+              }
+            });
+            
+            // Show success message
+            setMessage({ type: 'success', text: 'Reservation request cancelled!' });
+            setTimeout(() => setMessage(null), 2000);
+            
+            // Update the UI immediately
+            setListings(currentListings => 
+              currentListings.map(l => 
+                l.id === listingId ? {...l, isInterested: false} : l
+              )
+            );
+          }
         }
+      } else {
+        // Not interested yet, show reservation modal for new interest
+        const listing = listings.find(l => l.id === listingId);
+        setReservationListing(listing);
+        setReservationModalOpen(true);
       }
-      
-      // Now show reservation modal for new interest
-      const listing = listings.find(l => l.id === listingId);
-      setReservationListing(listing);
-      setReservationModalOpen(true);
     } catch (error) {
-      console.error('Error checking for pending requests:', error);
-      // Continue with showing the modal anyway
-      const listing = listings.find(l => l.id === listingId);
-      setReservationListing(listing);
-      setReservationModalOpen(true);
+      console.error('Error toggling interest:', error);
+      setMessage({ type: 'error', text: error.response?.data?.error || 'Error updating request' });
+      setTimeout(() => setMessage(null), 2000);
     }
   };
 
@@ -604,11 +622,11 @@ const ViewListings = () => {
                             <button
                               style={{
                                 ...styles.interestButton,
-                                backgroundColor: '#f57c00'
+                                backgroundColor: listing.isInterested ? '#f44336' : '#f57c00'
                               }}
                               onClick={() => toggleInterest(listing.id)}
                             >
-                              '+ Request Space'
+                              {listing.isInterested ? 'Remove Request' : '+ Request Space'}
                             </button>
                             <ReservationModal
                               open={reservationModalOpen}
