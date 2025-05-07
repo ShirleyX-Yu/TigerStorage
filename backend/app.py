@@ -1234,21 +1234,39 @@ def reserve_space(listing_id):
                     print(f"[RESERVE] Duplicate pending reservation for {renter_username} on listing {listing_id}")
                     return jsonify({'error': 'You already have a pending reservation request for this listing.'}), 400
                 # Get listing and check remaining_space
-                cur.execute("SELECT remaining_space, is_available FROM storage_listings WHERE listing_id = %s", (listing_id,))
+                cur.execute("SELECT remaining_space, is_available, owner_id FROM storage_listings WHERE listing_id = %s", (listing_id,))
                 row = cur.fetchone()
                 if not row:
                     print(f"[RESERVE] Listing {listing_id} not found")
                     return jsonify({'error': 'Listing not found'}), 404
-                remaining_space, is_available = row
-                print(f"[RESERVE] Listing remaining_space: {remaining_space}, is_available: {is_available}")
+                remaining_space, is_available, lender_username = row
+                print(f"[RESERVE] Listing remaining_space: {remaining_space}, is_available: {is_available}, lender: {lender_username}")
                 if not is_available or remaining_space is None or remaining_space < requested_space:
                     print(f"[RESERVE] Not enough space: requested {requested_space}, available {remaining_space}")
                     return jsonify({'error': 'Not enough space available'}), 400
-                # Insert reservation request
+                
+                # Check if lender_username field exists in the reservation_requests table
                 cur.execute("""
-                    INSERT INTO reservation_requests (listing_id, renter_username, requested_space, status)
-                    VALUES (%s, %s, %s, 'pending') RETURNING request_id
-                """, (listing_id, renter_username, requested_space))
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'reservation_requests';
+                """)
+                available_columns = [col[0] for col in cur.fetchall()]
+                
+                # Insert reservation request
+                if 'lender_username' in available_columns:
+                    print(f"[RESERVE] Adding request with lender_username field")
+                    cur.execute("""
+                        INSERT INTO reservation_requests (listing_id, renter_username, lender_username, requested_space, status)
+                        VALUES (%s, %s, %s, %s, 'pending') RETURNING request_id
+                    """, (listing_id, renter_username, lender_username, requested_space))
+                else:
+                    print(f"[RESERVE] Adding request without lender_username field")
+                    cur.execute("""
+                        INSERT INTO reservation_requests (listing_id, renter_username, requested_space, status)
+                        VALUES (%s, %s, %s, 'pending') RETURNING request_id
+                    """, (listing_id, renter_username, requested_space))
+                
                 request_id = cur.fetchone()[0]
                 conn.commit()
                 print(f"[RESERVE] Reservation created: request_id={request_id}")
@@ -1393,77 +1411,121 @@ def get_my_reservation_requests():
                 username = session['user_info'].get('user', '').lower()
             elif 'username' in session:
                 username = session.get('username', '').lower()
+            elif 'CAS_USERNAME' in session:
+                username = session.get('CAS_USERNAME', '').lower()
         except Exception as e:
             print(f"Error accessing session: {str(e)}")
     
+    print(f"[RESERVATION REQUESTS] Fetching requests for username: {username}")
+    
     # If still no username, return error
     if not username:
+        print("[RESERVATION REQUESTS] No username found in headers or session")
         return jsonify({'error': 'Username is required. Please provide X-Username header or username query param.'}), 400
     
     conn = None
     try:
         conn = get_db_connection()
         if not conn:
+            print("[RESERVATION REQUESTS] Database connection failed")
             return jsonify({'error': 'Database connection failed'}), 500
-            
-        query = """
-            SELECT 
-                r.request_id, 
-                r.listing_id, 
-                r.renter_username, 
-                r.lender_username, 
-                r.requested_space, 
-                r.approved_space, 
-                r.status, 
-                r.created_at, 
-                r.updated_at, 
-                r.start_date, 
-                r.end_date,
-                l.title,
-                l.address,
-                l.hall_name,
-                l.sq_ft,
-                l.cost
-            FROM 
-                reservation_requests r
-            JOIN 
-                storage_listings l ON r.listing_id = l.listing_id
-            WHERE 
-                r.renter_username = %s
-            ORDER BY 
-                r.created_at DESC
-        """
         
-        cursor = None
-        try:
+        with conn.cursor() as cur:
+            # First check if the reservation_requests table exists
+            cur.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'reservation_requests'
+                );
+            """)
+            reservation_table_exists = cur.fetchone()[0]
+            
+            # If table doesn't exist, return empty result
+            if not reservation_table_exists:
+                print("[RESERVATION REQUESTS] reservation_requests table does not exist")
+                return jsonify([]), 200
+            
+            # Get column names from the reservation_requests table
+            cur.execute("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'reservation_requests';
+            """)
+            available_columns = [col[0] for col in cur.fetchall()]
+            print(f"[RESERVATION REQUESTS] Available columns: {available_columns}")
+            
+            # Get column names from the storage_listings table
+            cur.execute("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'storage_listings';
+            """)
+            listing_columns = [col[0] for col in cur.fetchall()]
+            print(f"[RESERVATION REQUESTS] Available listing columns: {listing_columns}")
+            
+            # Build dynamic query based on available columns
+            select_fields = ['r.request_id', 'r.listing_id']
+            
+            # Add reservation request fields if they exist
+            reservation_fields = [
+                'renter_username', 'requested_space', 'approved_space', 'status', 
+                'created_at', 'updated_at', 'start_date', 'end_date'
+            ]
+            for field in reservation_fields:
+                if field in available_columns:
+                    select_fields.append(f'r.{field}')
+            
+            # Add listing fields if they exist
+            listing_fields = ['title', 'address', 'hall_name', 'sq_ft', 'cost', 'owner_id']
+            for field in listing_fields:
+                if field in listing_columns:
+                    select_fields.append(f'l.{field}')
+            
+            # Construct the final query
+            fields_str = ", ".join(select_fields)
+            query = f"""
+                SELECT {fields_str}
+                FROM reservation_requests r
+                JOIN storage_listings l ON r.listing_id = l.listing_id
+                WHERE r.renter_username = %s
+                ORDER BY r.created_at DESC
+            """
+            
+            print(f"[RESERVATION REQUESTS] Executing query: {query}")
+        
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cursor.execute(query, (username,))
-            requests = cursor.fetchall()
-            
-            # Convert result to list of dicts
-            result = []
-            for req in requests:
-                item = dict(req)
+            try:
+                cursor.execute(query, (username,))
+                requests = cursor.fetchall()
+                print(f"[RESERVATION REQUESTS] Found {len(requests)} requests")
                 
-                # Convert numeric fields
-                for field in ['cost', 'requested_space', 'approved_space', 'sq_ft']:
-                    if field in item and item[field] is not None:
-                        try:
-                            item[field] = float(item[field])
-                        except (ValueError, TypeError):
-                            # If conversion fails, keep original value
-                            pass
+                # Convert result to list of dicts
+                result = []
+                for req in requests:
+                    item = dict(req)
+                    
+                    # If owner_id exists in the result, use it as lender_username to maintain backwards compatibility
+                    if 'owner_id' in item:
+                        item['lender_username'] = item['owner_id']
+                    
+                    # Convert numeric fields
+                    for field in ['cost', 'requested_space', 'approved_space', 'sq_ft']:
+                        if field in item and item[field] is not None:
+                            try:
+                                item[field] = float(item[field])
+                            except (ValueError, TypeError):
+                                # If conversion fails, keep original value
+                                pass
+                    
+                    # Convert date fields to ISO format
+                    for field in ['created_at', 'updated_at', 'start_date', 'end_date']:
+                        if field in item and item[field] is not None and hasattr(item[field], 'isoformat'):
+                            item[field] = item[field].isoformat()
+                    
+                    result.append(item)
                 
-                # Convert date fields to ISO format
-                for field in ['created_at', 'updated_at', 'start_date', 'end_date']:
-                    if field in item and item[field] is not None and hasattr(item[field], 'isoformat'):
-                        item[field] = item[field].isoformat()
-                
-                result.append(item)
-            
-            return jsonify(result)
-        finally:
-            if cursor:
+                return jsonify(result)
+            finally:
                 cursor.close()
     except Exception as e:
         print(f"Error in get_my_reservation_requests: {str(e)}")
@@ -1659,6 +1721,107 @@ def get_csrf_token():
         domain='.onrender.com' if is_production else None
     )
     return response
+
+@app.route('/api/debug/schema/<table_name>', methods=['GET'])
+def debug_schema(table_name):
+    """Debug endpoint to view the schema of a table"""
+    try:
+        # Only allow this endpoint in development or for admin users
+        if not (os.environ.get('FLASK_ENV') == 'development' or 
+                (auth.is_authenticated() and session.get('user_type') == 'admin')):
+            return jsonify({'error': 'Not authorized'}), 403
+            
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': 'Database connection failed'}), 500
+            
+        with conn.cursor() as cur:
+            # Check if table exists
+            cur.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = %s
+                );
+            """, (table_name,))
+            table_exists = cur.fetchone()[0]
+            
+            if not table_exists:
+                return jsonify({'error': f'Table {table_name} does not exist'}), 404
+                
+            # Get column info
+            cur.execute("""
+                SELECT column_name, data_type, is_nullable, column_default
+                FROM information_schema.columns 
+                WHERE table_name = %s
+                ORDER BY ordinal_position;
+            """, (table_name,))
+            
+            columns = []
+            for row in cur.fetchall():
+                columns.append({
+                    'name': row[0],
+                    'type': row[1],
+                    'nullable': row[2] == 'YES',
+                    'default': row[3]
+                })
+                
+            # Get constraints
+            cur.execute("""
+                SELECT
+                    tc.constraint_name,
+                    tc.constraint_type,
+                    kcu.column_name,
+                    ccu.table_name AS foreign_table_name,
+                    ccu.column_name AS foreign_column_name
+                FROM
+                    information_schema.table_constraints AS tc
+                JOIN information_schema.key_column_usage AS kcu
+                    ON tc.constraint_name = kcu.constraint_name
+                    AND tc.table_schema = kcu.table_schema
+                LEFT JOIN information_schema.constraint_column_usage AS ccu
+                    ON ccu.constraint_name = tc.constraint_name
+                    AND ccu.table_schema = tc.table_schema
+                WHERE tc.table_name = %s;
+            """, (table_name,))
+            
+            constraints = []
+            for row in cur.fetchall():
+                constraints.append({
+                    'name': row[0],
+                    'type': row[1],
+                    'column': row[2],
+                    'foreign_table': row[3],
+                    'foreign_column': row[4]
+                })
+                
+            # Get sample data (first 5 rows)
+            sample_data = []
+            try:
+                cur.execute(f"SELECT * FROM {table_name} LIMIT 5")
+                column_names = [desc[0] for desc in cur.description]
+                for row in cur.fetchall():
+                    row_dict = {}
+                    for i, col in enumerate(column_names):
+                        # Convert non-JSON serializable types
+                        if isinstance(row[i], (datetime, date)):
+                            row_dict[col] = row[i].isoformat()
+                        else:
+                            row_dict[col] = row[i]
+                    sample_data.append(row_dict)
+            except Exception as e:
+                sample_data = [{'error': str(e)}]
+                
+            return jsonify({
+                'table': table_name,
+                'columns': columns,
+                'constraints': constraints,
+                'sample_data': sample_data
+            })
+            
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     args = parser.parse_args()
