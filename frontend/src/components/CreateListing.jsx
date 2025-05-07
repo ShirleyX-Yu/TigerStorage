@@ -416,43 +416,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             <option value="off-campus">Off Campus</option>
           </select>
         </div>
-        {locationType === 'on-campus' ? (
-          <div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
-              <select
-                style={styles.input}
-                value={tempAddress}
-                onChange={e => {
-                  setTempAddress(e.target.value);
-                  setFormData(prev => ({
-                    ...prev,
-                    hall_name: e.target.value
-                  }));
-                  if (e.target.value) {
-                    geocodeAddress(e.target.value);
-                  }
-                }}
-                required
-              >
-                <option value="">Select a hall...</option>
-                {Object.keys(HALL_COORDINATES).map(hall => (
-                  <option key={hall} value={hall}>{hall}</option>
-                ))}
-              </select>
-              {geocodingStatus && (
-                <div style={{
-                  ...styles.geocodingStatus,
-                  color: geocodingStatus.includes('✅') ? '#4caf50' : 
-                         geocodingStatus.includes('❌') ? '#d32f2f' : 
-                         '#666'
-                }}>
-                  {geocodingStatus}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
+        {locationType === 'on-campus' ? null : (
           <div style={styles.formGroup}>
             <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
             {addressNotFound && customAddressError && (
