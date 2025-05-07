@@ -9,6 +9,8 @@ import Button from '@mui/material/Button';
 import { axiosInstance } from '../utils/auth';
 import { HALL_COORDINATES } from '../utils/hallCoordinates';
 
+console.log('HALL_COORDINATES:', HALL_COORDINATES);
+
 const styles = {
   container: {
     display: 'flex',
