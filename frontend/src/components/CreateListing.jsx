@@ -310,11 +310,15 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         body: form,
         credentials: 'include'
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Upload failed: ${res.status} ${errText}`);
+      }
       const result = await res.json();
       setFormData(prev => ({ ...prev, image_url: result.url }));
-    } catch {
-      setError('Failed to upload image');
+    } catch (err) {
+      setError('Failed to upload image: ' + err.message);
+      console.error('Image upload error:', err);
     } finally {
       setUploading(false);
     }
