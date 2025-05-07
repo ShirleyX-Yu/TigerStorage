@@ -315,94 +315,109 @@ const Map = () => {
 
   const fetchListings = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const fetchUrl = `${apiUrl}/api/listings`;
-      console.log('Fetching listings from:', fetchUrl);
+      setLoading(true);
+      setError(null);
       
-      // Get user info for headers
+      // Get the API URL from environment variable
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      
+      // Get user information for headers
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+      console.log(`Using auth headers - User type: ${userType} Username: ${username}`);
       
-      console.log('Using auth headers - User type:', userType, 'Username:', username);
-      
-      // 1. Fetch all listings
-      const response = await axiosInstance.get('/api/listings', {
+      // Fetch listings from API
+      const response = await axiosInstance.get(`${apiUrl}/api/listings`, {
         headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
           'X-User-Type': userType,
           'X-Username': username
-        },
+        }
       });
-
-      console.log('Listings response status:', response.status);
       
-      // Axios does not have .ok/.text()/.json(), use response.data
+      console.log(`Listings response status: ${response.status}`);
       const data = response.data;
+      
+      // Clear any old data
+      setListings([]);
+      
+      // Data validation
       if (!Array.isArray(data)) {
-        throw new Error('Unexpected data format from API');
+        throw new Error('Invalid response format');
       }
-      console.log(`Received ${data.length} listings:`, data);
       
-      // Validate coordinates
-      const validListings = data.filter(listing => {
-        const hasCoords = listing.latitude && listing.longitude && 
-                          !isNaN(listing.latitude) && !isNaN(listing.longitude);
-        if (!hasCoords) {
-          console.warn('Listing with invalid coordinates:', listing.id);
-        }
-        return hasCoords;
+      // Add distance calculations
+      const dataWithDistance = data.map(listing => {
+        const distance = listing.latitude && listing.longitude
+          ? calculateDistance(
+              PRINCETON_COORDS.lat, PRINCETON_COORDS.lng,
+              listing.latitude, listing.longitude
+            )
+          : Number.MAX_VALUE;
+          
+        return {
+          ...listing,
+          distance,
+          // Filter match will be applied later
+          matchesFilters: true,
+          // Initially set interest to false, will be updated below
+          isInterested: false
+        };
       });
       
-      console.log(`${validListings.length} listings have valid coordinates`);
+      // Filter out unavailable listings (with 0 remaining space)
+      const availableListings = dataWithDistance.filter(
+        listing => 
+          (listing.is_available === undefined || listing.is_available === true) &&
+          Number(listing.remaining_space) > 0
+      );
       
-      // Add distance to each listing
-      const listingsWithDistance = validListings.map(listing => {
-        if (listing.latitude && listing.longitude) {
-          const distance = calculateDistance(
-            PRINCETON_COORDS.lat,
-            PRINCETON_COORDS.lng,
-            listing.latitude,
-            listing.longitude
-          );
-          return { ...listing, distance };
-        }
-        return listing;
-      });
+      console.log(`${availableListings.length} listings have valid coordinates`);
       
-      // 2. Fetch all reservation requests for the current user
+      // Sort by distance
+      availableListings.sort((a, b) => a.distance - b.distance);
+      
+      // Set available listings
+      setListings(availableListings);
+      
+      // Fetch the user's reservation requests to mark interest
       try {
-        const requestsResp = await axiosInstance.get('/api/my-reservation-requests', {
+        const requestsResponse = await axiosInstance.get(`${apiUrl}/api/my-reservation-requests`, {
           headers: {
-            'X-User-Type': userType,
-            'X-Username': username,
             'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType,
+            'X-Username': username
           }
         });
         
-        // 3. Build a set of listing IDs with pending requests
-        const pendingIds = new Set(
-          requestsResp.data
+        if (requestsResponse.data && Array.isArray(requestsResponse.data)) {
+          const requests = requestsResponse.data;
+          const pendingRequestIds = requests
             .filter(r => r.status === 'pending')
-            .map(r => String(r.listing_id)) // Convert to string for consistent comparison
-        );
-        
-        console.log('Pending reservation requests:', pendingIds);
-        
-        // 4. Mark listings as interested if they have a pending request
-        const listingsWithInterest = listingsWithDistance.map(listing => ({
-          ...listing,
-          isInterested: pendingIds.has(String(listing.id || listing.listing_id))
-        }));
-        
-        setListings(listingsWithInterest);
-      } catch (requestErr) {
-        console.error('Error fetching reservation requests:', requestErr);
-        // If we can't fetch reservations, continue with listings but without interest info
-        setListings(listingsWithDistance.map(listing => ({ ...listing, isInterested: false })));
+            .map(r => String(r.listing_id));
+          
+          // Mark listings as interested based on pending reservation requests
+          const listingsWithInterest = availableListings.map(listing => ({
+            ...listing,
+            isInterested: pendingRequestIds.includes(String(listing.id) || String(listing.listing_id))
+          }));
+          
+          // Update the available listings with interest information
+          setListings(listingsWithInterest);
+          
+          // Apply the current filter to these listings
+          applyFilters(listingsWithInterest);
+        }
+      } catch (error) {
+        console.error('Error fetching reservation requests:', error);
+        // Continue with listings even if we can't fetch reservation status
+        applyFilters(availableListings);
       }
-    } catch (err) {
-      console.error('Error in fetchListings:', err);
-      setError(err.message);
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+      setError('Unable to load listings. Please try again later.');
     } finally {
       setLoading(false);
     }

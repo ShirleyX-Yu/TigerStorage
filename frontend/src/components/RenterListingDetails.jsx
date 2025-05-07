@@ -55,6 +55,51 @@ const RenterListingDetails = () => {
     checkAuth();
   }, []);
 
+  // Fetch user's reservation requests to check if already interested
+  useEffect(() => {
+    if (!isAuthenticated || !id) return;
+    
+    const fetchMyRequests = async () => {
+      try {
+        setRequestsLoading(true);
+        const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+        const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+        
+        // Fetch all reservation requests for this user
+        const response = await axiosInstance.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/my-reservation-requests`, {
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType,
+            'X-Username': storedUsername
+          }
+        });
+        
+        const requests = response.data;
+        console.log('Fetched reservation requests:', requests);
+        
+        // Store all requests
+        setMyRequests(requests);
+        
+        // Check if any of the requests is for this listing
+        const matchingRequests = requests.filter(req => String(req.listing_id) === String(id));
+        const pendingRequest = matchingRequests.find(req => req.status === 'pending');
+        
+        // If there's a pending request, set listing as interested
+        if (pendingRequest) {
+          console.log('Found pending request for this listing:', pendingRequest);
+          setListing(prev => prev ? { ...prev, isInterested: true } : prev);
+        }
+      } catch (error) {
+        console.error('Error fetching reservation requests:', error);
+      } finally {
+        setRequestsLoading(false);
+      }
+    };
+    
+    fetchMyRequests();
+  }, [isAuthenticated, id]);
+
   useEffect(() => {
     // Ensure CSRF token is set on mount
     fetch(`${import.meta.env.VITE_API_URL}/api/csrf-token`, { credentials: 'include' });
