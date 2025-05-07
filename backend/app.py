@@ -153,7 +153,7 @@ def index():
 def map():
     # Assign user type if not already set
     if 'user_type' not in session:
-        if cas.username == 'cs-tigerstorage':
+        if cas.username in ['cs-tigerstorage', 'jiaweim', 'cs-rdondero', 'jd9751']:
             session['user_type'] = 'admin'
         else:
             session['user_type'] = 'lender'
