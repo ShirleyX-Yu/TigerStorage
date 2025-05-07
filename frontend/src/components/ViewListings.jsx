@@ -183,13 +183,13 @@ const ViewListings = () => {
           return;
         }
         
-        // Use the exact same data format as the map view
-        // This ensures consistency between the two views
-        setListings(data);
-
-        // Load interested locations from localStorage (same as map view)
-        const interestedLocations = JSON.parse(localStorage.getItem('interestedLocations') || '[]');
-        console.log('Interested locations:', interestedLocations);
+        // Mark listings as interested based on context
+        const listingsWithInterest = data.map(listing => ({
+          ...listing,
+          isInterested: interestedListings.some(l => l.id === listing.id)
+        }));
+        
+        setListings(listingsWithInterest);
       } catch (err) {
         console.error('Error fetching listings:', err);
         setError(err.message);
@@ -199,7 +199,17 @@ const ViewListings = () => {
     };
 
     fetchListings();
-  }, []);
+  }, [interestedListings]); // Re-fetch when interested listings change
+
+  // Keep listings in sync with interest changes
+  useEffect(() => {
+    setListings(prevListings => 
+      prevListings.map(listing => ({
+        ...listing,
+        isInterested: interestedListings.some(l => l.id === listing.id)
+      }))
+    );
+  }, [interestedListings]);
 
   // Function to toggle interest in a listing
   const toggleInterest = async (listingId) => {
@@ -398,10 +408,22 @@ const ViewListings = () => {
         }
       );
       
+      // Close modal first
       setReservationModalOpen(false);
-      await refreshInterestedListings(); // ensure state is up to date
       
-      // Fetch the updated listings to show the new remaining space
+      // Update the listing's interest state in the current view
+      setListings(prevListings => 
+        prevListings.map(l => 
+          l.id === reservationListing.id 
+            ? { ...l, isInterested: true } 
+            : l
+        )
+      );
+      
+      // Refresh global interest state to sync across components
+      await refreshInterestedListings();
+      
+      // Fetch updated listings to get new remaining space
       const response = await axiosInstance.get('/api/listings', {
         headers: {
           'Accept': 'application/json',
@@ -412,7 +434,13 @@ const ViewListings = () => {
       });
       
       if (Array.isArray(response.data)) {
-        setListings(response.data);
+        // Preserve interest state while updating listings
+        const updatedListings = response.data.map(newListing => ({
+          ...newListing,
+          isInterested: newListing.id === reservationListing.id ? true : 
+            listings.find(l => l.id === newListing.id)?.isInterested || false
+        }));
+        setListings(updatedListings);
       }
     } catch (err) {
       console.error('Reservation error:', err);

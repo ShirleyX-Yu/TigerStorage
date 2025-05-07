@@ -94,28 +94,8 @@ const RenterListingDetails = () => {
         const data = response.data;
         console.log('Received listing data:', data);
         
-        // Only fetch interest status if user is authenticated
-        let isInterested = false;
-        if (isAuthenticated) {
-          try {
-            const interestResponse = await axiosInstance.get('/api/my-interested-listings', {
-              headers: {
-                'Accept': 'application/json',
-                'Cache-Control': 'no-cache',
-                'X-User-Type': userType,
-                'X-Username': storedUsername || ''
-              }
-            });
-            
-            if (interestResponse.ok) {
-              const interestedListings = await interestResponse.json();
-              isInterested = interestedListings.some(listing => listing.id === data.id);
-            }
-          } catch (err) {
-            console.error('Error fetching interest status:', err);
-            // Continue with isInterested = false
-          }
-        }
+        // Get interest status from context instead of fetching separately
+        const isInterested = interestedListings.some(l => String(l.id) === String(data.id));
         
         // Simple formatted listing with fallbacks for all properties
         const formattedListing = {
@@ -157,46 +137,7 @@ const RenterListingDetails = () => {
     return () => {
       console.log('ListingDetails component unmounted');
     };
-  }, [id, isAuthenticated]);
-
-  useEffect(() => {
-    if (listing) {
-      const isInterested = interestedListings.some(l => l.id === listing.id);
-      if (isInterested !== listing.isInterested) {
-        setListing(l => l ? { ...l, isInterested } : l);
-      }
-    }
-    // eslint-disable-next-line
-  }, [interestedListings, listing?.id]);
-
-  // Fetch reservation requests for this listing (auto-refresh on refreshKey)
-  useEffect(() => {
-    if (!listing || !isAuthenticated) return;
-    const fetchRequests = async () => {
-      setRequestsLoading(true);
-      try {
-        const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
-        const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-        const resp = await axiosInstance.get('/api/my-reservation-requests', {
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache',
-            'X-User-Type': userType,
-            'X-Username': storedUsername
-          }
-        });
-        if (resp.ok) {
-          const all = await resp.json();
-          setMyRequests(all.filter(r => String(r.listing_id) === String(listing.id)));
-        }
-      } catch (err) {
-        // ignore for now
-      } finally {
-        setRequestsLoading(false);
-      }
-    };
-    fetchRequests();
-  }, [listing, isAuthenticated]);
+  }, [id, interestedListings]);
 
   // Auto-refresh listing after lender action or reservation
   const fetchListing = async () => {
@@ -216,7 +157,7 @@ const RenterListingDetails = () => {
       });
       const data = response.data;
       
-      // Check interested status from global context instead of resetting it
+      // Get interest status from context
       const isInterested = interestedListings.some(l => String(l.id) === String(data.id));
       
       // Simple formatted listing with fallbacks for all properties
@@ -240,7 +181,7 @@ const RenterListingDetails = () => {
           name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
           email: 'contact@tigerstorage.com'
         },
-        isInterested: isInterested, // Use value from context instead of defaulting to false
+        isInterested: isInterested,
         lender_avg_rating: data.lender_avg_rating,
       };
       setListing(formattedListing);
@@ -373,15 +314,15 @@ const RenterListingDetails = () => {
   };
 
   // Reservation submit handler for modal
-  const handleReservationSubmit = async ({ volume, mode }) => {
+  const handleReservationSubmit = async ({ space, mode }) => {
     setReservationLoading(true);
     setReservationError('');
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/listings/${listing.id}/reserve`;
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
-      const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+      const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
       // Always send full sq_ft for 'full', user-entered for 'partial', as a number
-      const requested_space = mode === 'full' ? Number(listing.sq_ft) : Number(volume);
+      const requested_space = mode === 'full' ? Number(listing.sq_ft) : Number(space);
       if (!requested_space || requested_space <= 0) {
         setReservationError('Please enter a valid space amount.');
         setReservationLoading(false);
@@ -394,24 +335,26 @@ const RenterListingDetails = () => {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
           'X-User-Type': userType,
-          'X-Username': storedUsername,
+          'X-Username': username,
           'X-CSRFToken': getCSRFToken()
         }
       });
       
-      // Success: close the modal and show a success message
+      // Close modal first
       setReservationModalOpen(false);
+      
+      // Update local state immediately
+      setListing(prev => prev ? { ...prev, isInterested: true } : prev);
+      
+      // Show success message
       setMessage({ type: 'success', text: 'Reservation request submitted!' });
       setTimeout(() => setMessage(null), 2000);
       
-      // Update both local and global state
-      setListing(l => l ? { ...l, isInterested: true } : l);
-      
-      // Make sure the global context is updated for all components
+      // Refresh global interest state
       await refreshInterestedListings();
       
-      // Trigger a refetch of the listing details to get updated data
-      fetchListing();
+      // Fetch updated listing details
+      await fetchListing();
     } catch (error) {
       console.error('Reservation error:', error);
       const errorData = error.response?.data || {};
