@@ -370,13 +370,38 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       setError('Please fill in all required fields');
       return;
     }
-    if (locationType === 'off-campus' && (!formData.street_address || !formData.city || !formData.zip_code)) {
-      setError('Please fill in all address fields for off-campus locations.');
-      return;
-    }
-    if (!formData.latitude || !formData.longitude) {
-      setError('Please locate a valid address before submitting.');
-      return;
+    if (locationType === 'off-campus') {
+      if (!formData.street_address || !formData.city || !formData.zip_code) {
+        setError('Please fill in all address fields for off-campus locations.');
+        return;
+      }
+      if (!formData.latitude || !formData.longitude) {
+        setError('Please locate a valid address before submitting.');
+        return;
+      }
+    } else {
+      // For on-campus, check if hall is selected and has coordinates
+      if (!formData.hall_name) {
+        setError('Please select a residential hall.');
+        return;
+      }
+      if (!formData.latitude || !formData.longitude) {
+        const hallCoords = HALL_COORDINATES[formData.hall_name];
+        if (hallCoords) {
+          setFormData(prev => ({
+            ...prev,
+            latitude: hallCoords.lat,
+            longitude: hallCoords.lng,
+            address: formData.hall_name,
+            street_address: formData.hall_name,
+            city: 'Princeton',
+            zip_code: '08544'
+          }));
+        } else {
+          setError('Invalid hall selected. Please try again.');
+          return;
+        }
+      }
     }
 
     try {
@@ -457,7 +482,20 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             <select
               style={styles.input}
               value={formData.hall_name}
-              onChange={e => setFormData(prev => ({ ...prev, hall_name: e.target.value }))}
+              onChange={e => {
+                const hallName = e.target.value;
+                const hallCoords = HALL_COORDINATES[hallName];
+                setFormData(prev => ({
+                  ...prev,
+                  hall_name: hallName,
+                  address: hallName,
+                  street_address: hallName,
+                  city: 'Princeton',
+                  zip_code: '08544',
+                  latitude: hallCoords ? hallCoords.lat : '',
+                  longitude: hallCoords ? hallCoords.lng : ''
+                }));
+              }}
               required
             >
               <option value="">Select a hall...</option>
