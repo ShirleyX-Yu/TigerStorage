@@ -825,8 +825,26 @@ const Map = () => {
           </MapContainer>
           {/* Popup Modal for Selected Listing */}
           <Dialog open={!!selectedListing} onClose={() => { setSelectedListingId(null); setGroupedListings(null); setInterestSuccess(false); setLastInterestAction(null); }} PaperProps={{ style: { borderRadius: 16, minWidth: 340, background: '#fff8f1' } }}>
-            <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, padding: '16px 24px' }}>
+            <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, padding: '16px 24px', position: 'relative' }}>
               Listing Details
+              <button
+                onClick={() => { setSelectedListingId(null); setGroupedListings(null); setInterestSuccess(false); setLastInterestAction(null); }}
+                style={{
+                  position: 'absolute',
+                  top: 12,
+                  right: 16,
+                  background: 'none',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: 22,
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  lineHeight: 1
+                }}
+                aria-label="Close"
+              >
+                &times;
+              </button>
             </DialogTitle>
             <DialogContent dividers style={{ background: '#fff8f1', padding: 24, position: 'relative' }}>
                 {/* Report Button - top right */}
