@@ -70,11 +70,19 @@ const AdminPlatform = () => {
     setLoadingReportId(reportId);
     setActionType('accept');
     try {
-      const response = await axiosInstance.put(`/api/listings/${listingId}`, { admin_action: 'accept', report_id: reportId });
+      const response = await axiosInstance.put(`/api/listings/${listingId}`, { 
+        admin_action: 'accept', 
+        report_id: reportId 
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       // Refresh listings
       setRefreshKey(k => k + 1);
     } catch (err) {
-      setError(err.message);
+      console.error('Error accepting report:', err);
+      setError(err.response?.data?.error || err.message || 'Failed to accept report');
     } finally {
       setLoadingReportId(null);
       setActionType(null);
@@ -85,11 +93,19 @@ const AdminPlatform = () => {
     setLoadingReportId(reportId);
     setActionType('reject');
     try {
-      const response = await axiosInstance.put(`/api/listings/${listingId}`, { admin_action: 'reject', report_id: reportId });
+      const response = await axiosInstance.put(`/api/listings/${listingId}`, { 
+        admin_action: 'reject', 
+        report_id: reportId 
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       // Refresh listings
       setRefreshKey(k => k + 1);
     } catch (err) {
-      setError(err.message);
+      console.error('Error rejecting report:', err);
+      setError(err.response?.data?.error || err.message || 'Failed to reject report');
     } finally {
       setLoadingReportId(null);
       setActionType(null);

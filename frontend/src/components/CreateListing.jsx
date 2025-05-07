@@ -310,11 +310,15 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         body: form,
         credentials: 'include'
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Upload failed: ${res.status} ${errText}`);
+      }
       const result = await res.json();
       setFormData(prev => ({ ...prev, image_url: result.url }));
-    } catch {
-      setError('Failed to upload image');
+    } catch (err) {
+      setError('Failed to upload image: ' + err.message);
+      console.error('Image upload error:', err);
     } finally {
       setUploading(false);
     }
@@ -416,43 +420,23 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             <option value="off-campus">Off Campus</option>
           </select>
         </div>
-        {locationType === 'on-campus' ? (
-          <div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
-              <select
-                style={styles.input}
-                value={tempAddress}
-                onChange={e => {
-                  setTempAddress(e.target.value);
-                  setFormData(prev => ({
-                    ...prev,
-                    hall_name: e.target.value
-                  }));
-                  if (e.target.value) {
-                    geocodeAddress(e.target.value);
-                  }
-                }}
-                required
-              >
-                <option value="">Select a hall...</option>
-                {Object.keys(HALL_COORDINATES).map(hall => (
-                  <option key={hall} value={hall}>{hall}</option>
-                ))}
-              </select>
-              {geocodingStatus && (
-                <div style={{
-                  ...styles.geocodingStatus,
-                  color: geocodingStatus.includes('✅') ? '#4caf50' : 
-                         geocodingStatus.includes('❌') ? '#d32f2f' : 
-                         '#666'
-                }}>
-                  {geocodingStatus}
-                </div>
-              )}
-            </div>
+        {locationType === 'on-campus' && (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
+            <select
+              style={styles.input}
+              value={formData.hall_name}
+              onChange={e => setFormData(prev => ({ ...prev, hall_name: e.target.value }))}
+              required
+            >
+              <option value="">Select a hall...</option>
+              {Object.keys(HALL_COORDINATES).map(hall => (
+                <option key={hall} value={hall}>{hall}</option>
+              ))}
+            </select>
           </div>
-        ) : (
+        )}
+        {locationType === 'on-campus' ? null : (
           <div style={styles.formGroup}>
             <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
             {addressNotFound && customAddressError && (
