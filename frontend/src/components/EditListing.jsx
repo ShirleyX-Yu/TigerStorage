@@ -562,6 +562,7 @@ const styles = {
     border: '1px solid #ddd',
     borderRadius: '4px',
     boxSizing: 'border-box',
+    fontFamily: 'inherit'
   },
   buttonContainer: {
     display: 'flex',

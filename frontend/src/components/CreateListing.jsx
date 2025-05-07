@@ -54,6 +54,7 @@ const styles = {
     border: '1px solid #ddd',
     borderRadius: '4px',
     fontSize: '1rem',
+    fontFamily: 'inherit',
   },
   textarea: {
     width: '100%',
@@ -62,6 +63,7 @@ const styles = {
     borderRadius: '4px',
     fontSize: '1rem',
     minHeight: '100px',
+    fontFamily: 'inherit',
   },
   error: {
     backgroundColor: '#ffebee',
