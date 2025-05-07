@@ -207,8 +207,9 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
 
   const geocodeAddress = async (addressComponents) => {
     if (locationType === 'on-campus') {
+      // No need to prompt for address on-campus, just return if not selected
       if (!tempAddress.trim()) {
-        setGeocodingStatus('Please enter an address');
+        setGeocodingStatus('');
         setAddressNotFound(false);
         return;
       }
