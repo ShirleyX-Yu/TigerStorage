@@ -231,7 +231,7 @@ def create_listing():
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
-            return jsonify({"error": "Database connection failed"}), 500
+            return jsonify({"error": "We're experiencing temporary database issues. Please try again later."}), 500
             
         try:
             # Convert data to correct types
@@ -344,8 +344,7 @@ def get_listings():
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
-            print("Database connection failed")
-            return jsonify({"error": "Database connection failed"}), 500
+            return jsonify({"error": "We're experiencing temporary database issues. Please try again later."}), 500
         try:
             with conn.cursor() as cur:
                 # First check if the storage_listings table exists
@@ -517,12 +516,12 @@ def get_current_rentals():
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
-            return jsonify({"error": "Database connection failed"}), 500
+            return jsonify({"error": "We're experiencing temporary database issues. Please try again later."}), 500
         # Implement real DB logic here or return 404 if not implemented
         return jsonify({"error": "Not implemented"}), 404
     except Exception as e:
         print("Error:", str(e))
-        return jsonify({"error": "Failed to fetch current rentals"}), 500
+        return jsonify({"error": "We couldn't retrieve your current rentals. Please try again later."}), 500
 
 @app.route('/api/rentals/history', methods=['GET'])
 def get_rental_history():
@@ -530,12 +529,12 @@ def get_rental_history():
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
-            return jsonify({"error": "Database connection failed"}), 500
+            return jsonify({"error": "We're experiencing temporary database issues. Please try again later."}), 500
         # Implement real DB logic here or return 404 if not implemented
         return jsonify({"error": "Not implemented"}), 404
     except Exception as e:
         print("Error:", str(e))
-        return jsonify({"error": "Failed to fetch rental history"}), 500
+        return jsonify({"error": "We couldn't retrieve your rental history. Please try again later."}), 500
 
 # API to get a specific listing by ID
 @app.route('/api/listings/<int:listing_id>', methods=['GET'])
@@ -544,7 +543,7 @@ def get_listing_by_id(listing_id):
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
-            return jsonify({"error": "Database connection failed"}), 500
+            return jsonify({"error": "We're experiencing temporary database issues. Please try again later."}), 500
         try:
             with conn.cursor() as cur:
                 # Check if the table exists
@@ -583,7 +582,7 @@ def get_listing_by_id(listing_id):
                         return get_mock_listing(listing_id)
                     else:
                         # If no listing found with that ID, return 404
-                        return jsonify({"error": "Listing not found"}), 404
+                        return jsonify({"error": "We couldn't find this storage listing. It may have been removed."}), 404
                 
                 # Get column names from cursor description
                 column_names = [desc[0] for desc in cur.description]
@@ -634,10 +633,8 @@ def get_listing_by_id(listing_id):
         finally:
             conn.close()
     except Exception as e:
-        print("Error fetching listing by ID:", str(e))
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": "Failed to fetch listing: " + str(e)}), 500
+        print("Error fetching listing:", str(e))
+        return jsonify({"error": "We couldn't retrieve this storage listing. Please try again later."}), 500
 
 # API to get listings by owner (for lender dashboard)
 @app.route('/api/my-listings', methods=['GET'])
@@ -684,8 +681,7 @@ def get_my_listings():
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
-            print("Database connection failed")
-            return jsonify({"error": "Database connection failed"}), 500
+            return jsonify({"error": "We're experiencing temporary database issues. Please try again later."}), 500
             
         try:
             with conn.cursor() as cur:
@@ -878,7 +874,7 @@ def get_my_listings():
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "We couldn't retrieve your listings at this time. Please try again later."}), 500
 
 # API to update a listing
 @app.route('/api/listings/<int:listing_id>', methods=['PUT'])
@@ -943,7 +939,7 @@ def update_listing(listing_id):
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
-            return jsonify({"error": "Database connection failed"}), 500
+            return jsonify({"error": "We're experiencing temporary database issues. Please try again later."}), 500
 
         try:
             with conn.cursor() as cur:
@@ -954,7 +950,7 @@ def update_listing(listing_id):
 
                 if not listing:
                     print(f"Listing {listing_id} not found for update")
-                    return jsonify({"error": "Listing not found"}), 404
+                    return jsonify({"error": "We couldn't find this storage listing. It may have been removed."}), 404
 
                 db_owner_id = listing[0]
                 print(f"Listing owner is: {db_owner_id}, update request from: {owner_id}, user_type: {user_type_header}")
@@ -963,7 +959,7 @@ def update_listing(listing_id):
                 is_admin = user_type_header == 'admin'
                 if not is_admin and db_owner_id != owner_id:
                     print(f"Permission denied: {owner_id} is not owner of listing {listing_id} and not admin")
-                    return jsonify({"error": "You don't have permission to update this listing"}), 403
+                    return jsonify({"error": "You don't have permission to update this listing. Please contact support if you believe this is an error."}), 403
 
                 # Prepare update data
                 update_values = {}
@@ -1050,7 +1046,7 @@ def update_listing(listing_id):
         print("Error updating listing:", str(e))
         import traceback
         traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "We couldn't update your listing. Please check your information and try again."}), 500
 
 # API to delete a listing
 @app.route('/api/listings/<int:listing_id>', methods=['DELETE'])
@@ -1087,7 +1083,7 @@ def delete_listing(listing_id):
         # Get a fresh connection
         conn = get_db_connection()
         if not conn:
-            return jsonify({"error": "Database connection failed"}), 500
+            return jsonify({"error": "We're experiencing temporary database issues. Please try again later."}), 500
             
         try:
             with conn.cursor() as cur:
@@ -1098,14 +1094,14 @@ def delete_listing(listing_id):
                 
                 if not listing:
                     print(f"Listing {listing_id} not found")
-                    return jsonify({"error": "Listing not found"}), 404
+                    return jsonify({"error": "We couldn't find this storage listing. It may have been removed."}), 404
                     
                 # Check if the current user is the owner
                 db_owner_id = listing[0]
                 print(f"Listing owner is: {db_owner_id}, request from: {owner_id}")
                 if db_owner_id != owner_id:
                     print(f"Permission denied: {owner_id} is not owner of listing {listing_id}")
-                    return jsonify({"error": "You don't have permission to delete this listing"}), 403
+                    return jsonify({"error": "You don't have permission to delete this listing. Please contact support if you believe this is an error."}), 403
                 
                 # Delete the listing
                 print(f"Deleting listing {listing_id}")
@@ -1275,7 +1271,7 @@ def reserve_space(listing_id):
             conn.close()
     except Exception as e:
         print('[RESERVE] Error in reserve_space:', e)
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'We couldn\'t process your reservation request at this time. Please try again later.'}), 500
 
 # 2. Lender views all reservation requests for their listing
 @app.route('/api/listings/<int:listing_id>/reservation-requests', methods=['GET'])
@@ -1319,7 +1315,7 @@ def get_reservation_requests(listing_id):
             conn.close()
     except Exception as e:
         print('Error in get_reservation_requests:', e)
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'We couldn\'t retrieve the reservation requests for this listing. Please try again later.'}), 500
 
 # 3. Lender approves/rejects/partially approves a reservation request
 @app.route('/api/reservation-requests/<int:request_id>', methods=['PATCH'])
@@ -1396,7 +1392,7 @@ def update_reservation_request(request_id):
             conn.close()
     except Exception as e:
         print('Error in update_reservation_request:', e)
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'We were unable to update this reservation request. Please try again later.'}), 500
 
 # API endpoint to fetch a user's reservation requests
 @app.route('/api/my-reservation-requests', methods=['GET'])
@@ -1531,7 +1527,7 @@ def get_my_reservation_requests():
         print(f"Error in get_my_reservation_requests: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': f'Error fetching reservation requests: {str(e)}'}), 500
+        return jsonify({'error': 'We couldn\'t retrieve your reservation requests at this time. Please try again later.'}), 500
     finally:
         if conn:
             conn.close()
@@ -1570,7 +1566,7 @@ def report_listing():
         }), 201
     except Exception as e:
         print('Error in report_listing:', e)
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'We couldn\'t process your report at this time. Please try again later.'}), 500
     finally:
         conn.close()
 
@@ -1598,7 +1594,7 @@ def get_reported_listings():
             return jsonify(reported), 200
     except Exception as e:
         print('Error in get_reported_listings:', e)
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'We couldn\'t retrieve the reported listings at this time. Please try again later.'}), 500
     finally:
         if 'conn' in locals():
             conn.close()
@@ -1684,7 +1680,7 @@ def serve_assets(filename):
 # Add a CSRF error handler for API endpoints
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
-    response = jsonify({'error': 'CSRF token missing or invalid', 'description': e.description})
+    response = jsonify({'error': 'For your security, please refresh the page and try again.', 'description': e.description})
     response.status_code = 400
     # Add CORS headers for API clients
     response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')

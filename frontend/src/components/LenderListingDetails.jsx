@@ -196,7 +196,11 @@ const LenderListingDetails = () => {
       }, 3000);
 
     } catch (err) {
-      setActionError(e => ({ ...e, [requestId]: err.message }));
+      let errorMessage = "We couldn't process this action. Please try again.";
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error.replace(/Error:\s*/, '');
+      }
+      setActionError(e => ({ ...e, [requestId]: errorMessage }));
     } finally {
       setActionLoading(l => ({ ...l, [requestId]: false }));
     }
@@ -227,8 +231,8 @@ const LenderListingDetails = () => {
 
   const renderError = () => (
     <div style={styles.errorContainer}>
-      <h2>Error</h2>
-      <p>{error}</p>
+      <h2>Something went wrong</h2>
+      <p>{typeof error === 'string' ? error.replace(/Error:\s*/, '') : "We couldn't load this listing. Please try again later."}</p>
       <button style={styles.backButton} onClick={() => navigate('/lender-dashboard')}>
         &larr; Back to Dashboard
       </button>
@@ -314,7 +318,7 @@ const LenderListingDetails = () => {
                                 <Button size="small" variant="contained" style={{ background: '#388e3c', color: 'white', marginRight: 6 }} disabled={actionLoading[req.request_id]} onClick={() => handleAction(req.request_id, 'approved_full')}>Approve Full</Button>
                                 <Button size="small" variant="contained" style={{ background: '#1976d2', color: 'white', marginRight: 6 }} disabled={actionLoading[req.request_id]} onClick={() => openPartialModal(req)}>Approve Partial</Button>
                                 <Button size="small" variant="contained" style={{ background: '#d32f2f', color: 'white' }} disabled={actionLoading[req.request_id]} onClick={() => handleAction(req.request_id, 'rejected')}>Reject</Button>
-                                {actionError[req.request_id] && <div style={{ color: 'red', marginTop: 4 }}>{actionError[req.request_id]}</div>}
+                                {actionError[req.request_id] && <div style={{ color: 'red', marginTop: 4 }}>{actionError[req.request_id].replace(/Error:\s*/, '')}</div>}
                               </>
                             )}
                             {req.status !== 'pending' && (

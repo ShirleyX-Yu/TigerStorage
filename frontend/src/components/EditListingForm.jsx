@@ -383,7 +383,11 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       const data = res.data;
       onSuccess ? onSuccess() : navigate(`/listing/${listingId}`);
     } catch (err) {
-      setError(`Error updating listing: ${err.message}`);
+      let errorMessage = "We couldn't update your listing. Please check your information and try again.";
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error.replace(/Error:\s*/, '');
+      }
+      setError(errorMessage);
     }
   };
 
@@ -393,7 +397,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
 
   return (
     <div style={styles.container} ref={containerRef}>
-      {error && <div style={styles.error}>{error}</div>}
+      {error && <div style={{...styles.error, backgroundColor: '#f8d7da', color: '#721c24', padding: '10px 15px', borderRadius: '4px', marginBottom: '15px'}}>{error}</div>}
       {success && <div style={{ color: 'green', marginBottom: 10 }}>Listing updated!</div>}
       <div style={styles.content}>
         {loading ? (

@@ -882,16 +882,30 @@ const Map = () => {
                     if (typeof interestError === 'string') {
                       try {
                         const parsed = JSON.parse(interestError);
-                        if (parsed && parsed.error) return `Error: ${parsed.error}`;
+                        if (parsed && parsed.error) return parsed.error;
                       } catch (e) {
                         // Not JSON, fall through
                       }
                       // Try to match {"error":"..."} pattern
                       const match = interestError.match(/\{"error"\s*:\s*"([^"]+)"\}/);
-                      if (match && match[1]) return `Error: ${match[1]}`;
-                      return `Error: ${interestError}`;
+                      if (match && match[1]) return match[1];
+                      
+                      // Remove any numeric codes from error
+                      let cleanError = interestError;
+                      cleanError = cleanError.replace(/Error:\s*/, '');
+                      cleanError = cleanError.replace(/\b[0-9]{3,}\b/, '');
+                      cleanError = cleanError.replace(/^\s+|\s+$/g, '');
+                      
+                      // Add default prefix if error looks too technical
+                      if (cleanError.includes('exception') || 
+                          cleanError.includes('failed') || 
+                          cleanError.toLowerCase().includes('error')) {
+                        return "We couldn't process your request. Please try again later.";
+                      }
+                      
+                      return cleanError;
                     }
-                    return 'An error occurred.';
+                    return 'We couldn\'t process your request. Please try again later.';
                   })()
                 }</Alert></Box>
               )}
@@ -986,7 +1000,12 @@ const Map = () => {
                     // await fetchListings();
                   } catch (error) {
                     const errorData = error.response?.data || {};
-                    setReservationError(errorData.error || 'Failed to submit reservation request');
+                    let errorMessage = errorData.error || 'We couldn\'t submit your reservation request. Please try again later.';
+                    
+                    // Clean up error message
+                    errorMessage = errorMessage.replace(/Error:\s*/, '');
+                    
+                    setReservationError(errorMessage);
                   } finally {
                     setReservationLoading(false);
                   }

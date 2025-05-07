@@ -31,7 +31,7 @@ const Home = () => {
     const authError = sessionStorage.getItem('authError');
     if (authError) {
       console.log("Auth error detected");
-      setErrorMessage("Authentication service is currently unavailable. Please try again later.");
+      setErrorMessage(authError);
       // Clear the error so it doesn't persist
       sessionStorage.removeItem('authError');
     }
@@ -64,7 +64,7 @@ const Home = () => {
   // Show admin error if redirected from /admin
   useEffect(() => {
     if (location.state && location.state.adminError) {
-      setErrorMessage('Access denied: Only verified admins can access the admin dashboard.');
+      setErrorMessage('You need admin permissions to access the admin dashboard. If you believe you should have access, please contact the TigerStorage team.');
       // Clear the state so it doesn't persist
       navigate('/', { replace: true, state: {} });
     }

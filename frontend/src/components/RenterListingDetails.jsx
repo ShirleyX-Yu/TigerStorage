@@ -302,8 +302,12 @@ const RenterListingDetails = () => {
       }
     } catch (error) {
       console.error('Error toggling interest:', error);
-      setMessage({ type: 'error', text: error.response?.data?.error || 'Error updating request' });
-      setTimeout(() => setMessage(null), 2000);
+      const errorMessage = error.response?.data?.error || "We couldn't process your request at this time.";
+      setMessage({
+        type: 'error',
+        text: errorMessage.replace(/Error:\s*/, '')
+      });
+      setTimeout(() => setMessage(null), 3000);
     } finally {
       setInterestLoading(false);
     }
@@ -354,8 +358,8 @@ const RenterListingDetails = () => {
       }
     } catch (error) {
       console.error('Error submitting reservation:', error);
-      setMessage({ type: 'error', text: error.response?.data?.error || 'Error submitting request' });
-      setTimeout(() => setMessage(null), 2000);
+      const errorMessage = error.response?.data?.error || "We couldn't process your reservation. Please try again.";
+      setReservationError(errorMessage.replace(/Error:\s*/, ''));
     } finally {
       setInterestLoading(false);
     }
@@ -446,8 +450,11 @@ const RenterListingDetails = () => {
       // Refresh reviews
       const reviewsResp = await axiosInstance.get('/api/lender-reviews/'+listing.owner_id);
       setReviews(reviewsResp.data);
-    } catch (err) {
-      setReviewError(err.message);
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      const errorMessage = error.response?.data?.error || "We couldn't submit your review. Please try again.";
+      setReviewError(errorMessage.replace(/Error:\s*/, ''));
+      setReviewSuccess('');
     } finally {
       setReviewLoading(false);
     }
@@ -466,8 +473,8 @@ const RenterListingDetails = () => {
   // Simple render function for error state
   const renderError = () => (
     <div style={styles.errorContainer}>
-      <h2>Error</h2>
-      <p>{error}</p>
+      <h2>Something went wrong</h2>
+      <p>{typeof error === 'string' ? error.replace(/Error:\s*/, '') : "We couldn't load this listing. Please try again later."}</p>
       <button style={styles.backButton} onClick={() => navigate('/view-listings')}>
         &larr; Back to Listings
       </button>

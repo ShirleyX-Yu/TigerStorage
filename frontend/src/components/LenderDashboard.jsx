@@ -153,7 +153,7 @@ const LenderDashboard = ({ username }) => {
 
       setListedSpaces(formattedListings);
     } catch (err) {
-      setError(err.message);
+      setError("We couldn't load your listings right now. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -235,7 +235,11 @@ const LenderDashboard = ({ username }) => {
         setTimeout(() => setLenderActionSuccess(s => ({ ...s, [requestId]: null })), 3000);
       }
     } catch (err) {
-      setLenderActionError(e => ({ ...e, [requestId]: err.message }));
+      let errorMessage = "We couldn't process this action. Please try again.";
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error.replace(/Error:\s*/, '');
+      }
+      setLenderActionError(e => ({ ...e, [requestId]: errorMessage }));
     } finally {
       setLenderActionLoading(l => ({ ...l, [requestId]: false }));
     }
@@ -272,7 +276,11 @@ const LenderDashboard = ({ username }) => {
       setDeleteSuccess(true);
       setTimeout(() => setDeleteSuccess(false), 3000);
     } catch (err) {
-      setError(`Error deleting listing: ${err.message}`);
+      let errorMessage = "We couldn't delete this listing.";
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error.replace(/Error:\s*/, '');
+      }
+      setError(errorMessage);
       setTimeout(() => setError(null), 5000);
     } finally {
       setDeleteInProgress(false);

@@ -266,7 +266,9 @@ export const checkAuthStatus = async () => {
         error.response?.status === 503 || 
         error.response?.status === 504) {
       console.log("Setting auth error flag due to network or API issues");
-      sessionStorage.setItem('authError', 'true');
+      sessionStorage.setItem('authError', 'Our authentication service is temporarily unavailable. Please try again later.');
+    } else {
+      sessionStorage.setItem('authError', 'We had trouble verifying your identity. Please try logging in again.');
     }
     
     // Return unauthenticated if we have no user type

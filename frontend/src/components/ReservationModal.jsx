@@ -44,7 +44,7 @@ const ReservationModal = ({
     let sp = mode === 'full' ? maxSpace : Number(space);
     if (mode === 'partial') {
       if (!space || isNaN(space) || sp <= 0 || sp > maxSpace) {
-        setLocalError(`Enter a valid space (0 < space ≤ ${maxSpace})`);
+        setLocalError(`Please enter a valid storage space between 1 and ${maxSpace} sq ft.`);
         return;
       }
     }
@@ -88,7 +88,7 @@ const ReservationModal = ({
           <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>
             Max available: {maxSpace} sq ft
           </div>
-          {(localError || error) && <Alert severity="error" style={{ marginBottom: 8 }}>{localError || error}</Alert>}
+          {(localError || error) && <Alert severity="error" style={{ marginBottom: 8 }}>{localError || (error ? error.replace(/Error:\s*/, '') : '')}</Alert>}
         </DialogContent>
         <DialogActions style={{ padding: '16px 24px', background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
           <Button onClick={onClose} disabled={loading} style={{ color: '#888', fontWeight: 600 }}>Cancel</Button>

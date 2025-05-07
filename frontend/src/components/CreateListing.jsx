@@ -398,13 +398,17 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       const data = await res.json();
       onSuccess ? onSuccess() : navigate(`/listing/${data.listing_id}`);
     } catch (err) {
-      setError(err.message);
+      let errorMessage = "We couldn't create your listing. Please check your information and try again.";
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error.replace(/Error:\s*/, '');
+      }
+      setError(errorMessage);
     }
   };
 
   return (
     <div style={styles.container}>
-      {error && <div ref={errorRef} style={styles.error}>{error}</div>}
+      {error && <div ref={errorRef} style={{...styles.error, backgroundColor: '#f8d7da', color: '#721c24', padding: '10px 15px', borderRadius: '4px', marginBottom: '15px'}}>{error}</div>}
       <form onSubmit={handleSubmit} style={{ ...styles.form, gap: 18, padding: 24, width: '100%' }}>
         <div>
           <label style={styles.label}>Location (Title) <span style={{color: '#b00020'}}>*</span></label>
