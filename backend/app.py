@@ -1179,62 +1179,49 @@ def handle_interest(listing_id):
                 if not lender_username:
                     print(f"Listing {listing_id} has no owner")
                     return jsonify({"error": "This listing is not available for interest as it has no owner"}), 400
-                    
-                print(f"Found lender username: {lender_username}")
                 
                 if request.method == 'POST':
-                    # Check if the user has already shown interest
-                    print(f"Checking if user {renter_username} has already shown interest in listing {listing_id}")
+                    # Check if a pending reservation request already exists
                     cur.execute("""
-                        SELECT interest_id FROM interested_listings 
-                        WHERE listing_id = %s AND renter_username = %s
+                        SELECT 1 FROM reservation_requests
+                        WHERE listing_id = %s AND renter_username = %s AND status = 'pending'
+                        LIMIT 1
                     """, (listing_id, renter_username))
                     
+<<<<<<< HEAD
                     existing_interest = cur.fetchone()
                     if existing_interest:
                         print(f"User {renter_username} has already shown interest in listing {listing_id}")
                         return jsonify({"error": "You have already requested this space"}), 400
+=======
+                    if cur.fetchone():
+                        return jsonify({
+                            "error": "You already have a pending reservation request for this listing"
+                        }), 400
+>>>>>>> dd05961 (using reservation_requests as main table)
                     
-                    # Check if interested_listings table exists
-                    cur.execute("""
-                        SELECT EXISTS (
-                            SELECT FROM information_schema.tables 
-                            WHERE table_name = 'interested_listings'
-                        );
-                    """)
-                    table_exists = cur.fetchone()[0]
-                    
-                    if not table_exists:
-                        print("Creating interested_listings table")
-                        cur.execute("""
-                            CREATE TABLE interested_listings (
-                                interest_id SERIAL PRIMARY KEY,
-                                listing_id INTEGER REFERENCES storage_listings(listing_id) ON DELETE CASCADE,
-                                lender_username VARCHAR(255) NOT NULL,
-                                renter_username VARCHAR(255) NOT NULL,
-                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                status VARCHAR(50) DEFAULT 'pending',
-                                UNIQUE(listing_id, renter_username)
-                            );
-                        """)
-                        conn.commit()
-                        print("interested_listings table created successfully")
-                    
-                    # Show interest in listing
-                    print(f"Inserting new interest record for listing {listing_id}, renter {renter_username}, lender {lender_username}")
+                    # Create a minimal reservation request (1 cubic foot as default)
                     try:
                         cur.execute("""
-                            INSERT INTO interested_listings 
-                            (listing_id, lender_username, renter_username, status) 
-                            VALUES (%s, %s, %s, 'pending')
+                            INSERT INTO reservation_requests 
+                            (listing_id, lender_username, renter_username, requested_space, status) 
+                            VALUES (%s, %s, %s, 1, 'pending')
+                            RETURNING request_id
                         """, (listing_id, lender_username, renter_username))
+                        
+                        request_id = cur.fetchone()[0]
                         conn.commit()
-                        print(f"Interest in listing {listing_id} recorded successfully")
+                        print(f"Reservation request {request_id} created for listing {listing_id}")
                         
                         # Create response with CORS headers
                         response = jsonify({
                             "success": True,
+<<<<<<< HEAD
                             "message": "Space request submitted successfully"
+=======
+                            "message": "Reservation request created successfully",
+                            "request_id": request_id
+>>>>>>> dd05961 (using reservation_requests as main table)
                         })
                         
                         # Add CORS headers with specific origin
@@ -1248,25 +1235,41 @@ def handle_interest(listing_id):
                         
                         return response, 200
                     except Exception as insert_error:
-                        print(f"Error adding interest: {insert_error}")
+                        print(f"Error creating reservation request: {insert_error}")
                         conn.rollback()
                         import traceback
                         traceback.print_exc()
+<<<<<<< HEAD
                         return jsonify({"error": f"Failed to submit space request: {str(insert_error)}"}), 500
+=======
+                        return jsonify({"error": f"Failed to create reservation request: {str(insert_error)}"}), 500
+                        
+>>>>>>> dd05961 (using reservation_requests as main table)
                 elif request.method == 'DELETE':
-                    # Remove interest in listing
-                    print(f"Removing interest for listing {listing_id}, renter {renter_username}")
+                    # Cancel pending reservation request
+                    print(f"Canceling reservation request for listing {listing_id}, renter {renter_username}")
                     cur.execute("""
-                        DELETE FROM interested_listings 
-                        WHERE listing_id = %s AND renter_username = %s
+                        DELETE FROM reservation_requests 
+                        WHERE listing_id = %s AND renter_username = %s AND status = 'pending'
+                        RETURNING request_id
                     """, (listing_id, renter_username))
+                    
+                    deleted = cur.fetchone()
                     conn.commit()
-                    print(f"Interest in listing {listing_id} removed successfully")
+                    
+                    if not deleted:
+                        return jsonify({"error": "No pending reservation request found to cancel"}), 404
+                        
+                    print(f"Reservation request for listing {listing_id} canceled successfully")
                     
                     # Create response with CORS headers
                     response = jsonify({
                         "success": True,
+<<<<<<< HEAD
                         "message": "Space request cancelled successfully"
+=======
+                        "message": "Reservation request canceled successfully"
+>>>>>>> dd05961 (using reservation_requests as main table)
                     })
                     
                     # Add CORS headers with specific origin
@@ -1299,7 +1302,6 @@ def get_interested_renters(listing_id):
         user_info = session['user_info']
         owner_id = user_info.get('user', '').lower()
         
-        # Get a fresh connection
         conn = get_db_connection()
         if not conn:
             return jsonify({"error": "Database connection failed"}), 500
@@ -1308,7 +1310,7 @@ def get_interested_renters(listing_id):
             with conn.cursor() as cur:
                 # Verify that the listing belongs to the current user
                 cur.execute("""
-                    SELECT owner_id FROM storage_listings 
+                    SELECT owner_username FROM storage_listings 
                     WHERE listing_id = %s
                 """, (listing_id,))
                 
@@ -1316,19 +1318,20 @@ def get_interested_renters(listing_id):
                 if not listing:
                     return jsonify({"error": "Listing not found"}), 404
                     
-                if listing[0] != owner_id:
+                if listing[0].lower() != owner_id:
                     return jsonify({"error": "You don't have permission to view interested renters for this listing"}), 403
                 
                 # Get interested renters with their details
                 cur.execute("""
                     SELECT 
-                        il.interest_id,
-                        il.renter_username,
-                        il.created_at,
-                        il.status
-                    FROM interested_listings il
-                    WHERE il.listing_id = %s
-                    ORDER BY il.created_at DESC
+                        rr.request_id,
+                        rr.renter_username,
+                        rr.requested_space,
+                        rr.status,
+                        rr.created_at
+                    FROM reservation_requests rr
+                    WHERE rr.listing_id = %s
+                    ORDER BY rr.created_at DESC
                 """, (listing_id,))
                 
                 interested_renters = []
@@ -1336,8 +1339,9 @@ def get_interested_renters(listing_id):
                     interested_renters.append({
                         "id": row[0],
                         "username": row[1],
-                        "dateInterested": row[2].isoformat(),
-                        "status": row[3]
+                        "requested_space": float(row[2]) if row[2] is not None else None,
+                        "status": row[3],
+                        "date_requested": row[4].isoformat()
                     })
                 
                 return jsonify(interested_renters), 200
@@ -1403,18 +1407,18 @@ def get_my_interested_listings():
             
         try:
             with conn.cursor() as cur:
-                # Check if the interested_listings table exists
-                print("Checking if interested_listings table exists")
+                # Check if the reservation_requests table exists
+                print("Checking if reservation_requests table exists")
                 cur.execute("""
                     SELECT EXISTS (
                         SELECT FROM information_schema.tables 
-                        WHERE table_name = 'interested_listings'
+                        WHERE table_name = 'reservation_requests'
                     );
                 """)
                 table_exists = cur.fetchone()[0]
                 
                 if not table_exists:
-                    print("interested_listings table does not exist, returning empty array")
+                    print("reservation_requests table does not exist, returning empty array")
                     response = jsonify([])
                     # Add CORS headers with specific origin
                     origin = request.headers.get('Origin')
@@ -1453,15 +1457,15 @@ def get_my_interested_listings():
                 print(f"Fetching interested listings for renter: {renter_username}")
                 
                 try:
-                    # Get the actual column names from the table to ensure we query correctly
+                    # Get the actual column names from the tables to ensure we query correctly
                     cur.execute("""
                         SELECT column_name
                         FROM information_schema.columns 
-                        WHERE table_name = 'interested_listings' 
+                        WHERE table_name = 'reservation_requests' 
                         ORDER BY ordinal_position;
                     """)
-                    interested_columns = [column[0] for column in cur.fetchall()]
-                    print(f"interested_listings columns: {interested_columns}")
+                    reservation_columns = [column[0] for column in cur.fetchall()]
+                    print(f"reservation_requests columns: {reservation_columns}")
                     
                     cur.execute("""
                         SELECT column_name
@@ -1472,26 +1476,24 @@ def get_my_interested_listings():
                     listing_columns = [column[0] for column in cur.fetchall()]
                     print(f"storage_listings columns: {listing_columns}")
                     
-                    # Now we can build a query that is guaranteed to work with the available columns
+                    # Build query using reservation_requests as the main table
                     query = """
                         SELECT 
-                            il.interest_id,
+                            rr.request_id,
                             sl.listing_id,
                             sl.title,
                             sl.cost,
                             sl.address,
                             sl.owner_id as lender,
-                            il.created_at,
-                            il.status,
+                            rr.created_at,
+                            rr.status as reservation_status,
                             rr.requested_space,
                             rr.approved_space,
-                            rr.status as reservation_status,
                             sl.hall_name
-                        FROM interested_listings il
-                        JOIN storage_listings sl ON il.listing_id = sl.listing_id
-                        LEFT JOIN reservation_requests rr ON rr.listing_id = il.listing_id AND rr.renter_username = il.renter_username
-                        WHERE il.renter_username = %s
-                        ORDER BY il.created_at DESC
+                        FROM reservation_requests rr
+                        JOIN storage_listings sl ON rr.listing_id = sl.listing_id
+                        WHERE rr.renter_username = %s
+                        ORDER BY rr.created_at DESC
                     """
                     print(f"Executing query: {query}")
                     cur.execute(query, (renter_username,))
@@ -1508,12 +1510,14 @@ def get_my_interested_listings():
                             "address": row[4],
                             "lender": row[5],
                             "dateInterested": row[6].isoformat() if row[6] else None,
-                            "status": row[10] if row[10] else row[7],
+                            "status": row[7],  # status from reservation_requests
                             "requested_space": row[8],
                             "approved_space": row[9],
-                            "approval_type": row[10],
+                            "approval_type": "approved_full" if row[9] and row[9] >= row[8] else 
+                                           "approved_partial" if row[9] and row[9] > 0 else 
+                                           "pending" if row[7] == 'pending' else row[7],
                             "nextStep": "Waiting for lender response" if row[7] == 'pending' else "In Discussion",
-                            "hall_name": row[11]
+                            "hall_name": row[10]
                         })
                     
                     print(f"Found {len(interested_listings)} interested listings for user {renter_username}")
