@@ -11,6 +11,18 @@ import { HALL_COORDINATES } from '../utils/hallCoordinates';
 
 console.log('HALL_COORDINATES:', HALL_COORDINATES);
 
+// Add Princeton Halls array
+const PRINCETON_HALLS = [
+  '1901 Hall', '1903 Hall', 'Addy Hall',
+  'Blair Hall', 'Bloomberg Hall', 'Brown Hall', 'Buyers Hall', 'Campbell Hall',
+  'Cuyler Hall', 'Dod Hall', 'Edwards Hall', 'Feinberg Hall', 'Feliciano Hall',
+  'Fisher Hall', 'Forbes College', 'Foulke Hall', 'Graduate College (Old Graduate College)',
+  'Hamilton Hall', 'Henry Hall', 'Holder Hall',
+  'Joline Hall', 'Laughlin Hall', 'Lawrence Apartments',
+  'Little Hall', 'Lockhart Hall', 'Madison Hall', 'New Graduate College', 'Patton Hall', 'Pyne Hall',
+  'Scully Hall', 'Walker Hall', 'Witherspoon Hall', 'Wright Hall'
+];
+
 const styles = {
   container: {
     display: 'flex',
@@ -188,109 +200,51 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   };
 
   const geocodeAddress = async (addressOverride) => {
-    if (locationType === 'on-campus') {
-      const addressToGeocode = addressOverride || tempAddress || formData.hall_name;
-      if (!addressToGeocode.trim()) {
-        setGeocodingStatus('Please select a hall');
-        return;
-      }
-      
-      // Try geocoding first
-      setGeocodingStatus('Looking up coordinates via geocoding...');
-      try {
-        const searchAddress = `${addressToGeocode}, Princeton University, Princeton, NJ 08544`;
-        console.log(`Geocoding address: ${searchAddress}`);
-        
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
-        );
-        if (!response.ok) throw new Error('Failed to fetch coordinates');
-        const data = await response.json();
-        
-        // If geocoding successful, use those coordinates
-        if (data.length > 0) {
-          const { lat, lon, display_name } = data[0];
-          setPendingAddress({
-            address: display_name,
-            latitude: lat,
-            longitude: lon
-          });
-          setShowAddressConfirm(true);
-          setGeocodingStatus('✅ Location geocoded successfully!');
-          setAddressNotFound(false);
-          console.log(`Geocoded successfully: ${display_name} (${lat}, ${lon})`);
-          
-          // If we also have hard-coded coordinates, log the difference for comparison
-          if (HALL_COORDINATES[addressToGeocode]) {
-            const hardCoded = HALL_COORDINATES[addressToGeocode];
-            console.log(`Hard-coded coordinates: (${hardCoded.lat}, ${hardCoded.lng})`);
-            
-            // Calculate distance between geocoded and hard-coded (rough estimate)
-            const latDiff = Math.abs(parseFloat(lat) - hardCoded.lat);
-            const lngDiff = Math.abs(parseFloat(lon) - hardCoded.lng);
-            console.log(`Coordinate difference: Lat ${latDiff.toFixed(6)}, Lng ${lngDiff.toFixed(6)}`);
-          }
-          return;
-        }
-        
-        // If geocoding failed, fall back to hard-coded coordinates
-        console.log(`Geocoding failed for ${addressToGeocode}, falling back to hard-coded coordinates`);
-      } catch (error) {
-        console.error('Error during geocoding:', error);
-        // Continue to fallback
-      }
-      
-      // Fallback to hard-coded coordinates
-      if (formData.hall_name && HALL_COORDINATES[formData.hall_name]) {
-        const hallCoords = HALL_COORDINATES[formData.hall_name];
+    const addressToGeocode = addressOverride || tempAddress;
+    if (!addressToGeocode.trim()) {
+      setGeocodingStatus('Please enter an address');
+      return;
+    }
+    setGeocodingStatus('Looking up coordinates...');
+    
+    try {
+      const searchAddress =
+        locationType === 'on-campus'
+          ? `${addressToGeocode}, Princeton, NJ 08544`
+          : addressToGeocode;
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
+      );
+      if (!response.ok) throw new Error('Failed to fetch coordinates');
+      const data = await response.json();
+      if (data.length > 0) {
+        const { lat, lon, display_name } = data[0];
         setPendingAddress({
-          address: formData.hall_name,
-          latitude: hallCoords.lat,
-          longitude: hallCoords.lng
+          address: display_name,
+          latitude: lat,
+          longitude: lon
         });
         setShowAddressConfirm(true);
-        setGeocodingStatus('✅ Location found from hard-coded coordinates!');
-        setAddressNotFound(false);
-        console.log(`Using hard-coded coordinates for ${formData.hall_name}: (${hallCoords.lat}, ${hallCoords.lng})`);
+        setGeocodingStatus('');
+      } else if (locationType === 'on-campus' && HALL_COORDINATES[addressToGeocode]) {
+        // Fallback to manual mapping if not found by API
+        const { lat, lng } = HALL_COORDINATES[addressToGeocode];
+        setFormData(prev => ({
+          ...prev,
+          address: addressToGeocode,
+          street_address: addressToGeocode,
+          city: 'Princeton',
+          zip_code: '08544',
+          latitude: lat,
+          longitude: lng
+        }));
+        setGeocodingStatus('Coordinates found from hall mapping!');
       } else {
-        setGeocodingStatus('❌ Could not find this hall. Please try another.');
-        setAddressNotFound(true);
+        setGeocodingStatus('Address not found. Try being more specific.');
       }
-    } else {
-      // For off-campus addresses
-      if (!formData.street_address || !formData.city || !formData.zip_code) {
-        setGeocodingStatus('Please fill in all address fields');
-        return;
-      }
-      setGeocodingStatus('Looking up coordinates...');
-      try {
-        const searchAddress = `${formData.street_address}, ${formData.city}, NJ ${formData.zip_code}, USA`;
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
-        );
-        if (!response.ok) throw new Error('Failed to fetch coordinates');
-        const data = await response.json();
-        
-        if (data.length > 0) {
-          const { lat, lon, display_name } = data[0];
-          setPendingAddress({
-            address: display_name,
-            latitude: lat,
-            longitude: lon
-          });
-          setShowAddressConfirm(true);
-          setGeocodingStatus('✅ Location found successfully!');
-          setAddressNotFound(false);
-        } else {
-          setGeocodingStatus('❌ No location found. Check that you entered the correct address.');
-          setAddressNotFound(true);
-          setCustomAddressError('No location found. Check that you entered the correct address.');
-        }
-      } catch {
-        setGeocodingStatus('❌ Error looking up address. Please try again.');
-        setAddressNotFound(true);
-        setCustomAddressError('Error looking up address. Please try again.');
-      }
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      setGeocodingStatus('Error looking up address. Please try again.');
     }
   };
 
@@ -416,27 +370,31 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         return;
       }
     } else {
-      // For on-campus, check if hall is selected and has coordinates
+      // For on-campus, check if hall is selected
       if (!formData.hall_name) {
         setError('Please select a residential hall.');
         return;
       }
-      // Always use the predefined coordinates for the selected hall 
-      // to avoid any "Address not found" errors
-      const hallCoords = HALL_COORDINATES[formData.hall_name];
-      if (hallCoords) {
-        setFormData(prev => ({
-          ...prev,
-          latitude: hallCoords.lat,
-          longitude: hallCoords.lng,
-          address: formData.hall_name,
-          street_address: formData.hall_name,
-          city: 'Princeton',
-          zip_code: '08544'
-        }));
-      } else {
-        setError('Invalid hall selected. Please try again.');
-        return;
+      
+      // Check if we have coordinates
+      if (!formData.latitude || !formData.longitude) {
+        // Try to use HALL_COORDINATES as fallback if available
+        if (HALL_COORDINATES[formData.hall_name]) {
+          const { lat, lng } = HALL_COORDINATES[formData.hall_name];
+          setFormData(prev => ({
+            ...prev,
+            latitude: lat,
+            longitude: lng,
+            address: formData.hall_name,
+            street_address: formData.hall_name,
+            city: 'Princeton',
+            zip_code: '08544'
+          }));
+        } else {
+          // If we don't have coordinates from geocoding or HALL_COORDINATES, show error
+          setError('Please geocode the hall address to get coordinates.');
+          return;
+        }
       }
     }
 
@@ -484,6 +442,11 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     }
   };
 
+  const handleAddressChange = (e) => {
+    setError('');
+    setTempAddress(e.target.value);
+  };
+
   return (
     <div style={styles.container}>
       {error && <div ref={errorRef} style={{...styles.error, backgroundColor: '#f8d7da', color: '#721c24', padding: '10px 15px', borderRadius: '4px', marginBottom: '15px'}}>{error}</div>}
@@ -517,38 +480,27 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
             <select
               style={styles.input}
-              value={formData.hall_name}
+              value={tempAddress}
               onChange={e => {
                 const hallName = e.target.value;
-                const hallCoords = HALL_COORDINATES[hallName];
-                if (hallCoords) {
-                  setFormData(prev => ({
-                    ...prev,
-                    hall_name: hallName,
-                    address: hallName,
-                    street_address: hallName,
-                    city: 'Princeton',
-                    zip_code: '08544',
-                    latitude: hallCoords.lat,
-                    longitude: hallCoords.lng
-                  }));
-                  // Set the geocoding status to success to avoid address not found errors
-                  setGeocodingStatus('✅ Hall coordinates set successfully!');
-                  setAddressNotFound(false);
-                } else {
-                  setFormData(prev => ({
-                    ...prev,
-                    hall_name: hallName
-                  }));
+                setTempAddress(hallName);
+                setFormData(prev => ({
+                  ...prev,
+                  hall_name: hallName
+                }));
+                if (hallName) {
+                  // Trigger geocoding when a hall is selected
+                  geocodeAddress(hallName);
                 }
               }}
               required
             >
               <option value="">Select a hall...</option>
-              {Object.keys(HALL_COORDINATES).map(hall => (
+              {PRINCETON_HALLS.map(hall => (
                 <option key={hall} value={hall}>{hall}</option>
               ))}
             </select>
+            {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
           </div>
         )}
         {locationType === 'on-campus' ? null : (
