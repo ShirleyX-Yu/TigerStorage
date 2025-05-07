@@ -161,6 +161,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const [pendingAddress, setPendingAddress] = useState(null);
   const [addressNotFound, setAddressNotFound] = useState(false);
   const [customAddressError, setCustomAddressError] = useState('');
+  const [isAddressConfirmed, setIsAddressConfirmed] = useState(false);
 
   useEffect(() => {
     if (error && errorRef.current) {
@@ -306,6 +307,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
           latitude: pendingAddress.latitude,
           longitude: pendingAddress.longitude
         }));
+        setIsAddressConfirmed(true);
       } else {
         setFormData(prev => ({
           ...prev,
@@ -322,6 +324,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const handleEditAddress = () => {
     setShowAddressConfirm(false);
     setPendingAddress(null);
+    setIsAddressConfirmed(false);
   };
 
   const handleImageUpload = async (e) => {
@@ -482,96 +485,117 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         )}
         {locationType === 'on-campus' ? null : (
           <div style={styles.formGroup}>
-            <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
-            {addressNotFound && customAddressError && (
-              <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
-                {customAddressError}
-              </div>
-            )}
-            <input
-              style={styles.input}
-              type="text"
-              value={formData.street_address || ''}
-              onChange={(e) => {
-                setFormData(prev => ({
-                  ...prev,
-                  street_address: e.target.value
-                }));
-                if (addressNotFound) setAddressNotFound(false);
-              }}
-              placeholder="Enter street address"
-              required
-            />
-            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-              <div style={{ flex: 1 }}>
-                <label style={styles.label}>City <span style={{color: '#b00020'}}>*</span></label>
+            {!isAddressConfirmed ? (
+              <>
+                <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
+                {addressNotFound && customAddressError && (
+                  <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
+                    {customAddressError}
+                  </div>
+                )}
                 <input
                   style={styles.input}
                   type="text"
-                  value={formData.city || ''}
+                  value={formData.street_address || ''}
                   onChange={(e) => {
                     setFormData(prev => ({
                       ...prev,
-                      city: e.target.value
+                      street_address: e.target.value
                     }));
                     if (addressNotFound) setAddressNotFound(false);
                   }}
-                  placeholder="Enter city"
+                  placeholder="Enter street address"
                   required
                 />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={styles.label}>State</label>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={styles.label}>City <span style={{color: '#b00020'}}>*</span></label>
+                    <input
+                      style={styles.input}
+                      type="text"
+                      value={formData.city || ''}
+                      onChange={(e) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          city: e.target.value
+                        }));
+                        if (addressNotFound) setAddressNotFound(false);
+                      }}
+                      placeholder="Enter city"
+                      required
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={styles.label}>State</label>
+                    <input
+                      style={styles.input}
+                      type="text"
+                      value="NJ"
+                      disabled
+                    />
+                  </div>
+                </div>
+                <div style={{ marginTop: '10px' }}>
+                  <label style={styles.label}>ZIP Code <span style={{color: '#b00020'}}>*</span></label>
+                  <input
+                    style={styles.input}
+                    type="text"
+                    value={formData.zip_code || ''}
+                    onChange={(e) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        zip_code: e.target.value
+                      }));
+                      if (addressNotFound) setAddressNotFound(false);
+                    }}
+                    placeholder="Enter ZIP code"
+                    required
+                  />
+                </div>
+                <div style={{ marginTop: '10px' }}>
+                  <label style={styles.label}>Country</label>
+                  <input
+                    style={styles.input}
+                    type="text"
+                    value="USA"
+                    disabled
+                  />
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => geocodeAddress()}
+                  style={{...styles.geocodeButton, marginTop: '20px', width: '100%'}}
+                >
+                  Locate Address
+                </button>
+                {geocodingStatus && (
+                  <div style={{
+                    ...styles.geocodingStatus,
+                    color: geocodingStatus.includes('✅') ? '#4caf50' : 
+                           geocodingStatus.includes('❌') ? '#d32f2f' : 
+                           '#666'
+                  }}>
+                    {geocodingStatus}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <label style={styles.label}>Confirmed Address</label>
                 <input
-                  style={styles.input}
+                  style={{...styles.input, backgroundColor: '#f5f5f5'}}
                   type="text"
-                  value="NJ"
-                  disabled
+                  value={formData.address}
+                  readOnly
                 />
-              </div>
-            </div>
-            <div style={{ marginTop: '10px' }}>
-              <label style={styles.label}>ZIP Code <span style={{color: '#b00020'}}>*</span></label>
-              <input
-                style={styles.input}
-                type="text"
-                value={formData.zip_code || ''}
-                onChange={(e) => {
-                  setFormData(prev => ({
-                    ...prev,
-                    zip_code: e.target.value
-                  }));
-                  if (addressNotFound) setAddressNotFound(false);
-                }}
-                placeholder="Enter ZIP code"
-                required
-              />
-            </div>
-            <div style={{ marginTop: '10px' }}>
-              <label style={styles.label}>Country</label>
-              <input
-                style={styles.input}
-                type="text"
-                value="USA"
-                disabled
-              />
-            </div>
-            <button 
-              type="button" 
-              onClick={() => geocodeAddress()}
-              style={{...styles.geocodeButton, marginTop: '20px', width: '100%'}}
-            >
-              Locate Address
-            </button>
-            {geocodingStatus && (
-              <div style={{
-                ...styles.geocodingStatus,
-                color: geocodingStatus.includes('✅') ? '#4caf50' : 
-                       geocodingStatus.includes('❌') ? '#d32f2f' : 
-                       '#666'
-              }}>
-                {geocodingStatus}
-              </div>
+                <button 
+                  type="button" 
+                  onClick={handleEditAddress}
+                  style={{...styles.geocodeButton, marginTop: '20px', width: '100%', backgroundColor: '#666'}}
+                >
+                  Edit Address
+                </button>
+              </>
             )}
           </div>
         )}
