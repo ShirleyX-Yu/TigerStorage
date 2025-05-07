@@ -11,7 +11,6 @@ import Header from './Header';
 import { logout, axiosInstance } from '../utils/auth';
 import { Link } from 'react-router-dom';
 import { getCSRFToken } from '../utils/csrf';
-import { useRenterInterest } from '../context/RenterInterestContext';
 
 // Fix for Leaflet marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -314,8 +313,6 @@ const Map = () => {
     ? groupedListings[groupedIndex]
     : listings.find(l => (l.listing_id || l.id) === selectedListingId) || null;
 
-  const { interestedListings, refreshInterestedListings } = useRenterInterest();
-
   const fetchAndSyncInterest = useCallback(async (listingsData) => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -500,7 +497,7 @@ const Map = () => {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-      const isInterested = interestedListings.some(l => l.id === (listing.listing_id || listing.id));
+      const isInterested = false; // This will be updated based on the response
       if (isInterested) {
         try {
           // First check for and cancel any pending reservation requests
@@ -545,7 +542,6 @@ const Map = () => {
           setInterestSuccess(true);
           setLastInterestAction('remove');
           setTimeout(() => setInterestSuccess(false), 2000);
-          await refreshInterestedListings();
         } catch (error) {
           const errorText = error.response?.data?.error || 'Failed to remove interest';
           setInterestError(errorText);
@@ -605,7 +601,7 @@ const Map = () => {
       }
     }
     // eslint-disable-next-line
-  }, [interestedListings]);
+  }, [listings]);
 
   if (error) {
     return (
@@ -931,7 +927,6 @@ const Map = () => {
                     setLastInterestAction('add');
                     setTimeout(() => setInterestSuccess(false), 2000);
                     await fetchListings();
-                    await refreshInterestedListings();
                   } catch (error) {
                     const errorData = error.response?.data || {};
                     setReservationError(errorData.error || 'Failed to request reservation');
@@ -1005,17 +1000,17 @@ const Map = () => {
               <Button
                 onClick={() => handleToggleInterest(selectedListing)}
                 style={{
-                  background: selectedListing && interestedListings.some(l => l.id === (selectedListing.listing_id || selectedListing.id)) ? '#fff' : '#FF6B00',
-                  color: selectedListing && interestedListings.some(l => l.id === (selectedListing.listing_id || selectedListing.id)) ? '#FF6B00' : 'white',
-                  border: selectedListing && interestedListings.some(l => l.id === (selectedListing.listing_id || selectedListing.id)) ? '1.5px solid #FF6B00' : 'none',
+                  background: selectedListing && false ? '#fff' : '#FF6B00',
+                  color: selectedListing && false ? '#FF6B00' : 'white',
+                  border: selectedListing && false ? '1.5px solid #FF6B00' : 'none',
                   fontWeight: 600
                 }}
-                variant={selectedListing && interestedListings.some(l => l.id === (selectedListing.listing_id || selectedListing.id)) ? 'outlined' : 'contained'}
+                variant={selectedListing && false ? 'outlined' : 'contained'}
                 disabled={interestLoading}
               >
                 {interestLoading
                   ? "Processing..."
-                  : selectedListing && interestedListings.some(l => l.id === (selectedListing.listing_id || selectedListing.id))
+                  : selectedListing && false
                     ? "Remove Request"
                     : "Request Space"}
               </Button>

@@ -274,44 +274,6 @@ async function toggleInterest(listingId) {
 }
 window.toggleInterest = toggleInterest;
 
-async function fetchInterestedListings() {
-  try {
-    const response = await fetch(`${window.location.origin}/api/my-interested-listings`, { credentials: 'include' });
-    if (!response.ok) throw new Error('Failed to fetch interested listings');
-    const data = await response.json();
-    interestedLocations = new Set(data.map(listing => listing.id));
-    markers.forEach(marker => {
-      const listing = listings.find(l => l.id === marker.listingId);
-      if (listing) {
-        const newPopupContent = `
-          <div class="custom-popup-content">
-            <h2>${listing.location}</h2>
-            <div class="popup-image">
-              <img src="${listing.image_url || '/assets/placeholder.jpg'}" alt="Storage space at ${listing.location}" onerror="this.onerror=null; this.src='/assets/placeholder.jpg';">
-            </div>
-            <div class="popup-details">
-              <div class="popup-description">${listing.description || 'No description available'}</div>
-              <div class="popup-specs">
-                <div><strong>Price:</strong> $${listing.cost}/month</div>
-                <div><strong>Size:</strong> ${listing.cubic_feet} cubic feet</div>
-                <div><strong>Contract Length:</strong> ${listing.contract_length_months} months</div>
-              </div>
-              <button class="interested-button ${interestedLocations.has(listing.id) ? 'interested' : ''}" onclick="toggleInterest(${listing.id})">
-                <i class="fas ${interestedLocations.has(listing.id) ? 'fa-check' : 'fa-heart'}"></i> ${interestedLocations.has(listing.id) ? 'Interested' : 'Show Interest'}
-              </button>
-            </div>
-          </div>
-        `;
-        marker.setPopupContent(newPopupContent);
-      }
-    });
-  } catch (err) {
-    // Silent fail
-  }
-}
-window.fetchInterestedListings = fetchInterestedListings;
-fetchInterestedListings();
-
 function createStorageUnitList(listings) {
   const storageUnitsList = document.getElementById('storageUnitsList');
   storageUnitsList.innerHTML = '';
