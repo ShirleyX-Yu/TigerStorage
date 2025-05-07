@@ -189,19 +189,25 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
 
   const geocodeAddress = async (addressOverride) => {
     if (locationType === 'on-campus') {
-      const addressToGeocode = addressOverride || tempAddress;
+      const addressToGeocode = addressOverride || tempAddress || formData.hall_name;
       if (!addressToGeocode.trim()) {
         setGeocodingStatus('Please select a hall');
         return;
       }
-      setGeocodingStatus('Looking up coordinates...');
+      
+      // Try geocoding first
+      setGeocodingStatus('Looking up coordinates via geocoding...');
       try {
         const searchAddress = `${addressToGeocode}, Princeton University, Princeton, NJ 08544`;
+        console.log(`Geocoding address: ${searchAddress}`);
+        
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
         );
         if (!response.ok) throw new Error('Failed to fetch coordinates');
         const data = await response.json();
+        
+        // If geocoding successful, use those coordinates
         if (data.length > 0) {
           const { lat, lon, display_name } = data[0];
           setPendingAddress({
@@ -210,14 +216,44 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             longitude: lon
           });
           setShowAddressConfirm(true);
-          setGeocodingStatus('✅ Location found successfully!');
+          setGeocodingStatus('✅ Location geocoded successfully!');
           setAddressNotFound(false);
-        } else {
-          setGeocodingStatus('❌ Could not find this hall. Please try another.');
-          setAddressNotFound(true);
+          console.log(`Geocoded successfully: ${display_name} (${lat}, ${lon})`);
+          
+          // If we also have hard-coded coordinates, log the difference for comparison
+          if (HALL_COORDINATES[addressToGeocode]) {
+            const hardCoded = HALL_COORDINATES[addressToGeocode];
+            console.log(`Hard-coded coordinates: (${hardCoded.lat}, ${hardCoded.lng})`);
+            
+            // Calculate distance between geocoded and hard-coded (rough estimate)
+            const latDiff = Math.abs(parseFloat(lat) - hardCoded.lat);
+            const lngDiff = Math.abs(parseFloat(lon) - hardCoded.lng);
+            console.log(`Coordinate difference: Lat ${latDiff.toFixed(6)}, Lng ${lngDiff.toFixed(6)}`);
+          }
+          return;
         }
-      } catch {
-        setGeocodingStatus('❌ Error looking up address. Please try again.');
+        
+        // If geocoding failed, fall back to hard-coded coordinates
+        console.log(`Geocoding failed for ${addressToGeocode}, falling back to hard-coded coordinates`);
+      } catch (error) {
+        console.error('Error during geocoding:', error);
+        // Continue to fallback
+      }
+      
+      // Fallback to hard-coded coordinates
+      if (formData.hall_name && HALL_COORDINATES[formData.hall_name]) {
+        const hallCoords = HALL_COORDINATES[formData.hall_name];
+        setPendingAddress({
+          address: formData.hall_name,
+          latitude: hallCoords.lat,
+          longitude: hallCoords.lng
+        });
+        setShowAddressConfirm(true);
+        setGeocodingStatus('✅ Location found from hard-coded coordinates!');
+        setAddressNotFound(false);
+        console.log(`Using hard-coded coordinates for ${formData.hall_name}: (${hallCoords.lat}, ${hallCoords.lng})`);
+      } else {
+        setGeocodingStatus('❌ Could not find this hall. Please try another.');
         setAddressNotFound(true);
       }
     } else {
@@ -385,22 +421,22 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         setError('Please select a residential hall.');
         return;
       }
-      if (!formData.latitude || !formData.longitude) {
-        const hallCoords = HALL_COORDINATES[formData.hall_name];
-        if (hallCoords) {
-          setFormData(prev => ({
-            ...prev,
-            latitude: hallCoords.lat,
-            longitude: hallCoords.lng,
-            address: formData.hall_name,
-            street_address: formData.hall_name,
-            city: 'Princeton',
-            zip_code: '08544'
-          }));
-        } else {
-          setError('Invalid hall selected. Please try again.');
-          return;
-        }
+      // Always use the predefined coordinates for the selected hall 
+      // to avoid any "Address not found" errors
+      const hallCoords = HALL_COORDINATES[formData.hall_name];
+      if (hallCoords) {
+        setFormData(prev => ({
+          ...prev,
+          latitude: hallCoords.lat,
+          longitude: hallCoords.lng,
+          address: formData.hall_name,
+          street_address: formData.hall_name,
+          city: 'Princeton',
+          zip_code: '08544'
+        }));
+      } else {
+        setError('Invalid hall selected. Please try again.');
+        return;
       }
     }
 
@@ -485,16 +521,26 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
               onChange={e => {
                 const hallName = e.target.value;
                 const hallCoords = HALL_COORDINATES[hallName];
-                setFormData(prev => ({
-                  ...prev,
-                  hall_name: hallName,
-                  address: hallName,
-                  street_address: hallName,
-                  city: 'Princeton',
-                  zip_code: '08544',
-                  latitude: hallCoords ? hallCoords.lat : '',
-                  longitude: hallCoords ? hallCoords.lng : ''
-                }));
+                if (hallCoords) {
+                  setFormData(prev => ({
+                    ...prev,
+                    hall_name: hallName,
+                    address: hallName,
+                    street_address: hallName,
+                    city: 'Princeton',
+                    zip_code: '08544',
+                    latitude: hallCoords.lat,
+                    longitude: hallCoords.lng
+                  }));
+                  // Set the geocoding status to success to avoid address not found errors
+                  setGeocodingStatus('✅ Hall coordinates set successfully!');
+                  setAddressNotFound(false);
+                } else {
+                  setFormData(prev => ({
+                    ...prev,
+                    hall_name: hallName
+                  }));
+                }
               }}
               required
             >
