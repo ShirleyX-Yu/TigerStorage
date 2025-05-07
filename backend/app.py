@@ -1380,15 +1380,27 @@ def update_reservation_request(request_id):
         print('Error in update_reservation_request:', e)
         return jsonify({'error': str(e)}), 500
 
-# 4. Renter views all their reservation requests
+# API endpoint to fetch a user's reservation requests
 @app.route('/api/my-reservation-requests', methods=['GET'])
 def get_my_reservation_requests():
-    # Get username from headers or query params
+    # Get username from headers, query params, or session
     username = request.headers.get('X-Username') or request.args.get('username')
-    if not username:
-        return jsonify({'error': 'Username is required'}), 400
     
-    # Query the reservation_requests table for this user
+    # If not provided directly, try to get from session
+    if not username:
+        try:
+            if 'user_info' in session and 'user' in session['user_info']:
+                username = session['user_info'].get('user', '').lower()
+            elif 'username' in session:
+                username = session.get('username', '').lower()
+        except Exception as e:
+            print(f"Error accessing session: {str(e)}")
+    
+    # If still no username, return error
+    if not username:
+        return jsonify({'error': 'Username is required. Please provide X-Username header or username query param.'}), 400
+    
+    conn = None
     try:
         conn = get_db_connection()
         if not conn:
@@ -1422,35 +1434,44 @@ def get_my_reservation_requests():
                 r.created_at DESC
         """
         
+        cursor = None
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             cursor.execute(query, (username,))
             requests = cursor.fetchall()
             
-            # Convert all numeric fields and ensure they're not strings
+            # Convert result to list of dicts
+            result = []
             for req in requests:
-                if req.get('cost') is not None:
-                    req['cost'] = float(req['cost'])
-                if req.get('requested_space') is not None:
-                    req['requested_space'] = float(req['requested_space'])
-                if req.get('approved_space') is not None:
-                    req['approved_space'] = float(req['approved_space'])
-                if req.get('sq_ft') is not None:
-                    req['sq_ft'] = float(req['sq_ft'])
-                    
-                # Convert dates to ISO format strings
-                for key, value in req.items():
-                    if hasattr(value, 'isoformat'):
-                        req[key] = value.isoformat()
+                item = dict(req)
+                
+                # Convert numeric fields
+                for field in ['cost', 'requested_space', 'approved_space', 'sq_ft']:
+                    if field in item and item[field] is not None:
+                        try:
+                            item[field] = float(item[field])
+                        except (ValueError, TypeError):
+                            # If conversion fails, keep original value
+                            pass
+                
+                # Convert date fields to ISO format
+                for field in ['created_at', 'updated_at', 'start_date', 'end_date']:
+                    if field in item and item[field] is not None and hasattr(item[field], 'isoformat'):
+                        item[field] = item[field].isoformat()
+                
+                result.append(item)
             
-            return jsonify(requests)
+            return jsonify(result)
         finally:
-            cursor.close()
+            if cursor:
+                cursor.close()
     except Exception as e:
-        print(f"Database error: {str(e)}")
-        return jsonify({'error': f'Database error: {str(e)}'}), 500
+        print(f"Error in get_my_reservation_requests: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Error fetching reservation requests: {str(e)}'}), 500
     finally:
-        if 'conn' in locals():
+        if conn:
             conn.close()
 
 # --- API endpoint for reporting a listing ---
