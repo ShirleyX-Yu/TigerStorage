@@ -656,7 +656,7 @@ const RenterListingDetails = () => {
                 open={reservationModalOpen}
                 onClose={() => setReservationModalOpen(false)}
                 onSubmit={handleReservationSubmit}
-                maxVolume={listing.sq_ft}
+                maxSpace={listing.sq_ft}
                 loading={reservationLoading}
                 error={reservationError}
               />
