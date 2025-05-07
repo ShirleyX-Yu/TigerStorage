@@ -303,13 +303,23 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     }
     setUploading(true);
     try {
+      // First get the CSRF token
+      const csrfResponse = await axiosInstance.get('/api/csrf-token');
+      const csrfToken = csrfResponse.data.csrf_token;
+
       const form = new FormData();
       form.append('file', file);
+      
+      // Use fetch with the CSRF token in headers
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/upload`, {
         method: 'POST',
         body: form,
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'X-CSRFToken': csrfToken
+        }
       });
+      
       if (!res.ok) {
         const errText = await res.text();
         throw new Error(`Upload failed: ${res.status} ${errText}`);
@@ -317,7 +327,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       const result = await res.json();
       setFormData(prev => ({ ...prev, image_url: result.url }));
     } catch (err) {
-      setError('Failed to upload image: ' + err.message);
+      setError('Failed to upload image: ' + (err.response?.data?.error || err.message));
       console.error('Image upload error:', err);
     } finally {
       setUploading(false);
