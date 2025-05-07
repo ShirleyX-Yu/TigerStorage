@@ -270,8 +270,8 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         const firstPart = parts[0] || '';
         console.log('First Part:', firstPart);
         
-        // Updated regex to handle various address formats
-        const streetMatch = firstPart.match(/^(\d+)(?:\s+|\s*,\s*)(.+)$/);
+        // Updated regex to handle various address formats including abbreviations
+        const streetMatch = firstPart.match(/^(\d+)(?:\s+|\s*,\s*)([A-Za-z\s\.]+)$/);
         console.log('Street Match:', streetMatch);
         
         let street = firstPart;
@@ -279,6 +279,17 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
           // Reformat as "Street Name Number"
           street = `${streetMatch[2].trim()} ${streetMatch[1]}`;
           console.log('Formatted Street:', street);
+        } else {
+          // If regex doesn't match, try to extract number and street name manually
+          const numberMatch = firstPart.match(/^(\d+)/);
+          if (numberMatch) {
+            const number = numberMatch[1];
+            const streetName = firstPart.substring(numberMatch[0].length).trim();
+            if (streetName) {
+              street = `${streetName} ${number}`;
+              console.log('Manually Formatted Street:', street);
+            }
+          }
         }
         
         let city = parts.find(p => p.toLowerCase() === formData.city.toLowerCase()) || formData.city;
