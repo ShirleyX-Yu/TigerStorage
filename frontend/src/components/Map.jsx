@@ -313,6 +313,31 @@ const Map = () => {
     ? groupedListings[groupedIndex]
     : listings.find(l => (l.listing_id || l.id) === selectedListingId) || null;
 
+  const [message, setMessage] = useState(null); // For success/error messages
+  
+  // Message styles
+  const messageStyles = {
+    container: {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      zIndex: 1000,
+      padding: '10px 20px',
+      borderRadius: '4px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+      animation: 'fadeIn 0.3s ease-out',
+      maxWidth: '300px'
+    },
+    success: {
+      backgroundColor: '#4caf50',
+      color: 'white'
+    },
+    error: {
+      backgroundColor: '#f44336',
+      color: 'white'
+    }
+  };
+
   const fetchListings = async () => {
     try {
       setLoading(true);
@@ -518,93 +543,103 @@ const Map = () => {
     </div>
   );
 
-  // Interest toggle handler
+  // Handle interest toggle
   const handleToggleInterest = async (listing) => {
-    setInterestLoading(true);
-    setInterestError(null);
-    setInterestSuccess(false);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
-      const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+      setInterestLoading(true);
+      const userType = sessionStorage.getItem('userType') || 'renter';
+      const username = sessionStorage.getItem('username') || '';
       
-      // Check if listing is already "interested" (has a pending reservation request)
-      const isInterested = listing.isInterested;
-      
-      if (isInterested) {
-        try {
-          // First check for and cancel any pending reservation requests
-          const resp = await axiosInstance.get('/api/my-reservation-requests', {
+      // Check if already interested
+      if (listing.isInterested) {
+        // Need to find the reservation request ID for this listing
+        const resp = await axiosInstance.get('/api/my-reservation-requests', {
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-User-Type': userType,
+            'X-Username': username
+          }
+        });
+        
+        if (resp.data && Array.isArray(resp.data)) {
+          const pending = resp.data.find(r => 
+            (String(r.listing_id) === String(listing.id)) && 
+            r.status === 'pending'
+          );
+          
+          if (pending) {
+            // Cancel the existing request
+            console.log(`Cancelling pending reservation request ID: ${pending.request_id}`);
+            await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
+              status: 'cancelled_by_renter'
+            }, {
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-User-Type': userType,
+                'X-Username': username
+              }
+            });
+            
+            // Update the UI immediately
+            setListings(currentListings => 
+              currentListings.map(l => 
+                l.id === listing.id ? {...l, isInterested: false} : l
+              )
+            );
+            
+            // If this was the selected listing, update it too
+            if (selectedListing && selectedListing.id === listing.id) {
+              setSelectedListing({...selectedListing, isInterested: false});
+            }
+            
+            // Show success message
+            setMessage({ type: 'success', text: 'Reservation request cancelled!' });
+            setTimeout(() => setMessage(null), 2000);
+          }
+        }
+      } else {
+        // Not interested yet, make new request
+        const requested_space = listing.sq_ft; // Request full space by default
+        
+        // Submit the reservation request (this now serves as the "interest" functionality)
+        await axiosInstance.post(`/api/listings/${listing.id}/reserve`, 
+          { requested_space }, 
+          {
             headers: {
+              'Content-Type': 'application/json',
               'Accept': 'application/json',
               'Cache-Control': 'no-cache',
               'X-User-Type': userType,
               'X-Username': username
             }
-          });
-          
-          if (resp.data && Array.isArray(resp.data)) {
-            const pending = resp.data.find(r => 
-              (String(r.listing_id) === String(listing.listing_id || listing.id)) && 
-              r.status === 'pending'
-            );
-            
-            if (pending) {
-              console.log(`Cancelling pending reservation request ID: ${pending.request_id}`);
-              await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
-                status: 'cancelled_by_renter'
-              }, {
-                headers: {
-                  'X-User-Type': userType,
-                  'X-Username': username,
-                  'X-CSRFToken': getCSRFToken()
-                }
-              });
-              
-              // Success - update UI
-              setInterestSuccess(true);
-              setLastInterestAction('remove');
-              setTimeout(() => setInterestSuccess(false), 2000);
-            } else {
-              // No pending request found for this listing
-              setInterestError("No pending request found for this listing");
-              setTimeout(() => setInterestError(null), 2000);
-            }
           }
-        } catch (error) {
-          const errorText = error.response?.data?.error || 'Failed to cancel reservation request';
-          setInterestError(errorText);
-          setTimeout(() => setInterestError(null), 2000);
-          throw new Error(errorText);
-        }
-      } else {
-        // Add new reservation request (show reservation form if needed)
-        const isAuthenticated = !!(sessionStorage.getItem('username') || localStorage.getItem('username'));
-        if (!isAuthenticated) {
-          sessionStorage.setItem('returnTo', `/listing/${listing.listing_id || listing.id}`);
-          navigate('/');
-          setInterestLoading(false);
-          return;
+        );
+        
+        // Update the UI immediately
+        setListings(currentListings => 
+          currentListings.map(l => 
+            l.id === listing.id ? {...l, isInterested: true} : l
+          )
+        );
+        
+        // If this was the selected listing, update it too
+        if (selectedListing && selectedListing.id === listing.id) {
+          setSelectedListing({...selectedListing, isInterested: true});
         }
         
-        // Show reservation form
-        setShowReservationForm(true);
-        setReservationMode('full');
-        setReservationSpace(listing.sq_ft ?? 0);
-        setReservationLocalError('');
-        setInterestLoading(false);
-        return;
+        // Show success message
+        setMessage({ type: 'success', text: 'Reservation request submitted!' });
+        setTimeout(() => setMessage(null), 2000);
       }
       
-      // Always re-fetch listings after interest change to update UI
-      await fetchListings();
-    } catch (err) {
-      console.error('Interest toggle error:', err);
-      // Don't override more specific errors set above
-      if (!interestError) {
-        setInterestError(err.message);
-        setTimeout(() => setInterestError(null), 2000);
-      }
+      // Optionally refresh data from server
+      // await fetchListings();
+    } catch (error) {
+      console.error('Error toggling interest:', error);
+      setMessage({ type: 'error', text: error.response?.data?.error || 'Error updating request' });
+      setTimeout(() => setMessage(null), 2000);
     } finally {
       setInterestLoading(false);
     }
@@ -1149,6 +1184,18 @@ const Map = () => {
           />
         </div>
       </div>
+
+      {/* Message notification */}
+      {message && (
+        <div 
+          style={{
+            ...messageStyles.container,
+            ...(message.type === 'success' ? messageStyles.success : messageStyles.error)
+          }}
+        >
+          {message.text}
+        </div>
+      )}
     </div>
   );
 };

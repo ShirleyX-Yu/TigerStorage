@@ -39,6 +39,31 @@ const RenterListingDetails = () => {
   const [canReview, setCanReview] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
   const [myRequestId, setMyRequestId] = useState(null);
+  const [interestLoading, setInterestLoading] = useState(false);
+  const [showReservationModal, setShowReservationModal] = useState(false);
+
+  // Message styles
+  const messageStyles = {
+    container: {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      zIndex: 1000,
+      padding: '10px 20px',
+      borderRadius: '4px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+      animation: 'fadeIn 0.3s ease-out',
+      maxWidth: '300px'
+    },
+    success: {
+      backgroundColor: '#4caf50',
+      color: 'white'
+    },
+    error: {
+      backgroundColor: '#f44336',
+      color: 'white'
+    }
+  };
 
   useEffect(() => {
     // Check authentication status
@@ -227,173 +252,112 @@ const RenterListingDetails = () => {
     }
   };
 
-  // Update handleToggleInterest to remove /api/listings/${id}/interest usage
+  // Handle toggle interest for both adding and removing interest
   const handleToggleInterest = async () => {
-    if (!listing) return;
-    if (!isAuthenticated) {
-      sessionStorage.setItem('returnTo', `/listing/${id}`);
-      navigate('/');
-      return;
-    }
+    if (!isAuthenticated || !listing) return;
+    
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
-      const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-
+      setInterestLoading(true);
+      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+      const username = sessionStorage.getItem('username') || localStorage.getItem('username');
+      
+      // Check current interest status
       if (listing.isInterested) {
-        // Remove interest by cancelling pending reservations
-        try {
-          // Check for and cancel any pending reservation requests
-          const resp = await axiosInstance.get('/api/my-reservation-requests', {
+        // Already interested - need to cancel the pending request
+        // Find the pending request ID for this listing
+        const pendingRequest = myRequests.find(r => 
+          r.listing_id === parseInt(id) && r.status === 'pending'
+        );
+        
+        if (pendingRequest) {
+          console.log(`Cancelling pending reservation request ID: ${pendingRequest.request_id}`);
+          await axiosInstance.patch(`/api/reservation-requests/${pendingRequest.request_id}`, {
+            status: 'cancelled_by_renter'
+          }, {
             headers: {
-              'Accept': 'application/json',
-              'Cache-Control': 'no-cache',
               'X-User-Type': userType,
-              'X-Username': storedUsername
+              'X-Username': username
             }
           });
           
-          if (resp.data && Array.isArray(resp.data)) {
-            const pending = resp.data.find(r => 
-              (String(r.listing_id) === String(listing.id)) && 
-              r.status === 'pending'
-            );
-            
-            if (pending) {
-              console.log(`Cancelling pending reservation request ID: ${pending.request_id}`);
-              await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
-                status: 'cancelled_by_renter'
-              }, {
-                headers: {
-                  'X-User-Type': userType,
-                  'X-Username': storedUsername,
-                  'X-CSRFToken': getCSRFToken()
-                }
-              });
-              
-              // Update local state immediately
-              setListing(prev => prev ? { ...prev, isInterested: false } : prev);
-              
-              // Show success message
-              setMessage({ type: 'success', text: 'Request cancelled!' });
-              setTimeout(() => setMessage(null), 2000);
-              
-              // Fetch updated listing details
-              await fetchListing();
-            } else {
-              // No pending request found
-              setListing(prev => prev ? { ...prev, isInterested: false } : prev);
-              setMessage({ type: 'warning', text: 'No pending request found for this listing.' });
-              setTimeout(() => setMessage(null), 2000);
-            }
-          }
-        } catch (error) {
-          const errorMessage = error.response?.data?.error || 'Failed to cancel request';
-          setError(errorMessage);
-          setMessage({ type: 'error', text: errorMessage });
+          // Update local state
+          setListing(prev => ({...prev, isInterested: false}));
+          
+          // Show success message
+          setMessage({ type: 'success', text: 'Reservation request cancelled!' });
           setTimeout(() => setMessage(null), 2000);
-          throw error; // Rethrow to be caught by outer catch
+          
+          // Update myRequests state to reflect the cancellation
+          setMyRequests(prev => 
+            prev.map(r => 
+              r.request_id === pendingRequest.request_id 
+                ? {...r, status: 'cancelled_by_renter'} 
+                : r
+            )
+          );
         }
       } else {
-        // Before showing interest, check if there's an existing pending request
-        try {
-          const resp = await axiosInstance.get('/api/my-reservation-requests', {
-            headers: {
-              'Accept': 'application/json',
-              'Cache-Control': 'no-cache',
-              'X-User-Type': userType,
-              'X-Username': storedUsername
-            }
-          });
-          
-          if (resp.data && Array.isArray(resp.data)) {
-            const pending = resp.data.find(r => 
-              (String(r.listing_id) === String(listing.id)) && 
-              r.status === 'pending'
-            );
-            
-            if (pending) {
-              // Cancel the existing request before adding interest
-              console.log(`Cancelling existing pending reservation request ID: ${pending.request_id}`);
-              await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
-                status: 'cancelled_by_renter'
-              }, {
-                headers: {
-                  'X-User-Type': userType,
-                  'X-Username': storedUsername,
-                  'X-CSRFToken': getCSRFToken()
-                }
-              });
-            }
-          }
-          
-          // Now show the reservation modal
-          setReservationModalOpen(true);
-        } catch (error) {
-          console.error('Error checking for pending requests:', error);
-          // Continue with showing the modal anyway
-          setReservationModalOpen(true);
-        }
-        return;
+        // Not interested yet - show reservation modal
+        setShowReservationModal(true);
       }
-    } catch (err) {
-      console.error('Toggle interest error:', err);
-      // Don't set error message if it was already set in the inner catch
-      if (!message) {
-        setError(err.message);
-        setMessage({ type: 'error', text: err.message });
-        setTimeout(() => setMessage(null), 2000);
-      }
+    } catch (error) {
+      console.error('Error toggling interest:', error);
+      setMessage({ type: 'error', text: error.response?.data?.error || 'Error updating request' });
+      setTimeout(() => setMessage(null), 2000);
+    } finally {
+      setInterestLoading(false);
     }
   };
 
-  // Update handleReservationSubmit to remove /api/listings/${id}/interest usage
-  const handleReservationSubmit = async ({ space, mode }) => {
-    setReservationLoading(true);
-    setReservationError('');
+  // Handle reservation submission
+  const handleReservationSubmit = async (formData) => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
-      const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-      // Always send full sq_ft for 'full', user-entered for 'partial', as a number
-      const requested_space = mode === 'full' ? Number(listing.sq_ft) : Number(space);
-      if (!requested_space || requested_space <= 0) {
-        setReservationError('Please enter a valid space amount.');
-        setReservationLoading(false);
-        return;
-      }
-      console.log('Submitting reservation:', { requested_space, mode, listing });
+      setInterestLoading(true);
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
+      const username = sessionStorage.getItem('username') || localStorage.getItem('username');
       
-      // Submit the reservation request (which now doubles as showing interest)
-      await axiosInstance.post(`${apiUrl}/api/listings/${listing.id}/reserve`, { requested_space }, {
+      // Submit the reservation request
+      const { space, fullSpace } = formData;
+      const requested_space = fullSpace ? listing.sq_ft : space;
+      
+      await axiosInstance.post(`${apiUrl}/api/listings/${id}/reserve`, {
+        requested_space: Number(requested_space)
+      }, {
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
           'X-User-Type': userType,
           'X-Username': username,
-          'X-CSRFToken': getCSRFToken()
+          'Content-Type': 'application/json'
         }
       });
       
-      // Close modal first
-      setReservationModalOpen(false);
+      // Update local state
+      setListing(prev => ({...prev, isInterested: true}));
       
-      // Update local state immediately
-      setListing(prev => prev ? { ...prev, isInterested: true } : prev);
+      // Close modal
+      setShowReservationModal(false);
       
       // Show success message
-      setMessage({ type: 'success', text: 'Space request submitted!' });
+      setMessage({ type: 'success', text: 'Reservation request submitted!' });
       setTimeout(() => setMessage(null), 2000);
       
-      // Fetch updated listing details
-      await fetchListing();
+      // Refresh reservation requests
+      const response = await axiosInstance.get(`${apiUrl}/api/my-reservation-requests`, {
+        headers: {
+          'X-User-Type': userType,
+          'X-Username': username
+        }
+      });
+      
+      if (response.data && Array.isArray(response.data)) {
+        setMyRequests(response.data);
+      }
     } catch (error) {
-      console.error('Reservation error:', error);
-      const errorData = error.response?.data || {};
-      setReservationError(errorData.error || 'Failed to request space');
+      console.error('Error submitting reservation:', error);
+      setMessage({ type: 'error', text: error.response?.data?.error || 'Error submitting request' });
+      setTimeout(() => setMessage(null), 2000);
     } finally {
-      setReservationLoading(false);
+      setInterestLoading(false);
     }
   };
 
@@ -541,16 +505,12 @@ const RenterListingDetails = () => {
           ← Back to Listings
         </button>
 
-        {/* Display any success/error messages */}
+        {/* Message notification */}
         {message && (
           <div 
             style={{
-              padding: '10px',
-              marginBottom: '15px',
-              borderRadius: '4px',
-              backgroundColor: message.type === 'success' ? '#d4edda' : '#f8d7da',
-              color: message.type === 'success' ? '#155724' : '#721c24',
-              textAlign: 'center'
+              ...messageStyles.container,
+              ...(message.type === 'success' ? messageStyles.success : messageStyles.error)
             }}
           >
             {message.text}
@@ -686,11 +646,11 @@ const RenterListingDetails = () => {
               </div>
 
               <ReservationModal
-                open={reservationModalOpen}
-                onClose={() => setReservationModalOpen(false)}
+                open={showReservationModal}
+                onClose={() => setShowReservationModal(false)}
                 onSubmit={handleReservationSubmit}
                 maxSpace={listing.sq_ft}
-                loading={reservationLoading}
+                loading={interestLoading}
                 error={reservationError}
               />
             </div>

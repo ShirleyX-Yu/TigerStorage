@@ -153,6 +153,29 @@ const ViewListings = () => {
   const [reservationListing, setReservationListing] = useState(null);
   const [message, setMessage] = useState(null);
 
+  // Message styles
+  const messageStyles = {
+    container: {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      zIndex: 1000,
+      padding: '10px 20px',
+      borderRadius: '4px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+      animation: 'fadeIn 0.3s ease-out',
+      maxWidth: '300px'
+    },
+    success: {
+      backgroundColor: '#4caf50',
+      color: 'white'
+    },
+    error: {
+      backgroundColor: '#f44336',
+      color: 'white'
+    }
+  };
+
   const openMap = () => {
     navigate('/map');
   };
@@ -400,7 +423,16 @@ const ViewListings = () => {
       setMessage({ type: 'success', text: 'Reservation request submitted!' });
       setTimeout(() => setMessage(null), 2000);
       
-      // Fetch the updated listings to refresh the UI
+      // Update the UI immediately
+      if (reservationListing) {
+        setListings(currentListings => 
+          currentListings.map(l => 
+            l.id === reservationListing.id ? {...l, isInterested: true} : l
+          )
+        );
+      }
+      
+      // Re-fetch all listings from the server
       await fetchListings();
     } catch (err) {
       console.error('Reservation error:', err);
@@ -417,28 +449,23 @@ const ViewListings = () => {
 
   return (
     <div style={styles.container}>
+      {/* Message notification */}
+      {message && (
+        <div 
+          style={{
+            ...messageStyles.container,
+            ...(message.type === 'success' ? messageStyles.success : messageStyles.error)
+          }}
+        >
+          {message.text}
+        </div>
+      )}
+      
       <Header title="Storage Listings" />
       <div style={styles.content}>
         <div style={styles.welcome}>
           Browse available storage spaces
         </div>
-        
-        {message && (
-          <div style={{
-            padding: '10px 20px',
-            marginBottom: '20px',
-            borderRadius: '4px',
-            backgroundColor: message.type === 'success' ? '#e6f7e6' : '#ffebee',
-            color: message.type === 'success' ? '#2e7d32' : '#c62828',
-            border: `1px solid ${message.type === 'success' ? '#c8e6c9' : '#ffcdd2'}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontWeight: '500'
-          }}>
-            {message.text}
-          </div>
-        )}
         
         <div style={styles.section}>
           <div style={styles.sectionHeader}>
