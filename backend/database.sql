@@ -20,18 +20,6 @@ CREATE TABLE IF NOT EXISTS storage_listings (
     hall_name VARCHAR(255)
 );
 
--- Interested Listings Table
-CREATE TABLE IF NOT EXISTS interested_listings (
-    interest_id SERIAL PRIMARY KEY,
-    listing_id INTEGER REFERENCES storage_listings(listing_id) ON DELETE CASCADE,
-    lender_username VARCHAR(255) NOT NULL,
-    renter_username VARCHAR(255) NOT NULL,
-    square_feet INTEGER,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(50) DEFAULT 'pending',
-    UNIQUE(listing_id, renter_username)
-);
-
 -- Reservation Requests Table
 CREATE TABLE IF NOT EXISTS reservation_requests (
     request_id SERIAL PRIMARY KEY,
@@ -68,14 +56,12 @@ CREATE TABLE IF NOT EXISTS lender_reviews (
 
 -- Indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_storage_listings_owner ON storage_listings(owner_id);
-CREATE INDEX IF NOT EXISTS idx_interested_listings_renter ON interested_listings(renter_username);
 CREATE INDEX IF NOT EXISTS idx_reservation_requests_renter ON reservation_requests(renter_username);
 CREATE INDEX IF NOT EXISTS idx_reported_listings_status ON reported_listings(status);
 CREATE INDEX IF NOT EXISTS idx_lender_reviews_lender ON lender_reviews(lender_username);
 
 -- Comments for documentation
 COMMENT ON TABLE storage_listings IS 'Stores all storage space listings';
-COMMENT ON TABLE interested_listings IS 'Tracks which renters are interested in which listings';
 COMMENT ON TABLE reservation_requests IS 'Manages storage space reservation requests';
 COMMENT ON TABLE reported_listings IS 'Tracks reported problematic listings';
 COMMENT ON TABLE lender_reviews IS 'Stores reviews given by renters to lenders';

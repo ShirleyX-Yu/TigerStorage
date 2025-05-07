@@ -7,7 +7,6 @@ import { checkAuthStatus, axiosInstance } from '../utils/auth';
 import { getCSRFToken } from '../utils/csrf';
 import ReservationModal from './ReservationModal';
 import StarIcon from '@mui/icons-material/Star';
-import { useRenterInterest } from '../context/RenterInterestContext';
 
 console.log('ListingDetails component loaded');
 
@@ -40,7 +39,6 @@ const RenterListingDetails = () => {
   const [canReview, setCanReview] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
   const [myRequestId, setMyRequestId] = useState(null);
-  const { interestedListings, refreshInterestedListings } = useRenterInterest();
 
   useEffect(() => {
     // Check authentication status
@@ -94,9 +92,6 @@ const RenterListingDetails = () => {
         const data = response.data;
         console.log('Received listing data:', data);
         
-        // Get interest status from context instead of fetching separately
-        const isInterested = interestedListings.some(l => String(l.id) === String(data.id));
-        
         // Simple formatted listing with fallbacks for all properties
         const formattedListing = {
           id: data.id || id,
@@ -118,7 +113,6 @@ const RenterListingDetails = () => {
             name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
             email: 'contact@tigerstorage.com'
           },
-          isInterested: isInterested,
           lender_avg_rating: data.lender_avg_rating,
         };
         
@@ -137,7 +131,7 @@ const RenterListingDetails = () => {
     return () => {
       console.log('ListingDetails component unmounted');
     };
-  }, [id, interestedListings]);
+  }, [id]);
 
   // Auto-refresh listing after lender action or reservation
   const fetchListing = async () => {
@@ -156,9 +150,6 @@ const RenterListingDetails = () => {
         }
       });
       const data = response.data;
-      
-      // Get interest status from context
-      const isInterested = interestedListings.some(l => String(l.id) === String(data.id));
       
       // Simple formatted listing with fallbacks for all properties
       const formattedListing = {
@@ -181,7 +172,6 @@ const RenterListingDetails = () => {
           name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
           email: 'contact@tigerstorage.com'
         },
-        isInterested: isInterested,
         lender_avg_rating: data.lender_avg_rating,
       };
       setListing(formattedListing);
@@ -247,12 +237,15 @@ const RenterListingDetails = () => {
             }
           });
           
-          // Update global context and refresh the listing details
-          await refreshInterestedListings();
+          // Update local state immediately
+          setListing(prev => prev ? { ...prev, isInterested: false } : prev);
+          
+          // Show success message
           setMessage({ type: 'success', text: 'Request cancelled!' });
           setTimeout(() => setMessage(null), 2000);
           
-          // Local state will be synced via the useEffect that watches interestedListings
+          // Fetch updated listing details after interest removal
+          await fetchListing();
         } catch (error) {
           const errorMessage = error.response?.data?.error || 'Failed to cancel request';
           setError(errorMessage);
@@ -364,10 +357,7 @@ const RenterListingDetails = () => {
       setMessage({ type: 'success', text: 'Space request submitted!' });
       setTimeout(() => setMessage(null), 2000);
       
-      // Refresh global interest state and wait for it to complete
-      await refreshInterestedListings();
-      
-      // Fetch updated listing details after interest refresh
+      // Fetch updated listing details after interest addition
       await fetchListing();
     } catch (error) {
       console.error('Reservation error:', error);

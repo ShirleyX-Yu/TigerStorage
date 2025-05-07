@@ -3,7 +3,6 @@ import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 import boxes from '../assets/boxes.jpg';
 import { axiosInstance } from '../utils/auth';
-import { useRenterInterest } from '../context/RenterInterestContext';
 
 const getStatusLabel = (status) => {
   if (!status) return '';
@@ -50,7 +49,6 @@ const getStatusColor = (status) => {
 
 const RenterDashboard = ({ username }) => {
   const navigate = useNavigate();
-  const { interestedListings: interestedSpaces, loading, error, refreshInterestedListings } = useRenterInterest();
   const [removing, setRemoving] = useState(false);
   
   const openMap = () => {
@@ -61,7 +59,6 @@ const RenterDashboard = ({ username }) => {
     try {
       setRemoving(true);
       await axiosInstance.delete(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}/interest`);
-      await refreshInterestedListings();
     } catch (err) {
       console.error('Error removing request:', err);
     } finally {
@@ -95,126 +92,15 @@ const RenterDashboard = ({ username }) => {
 
         <div style={styles.section}>
           <h2>My Approved Spaces</h2>
-          {loading ? (
-            <div style={styles.placeholder}>Loading...</div>
-          ) : error ? (
-            <div style={styles.error}>{error}</div>
-          ) : interestedSpaces.filter(space => space.approval_type === 'approved_full' || space.approval_type === 'approved_partial').length > 0 ? (
-            <div style={styles.tableContainer}>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={styles.th}>Title</th>
-                    <th style={styles.th}>Cost/Month</th>
-                    <th style={styles.th}>Lender</th>
-                    <th style={styles.th}>Requested Space</th>
-                    <th style={styles.th}>Approved Space</th>
-                    <th style={styles.th}>Approval Type</th>
-                    <th style={styles.th}>Status</th>
-                    <th style={styles.th}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {interestedSpaces.filter(space => space.approval_type === 'approved_full' || space.approval_type === 'approved_partial').map(space => (
-                    <tr key={space.id}>
-                      <td style={styles.td}>{space.title}</td>
-                      <td style={styles.td}>${space.cost}</td>
-                      <td style={styles.td}>{space.lender}</td>
-                      <td style={styles.td}>{space.requested_space ? `${space.requested_space} sq ft` : '-'}</td>
-                      <td style={styles.td}>{space.approved_space ? `${space.approved_space} sq ft` : '-'}</td>
-                      <td style={styles.td}>{getStatusLabel(space.approval_type)}</td>
-                      <td style={styles.td}>
-                        <span style={{
-                          ...styles.status,
-                          backgroundColor: getStatusColor(space.status)
-                        }}>
-                          {getStatusLabel(space.status)}
-                        </span>
-                      </td>
-                      <td style={styles.td}>
-                        <button 
-                          style={styles.viewButton}
-                          onClick={() => navigate(`/listing/${space.id}`)}
-                        >
-                          View Details
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div style={styles.placeholder}>
-              You have no approved spaces yet.
-            </div>
-          )}
+          <div style={styles.placeholder}>
+            Loading...
+          </div>
         </div>
         <div style={styles.section}>
           <h2>My Requested Spaces</h2>
-          {loading ? (
-            <div style={styles.placeholder}>Loading...</div>
-          ) : error ? (
-            <div style={styles.error}>{error}</div>
-          ) : interestedSpaces.filter(space => space.approval_type === 'pending').length > 0 ? (
-            <div style={styles.tableContainer}>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={styles.th}>Title</th>
-                    <th style={styles.th}>Cost/Month</th>
-                    <th style={styles.th}>Lender</th>
-                    <th style={styles.th}>Requested Space</th>
-                    <th style={styles.th}>Approved Space</th>
-                    <th style={styles.th}>Approval Type</th>
-                    <th style={styles.th}>Status</th>
-                    <th style={styles.th}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {interestedSpaces.filter(space => space.approval_type === 'pending').map(space => (
-                    <tr key={space.id}>
-                      <td style={styles.td}>{space.title}</td>
-                      <td style={styles.td}>${space.cost}</td>
-                      <td style={styles.td}>{space.lender}</td>
-                      <td style={styles.td}>{space.requested_space ? `${space.requested_space} sq ft` : '-'}</td>
-                      <td style={styles.td}>{space.approved_space ? `${space.approved_space} sq ft` : '-'}</td>
-                      <td style={styles.td}>{getStatusLabel(space.approval_type)}</td>
-                      <td style={styles.td}>
-                        <span style={{
-                          ...styles.status,
-                          backgroundColor: getStatusColor(space.status)
-                        }}>
-                          {getStatusLabel(space.status)}
-                        </span>
-                      </td>
-                      <td style={styles.td}>
-                        <div style={styles.actionButtons}>
-                          <button 
-                            style={styles.viewButton}
-                            onClick={() => navigate(`/listing/${space.id}`)}
-                          >
-                            View Details
-                          </button>
-                          <button 
-                            style={styles.removeButton}
-                            onClick={() => removeRequest(space.id)}
-                            disabled={removing}
-                          >
-                            {removing ? 'Removing...' : 'Remove Request'}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div style={styles.placeholder}>
-              You haven't made any storage space requests yet.
-            </div>
-          )}
+          <div style={styles.placeholder}>
+            Loading...
+          </div>
         </div>
       </div>
     </div>
