@@ -288,22 +288,20 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     if (pendingAddress) {
       // Parse the display_name to extract address, city, and zip code
       const displayName = pendingAddress.address || '';
-      // Example: '2600 Woodbridge Avenue, Nixon, Edison, Middlesex County, New Jersey, 08818, United States'
       const parts = displayName.split(',').map(s => s.trim());
       let street = '';
       let city = '';
       let zip = '';
-      // Try to find the street, city, and zip code
       if (parts.length > 0) street = parts[0];
-      // Find the first part that looks like a 5-digit zip code
       for (let i = 0; i < parts.length; i++) {
         if (/^\d{5}$/.test(parts[i])) zip = parts[i];
       }
-      // Find the first part that matches the entered city (case-insensitive), fallback to the third part
       city = parts.find(p => p.toLowerCase() === formData.city.toLowerCase()) || parts[2] || '';
+      // Set address to standardized format
+      const standardizedAddress = `${street}, ${city}, NJ ${zip}, USA`;
       setFormData(prev => ({
         ...prev,
-        address: pendingAddress.address,
+        address: standardizedAddress,
         street_address: street,
         city: city,
         zip_code: zip,
@@ -381,6 +379,10 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     }
     if (locationType === 'off-campus' && !formData.zip_code) {
       setError('ZIP code is required for off-campus addresses.');
+      return;
+    }
+    if (!formData.address || !formData.latitude || !formData.longitude) {
+      setError('Please locate a valid address before submitting.');
       return;
     }
     try {
