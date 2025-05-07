@@ -58,7 +58,32 @@ const RenterDashboard = ({ username }) => {
   const removeRequest = async (listingId) => {
     try {
       setRemoving(true);
-      await axiosInstance.delete(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}/interest`);
+      // First find the pending reservation request for this listing
+      const response = await axiosInstance.get('/api/my-reservation-requests', {
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      if (response.data && Array.isArray(response.data)) {
+        const pendingRequest = response.data.find(req => 
+          String(req.listing_id) === String(listingId) && req.status === 'pending');
+        
+        if (pendingRequest) {
+          // Cancel the pending request
+          await axiosInstance.patch(`/api/reservation-requests/${pendingRequest.request_id}`, {
+            status: 'cancelled_by_renter'
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCSRFToken()
+            }
+          });
+        } else {
+          console.warn(`No pending reservation request found for listing ${listingId}`);
+        }
+      }
     } catch (err) {
       console.error('Error removing request:', err);
     } finally {

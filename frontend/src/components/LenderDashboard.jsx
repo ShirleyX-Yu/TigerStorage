@@ -111,7 +111,7 @@ const LenderDashboard = ({ username }) => {
       const formattedListings = await Promise.all(data.map(async listing => {
         let interestedRenters = [];
         try {
-          const rentersResponse = await axiosInstance.get(`/api/listings/${listing.id}/interested-renters`, {
+          const rentersResponse = await axiosInstance.get(`/api/listings/${listing.id}/reservation-requests`, {
             headers: {
               'Accept': 'application/json',
               'Cache-Control': 'no-cache',
@@ -119,13 +119,16 @@ const LenderDashboard = ({ username }) => {
               'X-Username': storedUsername
             }
           });
-          const rentersData = rentersResponse.data;
-          interestedRenters = rentersData.map(renter => ({
-            id: renter.id,
-            name: renter.username,
-            email: `${renter.username}@princeton.edu`,
-            dateInterested: renter.dateInterested,
-            status: renter.status
+          
+          const pendingRequests = rentersResponse.data.filter(req => req.status === 'pending');
+          
+          interestedRenters = pendingRequests.map(req => ({
+            id: req.request_id,
+            name: req.renter_username,
+            email: `${req.renter_username}@princeton.edu`,
+            dateInterested: req.created_at,
+            status: 'pending',
+            requested_space: req.requested_space
           }));
         } catch (e) {
           // ignore

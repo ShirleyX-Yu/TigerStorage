@@ -182,7 +182,7 @@ const RenterListingDetails = () => {
     }
   };
 
-  // Add interest toggle handler
+  // Update handleToggleInterest to remove /api/listings/${id}/interest usage
   const handleToggleInterest = async () => {
     if (!listing) return;
     if (!isAuthenticated) {
@@ -196,9 +196,9 @@ const RenterListingDetails = () => {
       const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
 
       if (listing.isInterested) {
-        // Remove interest after cancelling any pending reservations
+        // Remove interest by cancelling pending reservations
         try {
-          // First, check for and cancel any pending reservation requests
+          // Check for and cancel any pending reservation requests
           const resp = await axiosInstance.get('/api/my-reservation-requests', {
             headers: {
               'Accept': 'application/json',
@@ -225,27 +225,23 @@ const RenterListingDetails = () => {
                   'X-CSRFToken': getCSRFToken()
                 }
               });
+              
+              // Update local state immediately
+              setListing(prev => prev ? { ...prev, isInterested: false } : prev);
+              
+              // Show success message
+              setMessage({ type: 'success', text: 'Request cancelled!' });
+              setTimeout(() => setMessage(null), 2000);
+              
+              // Fetch updated listing details
+              await fetchListing();
+            } else {
+              // No pending request found
+              setListing(prev => prev ? { ...prev, isInterested: false } : prev);
+              setMessage({ type: 'warning', text: 'No pending request found for this listing.' });
+              setTimeout(() => setMessage(null), 2000);
             }
           }
-          
-          // Then remove interest
-          await axiosInstance.delete(`${apiUrl}/api/listings/${listing.id}/interest`, {
-            headers: {
-              'Content-Type': 'application/json',
-              'X-User-Type': userType,
-              'X-Username': storedUsername
-            }
-          });
-          
-          // Update local state immediately
-          setListing(prev => prev ? { ...prev, isInterested: false } : prev);
-          
-          // Show success message
-          setMessage({ type: 'success', text: 'Request cancelled!' });
-          setTimeout(() => setMessage(null), 2000);
-          
-          // Fetch updated listing details after interest removal
-          await fetchListing();
         } catch (error) {
           const errorMessage = error.response?.data?.error || 'Failed to cancel request';
           setError(errorMessage);
@@ -306,7 +302,7 @@ const RenterListingDetails = () => {
     }
   };
 
-  // Reservation submit handler for modal
+  // Update handleReservationSubmit to remove /api/listings/${id}/interest usage
   const handleReservationSubmit = async ({ space, mode }) => {
     setReservationLoading(true);
     setReservationError('');
@@ -323,20 +319,8 @@ const RenterListingDetails = () => {
       }
       console.log('Submitting reservation:', { requested_space, mode, listing });
       
-      // First submit the reservation request
+      // Submit the reservation request (which now doubles as showing interest)
       await axiosInstance.post(`${apiUrl}/api/listings/${listing.id}/reserve`, { requested_space }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-          'X-User-Type': userType,
-          'X-Username': username,
-          'X-CSRFToken': getCSRFToken()
-        }
-      });
-      
-      // Then add interest
-      await axiosInstance.post(`${apiUrl}/api/listings/${listing.id}/interest`, {}, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -357,7 +341,7 @@ const RenterListingDetails = () => {
       setMessage({ type: 'success', text: 'Space request submitted!' });
       setTimeout(() => setMessage(null), 2000);
       
-      // Fetch updated listing details after interest addition
+      // Fetch updated listing details
       await fetchListing();
     } catch (error) {
       console.error('Reservation error:', error);

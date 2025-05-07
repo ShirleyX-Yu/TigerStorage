@@ -1129,168 +1129,10 @@ def delete_listing(listing_id):
 # Initialize CSRF protection
 csrf = CSRFProtect(app)
 
-# API to handle interest in a listing
-@app.route('/api/listings/<int:listing_id>/interest', methods=['POST', 'DELETE', 'OPTIONS'])
-def handle_interest(listing_id):
-    # Handle OPTIONS requests for CORS preflight
-    if request.method == 'OPTIONS':
-        response = jsonify({})
-        origin = request.headers.get('Origin')
-        if origin:
-            response.headers['Access-Control-Allow-Origin'] = origin
-        else:
-            response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
-        response.headers['Access-Control-Allow-Methods'] = 'POST, DELETE, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-User-Type, X-Username, Accept, Cache-Control'
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-        response.headers['Access-Control-Max-Age'] = '3600'  # Cache preflight request for 1 hour
-        return response, 200
-        
-    try:
-        print(f"Received interest request for listing {listing_id}")
-        # Check if user is logged in
-        authenticated = auth.is_authenticated()
-        renter_username = None
-        
-        if authenticated:
-            # Get from session if authenticated
-            print("User authenticated via session")
-            user_info = session['user_info']
-            renter_username = user_info.get('user', '').lower()
-            print(f"Authenticated username from session: {renter_username}")
-        else:
-            # If not authenticated via session, check headers
-            print("User not authenticated via session, checking headers")
-            username_header = request.headers.get('X-Username')
-            user_type_header = request.headers.get('X-User-Type')
-            
-            if username_header:
-                renter_username = username_header.lower()
-                print(f"Using username from X-Username header: {renter_username}")
-            else:
-                # No authentication found
-                print("No authentication found in session or headers")
-                return jsonify({"error": "Not authenticated"}), 401
-        
-        if not renter_username:
-            print("Renter username not found in session or headers")
-            return jsonify({"error": "User not found"}), 400
-            
-        # Get a fresh connection
-        conn = get_db_connection()
-        if not conn:
-            print("Failed to get database connection")
-            return jsonify({"error": "Database connection failed"}), 500
-            
-        try:
-            with conn.cursor() as cur:
-                # First get the listing to get the lender's username
-                print(f"Fetching listing {listing_id} to get lender info")
-                cur.execute("""
-                    SELECT owner_id FROM storage_listings 
-                    WHERE listing_id = %s
-                """, (listing_id,))
-                
-                listing = cur.fetchone()
-                if not listing:
-                    print(f"Listing {listing_id} not found")
-                    return jsonify({"error": "Listing not found"}), 404
-                    
-                lender_username = listing[0]
-                if not lender_username:
-                    print(f"Listing {listing_id} has no owner")
-                    return jsonify({"error": "This listing is not available for interest as it has no owner"}), 400
-                
-                if request.method == 'POST':
-                    # Check if a pending reservation request already exists
-                    cur.execute("""
-                        SELECT 1 FROM reservation_requests
-                        WHERE listing_id = %s AND renter_username = %s AND status = 'pending'
-                        LIMIT 1
-                    """, (listing_id, renter_username))
-                    
-                    if cur.fetchone():
-                        return jsonify({
-                            "error": "You already have a pending reservation request for this listing"
-                        }), 400
-                    
-                    # Create a minimal reservation request (1 cubic foot as default)
-                    try:
-                        cur.execute("""
-                            INSERT INTO reservation_requests 
-                            (listing_id, lender_username, renter_username, requested_space, status) 
-                            VALUES (%s, %s, %s, 1, 'pending')
-                            RETURNING request_id
-                        """, (listing_id, lender_username, renter_username))
-                        
-                        request_id = cur.fetchone()[0]
-                        conn.commit()
-                        print(f"Reservation request {request_id} created for listing {listing_id}")
-                        
-                        # Create response with CORS headers
-                        response = jsonify({
-                            "success": True,
-                            "message": "Reservation request created successfully",
-                            "request_id": request_id
-                        })
-                        
-                        # Add CORS headers with specific origin
-                        origin = request.headers.get('Origin')
-                        if origin:
-                            response.headers['Access-Control-Allow-Origin'] = origin
-                        else:
-                            response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
-                        response.headers['Access-Control-Allow-Methods'] = 'POST, DELETE, OPTIONS'
-                        response.headers['Access-Control-Allow-Credentials'] = 'true'
-                        
-                        return response, 200
-                    except Exception as insert_error:
-                        print(f"Error creating reservation request: {insert_error}")
-                        conn.rollback()
-                        import traceback
-                        traceback.print_exc()
-                        return jsonify({"error": f"Failed to create reservation request: {str(insert_error)}"}), 500
-                        
-                elif request.method == 'DELETE':
-                    # Cancel pending reservation request
-                    print(f"Canceling reservation request for listing {listing_id}, renter {renter_username}")
-                    cur.execute("""
-                        DELETE FROM reservation_requests 
-                        WHERE listing_id = %s AND renter_username = %s AND status = 'pending'
-                        RETURNING request_id
-                    """, (listing_id, renter_username))
-                    
-                    deleted = cur.fetchone()
-                    conn.commit()
-                    
-                    if not deleted:
-                        return jsonify({"error": "No pending reservation request found to cancel"}), 404
-                        
-                    print(f"Reservation request for listing {listing_id} canceled successfully")
-                    
-                    # Create response with CORS headers
-                    response = jsonify({
-                        "success": True,
-                        "message": "Reservation request canceled successfully"
-                    })
-                    
-                    # Add CORS headers with specific origin
-                    origin = request.headers.get('Origin')
-                    if origin:
-                        response.headers['Access-Control-Allow-Origin'] = origin
-                    else:
-                        response.headers['Access-Control-Allow-Origin'] = 'https://tigerstorage-frontend.onrender.com'
-                    response.headers['Access-Control-Allow-Methods'] = 'POST, DELETE, OPTIONS'
-                    response.headers['Access-Control-Allow-Credentials'] = 'true'
-                    
-                    return response, 200
-        finally:
-            conn.close()
-    except Exception as e:
-        print("Error handling interest:", str(e))
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+# NOTE: The interest endpoint has been deprecated and removed.
+# Interest functionality is now handled through the reservation_requests system.
+# See /api/listings/<listing_id>/reserve for creating new requests
+# and /api/reservation-requests/<request_id> for managing them.
 
 # API to get interested renters for a listing
 @app.route('/api/listings/<int:listing_id>/interested-renters', methods=['GET'])
@@ -1767,6 +1609,54 @@ def get_csrf_token():
         domain='.onrender.com' if is_production else None
     )
     return response
+
+# Add the endpoint to fetch a user's reservation requests
+@app.route('/api/my-reservation-requests', methods=['GET'])
+def get_my_reservation_requests():
+    # Get username from headers or query params
+    username = request.headers.get('X-Username') or request.args.get('username')
+    if not username:
+        return jsonify({'error': 'Username is required'}), 400
+    
+    # Query the reservation_requests table for this user
+    try:
+        query = """
+            SELECT 
+                r.request_id, 
+                r.listing_id, 
+                r.renter_username, 
+                r.lender_username, 
+                r.requested_space, 
+                r.approved_space, 
+                r.status, 
+                r.created_at, 
+                r.updated_at, 
+                r.start_date, 
+                r.end_date,
+                l.title,
+                l.address,
+                l.hall_name,
+                l.sq_ft,
+                l.cost
+            FROM 
+                reservation_requests r
+            JOIN 
+                storage_listings l ON r.listing_id = l.listing_id
+            WHERE 
+                r.renter_username = %s
+            ORDER BY 
+                r.created_at DESC
+        """
+        
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute(query, (username,))
+        requests = cursor.fetchall()
+        cursor.close()
+        
+        return jsonify(requests)
+    except Exception as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
 
 if __name__ == "__main__":
     args = parser.parse_args()

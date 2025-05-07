@@ -313,18 +313,6 @@ const Map = () => {
     ? groupedListings[groupedIndex]
     : listings.find(l => (l.listing_id || l.id) === selectedListingId) || null;
 
-  const fetchAndSyncInterest = useCallback(async (listingsData) => {
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const response = await axiosInstance.get('/api/my-interested-listings');
-      const interested = response.data;
-      const interestedIds = new Set(interested.map(l => l.id));
-      return listingsData.map(l => ({ ...l, isInterested: interestedIds.has(l.listing_id || l.id) }));
-    } catch (err) {
-      return listingsData.map(l => ({ ...l, isInterested: false }));
-    }
-  }, []);
-
   const fetchListings = async () => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -337,6 +325,7 @@ const Map = () => {
       
       console.log('Using auth headers - User type:', userType, 'Username:', username);
       
+      // 1. Fetch all listings
       const response = await axiosInstance.get('/api/listings', {
         headers: {
           'X-User-Type': userType,
@@ -379,8 +368,38 @@ const Map = () => {
         return listing;
       });
       
-      const synced = await fetchAndSyncInterest(listingsWithDistance);
-      setListings(synced);
+      // 2. Fetch all reservation requests for the current user
+      try {
+        const requestsResp = await axiosInstance.get('/api/my-reservation-requests', {
+          headers: {
+            'X-User-Type': userType,
+            'X-Username': username,
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        // 3. Build a set of listing IDs with pending requests
+        const pendingIds = new Set(
+          requestsResp.data
+            .filter(r => r.status === 'pending')
+            .map(r => String(r.listing_id)) // Convert to string for consistent comparison
+        );
+        
+        console.log('Pending reservation requests:', pendingIds);
+        
+        // 4. Mark listings as interested if they have a pending request
+        const listingsWithInterest = listingsWithDistance.map(listing => ({
+          ...listing,
+          isInterested: pendingIds.has(String(listing.id || listing.listing_id))
+        }));
+        
+        setListings(listingsWithInterest);
+      } catch (requestErr) {
+        console.error('Error fetching reservation requests:', requestErr);
+        // If we can't fetch reservations, continue with listings but without interest info
+        setListings(listingsWithDistance.map(listing => ({ ...listing, isInterested: false })));
+      }
     } catch (err) {
       console.error('Error in fetchListings:', err);
       setError(err.message);
@@ -497,7 +516,10 @@ const Map = () => {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-      const isInterested = false; // This will be updated based on the response
+      
+      // Check if listing is already "interested" (has a pending reservation request)
+      const isInterested = listing.isInterested;
+      
       if (isInterested) {
         try {
           // First check for and cancel any pending reservation requests
@@ -527,29 +549,25 @@ const Map = () => {
                   'X-CSRFToken': getCSRFToken()
                 }
               });
+              
+              // Success - update UI
+              setInterestSuccess(true);
+              setLastInterestAction('remove');
+              setTimeout(() => setInterestSuccess(false), 2000);
+            } else {
+              // No pending request found for this listing
+              setInterestError("No pending request found for this listing");
+              setTimeout(() => setInterestError(null), 2000);
             }
           }
-          
-          // Then remove interest
-          await axiosInstance.delete(`/api/listings/${listing.listing_id || listing.id}/interest`, {
-            headers: {
-              'X-User-Type': userType,
-              'X-Username': username,
-            },
-          });
-          
-          // Success - no need to check .ok as axios will throw on error status codes
-          setInterestSuccess(true);
-          setLastInterestAction('remove');
-          setTimeout(() => setInterestSuccess(false), 2000);
         } catch (error) {
-          const errorText = error.response?.data?.error || 'Failed to remove interest';
+          const errorText = error.response?.data?.error || 'Failed to cancel reservation request';
           setInterestError(errorText);
           setTimeout(() => setInterestError(null), 2000);
           throw new Error(errorText);
         }
       } else {
-        // Add interest (show reservation form if needed)
+        // Add new reservation request (show reservation form if needed)
         const isAuthenticated = !!(sessionStorage.getItem('username') || localStorage.getItem('username'));
         if (!isAuthenticated) {
           sessionStorage.setItem('returnTo', `/listing/${listing.listing_id || listing.id}`);
@@ -557,6 +575,8 @@ const Map = () => {
           setInterestLoading(false);
           return;
         }
+        
+        // Show reservation form
         setShowReservationForm(true);
         setReservationMode('full');
         setReservationSpace(listing.sq_ft ?? 0);
@@ -564,7 +584,8 @@ const Map = () => {
         setInterestLoading(false);
         return;
       }
-      // Always re-fetch listings after interest change
+      
+      // Always re-fetch listings after interest change to update UI
       await fetchListings();
     } catch (err) {
       console.error('Interest toggle error:', err);
@@ -905,7 +926,9 @@ const Map = () => {
                     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
                     const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
                     const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-                    const response = await axiosInstance.post(`/api/listings/${selectedListing.listing_id || selectedListing.id}/reserve`, {
+                    
+                    // Submit reservation request
+                    await axiosInstance.post(`/api/listings/${selectedListing.listing_id || selectedListing.id}/reserve`, {
                       requested_space: space
                     }, {
                       headers: {
@@ -915,21 +938,20 @@ const Map = () => {
                         'X-CSRFToken': getCSRFToken()
                       }
                     });
-                    // Success: response.data contains the result
-                    await axiosInstance.post(`/api/listings/${selectedListing.listing_id || selectedListing.id}/interest`, {
-                      headers: {
-                        'X-User-Type': userType,
-                        'X-Username': username
-                      }
-                    });
+                    
+                    // Close the form
                     setShowReservationForm(false);
+                    
+                    // Update UI
                     setInterestSuccess(true);
                     setLastInterestAction('add');
                     setTimeout(() => setInterestSuccess(false), 2000);
+                    
+                    // Refresh listings to update UI
                     await fetchListings();
                   } catch (error) {
                     const errorData = error.response?.data || {};
-                    setReservationError(errorData.error || 'Failed to request reservation');
+                    setReservationError(errorData.error || 'Failed to submit reservation request');
                   } finally {
                     setReservationLoading(false);
                   }

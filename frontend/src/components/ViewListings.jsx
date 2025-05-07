@@ -151,6 +151,7 @@ const ViewListings = () => {
   const [reservationLoading, setReservationLoading] = useState(false);
   const [reservationError, setReservationError] = useState('');
   const [reservationListing, setReservationListing] = useState(null);
+  const [message, setMessage] = useState(null);
 
   const openMap = () => {
     navigate('/map');
@@ -312,7 +313,7 @@ const ViewListings = () => {
       // Use axiosInstance for consistency with other components
       const requested_space = mode === 'full' ? Number(reservationListing.sq_ft) : Number(space);
       
-      // First submit the reservation request
+      // Submit the reservation request (this now serves as the "interest" functionality)
       await axiosInstance.post(`/api/listings/${reservationListing?.id}/reserve`, 
         { requested_space }, 
         {
@@ -330,14 +331,12 @@ const ViewListings = () => {
       // Close modal first
       setReservationModalOpen(false);
       
-      // Update local state immediately
-      setListings(prevListings => 
-        prevListings.map(l => 
-          l.id === reservationListing.id 
-            ? { ...l, remaining_space: l.remaining_space - requested_space } 
-            : l
-        )
-      );
+      // Show success message
+      setMessage({ type: 'success', text: 'Reservation request submitted!' });
+      setTimeout(() => setMessage(null), 2000);
+      
+      // Fetch the updated listings to refresh the UI
+      await fetchListings();
     } catch (err) {
       console.error('Reservation error:', err);
       setReservationError(err.response?.data?.error || err.message);
@@ -358,6 +357,23 @@ const ViewListings = () => {
         <div style={styles.welcome}>
           Browse available storage spaces
         </div>
+        
+        {message && (
+          <div style={{
+            padding: '10px 20px',
+            marginBottom: '20px',
+            borderRadius: '4px',
+            backgroundColor: message.type === 'success' ? '#e6f7e6' : '#ffebee',
+            color: message.type === 'success' ? '#2e7d32' : '#c62828',
+            border: `1px solid ${message.type === 'success' ? '#c8e6c9' : '#ffcdd2'}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontWeight: '500'
+          }}>
+            {message.text}
+          </div>
+        )}
         
         <div style={styles.section}>
           <div style={styles.sectionHeader}>
