@@ -33,6 +33,11 @@ app = Flask(
 # Register CAS authentication routes
 auth.init_auth(app)
 
+# Initialize flask-cas
+cas = CAS(app)
+app.config['CAS_SERVER'] = 'https://fed.princeton.edu/cas'
+app.config['CAS_AFTER_LOGIN'] = 'catch_all'
+
 # --- SESSION COOKIE CONFIGURATION ---
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 app.config['SESSION_COOKIE_SECURE'] = True
@@ -78,12 +83,33 @@ app.add_url_rule(
 def serve_static(filename):
     return send_from_directory('build', filename)
 
-# Catch-all route for React Router (serves index.html for any unknown route)
+# Catch-all route for React Router and CAS authentication
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
-def catch_all(path):
+def catch_all(path=''):
+    # Handle API routes separately
     if path.startswith('api/') or path.startswith('build/'):
         abort(404)
+    
+    # Check if user is authenticated and handle CAS redirects
+    if 'CAS_USERNAME' in session:
+        username = session.get('CAS_USERNAME')
+        # Set user type based on username
+        if username == 'cs-tigerstorage':
+            session['user_type'] = 'admin'
+            # If accessing root, redirect admin to admin dashboard
+            if not path:
+                return redirect('/admin')
+        else:
+            # For non-admin users, set default type and handle redirects
+            user_type = session.get('user_type', 'lender')
+            if not path:  # Only redirect if at root path
+                if user_type == 'renter':
+                    return redirect('/map')
+                else:
+                    return redirect('/lender-dashboard')
+    
+    # Serve the React app for all other routes
     return send_from_directory('build', 'index.html')
 
 @app.route('/api/debug-session')
@@ -121,11 +147,6 @@ def get_asset_path(entry: str) -> str:
 @app.route('/')
 def index():
     return send_from_directory('build', 'index.html')
-
-# Initialize flask-cas
-cas = CAS(app)
-app.config['CAS_SERVER'] = 'https://fed.princeton.edu/cas'
-app.config['CAS_AFTER_LOGIN'] = 'catch_all'  # or your main route function name
 
 @app.route('/map')
 @login_required
