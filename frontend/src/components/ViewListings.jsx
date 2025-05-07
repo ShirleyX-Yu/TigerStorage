@@ -5,6 +5,7 @@ import ReservationModal from './ReservationModal';
 import { getCSRFToken } from '../utils/csrf';
 import { useRenterInterest } from '../context/RenterInterestContext';
 import { axiosInstance } from '../utils/auth';
+import Slider from '@mui/material/Slider';
 
 // Function to calculate distance between two points in miles
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -454,34 +455,48 @@ const ViewListings = () => {
               <div style={styles.filtersSection}>
                 <h3 style={styles.filtersTitle}>Filters</h3>
                 <div className="responsive-filter-grid" style={styles.filterGrid}>
-                  <RangeSlider
-                    min={0}
-                    max={100}
-                    value={[filters.minCost, filters.maxCost]}
-                    onChange={([min, max]) => setFilters(f => ({ ...f, minCost: min, maxCost: max }))}
-                    label="Price Range ($/month)"
-                    unit="$"
-                    color="#FF6B00"
-                  />
-                  <RangeSlider
-                    min={0}
-                    max={500}
-                    value={[filters.minSize, filters.maxSize]}
-                    onChange={([min, max]) => setFilters(f => ({ ...f, minSize: min, maxSize: max }))}
-                    label="Size Range (sq ft)"
-                    unit=" sq ft"
-                    color="#FF6B00"
-                  />
+                  <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>Price Range ($/month)</label>
+                    <Slider
+                      value={[filters.minCost, filters.maxCost]}
+                      onChange={(_, newValue) => setFilters(f => ({ ...f, minCost: newValue[0], maxCost: newValue[1] }))}
+                      min={0}
+                      max={100}
+                      step={1}
+                      valueLabelDisplay="auto"
+                      sx={{ color: '#FF6B00' }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 2 }}>
+                      <span>Min: ${filters.minCost}</span>
+                      <span>Max: ${filters.maxCost}</span>
+                    </div>
+                  </div>
+                  <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>Size Range (sq ft)</label>
+                    <Slider
+                      value={[filters.minSize, filters.maxSize]}
+                      onChange={(_, newValue) => setFilters(f => ({ ...f, minSize: newValue[0], maxSize: newValue[1] }))}
+                      min={0}
+                      max={500}
+                      step={1}
+                      valueLabelDisplay="auto"
+                      sx={{ color: '#FF6B00' }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 2 }}>
+                      <span>Min: {filters.minSize} sq ft</span>
+                      <span>Max: {filters.maxSize} sq ft</span>
+                    </div>
+                  </div>
                   <div style={styles.filterGroup}>
                     <label style={styles.filterLabel}>Distance from Campus (miles)</label>
-                    <input
-                      type="range"
+                    <Slider
+                      value={filters.maxDistance}
+                      onChange={(_, newValue) => setFilters(f => ({ ...f, maxDistance: newValue }))}
                       min={0}
                       max={50}
                       step={0.1}
-                      value={filters.maxDistance}
-                      onChange={e => setFilters(f => ({ ...f, maxDistance: Number(e.target.value) }))}
-                      style={{ width: '100%', accentColor: '#FF6B00' }}
+                      valueLabelDisplay="auto"
+                      sx={{ color: '#FF6B00' }}
                     />
                     <div style={{ display: 'flex', justifyContent: 'flex-end', fontSize: 12 }}>
                       <span>Max: {filters.maxDistance} mi</span>
@@ -489,13 +504,15 @@ const ViewListings = () => {
                   </div>
                   <div style={styles.filterGroup}>
                     <label style={styles.filterLabel}>Minimum Lender Rating</label>
-                    <input
-                      type="range"
+                    <Slider
+                      value={filters.minRating}
+                      onChange={(_, newValue) => setFilters(f => ({ ...f, minRating: newValue }))}
                       min={1}
                       max={5}
-                      value={filters.minRating}
-                      onChange={e => setFilters(f => ({ ...f, minRating: Number(e.target.value) }))}
-                      style={{ width: '100%', accentColor: '#FF6B00' }}
+                      step={1}
+                      marks={[{value:1,label:'1'},{value:2,label:'2'},{value:3,label:'3'},{value:4,label:'4'},{value:5,label:'5'}]}
+                      valueLabelDisplay="auto"
+                      sx={{ color: '#FF6B00' }}
                     />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
                       {[1,2,3,4,5].map(star => (
@@ -521,13 +538,6 @@ const ViewListings = () => {
                       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
                       gap: 1.5rem !important;
                     }
-                  }
-                  .responsive-filter-grid input[type='number'],
-                  .responsive-filter-grid input[type='date'] {
-                    font-size: 1rem;
-                    padding: 0.75rem;
-                    border-radius: 4px;
-                    border: 1px solid #ddd;
                   }
                 `}</style>
               </div>
