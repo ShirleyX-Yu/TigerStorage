@@ -160,7 +160,8 @@ const RenterListingDetails = () => {
         });
         
         const data = response.data;
-        console.log('Received listing data:', data);
+        console.log('Received listing data with image:', data);
+        console.log('Image URL from data:', data.image_url);
         
         // Simple formatted listing with fallbacks for all properties
         const formattedListing = {
@@ -527,12 +528,27 @@ const RenterListingDetails = () => {
         {loading ? renderLoading() : error ? renderError() : !listing ? renderNotFound() : (
           <div style={styles.detailsContainer}>
             <div style={styles.imageSection}>
-              {listing.images && listing.images.length > 0 && (
+              {listing.image_url ? (
                 <img
-                  src={listing.images[0]}
+                  src={listing.image_url}
                   alt="Storage Space"
                   style={styles.mainImage}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/assets/placeholder.jpg';
+                  }}
                 />
+              ) : (
+                <div style={{
+                  ...styles.mainImage,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#888',
+                  fontStyle: 'italic'
+                }}>
+                  No image available
+                </div>
               )}
             </div>
 
@@ -757,6 +773,8 @@ const styles = {
     width: '100%',
     height: 'auto',
     objectFit: 'cover',
+    minHeight: '250px',
+    backgroundColor: '#f8f8f8'
   },
   infoSection: {
     display: 'flex',
