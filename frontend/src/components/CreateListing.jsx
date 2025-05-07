@@ -421,7 +421,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         start_date: formData.start_date,
         end_date: formData.end_date,
         cost: Number(formData.cost),
-        sq_ft: formData.sq_ft ? Number(formData.sq_ft) : undefined,
+        sq_ft: formData.sq_ft ? String(formData.sq_ft) : undefined,
         remaining_space: formData.sq_ft ? Number(formData.sq_ft) : undefined,
         latitude: formData.latitude ? Number(formData.latitude) : undefined,
         longitude: formData.longitude ? Number(formData.longitude) : undefined,
@@ -429,7 +429,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         hall_name: formData.hall_name || '',
         is_available: true,
       };
-      // owner_id is likely set by backend from session, so not included here
+      // owner_id, created_at, lender_avg_rating are set by backend
       console.log('Submitting listing payload:', payload);
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/listings`, {
         method: 'POST',
