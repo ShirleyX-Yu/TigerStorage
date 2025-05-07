@@ -970,7 +970,7 @@ const Map = () => {
                 </Box>
               )}
               {showReservationForm && selectedListing && (
-                <form onSubmit={async (e) => {
+                <form id="reservation-form" onSubmit={async (e) => {
                   e.preventDefault();
                   let space = reservationMode === 'full' ? (selectedListing.sq_ft ?? 0) : Number(reservationSpace);
                   if (reservationMode === 'partial') {
@@ -1062,9 +1062,6 @@ const Map = () => {
                   {(reservationLocalError || reservationError) && <Alert severity="error" style={{ marginBottom: 8 }}>{reservationLocalError || reservationError}</Alert>}
                   <DialogActions style={{ padding: '16px 0 0 0', background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
                     <Button onClick={() => setShowReservationForm(false)} disabled={reservationLoading} style={{ color: '#888', fontWeight: 600 }}>Cancel</Button>
-                    <Button type="submit" variant="contained" style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }} disabled={reservationLoading}>
-                      {reservationLoading ? 'Submitting...' : 'Submit'}
-                    </Button>
                   </DialogActions>
                 </form>
               )}
@@ -1081,7 +1078,6 @@ const Map = () => {
                 style={{ color: '#888' }}>
                 Close
               </Button>
-              
               <Button
                 onClick={() => {
                   if (selectedListing) navigate(`/listing/${selectedListing.listing_id || selectedListing.id}`);
@@ -1091,24 +1087,36 @@ const Map = () => {
               >
                 View Details
               </Button>
-              <Button
-                onClick={() => handleToggleInterest(selectedListing)}
-                style={{
-                  background: selectedListing && selectedListing.isInterested ? '#f44336' : '#FF6B00',
-                  color: 'white',
-                  border: 'none',
-                  fontWeight: 600
-                }}
-                variant="contained"
-                disabled={interestLoading}
-              >
-                {interestLoading
-                  ? "Processing..."
-                  : selectedListing && selectedListing.isInterested
-                    ? "Cancel Request"
-                    : "Request Space"}
-              </Button>
-
+              {!showReservationForm && (
+                <Button
+                  onClick={() => handleToggleInterest(selectedListing)}
+                  style={{
+                    background: selectedListing && selectedListing.isInterested ? '#f44336' : '#FF6B00',
+                    color: 'white',
+                    border: 'none',
+                    fontWeight: 600
+                  }}
+                  variant="contained"
+                  disabled={interestLoading}
+                >
+                  {interestLoading
+                    ? "Processing..."
+                    : selectedListing && selectedListing.isInterested
+                      ? "Cancel Request"
+                      : "Request Space"}
+                </Button>
+              )}
+              {showReservationForm && (
+                <Button
+                  type="submit"
+                  form="reservation-form"
+                  style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }}
+                  variant="contained"
+                  disabled={reservationLoading}
+                >
+                  {reservationLoading ? 'Submitting...' : 'Submit'}
+                </Button>
+              )}
             </DialogActions>
           </Dialog>
 
