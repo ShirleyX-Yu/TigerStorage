@@ -547,6 +547,7 @@ const Map = () => {
   const handleToggleInterest = async (listing) => {
     try {
       setInterestLoading(true);
+      setInterestError(null); // Clear any previous errors
       const userType = sessionStorage.getItem('userType') || 'renter';
       const username = sessionStorage.getItem('username') || '';
       
@@ -589,14 +590,13 @@ const Map = () => {
               )
             );
             
-            // If this was the selected listing, update it too
-            if (selectedListing && selectedListing.id === listing.id) {
-              setSelectedListing({...selectedListing, isInterested: false});
+            // Update the selected listing ID's isInterested property
+            if (selectedListingId && selectedListingId === listing.id) {
+              // Show success message inside the modal
+              setInterestSuccess(true);
+              setLastInterestAction('remove');
+              setTimeout(() => setInterestSuccess(false), 2000);
             }
-            
-            // Show success message
-            setMessage({ type: 'success', text: 'Reservation request cancelled!' });
-            setTimeout(() => setMessage(null), 2000);
           }
         }
       } else {
@@ -624,22 +624,22 @@ const Map = () => {
           )
         );
         
-        // If this was the selected listing, update it too
-        if (selectedListing && selectedListing.id === listing.id) {
-          setSelectedListing({...selectedListing, isInterested: true});
+        // Update the selected listing ID's isInterested property
+        if (selectedListingId && selectedListingId === listing.id) {
+          // Show success message inside the modal
+          setInterestSuccess(true);
+          setLastInterestAction('add');
+          setTimeout(() => setInterestSuccess(false), 2000);
         }
-        
-        // Show success message
-        setMessage({ type: 'success', text: 'Reservation request submitted!' });
-        setTimeout(() => setMessage(null), 2000);
       }
       
       // Optionally refresh data from server
       // await fetchListings();
     } catch (error) {
       console.error('Error toggling interest:', error);
-      setMessage({ type: 'error', text: error.response?.data?.error || 'Error updating request' });
-      setTimeout(() => setMessage(null), 2000);
+      // Show error inside the modal
+      setInterestError(error.response?.data?.error || 'Error updating request');
+      setTimeout(() => setInterestError(null), 3000);
     } finally {
       setInterestLoading(false);
     }
@@ -993,8 +993,15 @@ const Map = () => {
                     setLastInterestAction('add');
                     setTimeout(() => setInterestSuccess(false), 2000);
                     
+                    // Update the listings immediately
+                    setListings(currentListings => 
+                      currentListings.map(l => 
+                        l.id === (selectedListing.listing_id || selectedListing.id) ? {...l, isInterested: true} : l
+                      )
+                    );
+                    
                     // Refresh listings to update UI
-                    await fetchListings();
+                    // await fetchListings();
                   } catch (error) {
                     const errorData = error.response?.data || {};
                     setReservationError(errorData.error || 'Failed to submit reservation request');
@@ -1115,7 +1122,6 @@ const Map = () => {
                   value={reportReason}
                   onChange={e => setReportReason(e.target.value)}
                   disabled={reportSuccess}
-                  displayEmpty
                   style={{ width: '100%', marginTop: 16, background: '#fff', borderRadius: 8, fontSize: 16, border: '1.5px solid #FF6B00', color: '#444', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
                   inputProps={{ 'aria-label': 'Reason' }}
                 >
