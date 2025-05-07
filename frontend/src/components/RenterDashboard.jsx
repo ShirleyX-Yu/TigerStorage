@@ -51,9 +51,22 @@ const getStatusColor = (status) => {
 const RenterDashboard = ({ username }) => {
   const navigate = useNavigate();
   const { interestedListings: interestedSpaces, loading, error, refreshInterestedListings } = useRenterInterest();
+  const [removing, setRemoving] = useState(false);
   
   const openMap = () => {
     navigate('/map');
+  };
+
+  const removeRequest = async (listingId) => {
+    try {
+      setRemoving(true);
+      await axiosInstance.delete(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}/interest`);
+      await refreshInterestedListings();
+    } catch (err) {
+      console.error('Error removing request:', err);
+    } finally {
+      setRemoving(false);
+    }
   };
 
   return (
@@ -176,12 +189,21 @@ const RenterDashboard = ({ username }) => {
                         </span>
                       </td>
                       <td style={styles.td}>
-                        <button 
-                          style={styles.viewButton}
-                          onClick={() => navigate(`/listing/${space.id}`)}
-                        >
-                          View Details
-                        </button>
+                        <div style={styles.actionButtons}>
+                          <button 
+                            style={styles.viewButton}
+                            onClick={() => navigate(`/listing/${space.id}`)}
+                          >
+                            View Details
+                          </button>
+                          <button 
+                            style={styles.removeButton}
+                            onClick={() => removeRequest(space.id)}
+                            disabled={removing}
+                          >
+                            {removing ? 'Removing...' : 'Remove Request'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -295,6 +317,11 @@ const styles = {
     fontSize: '0.9rem',
     fontWeight: '500',
   },
+  actionButtons: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+  },
   viewButton: {
     backgroundColor: '#f57c00',
     color: 'white',
@@ -304,6 +331,22 @@ const styles = {
     cursor: 'pointer',
     fontSize: '0.9rem',
     fontWeight: '500',
+    width: '100%',
+  },
+  removeButton: {
+    backgroundColor: '#d32f2f',
+    color: 'white',
+    border: 'none',
+    padding: '0.5rem 1rem',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '0.9rem',
+    fontWeight: '500',
+    width: '100%',
+    '&:disabled': {
+      backgroundColor: '#ccc',
+      cursor: 'not-allowed',
+    },
   },
   error: {
     color: 'red',
