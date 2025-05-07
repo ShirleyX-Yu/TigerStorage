@@ -232,15 +232,15 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             longitude: lon
           });
           setShowAddressConfirm(true);
-          setGeocodingStatus('');
+          setGeocodingStatus('✅ Location found successfully!');
           setAddressNotFound(false);
         } else {
-          setGeocodingStatus('');
+          setGeocodingStatus('❌ Could not find this hall. Please try another.');
           setAddressNotFound(true);
           setCustomAddressError('Could not find this hall on Princeton campus. Please try being more specific.');
         }
       } catch (err) {
-        setGeocodingStatus('');
+        setGeocodingStatus('❌ Error looking up location. Please try again.');
         setAddressNotFound(true);
         setCustomAddressError('Error looking up address. Please try again.');
       }
@@ -269,15 +269,15 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             longitude: lon
           });
           setShowAddressConfirm(true);
-          setGeocodingStatus('');
+          setGeocodingStatus('✅ Location found successfully!');
           setAddressNotFound(false);
         } else {
-          setGeocodingStatus('');
+          setGeocodingStatus('❌ No location found. Check that you entered the correct address.');
           setAddressNotFound(true);
           setCustomAddressError('No location found. Check that you entered the correct address.');
         }
       } catch (err) {
-        setGeocodingStatus('');
+        setGeocodingStatus('❌ Error looking up location. Please try again.');
         setAddressNotFound(true);
         setCustomAddressError('Error looking up address. Please try again.');
       }
@@ -459,14 +459,39 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                   <select
                     style={styles.input}
                     value={tempAddress}
-                    onChange={e => {
-                      setTempAddress(e.target.value);
+                    onChange={async (e) => {
+                      const selectedHall = e.target.value;
+                      setTempAddress(selectedHall);
                       setFormData(prev => ({
                         ...prev,
-                        hall_name: e.target.value
+                        hall_name: selectedHall
                       }));
-                      if (e.target.value) {
-                        geocodeAddress({});
+                      
+                      if (selectedHall) {
+                        setGeocodingStatus('Looking up coordinates...');
+                        try {
+                          const searchAddress = `${selectedHall}, Princeton University, Princeton, NJ 08544, USA`;
+                          const response = await fetch(
+                            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
+                          );
+                          if (!response.ok) throw new Error('Failed to fetch coordinates');
+                          const data = await response.json();
+                          
+                          if (data.length > 0) {
+                            const { lat, lon, display_name } = data[0];
+                            setFormData(prev => ({
+                              ...prev,
+                              address: display_name,
+                              latitude: lat,
+                              longitude: lon
+                            }));
+                            setGeocodingStatus('✅ Location found successfully!');
+                          } else {
+                            setGeocodingStatus('❌ Could not find this hall. Please try another.');
+                          }
+                        } catch (err) {
+                          setGeocodingStatus('❌ Error looking up location. Please try again.');
+                        }
                       }
                     }}
                     required
@@ -476,7 +501,16 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                       <option key={hall} value={hall}>{hall}</option>
                     ))}
                   </select>
-                  {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
+                  {geocodingStatus && (
+                    <div style={{
+                      ...styles.geocodingStatus,
+                      color: geocodingStatus.includes('✅') ? '#4caf50' : 
+                             geocodingStatus.includes('❌') ? '#d32f2f' : 
+                             '#666'
+                    }}>
+                      {geocodingStatus}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
