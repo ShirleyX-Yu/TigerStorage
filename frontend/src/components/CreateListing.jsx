@@ -161,6 +161,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const [pendingAddress, setPendingAddress] = useState(null);
   const [addressNotFound, setAddressNotFound] = useState(false);
   const [customAddressError, setCustomAddressError] = useState('');
+  const [isAddressConfirmed, setIsAddressConfirmed] = useState(false);
 
   useEffect(() => {
     if (error && errorRef.current) {
@@ -260,43 +261,11 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const handleConfirmAddress = () => {
     if (pendingAddress) {
       if (locationType === 'off-campus') {
-        // Parse the display_name to extract address components
         const displayName = pendingAddress.address || '';
-        console.log('Display Name:', displayName);
         const parts = displayName.split(',').map(s => s.trim());
-        console.log('Parts:', parts);
-        
-        // Extract street number and name from the first part
-        const firstPart = parts[0] || '';
-        console.log('First Part:', firstPart);
-        
-        // Updated regex to handle various address formats including abbreviations
-        const streetMatch = firstPart.match(/^(\d+)(?:\s+|\s*,\s*)([A-Za-z\s\.]+)$/);
-        console.log('Street Match:', streetMatch);
-        
-        let street = firstPart;
-        if (streetMatch) {
-          // Reformat as "Street Name Number"
-          street = `${streetMatch[2].trim()} ${streetMatch[1]}`;
-          console.log('Formatted Street:', street);
-        } else {
-          // If regex doesn't match, try to extract number and street name manually
-          const numberMatch = firstPart.match(/^(\d+)/);
-          if (numberMatch) {
-            const number = numberMatch[1];
-            const streetName = firstPart.substring(numberMatch[0].length).trim();
-            if (streetName) {
-              street = `${streetName} ${number}`;
-              console.log('Manually Formatted Street:', street);
-            }
-          }
-        }
-        
+        let street = parts[0] || formData.street_address;
         let city = parts.find(p => p.toLowerCase() === formData.city.toLowerCase()) || formData.city;
         let zip = parts.find(p => /^\d{5}$/.test(p)) || formData.zip_code;
-        
-        console.log('Final Street Address:', street);
-        
         setFormData(prev => ({
           ...prev,
           address: pendingAddress.address,
@@ -306,6 +275,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
           latitude: pendingAddress.latitude,
           longitude: pendingAddress.longitude
         }));
+        setIsAddressConfirmed(true);
       } else {
         setFormData(prev => ({
           ...prev,
@@ -320,8 +290,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   };
 
   const handleEditAddress = () => {
-    setShowAddressConfirm(false);
-    setPendingAddress(null);
+    setIsAddressConfirmed(false);
   };
 
   const handleImageUpload = async (e) => {
@@ -401,25 +370,63 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       setError('Please fill in all required fields');
       return;
     }
-    if (locationType === 'off-campus' && (!formData.street_address || !formData.city || !formData.zip_code)) {
-      setError('Please fill in all address fields for off-campus locations.');
-      return;
-    }
-    if (!formData.latitude || !formData.longitude) {
-      setError('Please locate a valid address before submitting.');
-      return;
+    if (locationType === 'off-campus') {
+      if (!formData.street_address || !formData.city || !formData.zip_code) {
+        setError('Please fill in all address fields for off-campus locations.');
+        return;
+      }
+      if (!formData.latitude || !formData.longitude) {
+        setError('Please locate a valid address before submitting.');
+        return;
+      }
+    } else {
+      // For on-campus, check if hall is selected and has coordinates
+      if (!formData.hall_name) {
+        setError('Please select a residential hall.');
+        return;
+      }
+      if (!formData.latitude || !formData.longitude) {
+        const hallCoords = HALL_COORDINATES[formData.hall_name];
+        if (hallCoords) {
+          setFormData(prev => ({
+            ...prev,
+            latitude: hallCoords.lat,
+            longitude: hallCoords.lng,
+            address: formData.hall_name,
+            street_address: formData.hall_name,
+            city: 'Princeton',
+            zip_code: '08544'
+          }));
+        } else {
+          setError('Invalid hall selected. Please try again.');
+          return;
+        }
+      }
     }
 
     try {
+      // First get the CSRF token
+      const csrfResponse = await axiosInstance.get('/api/csrf-token');
+      const csrfToken = csrfResponse.data.csrf_token;
+
+      const requestData = {
+        ...formData,
+        location: formData.title,
+        squareFeet: formData.sq_ft,
+        sq_ft: formData.sq_ft, // Include both for backward compatibility
+        cost: Number(formData.cost),
+        latitude: Number(formData.latitude),
+        longitude: Number(formData.longitude)
+      };
+
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/listings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
         credentials: 'include',
-        body: JSON.stringify({
-          ...formData,
-          location: formData.title,
-          squareFeet: formData.sq_ft
-        }),
+        body: JSON.stringify(requestData),
       });
       if (!res.ok) {
         const errData = await res.json();
@@ -428,9 +435,14 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       const data = await res.json();
       onSuccess ? onSuccess() : navigate(`/listing/${data.listing_id}`);
     } catch (err) {
+      console.error('Error creating listing:', err);
       let errorMessage = "We couldn't create your listing. Please check your information and try again.";
       if (err.response?.data?.error) {
         errorMessage = err.response.data.error.replace(/Error:\s*/, '');
+      } else if (err.response?.data?.description) {
+        errorMessage = err.response.data.description;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       setError(errorMessage);
     }
@@ -470,7 +482,20 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             <select
               style={styles.input}
               value={formData.hall_name}
-              onChange={e => setFormData(prev => ({ ...prev, hall_name: e.target.value }))}
+              onChange={e => {
+                const hallName = e.target.value;
+                const hallCoords = HALL_COORDINATES[hallName];
+                setFormData(prev => ({
+                  ...prev,
+                  hall_name: hallName,
+                  address: hallName,
+                  street_address: hallName,
+                  city: 'Princeton',
+                  zip_code: '08544',
+                  latitude: hallCoords ? hallCoords.lat : '',
+                  longitude: hallCoords ? hallCoords.lng : ''
+                }));
+              }}
               required
             >
               <option value="">Select a hall...</option>
@@ -482,96 +507,117 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         )}
         {locationType === 'on-campus' ? null : (
           <div style={styles.formGroup}>
-            <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
-            {addressNotFound && customAddressError && (
-              <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
-                {customAddressError}
-              </div>
-            )}
-            <input
-              style={styles.input}
-              type="text"
-              value={formData.street_address || ''}
-              onChange={(e) => {
-                setFormData(prev => ({
-                  ...prev,
-                  street_address: e.target.value
-                }));
-                if (addressNotFound) setAddressNotFound(false);
-              }}
-              placeholder="Enter street address"
-              required
-            />
-            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-              <div style={{ flex: 1 }}>
-                <label style={styles.label}>City <span style={{color: '#b00020'}}>*</span></label>
+            {!isAddressConfirmed ? (
+              <>
+                <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
+                {addressNotFound && customAddressError && (
+                  <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
+                    {customAddressError}
+                  </div>
+                )}
                 <input
                   style={styles.input}
                   type="text"
-                  value={formData.city || ''}
+                  value={formData.street_address || ''}
                   onChange={(e) => {
                     setFormData(prev => ({
                       ...prev,
-                      city: e.target.value
+                      street_address: e.target.value
                     }));
                     if (addressNotFound) setAddressNotFound(false);
                   }}
-                  placeholder="Enter city"
+                  placeholder="Enter street address"
                   required
                 />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={styles.label}>State</label>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={styles.label}>City <span style={{color: '#b00020'}}>*</span></label>
+                    <input
+                      style={styles.input}
+                      type="text"
+                      value={formData.city || ''}
+                      onChange={(e) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          city: e.target.value
+                        }));
+                        if (addressNotFound) setAddressNotFound(false);
+                      }}
+                      placeholder="Enter city"
+                      required
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={styles.label}>State</label>
+                    <input
+                      style={styles.input}
+                      type="text"
+                      value="NJ"
+                      disabled
+                    />
+                  </div>
+                </div>
+                <div style={{ marginTop: '10px' }}>
+                  <label style={styles.label}>ZIP Code <span style={{color: '#b00020'}}>*</span></label>
+                  <input
+                    style={styles.input}
+                    type="text"
+                    value={formData.zip_code || ''}
+                    onChange={(e) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        zip_code: e.target.value
+                      }));
+                      if (addressNotFound) setAddressNotFound(false);
+                    }}
+                    placeholder="Enter ZIP code"
+                    required
+                  />
+                </div>
+                <div style={{ marginTop: '10px' }}>
+                  <label style={styles.label}>Country</label>
+                  <input
+                    style={styles.input}
+                    type="text"
+                    value="USA"
+                    disabled
+                  />
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => geocodeAddress()}
+                  style={{...styles.geocodeButton, marginTop: '20px', width: '100%'}}
+                >
+                  Locate Address
+                </button>
+                {geocodingStatus && (
+                  <div style={{
+                    ...styles.geocodingStatus,
+                    color: geocodingStatus.includes('✅') ? '#4caf50' : 
+                           geocodingStatus.includes('❌') ? '#d32f2f' : 
+                           '#666'
+                  }}>
+                    {geocodingStatus}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <label style={styles.label}>Confirmed Address</label>
                 <input
-                  style={styles.input}
+                  style={{...styles.input, backgroundColor: '#f5f5f5'}}
                   type="text"
-                  value="NJ"
-                  disabled
+                  value={formData.address}
+                  readOnly
                 />
-              </div>
-            </div>
-            <div style={{ marginTop: '10px' }}>
-              <label style={styles.label}>ZIP Code <span style={{color: '#b00020'}}>*</span></label>
-              <input
-                style={styles.input}
-                type="text"
-                value={formData.zip_code || ''}
-                onChange={(e) => {
-                  setFormData(prev => ({
-                    ...prev,
-                    zip_code: e.target.value
-                  }));
-                  if (addressNotFound) setAddressNotFound(false);
-                }}
-                placeholder="Enter ZIP code"
-                required
-              />
-            </div>
-            <div style={{ marginTop: '10px' }}>
-              <label style={styles.label}>Country</label>
-              <input
-                style={styles.input}
-                type="text"
-                value="USA"
-                disabled
-              />
-            </div>
-            <button 
-              type="button" 
-              onClick={() => geocodeAddress()}
-              style={{...styles.geocodeButton, marginTop: '20px', width: '100%'}}
-            >
-              Locate Address
-            </button>
-            {geocodingStatus && (
-              <div style={{
-                ...styles.geocodingStatus,
-                color: geocodingStatus.includes('✅') ? '#4caf50' : 
-                       geocodingStatus.includes('❌') ? '#d32f2f' : 
-                       '#666'
-              }}>
-                {geocodingStatus}
-              </div>
+                <button 
+                  type="button" 
+                  onClick={handleEditAddress}
+                  style={{...styles.geocodeButton, marginTop: '20px', width: '100%', backgroundColor: '#666'}}
+                >
+                  Edit Address
+                </button>
+              </>
             )}
           </div>
         )}
