@@ -1441,83 +1441,53 @@ def get_my_reservation_requests():
                 print("[RESERVATION REQUESTS] reservation_requests table does not exist")
                 return jsonify([]), 200
             
-            # Get column names from the reservation_requests table
-            cur.execute("""
-                SELECT column_name 
-                FROM information_schema.columns 
-                WHERE table_name = 'reservation_requests';
-            """)
-            available_columns = [col[0] for col in cur.fetchall()]
-            print(f"[RESERVATION REQUESTS] Available columns: {available_columns}")
-            
-            # Get column names from the storage_listings table
-            cur.execute("""
-                SELECT column_name 
-                FROM information_schema.columns 
-                WHERE table_name = 'storage_listings';
-            """)
-            listing_columns = [col[0] for col in cur.fetchall()]
-            print(f"[RESERVATION REQUESTS] Available listing columns: {listing_columns}")
-            
-            # Build dynamic query based on available columns
-            select_fields = ['r.request_id', 'r.listing_id']
-            
-            # Add reservation request fields if they exist
-            reservation_fields = [
-                'renter_username', 'requested_space', 'approved_space', 'status', 
-                'created_at', 'updated_at', 'start_date', 'end_date'
-            ]
-            for field in reservation_fields:
-                if field in available_columns:
-                    select_fields.append(f'r.{field}')
-            
-            # Add listing fields if they exist
-            listing_fields = ['title', 'address', 'hall_name', 'sq_ft', 'cost', 'owner_id']
-            for field in listing_fields:
-                if field in listing_columns:
-                    select_fields.append(f'l.{field}')
-            
-            # Construct the final query
-            fields_str = ", ".join(select_fields)
-            query = f"""
-                SELECT {fields_str}
-                FROM reservation_requests r
-                JOIN storage_listings l ON r.listing_id = l.listing_id
-                WHERE r.renter_username = %s
-                ORDER BY r.created_at DESC
-            """
-            
-            print(f"[RESERVATION REQUESTS] Executing query: {query}")
-        
+            # Simplified query that explicitly includes dates
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             try:
+                # Use a simpler query that explicitly pulls the fields we need
+                query = """
+                    SELECT 
+                        r.request_id, 
+                        r.listing_id,
+                        r.renter_username, 
+                        r.requested_space, 
+                        r.approved_space, 
+                        r.status, 
+                        r.created_at, 
+                        r.updated_at,
+                        l.title, 
+                        l.address, 
+                        l.hall_name, 
+                        l.sq_ft, 
+                        l.cost, 
+                        l.owner_id,
+                        l.start_date,
+                        l.end_date,
+                        l.image_url
+                    FROM reservation_requests r
+                    JOIN storage_listings l ON r.listing_id = l.listing_id
+                    WHERE r.renter_username = %s
+                    ORDER BY r.created_at DESC
+                """
+                
+                print(f"[RESERVATION REQUESTS] Executing query: {query}")
                 cursor.execute(query, (username,))
                 requests = cursor.fetchall()
                 print(f"[RESERVATION REQUESTS] Found {len(requests)} requests")
                 
-                # Convert result to list of dicts
+                # Debug the first request's dates
+                if requests and len(requests) > 0:
+                    first_req = requests[0]
+                    print(f"[RESERVATION REQUESTS] First request dates: start_date={first_req.get('start_date')}, end_date={first_req.get('end_date')}")
+                
+                # Convert all date objects to ISO strings for proper JSON serialization
                 result = []
                 for req in requests:
                     item = dict(req)
-                    
-                    # If owner_id exists in the result, use it as lender_username to maintain backwards compatibility
-                    if 'owner_id' in item:
-                        item['lender_username'] = item['owner_id']
-                    
-                    # Convert numeric fields
-                    for field in ['cost', 'requested_space', 'approved_space', 'sq_ft']:
-                        if field in item and item[field] is not None:
-                            try:
-                                item[field] = float(item[field])
-                            except (ValueError, TypeError):
-                                # If conversion fails, keep original value
-                                pass
-                    
                     # Convert date fields to ISO format
                     for field in ['created_at', 'updated_at', 'start_date', 'end_date']:
                         if field in item and item[field] is not None and hasattr(item[field], 'isoformat'):
                             item[field] = item[field].isoformat()
-                    
                     result.append(item)
                 
                 return jsonify(result)

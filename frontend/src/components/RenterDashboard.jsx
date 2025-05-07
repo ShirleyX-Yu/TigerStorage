@@ -56,26 +56,63 @@ function formatDate(dateStr) {
     // Log date for debugging
     console.log('Formatting date:', dateStr, 'Type:', typeof dateStr);
     
-    // Handle ISO format dates (YYYY-MM-DD)
-    if (typeof dateStr === 'string' && dateStr.includes('-')) {
-      const parts = dateStr.split('T')[0].split('-');
-      if (parts.length === 3) {
-        const [year, month, day] = parts;
-        if (year && month && day) {
-          return `${month}/${day}/${year}`;
+    // Handle date objects directly
+    if (dateStr instanceof Date) {
+      return dateStr.toLocaleDateString();
+    }
+    
+    // If it's an object with a string representation
+    if (typeof dateStr === 'object' && dateStr !== null) {
+      if (dateStr.toString) {
+        console.log('Converting object to string:', dateStr.toString());
+        dateStr = dateStr.toString();
+      } else {
+        // Try to extract properties that might contain the date
+        for (const key of ['date', 'value', 'timestamp']) {
+          if (dateStr[key]) {
+            console.log(`Found date in object property '${key}':`, dateStr[key]);
+            return formatDate(dateStr[key]);
+          }
         }
       }
     }
     
-    // Handle non-standard formats
-    const date = new Date(dateStr);
-    if (!isNaN(date.getTime())) {
-      // Valid date object
-      return date.toLocaleDateString();
+    // Handle ISO format dates (YYYY-MM-DD)
+    if (typeof dateStr === 'string') {
+      // First try parsing as ISO format
+      if (dateStr.includes('-')) {
+        const parts = dateStr.split('T')[0].split('-');
+        if (parts.length === 3) {
+          const [year, month, day] = parts;
+          if (year && month && day) {
+            return `${month}/${day}/${year}`;
+          }
+        }
+      }
+      
+      // Also try direct date parsing
+      const date = new Date(dateStr);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString();
+      }
     }
     
-    // Fallback
-    return dateStr;
+    // Handle timestamp numbers
+    if (typeof dateStr === 'number' || (typeof dateStr === 'string' && !isNaN(Number(dateStr)))) {
+      const timestamp = Number(dateStr);
+      // Check if it looks like a reasonable timestamp
+      if (timestamp > 1000000000000) { // Milliseconds timestamp
+        const date = new Date(timestamp);
+        return date.toLocaleDateString();
+      } else if (timestamp > 1000000000) { // Seconds timestamp
+        const date = new Date(timestamp * 1000);
+        return date.toLocaleDateString();
+      }
+    }
+    
+    // Fallback - return as is
+    console.log('Using fallback date format');
+    return String(dateStr);
   } catch (e) {
     console.error('Error formatting date:', e, dateStr);
     return 'Invalid date';
@@ -110,65 +147,101 @@ const RenterDashboard = ({ username }) => {
         if (response.data && Array.isArray(response.data)) {
           console.log('Received reservation requests:', response.data);
           
+          // Check for dates structure before processing
+          if (response.data.length > 0) {
+            const firstItem = response.data[0];
+            console.log('First item in API response:', firstItem);
+            console.log('Date properties in first item:', {
+              directStartDate: firstItem.start_date,
+              directEndDate: firstItem.end_date,
+              nestedStartDate: firstItem.listing?.start_date,
+              nestedEndDate: firstItem.listing?.end_date,
+              hasListingProperty: 'listing' in firstItem,
+              hasDirectStartDate: 'start_date' in firstItem,
+              hasDirectEndDate: 'end_date' in firstItem
+            });
+          }
+          
           // Process the data to ensure all fields are properly converted
           const processedRequests = response.data.map(req => {
+            // Make a copy of the entire object first to avoid mutation
+            const processed = { ...req };
+            
             // Handle numeric fields
-            const cost = typeof req.cost === 'string' ? parseFloat(req.cost) : req.cost || 0;
-            const requested_space = typeof req.requested_space === 'string' 
+            processed.cost = typeof req.cost === 'string' ? parseFloat(req.cost) : req.cost || 0;
+            processed.requested_space = typeof req.requested_space === 'string' 
               ? parseFloat(req.requested_space) 
               : req.requested_space || 0;
-            const approved_space = typeof req.approved_space === 'string' 
+            processed.approved_space = typeof req.approved_space === 'string' 
               ? parseFloat(req.approved_space) 
               : req.approved_space || 0;
             
             // Handle different date formats and locations in API response
-            let start_date = null;
-            let end_date = null;
-            
-            // Direct dates from request
+            // 1. Direct dates from request
             if (req.start_date) {
-              start_date = req.start_date;
+              processed.start_date = req.start_date;
             }
             if (req.end_date) {
-              end_date = req.end_date;
+              processed.end_date = req.end_date;
             }
             
-            // Dates might be in the listing object for some endpoints
-            if (!start_date && req.listing && req.listing.start_date) {
-              start_date = req.listing.start_date;
+            // 2. Dates might be in the listing object
+            if ((!processed.start_date || processed.start_date === null) && req.listing && req.listing.start_date) {
+              processed.start_date = req.listing.start_date;
             }
-            if (!end_date && req.listing && req.listing.end_date) {
-              end_date = req.listing.end_date;
+            if ((!processed.end_date || processed.end_date === null) && req.listing && req.listing.end_date) {
+              processed.end_date = req.listing.end_date;
             }
+            
+            // 3. Using date directly from the object in any location
+            if (!processed.start_date) {
+              // Try to find start_date anywhere in the object
+              for (const key in req) {
+                if (key.includes('start_date') && req[key]) {
+                  processed.start_date = req[key];
+                  break;
+                }
+              }
+            }
+            if (!processed.end_date) {
+              // Try to find end_date anywhere in the object
+              for (const key in req) {
+                if (key.includes('end_date') && req[key]) {
+                  processed.end_date = req[key];
+                  break;
+                }
+              }
+            }
+            
+            // Ensure these string fields exist
+            processed.title = req.title || 'Unnamed Space';
+            processed.lender_username = req.lender_username || req.owner_id || 'Unknown Lender';
+            processed.status = req.status || 'unknown';
             
             // Debug the date values
-            console.log(`Request ${req.request_id} dates:`, { 
-              start_date, 
-              end_date,
+            console.log(`Request ${processed.request_id} dates:`, { 
+              start_date: processed.start_date, 
+              end_date: processed.end_date,
               original_start: req.start_date,
               original_end: req.end_date,
               listing_start: req.listing?.start_date,
               listing_end: req.listing?.end_date
             });
             
-            return {
-              ...req,
-              cost,
-              requested_space,
-              approved_space,
-              // Ensure these string fields exist
-              title: req.title || 'Unnamed Space',
-              lender_username: req.lender_username || req.owner_id || 'Unknown Lender',
-              status: req.status || 'unknown',
-              // Use our processed dates
-              start_date,
-              end_date
-            };
+            return processed;
           });
           
           // Log the first processed item
           if (processedRequests.length > 0) {
             console.log('First processed request:', processedRequests[0]);
+            console.log('Date fields in first processed request:', {
+              startDate: processedRequests[0].start_date,
+              endDate: processedRequests[0].end_date,
+              startDateType: typeof processedRequests[0].start_date,
+              endDateType: typeof processedRequests[0].end_date,
+              formattedStartDate: formatDate(processedRequests[0].start_date),
+              formattedEndDate: formatDate(processedRequests[0].end_date)
+            });
           }
           
           setMyRequests(processedRequests);
@@ -251,8 +324,13 @@ const RenterDashboard = ({ username }) => {
       console.log('Approved requests with date info:', approvedRequests.map(req => ({
         id: req.request_id,
         title: req.title,
+        status: req.status,
         start_date: req.start_date,
-        end_date: req.end_date
+        end_date: req.end_date,
+        hasStartDate: !!req.start_date,
+        hasEndDate: !!req.end_date,
+        startDateType: typeof req.start_date,
+        endDateType: typeof req.end_date
       })));
     }
   }, [approvedRequests]);
@@ -317,12 +395,15 @@ const RenterDashboard = ({ username }) => {
                           : `${request.requested_space || 0} sq ft`}
                       </td>
                       <td style={styles.td}>
-                        {request.start_date && request.end_date ? (
-                          `${formatDate(request.start_date)} - ${formatDate(request.end_date)}`
-                        ) : request.start_date ? (
-                          `From: ${formatDate(request.start_date)}`
-                        ) : request.end_date ? (
-                          `Until: ${formatDate(request.end_date)}`
+                        {(request.start_date || request.end_date) ? (
+                          <div>
+                            {request.start_date && 
+                              <div>{`Start: ${formatDate(request.start_date)}`}</div>
+                            }
+                            {request.end_date && 
+                              <div>{`End: ${formatDate(request.end_date)}`}</div>
+                            }
+                          </div>
                         ) : (
                           <span style={{ color: '#888', fontStyle: 'italic' }}>Dates not specified</span>
                         )}
