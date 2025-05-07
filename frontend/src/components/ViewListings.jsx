@@ -656,15 +656,14 @@ const ViewListings = () => {
                             <span style={styles.lenderInfo}>Lender: Owner #{listing.owner_id}</span>
                           </div>
                           <div style={styles.actionButtons}>
-                            <button 
+                            <button
                               style={{
                                 ...styles.interestButton,
-                                backgroundColor: isInterested ? '#4caf50' : '#FF8F00'
+                                backgroundColor: '#f57c00'
                               }}
                               onClick={() => toggleInterest(listing.id)}
                             >
-                              <i className={`fas ${isInterested ? 'fa-check' : 'fa-heart'}`}></i>
-                              {isInterested ? 'Requested' : 'Request'}
+                              {listing.isInterested ? 'Remove Request' : '+ Request Space'}
                             </button>
                             <ReservationModal
                               open={reservationModalOpen}

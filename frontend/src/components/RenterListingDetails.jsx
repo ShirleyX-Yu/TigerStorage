@@ -594,12 +594,12 @@ const RenterListingDetails = () => {
                   <button
                     style={{
                       ...styles.interestButton,
-                      backgroundColor: listing.isInterested ? '#4caf50' : '#f57c00'
+                      backgroundColor: '#f57c00'
                     }}
                     onClick={handleToggleInterest}
                   >
                     {isAuthenticated
-                      ? (listing.isInterested ? '✓ Space Requested' : '+ Request Space')
+                      ? (listing.isInterested ? 'Remove Request' : '+ Request Space')
                       : 'Login to Request Space'}
                   </button>
                 </div>
