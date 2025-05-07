@@ -321,6 +321,7 @@ const ViewListings = () => {
     maxSize: 500,
     maxDistance: 50,
     minRating: 1,
+    includeUnrated: false,
   });
 
   const handleFilterChange = (key, value) => {
@@ -335,6 +336,7 @@ const ViewListings = () => {
       maxSize: 500,
       maxDistance: 50,
       minRating: 1,
+      includeUnrated: false,
     });
   };
 
@@ -349,12 +351,16 @@ const ViewListings = () => {
       const distance = listing.latitude && listing.longitude
         ? calculateDistance(40.3437, -74.6517, listing.latitude, listing.longitude)
         : 0;
-      const rating = listing.lender_avg_rating ?? 0;
+      const rating = listing.lender_avg_rating;
+      const hasRating = typeof rating === 'number' && !isNaN(rating);
       return (
         cost >= filters.minCost && cost <= filters.maxCost &&
         size >= filters.minSize && size <= filters.maxSize &&
         distance <= filters.maxDistance &&
-        rating >= filters.minRating
+        (
+          (hasRating && rating >= filters.minRating) ||
+          (filters.includeUnrated && !hasRating)
+        )
       );
     });
   };
@@ -521,6 +527,15 @@ const ViewListings = () => {
                         <span key={star} style={{ color: filters.minRating >= star ? '#fbc02d' : '#ccc', fontSize: 18 }}>★</span>
                       ))}
                       <span style={{ marginLeft: 8 }}>{filters.minRating} star{filters.minRating > 1 ? 's' : ''} & up</span>
+                      <label style={{ marginLeft: 16, display: 'flex', alignItems: 'center', fontSize: 13 }}>
+                        <input
+                          type="checkbox"
+                          checked={filters.includeUnrated}
+                          onChange={e => setFilters(f => ({ ...f, includeUnrated: e.target.checked }))}
+                          style={{ marginRight: 4 }}
+                        />
+                        N/A (Include unrated)
+                      </label>
                     </div>
                   </div>
                 </div>
