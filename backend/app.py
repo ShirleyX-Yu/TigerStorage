@@ -2057,21 +2057,6 @@ def get_csrf_token():
     )
     return response
 
-@app.route('/catch_all')
-def catch_all():
-    # Check if user is authenticated and is admin
-    if 'CAS_USERNAME' in session and session.get('CAS_USERNAME') == 'cs-tigerstorage':
-        session['user_type'] = 'admin'
-        return redirect('/admin')
-    elif 'CAS_USERNAME' in session:
-        # For non-admin users, redirect based on stored user type
-        user_type = session.get('user_type', 'lender')
-        if user_type == 'renter':
-            return redirect('/map')
-        else:
-            return redirect('/lender-dashboard')
-    return redirect('/')
-
 if __name__ == "__main__":
     args = parser.parse_args()
     app.debug = not args.production
