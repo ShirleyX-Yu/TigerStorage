@@ -406,14 +406,10 @@ const Map = () => {
           
           // Update the available listings with interest information
           setListings(listingsWithInterest);
-          
-          // Apply the current filter to these listings
-          applyFilters(listingsWithInterest);
         }
       } catch (error) {
         console.error('Error fetching reservation requests:', error);
         // Continue with listings even if we can't fetch reservation status
-        applyFilters(availableListings);
       }
     } catch (error) {
       console.error('Error fetching listings:', error);
