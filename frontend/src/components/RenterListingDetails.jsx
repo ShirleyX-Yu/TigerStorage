@@ -215,7 +215,11 @@ const RenterListingDetails = () => {
         }
       });
       const data = response.data;
-      // ...formatting as before...
+      
+      // Check interested status from global context instead of resetting it
+      const isInterested = interestedListings.some(l => String(l.id) === String(data.id));
+      
+      // Simple formatted listing with fallbacks for all properties
       const formattedListing = {
         id: data.id || id,
         title: data.title || 'Unknown Title',
@@ -236,7 +240,7 @@ const RenterListingDetails = () => {
           name: data.owner_id ? `Owner #${data.owner_id}` : 'Unknown Owner',
           email: 'contact@tigerstorage.com'
         },
-        isInterested: false, // skip for now
+        isInterested: isInterested, // Use value from context instead of defaulting to false
         lender_avg_rating: data.lender_avg_rating,
       };
       setListing(formattedListing);
