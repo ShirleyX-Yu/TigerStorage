@@ -329,7 +329,21 @@ const RenterListingDetails = () => {
         return;
       }
       console.log('Submitting reservation:', { requested_space, mode, listing });
-      await axiosInstance.post(apiUrl, { requested_space }, {
+      
+      // First submit the reservation request
+      await axiosInstance.post(`${apiUrl}/api/listings/${listing.id}/reserve`, { requested_space }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-User-Type': userType,
+          'X-Username': username,
+          'X-CSRFToken': getCSRFToken()
+        }
+      });
+      
+      // Then add interest
+      await axiosInstance.post(`${apiUrl}/api/listings/${listing.id}/interest`, {}, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
