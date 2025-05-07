@@ -416,6 +416,22 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             <option value="off-campus">Off Campus</option>
           </select>
         </div>
+        {locationType === 'on-campus' && (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
+            <select
+              style={styles.input}
+              value={formData.hall_name}
+              onChange={e => setFormData(prev => ({ ...prev, hall_name: e.target.value }))}
+              required
+            >
+              <option value="">Select a hall...</option>
+              {Object.keys(HALL_COORDINATES).map(hall => (
+                <option key={hall} value={hall}>{hall}</option>
+              ))}
+            </select>
+          </div>
+        )}
         {locationType === 'on-campus' ? null : (
           <div style={styles.formGroup}>
             <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
