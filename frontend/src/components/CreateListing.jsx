@@ -200,51 +200,85 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   };
 
   const geocodeAddress = async (addressOverride) => {
-    const addressToGeocode = addressOverride || tempAddress;
-    if (!addressToGeocode.trim()) {
-      setGeocodingStatus('Please enter an address');
-      return;
-    }
-    setGeocodingStatus('Looking up coordinates...');
-    
-    try {
-      const searchAddress =
-        locationType === 'on-campus'
-          ? `${addressToGeocode}, Princeton, NJ 08544`
-          : addressToGeocode;
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
-      );
-      if (!response.ok) throw new Error('Failed to fetch coordinates');
-      const data = await response.json();
-      if (data.length > 0) {
-        const { lat, lon, display_name } = data[0];
-        setPendingAddress({
-          address: display_name,
-          latitude: lat,
-          longitude: lon
-        });
-        setShowAddressConfirm(true);
-        setGeocodingStatus('');
-      } else if (locationType === 'on-campus' && HALL_COORDINATES[addressToGeocode]) {
-        // Fallback to manual mapping if not found by API
-        const { lat, lng } = HALL_COORDINATES[addressToGeocode];
-        setFormData(prev => ({
-          ...prev,
-          address: addressToGeocode,
-          street_address: addressToGeocode,
-          city: 'Princeton',
-          zip_code: '08544',
-          latitude: lat,
-          longitude: lng
-        }));
-        setGeocodingStatus('Coordinates found from hall mapping!');
-      } else {
-        setGeocodingStatus('Address not found. Try being more specific.');
+    if (locationType === 'on-campus') {
+      const addressToGeocode = addressOverride || tempAddress;
+      if (!addressToGeocode.trim()) {
+        setGeocodingStatus('Please select a hall');
+        return;
       }
-    } catch (error) {
-      console.error('Geocoding error:', error);
-      setGeocodingStatus('Error looking up address. Please try again.');
+      setGeocodingStatus('Looking up coordinates...');
+      
+      try {
+        const searchAddress = `${addressToGeocode}, Princeton, NJ 08544`;
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
+        );
+        if (!response.ok) throw new Error('Failed to fetch coordinates');
+        const data = await response.json();
+        if (data.length > 0) {
+          const { lat, lon, display_name } = data[0];
+          setPendingAddress({
+            address: display_name,
+            latitude: lat,
+            longitude: lon
+          });
+          setShowAddressConfirm(true);
+          setGeocodingStatus('');
+        } else if (HALL_COORDINATES[addressToGeocode]) {
+          // Fallback to manual mapping if not found by API
+          const { lat, lng } = HALL_COORDINATES[addressToGeocode];
+          setFormData(prev => ({
+            ...prev,
+            address: addressToGeocode,
+            street_address: addressToGeocode,
+            city: 'Princeton',
+            zip_code: '08544',
+            latitude: lat,
+            longitude: lng
+          }));
+          setGeocodingStatus('Coordinates found from hall mapping!');
+        } else {
+          setGeocodingStatus('Address not found. Try being more specific.');
+        }
+      } catch (error) {
+        console.error('Geocoding error:', error);
+        setGeocodingStatus('Error looking up address. Please try again.');
+      }
+    } else {
+      // For off-campus addresses
+      if (!formData.street_address || !formData.city || !formData.zip_code) {
+        setGeocodingStatus('Please fill in all address fields');
+        return;
+      }
+      setGeocodingStatus('Looking up coordinates...');
+      try {
+        const searchAddress = `${formData.street_address}, ${formData.city}, NJ ${formData.zip_code}, USA`;
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
+        );
+        if (!response.ok) throw new Error('Failed to fetch coordinates');
+        const data = await response.json();
+        
+        if (data.length > 0) {
+          const { lat, lon, display_name } = data[0];
+          setPendingAddress({
+            address: display_name,
+            latitude: lat,
+            longitude: lon
+          });
+          setShowAddressConfirm(true);
+          setGeocodingStatus('✅ Location found successfully!');
+          setAddressNotFound(false);
+        } else {
+          setGeocodingStatus('❌ No location found. Check that you entered the correct address.');
+          setAddressNotFound(true);
+          setCustomAddressError('No location found. Check that you entered the correct address.');
+        }
+      } catch {
+        setGeocodingStatus('❌ Error looking up address. Please try again.');
+        setAddressNotFound(true);
+        setCustomAddressError('Error looking up address. Please try again.');
+      }
     }
   };
 
