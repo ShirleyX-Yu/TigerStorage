@@ -852,7 +852,7 @@ const Map = () => {
               )}
               {interestSuccess && (
                 <Box mb={2}><Alert severity="success" variant="filled">
-                  {lastInterestAction === 'remove' ? 'Space request cancelled!' : 'Space request submitted!'}
+                  {lastInterestAction === 'remove' ? 'Space request cancelled!' : 'Space requested!'}
                 </Alert></Box>
               )}
               {selectedListing && (
