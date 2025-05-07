@@ -414,15 +414,17 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     }
 
     try {
+      const payload = {
+        ...formData,
+        location: formData.title,
+        squareFeet: formData.sq_ft
+      };
+      console.log('Submitting listing payload:', payload);
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/listings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          ...formData,
-          location: formData.title,
-          squareFeet: formData.sq_ft
-        }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const errData = await res.json();
