@@ -1188,17 +1188,10 @@ def handle_interest(listing_id):
                         LIMIT 1
                     """, (listing_id, renter_username))
                     
-<<<<<<< HEAD
-                    existing_interest = cur.fetchone()
-                    if existing_interest:
-                        print(f"User {renter_username} has already shown interest in listing {listing_id}")
-                        return jsonify({"error": "You have already requested this space"}), 400
-=======
                     if cur.fetchone():
                         return jsonify({
                             "error": "You already have a pending reservation request for this listing"
                         }), 400
->>>>>>> dd05961 (using reservation_requests as main table)
                     
                     # Create a minimal reservation request (1 cubic foot as default)
                     try:
@@ -1216,12 +1209,8 @@ def handle_interest(listing_id):
                         # Create response with CORS headers
                         response = jsonify({
                             "success": True,
-<<<<<<< HEAD
-                            "message": "Space request submitted successfully"
-=======
                             "message": "Reservation request created successfully",
                             "request_id": request_id
->>>>>>> dd05961 (using reservation_requests as main table)
                         })
                         
                         # Add CORS headers with specific origin
@@ -1239,12 +1228,8 @@ def handle_interest(listing_id):
                         conn.rollback()
                         import traceback
                         traceback.print_exc()
-<<<<<<< HEAD
-                        return jsonify({"error": f"Failed to submit space request: {str(insert_error)}"}), 500
-=======
                         return jsonify({"error": f"Failed to create reservation request: {str(insert_error)}"}), 500
                         
->>>>>>> dd05961 (using reservation_requests as main table)
                 elif request.method == 'DELETE':
                     # Cancel pending reservation request
                     print(f"Canceling reservation request for listing {listing_id}, renter {renter_username}")
@@ -1265,11 +1250,7 @@ def handle_interest(listing_id):
                     # Create response with CORS headers
                     response = jsonify({
                         "success": True,
-<<<<<<< HEAD
-                        "message": "Space request cancelled successfully"
-=======
                         "message": "Reservation request canceled successfully"
->>>>>>> dd05961 (using reservation_requests as main table)
                     })
                     
                     # Add CORS headers with specific origin
