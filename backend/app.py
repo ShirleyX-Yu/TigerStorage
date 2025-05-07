@@ -1382,47 +1382,76 @@ def update_reservation_request(request_id):
 
 # 4. Renter views all their reservation requests
 @app.route('/api/my-reservation-requests', methods=['GET'])
-def my_reservation_requests():
+def get_my_reservation_requests():
+    # Get username from headers or query params
+    username = request.headers.get('X-Username') or request.args.get('username')
+    if not username:
+        return jsonify({'error': 'Username is required'}), 400
+    
+    # Query the reservation_requests table for this user
     try:
-        authenticated = auth.is_authenticated()
-        renter_username = None
-        if authenticated:
-            user_info = session.get('user_info', {})
-            renter_username = user_info.get('user', '').lower()
-        else:
-            renter_username = request.headers.get('X-Username', '').lower()
-        if not renter_username:
-            return jsonify({'error': 'Not authenticated'}), 401
         conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': 'Database connection failed'}), 500
+            
+        query = """
+            SELECT 
+                r.request_id, 
+                r.listing_id, 
+                r.renter_username, 
+                r.lender_username, 
+                r.requested_space, 
+                r.approved_space, 
+                r.status, 
+                r.created_at, 
+                r.updated_at, 
+                r.start_date, 
+                r.end_date,
+                l.title,
+                l.address,
+                l.hall_name,
+                l.sq_ft,
+                l.cost
+            FROM 
+                reservation_requests r
+            JOIN 
+                storage_listings l ON r.listing_id = l.listing_id
+            WHERE 
+                r.renter_username = %s
+            ORDER BY 
+                r.created_at DESC
+        """
+        
         try:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    SELECT rr.request_id, rr.listing_id, rr.requested_space, rr.approved_space, rr.status, rr.created_at, rr.updated_at,
-                           sl.end_date, sl.start_date
-                    FROM reservation_requests rr
-                    JOIN storage_listings sl ON rr.listing_id = sl.listing_id
-                    WHERE rr.renter_username = %s
-                    ORDER BY rr.created_at DESC
-                """, (renter_username,))
-                requests = [
-                    {
-                        'request_id': r[0],
-                        'listing_id': r[1],
-                        'requested_space': r[2],
-                        'approved_space': r[3],
-                        'status': r[4],
-                        'created_at': r[5].isoformat() if r[5] else None,
-                        'updated_at': r[6].isoformat() if r[6] else None,
-                        'end_date': r[7].isoformat() if r[7] else None,
-                        'start_date': r[8].isoformat() if r[8] else None,
-                    } for r in cur.fetchall()
-                ]
-                return jsonify(requests), 200
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cursor.execute(query, (username,))
+            requests = cursor.fetchall()
+            
+            # Convert all numeric fields and ensure they're not strings
+            for req in requests:
+                if req.get('cost') is not None:
+                    req['cost'] = float(req['cost'])
+                if req.get('requested_space') is not None:
+                    req['requested_space'] = float(req['requested_space'])
+                if req.get('approved_space') is not None:
+                    req['approved_space'] = float(req['approved_space'])
+                if req.get('sq_ft') is not None:
+                    req['sq_ft'] = float(req['sq_ft'])
+                    
+                # Convert dates to ISO format strings
+                for key, value in req.items():
+                    if hasattr(value, 'isoformat'):
+                        req[key] = value.isoformat()
+            
+            return jsonify(requests)
         finally:
-            conn.close()
+            cursor.close()
     except Exception as e:
-        print('Error in my_reservation_requests:', e)
-        return jsonify({'error': str(e)}), 500
+        print(f"Database error: {str(e)}")
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    finally:
+        if 'conn' in locals():
+            conn.close()
 
 # --- API endpoint for reporting a listing ---
 @app.route('/api/report-listing', methods=['POST'])
@@ -1609,54 +1638,6 @@ def get_csrf_token():
         domain='.onrender.com' if is_production else None
     )
     return response
-
-# Add the endpoint to fetch a user's reservation requests
-@app.route('/api/my-reservation-requests', methods=['GET'])
-def get_my_reservation_requests():
-    # Get username from headers or query params
-    username = request.headers.get('X-Username') or request.args.get('username')
-    if not username:
-        return jsonify({'error': 'Username is required'}), 400
-    
-    # Query the reservation_requests table for this user
-    try:
-        query = """
-            SELECT 
-                r.request_id, 
-                r.listing_id, 
-                r.renter_username, 
-                r.lender_username, 
-                r.requested_space, 
-                r.approved_space, 
-                r.status, 
-                r.created_at, 
-                r.updated_at, 
-                r.start_date, 
-                r.end_date,
-                l.title,
-                l.address,
-                l.hall_name,
-                l.sq_ft,
-                l.cost
-            FROM 
-                reservation_requests r
-            JOIN 
-                storage_listings l ON r.listing_id = l.listing_id
-            WHERE 
-                r.renter_username = %s
-            ORDER BY 
-                r.created_at DESC
-        """
-        
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute(query, (username,))
-        requests = cursor.fetchall()
-        cursor.close()
-        
-        return jsonify(requests)
-    except Exception as e:
-        print(f"Database error: {str(e)}")
-        return jsonify({'error': f'Database error: {str(e)}'}), 500
 
 if __name__ == "__main__":
     args = parser.parse_args()

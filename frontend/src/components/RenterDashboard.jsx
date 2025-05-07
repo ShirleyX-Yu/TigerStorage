@@ -75,7 +75,37 @@ const RenterDashboard = ({ username }) => {
         });
         
         if (response.data && Array.isArray(response.data)) {
-          setMyRequests(response.data);
+          console.log('Received reservation requests:', response.data);
+          
+          // Process the data to ensure all fields are properly converted
+          const processedRequests = response.data.map(req => {
+            // Handle numeric fields
+            const cost = typeof req.cost === 'string' ? parseFloat(req.cost) : req.cost || 0;
+            const requested_space = typeof req.requested_space === 'string' 
+              ? parseFloat(req.requested_space) 
+              : req.requested_space || 0;
+            const approved_space = typeof req.approved_space === 'string' 
+              ? parseFloat(req.approved_space) 
+              : req.approved_space || 0;
+            
+            return {
+              ...req,
+              cost,
+              requested_space,
+              approved_space,
+              // Ensure these string fields exist
+              title: req.title || 'Unnamed Space',
+              lender_username: req.lender_username || 'Unknown Lender',
+              status: req.status || 'unknown'
+            };
+          });
+          
+          // Log the first processed item
+          if (processedRequests.length > 0) {
+            console.log('First processed request:', processedRequests[0]);
+          }
+          
+          setMyRequests(processedRequests);
         } else {
           setError('Unexpected response format from server');
         }
@@ -202,11 +232,11 @@ const RenterDashboard = ({ username }) => {
                     <tr key={request.request_id}>
                       <td style={styles.td}>{request.title || 'Unnamed Listing'}</td>
                       <td style={styles.td}>{request.lender_username}</td>
-                      <td style={styles.td}>${request.cost}/month</td>
+                      <td style={styles.td}>${request.cost || 0}/month</td>
                       <td style={styles.td}>
                         {request.status === 'approved_partial' 
-                          ? `${request.approved_space}/${request.requested_space} sq ft` 
-                          : `${request.requested_space} sq ft`}
+                          ? `${request.approved_space || 0}/${request.requested_space || 0} sq ft` 
+                          : `${request.requested_space || 0} sq ft`}
                       </td>
                       <td style={styles.td}>
                         {request.start_date && request.end_date 
@@ -272,8 +302,8 @@ const RenterDashboard = ({ username }) => {
                     <tr key={request.request_id}>
                       <td style={styles.td}>{request.title || 'Unnamed Listing'}</td>
                       <td style={styles.td}>{request.lender_username}</td>
-                      <td style={styles.td}>${request.cost}/month</td>
-                      <td style={styles.td}>{request.requested_space} sq ft</td>
+                      <td style={styles.td}>${request.cost || 0}/month</td>
+                      <td style={styles.td}>{request.requested_space || 0} sq ft</td>
                       <td style={styles.td}>{new Date(request.created_at).toLocaleDateString()}</td>
                       <td style={styles.td}>
                         <span style={{
