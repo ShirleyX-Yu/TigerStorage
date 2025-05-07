@@ -175,6 +175,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const [showAddressConfirm, setShowAddressConfirm] = useState(false);
   const [pendingAddress, setPendingAddress] = useState(null);
   const [addressNotFound, setAddressNotFound] = useState(false);
+  const [customAddressError, setCustomAddressError] = useState('');
 
   // Scroll to error when it appears
   useEffect(() => {
@@ -242,8 +243,20 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         );
         if (!response.ok) throw new Error('Failed to fetch coordinates');
         const data = await response.json();
+        setCustomAddressError('');
         if (data.length > 0) {
           const { lat, lon, display_name } = data[0];
+          const userAddress = `${addressComponents.street}, ${addressComponents.city}, NJ ${addressComponents.zip_code}, USA`;
+          const geocodeResult = display_name || '';
+          const distance = stringDistance(userAddress.toLowerCase(), geocodeResult.toLowerCase());
+
+          if (distance > 10) {
+            setGeocodingStatus('');
+            setAddressNotFound(true);
+            setCustomAddressError('No location found. Check that you entered the correct address.');
+            return;
+          }
+
           setPendingAddress({
             address: display_name,
             latitude: lat,
@@ -255,10 +268,12 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         } else {
           setGeocodingStatus('');
           setAddressNotFound(true);
+          setCustomAddressError('No location found. Check that you entered the correct address.');
         }
       } catch {
         setGeocodingStatus('');
         setAddressNotFound(true);
+        setCustomAddressError('No location found. Check that you entered the correct address.');
       }
     }
   };
@@ -364,6 +379,27 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     return /\d+\s+\w+/.test(address) || /Princeton,?\s*NJ/i.test(address);
   };
 
+  function stringDistance(a, b) {
+    // Simple Levenshtein distance implementation or use a library for better accuracy
+    if (!a || !b) return Math.max(a?.length || 0, b?.length || 0);
+    const matrix = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+    for (let j = 1; j <= b.length; j++) matrix[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        if (a[i - 1] === b[j - 1]) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1, // substitution
+            matrix[i][j - 1] + 1,     // insertion
+            matrix[i - 1][j] + 1      // deletion
+          );
+        }
+      }
+    }
+    return matrix[a.length][b.length];
+  }
+
   return (
     <div style={styles.container}>
       {error && <div ref={errorRef} style={styles.error}>{error}</div>}
@@ -425,6 +461,11 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                 {addressNotFound && (
                   <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
                     No location matching address found. Check values entered.
+                  </div>
+                )}
+                {addressNotFound && customAddressError && (
+                  <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
+                    {customAddressError}
                   </div>
                 )}
                 <input
