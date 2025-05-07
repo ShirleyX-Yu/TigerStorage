@@ -477,11 +477,6 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             ) : (
               <div style={styles.formGroup}>
                 <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
-                {addressNotFound && (
-                  <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
-                    No location matching address found. Check values entered.
-                  </div>
-                )}
                 {addressNotFound && customAddressError && (
                   <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
                     {customAddressError}
