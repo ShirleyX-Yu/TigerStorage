@@ -385,6 +385,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       setError('Please locate a valid address before submitting.');
       return;
     }
+    console.log('Submitting formData:', formData);
     try {
       const res = await axiosInstance.post(`${import.meta.env.VITE_API_URL}/api/listings`, formData, {
         withCredentials: true,
