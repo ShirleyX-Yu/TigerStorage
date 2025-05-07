@@ -600,41 +600,23 @@ const Map = () => {
           }
         }
       } else {
-        // Not interested yet, make new request
-        const requested_space = listing.sq_ft; // Request full space by default
-        
-        // Submit the reservation request (this now serves as the "interest" functionality)
-        await axiosInstance.post(`/api/listings/${listing.id}/reserve`, 
-          { requested_space }, 
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Cache-Control': 'no-cache',
-              'X-User-Type': userType,
-              'X-Username': username
-            }
-          }
-        );
-        
-        // Update the UI immediately
-        setListings(currentListings => 
-          currentListings.map(l => 
-            l.id === listing.id ? {...l, isInterested: true} : l
-          )
-        );
-        
-        // Update the selected listing ID's isInterested property
-        if (selectedListingId && selectedListingId === listing.id) {
-          // Show success message inside the modal
-          setInterestSuccess(true);
-          setLastInterestAction('add');
-          setTimeout(() => setInterestSuccess(false), 2000);
+        // Not interested yet - show reservation form
+        const isAuthenticated = !!(sessionStorage.getItem('username') || localStorage.getItem('username'));
+        if (!isAuthenticated) {
+          sessionStorage.setItem('returnTo', `/listing/${listing.listing_id || listing.id}`);
+          navigate('/');
+          setInterestLoading(false);
+          return;
         }
+        
+        // Show reservation form
+        setShowReservationForm(true);
+        setReservationMode('full');
+        setReservationSpace(listing.sq_ft ?? 0);
+        setReservationLocalError('');
+        setInterestLoading(false);
+        return;
       }
-      
-      // Optionally refresh data from server
-      // await fetchListings();
     } catch (error) {
       console.error('Error toggling interest:', error);
       // Show error inside the modal
