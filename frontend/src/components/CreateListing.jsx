@@ -427,17 +427,20 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        const errData = await res.json();
+        let errText = await res.text();
+        console.error('Backend error response:', errText);
+        let errData;
+        try {
+          errData = JSON.parse(errText);
+        } catch {
+          errData = { error: errText };
+        }
         throw new Error(errData.error || 'Failed to create listing');
       }
       const data = await res.json();
       onSuccess ? onSuccess() : navigate(`/listing/${data.listing_id}`);
     } catch (err) {
-      let errorMessage = "We couldn't create your listing. Please check your information and try again.";
-      if (err.response?.data?.error) {
-        errorMessage = err.response.data.error.replace(/Error:\s*/, '');
-      }
-      setError(errorMessage);
+      setError(err.message);
     }
   };
 
