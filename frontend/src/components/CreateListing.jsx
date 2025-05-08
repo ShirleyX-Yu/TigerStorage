@@ -18,7 +18,7 @@ const PRINCETON_HALLS = [
   'Cuyler Hall', 'Dod Hall', 'Edwards Hall', 'Feinberg Hall', 'Feliciano Hall',
   'Fisher Hall', 'Forbes College', 'Foulke Hall', 'Graduate College (Old Graduate College)',
   'Hamilton Hall', 'Henry Hall', 'Holder Hall',
-  'Joline Hall', 'Laughlin Hall', 'Lawrence Apartments',
+  'Joline Hall', 'Laughlin Hall',
   'Little Hall', 'Lockhart Hall', 'Madison Hall', 'New Graduate College', 'Patton Hall', 'Pyne Hall',
   'Scully Hall', 'Walker Hall', 'Witherspoon Hall', 'Wright Hall'
 ];
