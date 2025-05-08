@@ -268,18 +268,43 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       }
       setGeocodingStatus('Looking up coordinates...');
       setAddressNotFound(false);
-      // Check manual mapping first for on-campus
-      if (HALL_COORDINATES[tempAddress]) {
-        const { lat, lng } = HALL_COORDINATES[tempAddress];
-        setFormData(prev => ({
-          ...prev,
-          address: tempAddress,
-          latitude: lat,
-          longitude: lng
-        }));
-        setGeocodingStatus('Coordinates found from hall mapping!');
-        setAddressNotFound(false);
-        return;
+      
+      try {
+        const searchAddress = `${tempAddress}, Princeton, NJ 08544`;
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
+        );
+        if (!response.ok) throw new Error('Failed to fetch coordinates');
+        const data = await response.json();
+        
+        if (data.length > 0) {
+          const { lat, lon, display_name } = data[0];
+          setPendingAddress({
+            address: display_name,
+            latitude: lat,
+            longitude: lon
+          });
+          setShowAddressConfirm(true);
+          setGeocodingStatus('');
+          setAddressNotFound(false);
+        } else if (HALL_COORDINATES[tempAddress]) {
+          const { lat, lng } = HALL_COORDINATES[tempAddress];
+          setFormData(prev => ({
+            ...prev,
+            address: tempAddress,
+            latitude: lat,
+            longitude: lng
+          }));
+          setGeocodingStatus('Coordinates found from hall mapping!');
+          setAddressNotFound(false);
+        } else {
+          setGeocodingStatus('Address not found. Try being more specific.');
+          setAddressNotFound(true);
+        }
+      } catch (error) {
+        console.error('Geocoding error:', error);
+        setGeocodingStatus('Error looking up address. Please try again.');
+        setAddressNotFound(true);
       }
     } else {
       // For off-campus addresses
