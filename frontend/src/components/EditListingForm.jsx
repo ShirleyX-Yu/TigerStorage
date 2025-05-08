@@ -156,7 +156,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
   const [geocodingStatus, setGeocodingStatus] = useState('');
   const [locationType, setLocationType] = useState('on-campus');
   const [uploading, setUploading] = useState(false);
-  const [showAddressConfirm, setShowAddressConfirm] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [currentAddress, setCurrentAddress] = useState('');
   const [pendingAddress, setPendingAddress] = useState(null);
   const [addressNotFound, setAddressNotFound] = useState(false);
   const [lastGeocodeResult, setLastGeocodeResult] = useState(null);
@@ -277,7 +278,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
             latitude: lat,
             longitude: lon
           });
-          setShowAddressConfirm(true);
+          setShowConfirmationModal(true);
+          setCurrentAddress(display_name);
           setGeocodingStatus('');
           setAddressNotFound(false);
         } else if (HALL_COORDINATES[tempAddress]) {
@@ -287,7 +289,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
             latitude: lat,
             longitude: lng
           });
-          setShowAddressConfirm(true);
+          setShowConfirmationModal(true);
+          setCurrentAddress(tempAddress);
           setGeocodingStatus('');
           setAddressNotFound(false);
         } else {
@@ -323,7 +326,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
             latitude: lat,
             longitude: lon
           });
-          setShowAddressConfirm(true);
+          setShowConfirmationModal(true);
+          setCurrentAddress(display_name);
           setGeocodingStatus('');
           setAddressNotFound(false);
         } else {
@@ -338,7 +342,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
     }
   };
 
-  const handleConfirmAddress = () => {
+  const handleConfirmUpdate = async () => {
     if (pendingAddress) {
       setFormData(prev => ({
         ...prev,
@@ -347,12 +351,23 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
         longitude: pendingAddress.longitude
       }));
     }
-    setShowAddressConfirm(false);
+    setShowConfirmationModal(false);
     setPendingAddress(null);
+    try {
+      const res = await axiosInstance.put(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}`, formData);
+      const data = res.data;
+      onSuccess ? onSuccess() : navigate(`/listing/${listingId}`);
+    } catch (err) {
+      let errorMessage = "We couldn't update your listing. Please check your information and try again.";
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error.replace(/Error:\s*/, '');
+      }
+      setError(errorMessage);
+    }
   };
 
   const handleEditAddress = () => {
-    setShowAddressConfirm(false);
+    setShowConfirmationModal(false);
     setPendingAddress(null);
   };
 
@@ -396,17 +411,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       setError('Please geocode the address to get coordinates');
       return;
     }
-    try {
-      const res = await axiosInstance.put(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}`, formData);
-      const data = res.data;
-      onSuccess ? onSuccess() : navigate(`/listing/${listingId}`);
-    } catch (err) {
-      let errorMessage = "We couldn't update your listing. Please check your information and try again.";
-      if (err.response?.data?.error) {
-        errorMessage = err.response.data.error.replace(/Error:\s*/, '');
-      }
-      setError(errorMessage);
-    }
+    setCurrentAddress(tempAddress);
+    setShowConfirmationModal(true);
   };
 
   if (loading) {
@@ -649,7 +655,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
         )}
       </div>
       <Dialog 
-        open={showAddressConfirm} 
+        open={showConfirmationModal} 
         onClose={handleEditAddress} 
         maxWidth="xs" 
         fullWidth
@@ -678,12 +684,12 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
             Please confirm the address for your listing:
           </div>
           <div style={{ fontWeight: 600, fontSize: 17, color: '#222', marginBottom: 8, background: '#fff', borderRadius: 8, padding: '12px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            {pendingAddress?.address}
+            {currentAddress}
           </div>
         </DialogContent>
         <DialogActions style={{ background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, padding: '16px 24px' }}>
           <Button onClick={handleEditAddress} style={{ color: '#888', fontWeight: 600 }}>Edit</Button>
-          <Button onClick={handleConfirmAddress} variant="contained" style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }}>
+          <Button onClick={handleConfirmUpdate} variant="contained" style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }}>
             Confirm
           </Button>
         </DialogActions>
