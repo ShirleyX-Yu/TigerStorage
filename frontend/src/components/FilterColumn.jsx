@@ -164,33 +164,25 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
 
       <Box sx={{ mb: 3, width: '100%' }}>
         <Typography gutterBottom>Minimum Lender Rating</Typography>
-        <Slider
-          value={filters.minRating || 1}
-          onChange={(_, newValue) => onFilterChange('minRating', newValue)}
-          valueLabelDisplay="auto"
-          min={1}
-          max={5}
-          step={1}
-          marks={[{value:1,label:'1'},{value:2,label:'2'},{value:3,label:'3'},{value:4,label:'4'},{value:5,label:'5'}]}
-          sx={{
-            color: '#FF6B00',
-            width: '100%',
-            '& .MuiSlider-thumb': {
-              backgroundColor: '#FF6B00',
-            },
-            '& .MuiSlider-track': {
-              backgroundColor: '#FF6B00',
-            },
-            '& .MuiSlider-rail': {
-              backgroundColor: '#FFF3E6',
-            },
-          }}
-        />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
           {[1,2,3,4,5].map(star => (
-            <span key={star} style={{ color: (filters.minRating || 1) >= star ? '#fbc02d' : '#ccc', fontSize: 22 }}>★</span>
+            <span
+              key={star}
+              onClick={() => onFilterChange('minRating', star)}
+              style={{
+                color: (filters.minRating || 1) >= star ? '#fbc02d' : '#ccc',
+                fontSize: 28,
+                cursor: 'pointer',
+                transition: 'color 0.15s',
+                userSelect: 'none'
+              }}
+              role="button"
+              aria-label={`Set minimum rating to ${star} star${star > 1 ? 's' : ''}`}
+              tabIndex={0}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onFilterChange('minRating', star); }}
+            >★</span>
           ))}
-          <span style={{ marginLeft: 8 }}>{filters.minRating || 1} star{(filters.minRating || 1) > 1 ? 's' : ''} & up</span>
+          <span style={{ marginLeft: 8, color: '#FF6B00', fontWeight: 500 }}>{filters.minRating || 1} star{(filters.minRating || 1) > 1 ? 's' : ''} & up</span>
         </Box>
       </Box>
 
