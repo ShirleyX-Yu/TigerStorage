@@ -259,7 +259,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
     }
   };
 
-  const geocodeAddress = async (addressComponents) => {
+  const geocodeAddress = async () => {
     if (locationType === 'on-campus') {
       if (!tempAddress.trim()) {
         setGeocodingStatus('Please enter an address');
@@ -283,7 +283,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
       }
     } else {
       // For off-campus addresses
-      if (!addressComponents.street || !addressComponents.city || !addressComponents.zip_code) {
+      if (!formData.street_address || !formData.city || !formData.zip_code) {
         setGeocodingStatus('Please fill in all address fields');
         setAddressNotFound(false);
         return;
@@ -442,7 +442,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                         hall_name: e.target.value
                       }));
                       if (e.target.value) {
-                        geocodeAddress(e.target.value);
+                        geocodeAddress();
                       }
                     }}
                     required
@@ -547,7 +547,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                 <button 
                   type="button" 
                   onClick={() => {
-                    geocodeAddress({});
+                    geocodeAddress();
                   }}
                   style={{...styles.geocodeButton, marginTop: '20px'}}
                 >
