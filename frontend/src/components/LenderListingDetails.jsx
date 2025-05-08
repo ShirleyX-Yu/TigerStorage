@@ -333,44 +333,42 @@ const LenderListingDetails = () => {
                           <td style={{ padding: 8, border: '1px solid #eee' }}>{req.approved_space ? `${req.approved_space} sq ft` : '-'}</td>
                           <td style={{ padding: 8, border: '1px solid #eee' }}>
                             {req.status === 'pending' && (
-                              <>
-                                <Button size="small" variant="contained" style={{
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', minWidth: 140 }}>
+                                <Button size="large" variant="contained" style={{
                                   background: '#388e3c',
                                   color: 'white',
                                   borderRadius: '8px',
                                   fontWeight: 700,
-                                  marginRight: 8,
-                                  minWidth: 110,
+                                  width: '100%',
+                                  fontSize: '1rem',
+                                  padding: '14px 0',
                                   boxShadow: '0 2px 8px rgba(56,142,60,0.08)',
                                   textTransform: 'none',
-                                  fontSize: '1rem',
-                                  padding: '8px 0'
                                 }} disabled={actionLoading[req.request_id]} onClick={() => handleAction(req.request_id, 'approved_full')}>Approve Full</Button>
-                                <Button size="small" variant="contained" style={{
+                                <Button size="large" variant="contained" style={{
                                   background: '#1976d2',
                                   color: 'white',
                                   borderRadius: '8px',
                                   fontWeight: 700,
-                                  marginRight: 8,
-                                  minWidth: 110,
+                                  width: '100%',
+                                  fontSize: '1rem',
+                                  padding: '14px 0',
                                   boxShadow: '0 2px 8px rgba(25,118,210,0.08)',
                                   textTransform: 'none',
-                                  fontSize: '1rem',
-                                  padding: '8px 0'
                                 }} disabled={actionLoading[req.request_id]} onClick={() => openPartialModal(req)}>Approve Partial</Button>
-                                <Button size="small" variant="contained" style={{
+                                <Button size="large" variant="contained" style={{
                                   background: '#d32f2f',
                                   color: 'white',
                                   borderRadius: '8px',
                                   fontWeight: 700,
-                                  minWidth: 110,
+                                  width: '100%',
+                                  fontSize: '1rem',
+                                  padding: '14px 0',
                                   boxShadow: '0 2px 8px rgba(211,47,47,0.08)',
                                   textTransform: 'none',
-                                  fontSize: '1rem',
-                                  padding: '8px 0'
                                 }} disabled={actionLoading[req.request_id]} onClick={() => handleAction(req.request_id, 'rejected')}>Reject</Button>
                                 {actionError[req.request_id] && <div style={{ color: 'red', marginTop: 4 }}>{actionError[req.request_id].replace(/Error:\s*/, '')}</div>}
-                              </>
+                              </div>
                             )}
                             {req.status !== 'pending' && (
                               <span style={{ color: '#888', fontStyle: 'italic' }}>No action to be taken</span>
