@@ -182,7 +182,6 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onFilterChange('minRating', star); }}
             >★</span>
           ))}
-          <span style={{ marginLeft: 8, color: '#FF6B00', fontWeight: 500 }}>{filters.minRating || 1} star{(filters.minRating || 1) > 1 ? 's' : ''} & up</span>
         </Box>
       </Box>
 

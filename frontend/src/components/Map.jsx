@@ -249,12 +249,12 @@ const scrollbarStyles = `
     width: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #FFF3E6;
+    background: #f5f5f5;
   }
   ::-webkit-scrollbar-thumb {
-    background-color: #FF6B00;
+    background-color: #bdbdbd;
     border-radius: 10px;
-    border: 2px solid #FFF3E6;
+    border: 2px solid #f5f5f5;
   }
   .left-scrollbar {
     direction: rtl;
@@ -700,9 +700,19 @@ const Map = () => {
     );
   }
 
+  const listingsColumn = {
+    width: '300px',
+    backgroundColor: '#fff',
+    borderRight: '1px solid #e0e0e0',
+    display: 'flex',
+    flexDirection: 'column',
+    maxWidth: '300px',
+    boxSizing: 'border-box'
+  };
+
   const filterColumn = {
     width: '300px',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
     borderLeft: '1px solid #e0e0e0',
     display: 'flex',
     flexDirection: 'column',
@@ -712,16 +722,6 @@ const Map = () => {
     overflowX: 'hidden',
     boxSizing: 'border-box',
     maxWidth: '300px'
-  };
-
-  const listingsColumn = {
-    width: '300px',
-    backgroundColor: '#ededed',
-    borderRight: '1px solid #e0e0e0',
-    display: 'flex',
-    flexDirection: 'column',
-    maxWidth: '300px',
-    boxSizing: 'border-box'
   };
 
   return (
