@@ -252,24 +252,23 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
     }
   };
 
-  const geocodeAddress = async () => {
+  const geocodeAddress = async (addressOverride) => {
+    const addressToGeocode = addressOverride || tempAddress;
     if (locationType === 'on-campus') {
-      if (!tempAddress.trim()) {
+      if (!addressToGeocode.trim()) {
         setGeocodingStatus('Please enter an address');
         setAddressNotFound(false);
         return;
       }
       setGeocodingStatus('Looking up coordinates...');
       setAddressNotFound(false);
-      
       try {
-        const searchAddress = `${tempAddress}, Princeton, NJ 08544`;
+        const searchAddress = `${addressToGeocode}, Princeton, NJ 08544`;
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
         );
         if (!response.ok) throw new Error('Failed to fetch coordinates');
         const data = await response.json();
-        
         if (data.length > 0) {
           const { lat, lon, display_name } = data[0];
           setPendingAddress({
@@ -280,10 +279,10 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           setShowAddressConfirm(true);
           setGeocodingStatus('');
           setAddressNotFound(false);
-        } else if (HALL_COORDINATES[tempAddress]) {
-          const { lat, lng } = HALL_COORDINATES[tempAddress];
+        } else if (HALL_COORDINATES[addressToGeocode]) {
+          const { lat, lng } = HALL_COORDINATES[addressToGeocode];
           setPendingAddress({
-            address: tempAddress,
+            address: `${addressToGeocode}, Princeton, NJ 08544, USA`,
             latitude: lat,
             longitude: lng
           });
@@ -295,7 +294,6 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           setAddressNotFound(true);
         }
       } catch (error) {
-        // console.error('Geocoding error:', error);
         setGeocodingStatus('Error looking up address. Please try again.');
         setAddressNotFound(true);
       }
@@ -448,15 +446,16 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                     style={styles.input}
                     value={tempAddress}
                     onChange={e => {
-                      setTempAddress(e.target.value);
+                      const newHall = e.target.value;
+                      setTempAddress(newHall);
                       setFormData(prev => ({
                         ...prev,
-                        hall_name: e.target.value
+                        hall_name: newHall
                       }));
                       setPendingAddress(null);
                       setShowAddressConfirm(false);
-                      if (e.target.value) {
-                        geocodeAddress();
+                      if (newHall) {
+                        geocodeAddress(newHall);
                       }
                     }}
                     required
