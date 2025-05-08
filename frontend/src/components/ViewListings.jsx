@@ -247,12 +247,12 @@ const ViewListings = () => {
             setListings(listingsWithDistance);
           }
         } catch (error) {
-          console.error('Error fetching reservation requests:', error);
+          //console.error('Error fetching reservation requests:', error);
           // Continue with listings even if we can't fetch reservation status
           setListings(listingsWithDistance);
         }
       } catch (err) {
-        console.error('Error fetching listings:', err);
+        //console.error('Error fetching listings:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -294,7 +294,7 @@ const ViewListings = () => {
           
           if (pending) {
             // Cancel the existing request
-            console.log(`Cancelling pending reservation request ID: ${pending.request_id}`);
+            // console.log(`Cancelling pending reservation request ID: ${pending.request_id}`);
             await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
               status: 'cancelled_by_renter'
             }, {
@@ -324,7 +324,7 @@ const ViewListings = () => {
         setReservationModalOpen(true);
       }
     } catch (error) {
-      console.error('Error toggling interest:', error);
+      // console.error('Error toggling interest:', error);
       setMessage({ type: 'error', text: error.response?.data?.error || 'Error updating request' });
       setTimeout(() => setMessage(null), 3000);
     }
@@ -358,7 +358,7 @@ const ViewListings = () => {
   };
 
   // Debug: log filter values on every render
-  console.log('Current filters:', filters);
+  // console.log('Current filters:', filters);
 
   // Live updating filter logic
   const filterListings = (listings) => {
@@ -435,7 +435,7 @@ const ViewListings = () => {
       // Re-fetch all listings from the server
       await fetchListings();
     } catch (err) {
-      console.error('Reservation error:', err);
+      // console.error('Reservation error:', err);
       setReservationError(err.response?.data?.error || err.message);
     } finally {
       setReservationLoading(false);

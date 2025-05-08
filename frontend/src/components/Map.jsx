@@ -5,11 +5,9 @@ import L from 'leaflet';
 import FilterColumn from './FilterColumn';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartBar } from '@fortawesome/free-solid-svg-icons';
 import { Box, Typography, List, ListItem, ListItemText, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button, Alert, TextField, ToggleButton, ToggleButtonGroup, Select, MenuItem } from '@mui/material';
 import Header from './Header';
 import { logout, axiosInstance } from '../utils/auth';
-import { Link } from 'react-router-dom';
 import { getCSRFToken } from '../utils/csrf';
 
 // Fix for Leaflet marker icons
@@ -349,7 +347,7 @@ const Map = () => {
       // Get user information for headers
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
       const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-      console.log(`Using auth headers - User type: ${userType} Username: ${username}`);
+      // console.log(`Using auth headers - User type: ${userType} Username: ${username}`);
       
       // Fetch listings from API
       const response = await axiosInstance.get(`${apiUrl}/api/listings`, {
@@ -361,7 +359,7 @@ const Map = () => {
         }
       });
       
-      console.log(`Listings response status: ${response.status}`);
+      // console.log(`Listings response status: ${response.status}`);
       const data = response.data;
       
       // Clear any old data
@@ -398,7 +396,7 @@ const Map = () => {
           Number(listing.remaining_space) > 0
       );
       
-      console.log(`${availableListings.length} listings have valid coordinates`);
+      // console.log(`${availableListings.length} listings have valid coordinates`);
       
       // Sort by distance
       availableListings.sort((a, b) => a.distance - b.distance);
@@ -433,11 +431,11 @@ const Map = () => {
           setListings(listingsWithInterest);
         }
       } catch (error) {
-        console.error('Error fetching reservation requests:', error);
+        // console.error('Error fetching reservation requests:', error);
         // Continue with listings even if we can't fetch reservation status
       }
     } catch (error) {
-      console.error('Error fetching listings:', error);
+      // console.error('Error fetching listings:', error);
       setError('Unable to load listings. Please try again later.');
     } finally {
       setLoading(false);
@@ -479,7 +477,7 @@ const Map = () => {
       await logout();
       navigate('/');
     } catch (err) {
-      console.error('Logout failed:', err);
+      //console.error('Logout failed:', err);
     }
   };
 
@@ -571,7 +569,7 @@ const Map = () => {
           
           if (pending) {
             // Cancel the existing request
-            console.log(`Cancelling pending reservation request ID: ${pending.request_id}`);
+            // console.log(`Cancelling pending reservation request ID: ${pending.request_id}`);
             await axiosInstance.patch(`/api/reservation-requests/${pending.request_id}`, {
               status: 'cancelled_by_renter'
             }, {
@@ -618,7 +616,7 @@ const Map = () => {
         return;
       }
     } catch (error) {
-      console.error('Error toggling interest:', error);
+      //console.error('Error toggling interest:', error);
       // Show error inside the modal
       setInterestError(error.response?.data?.error || 'Error updating request');
       setTimeout(() => setInterestError(null), 3000);
@@ -1182,7 +1180,7 @@ const Map = () => {
                     // Success - axios will throw on error
                     setReportSuccess(true);
                   } catch (err) {
-                    console.error('Report error:', err);
+                    // console.error('Report error:', err);
                     setReportSuccess(false);
                     alert(err.response?.data?.error || 'Error submitting report.');
                   }

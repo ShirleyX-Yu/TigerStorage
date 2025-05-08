@@ -65,5 +65,5 @@ function deg2rad(deg) {
   return deg * (Math.PI/180);
 }
 
-// If you want to run this directly in the browser console
+// If running this directly in the browser console
 window.testHallCoordinate = testHallCoordinate; 

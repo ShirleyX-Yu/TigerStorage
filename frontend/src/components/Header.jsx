@@ -26,7 +26,7 @@ const Header = ({ title }) => {
     try {
       await logout();
     } catch (error) {
-      console.error('Logout failed:', error);
+      // console.error('Logout failed:', error);
       // Fallback: Clear storage and redirect to login page manually
       sessionStorage.removeItem('userType');
       localStorage.removeItem('userType');

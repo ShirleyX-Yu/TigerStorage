@@ -25,12 +25,12 @@ const Home = () => {
   
   // Check for dashboard redirect flag
   React.useEffect(() => {
-    console.log("Home component mounted, checking for redirect flag");
+    // console.log("Home component mounted, checking for redirect flag");
     
     // Check for auth errors
     const authError = sessionStorage.getItem('authError');
     if (authError) {
-      console.log("Auth error detected");
+      // console.log("Auth error detected");
       setErrorMessage(authError);
       // Clear the error so it doesn't persist
       sessionStorage.removeItem('authError');
@@ -38,26 +38,26 @@ const Home = () => {
     
     const dashboardRedirect = localStorage.getItem('dashboardRedirect');
     if (dashboardRedirect) {
-      console.log(`Found dashboardRedirect flag: ${dashboardRedirect}`);
+      // console.log(`Found dashboardRedirect flag: ${dashboardRedirect}`);
       // Clear the flag
       localStorage.removeItem('dashboardRedirect');
       
       // Get the user type
       const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType');
-      console.log(`Current userType from storage: ${userType}`);
+      // console.log(`Current userType from storage: ${userType}`);
       
       // Navigate to the appropriate dashboard
       if (userType === 'renter') {
-        console.log("Redirecting to /map for renter");
+        // console.log("Redirecting to /map for renter");
         navigate('/map');
       } else if (userType === 'lender') {
-        console.log("Redirecting to /lender-dashboard for lender");
+        // console.log("Redirecting to /lender-dashboard for lender");
         navigate('/lender-dashboard');
       } else {
-        console.log("No valid userType found, remaining on home page");
+        // console.log("No valid userType found, remaining on home page");
       }
     } else {
-      console.log("No dashboard redirect flag found");
+      // console.log("No dashboard redirect flag found");
     }
   }, [navigate]);
   

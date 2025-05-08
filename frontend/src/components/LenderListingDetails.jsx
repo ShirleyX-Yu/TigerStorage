@@ -103,7 +103,7 @@ const LenderListingDetails = () => {
 
     fetchListingDetailsRef.current = fetchListingDetails;
     fetchListingDetails();
-    return () => console.log('Component unmounted');
+    // return () => console.log('Component unmounted');
   }, [id]);
 
   useEffect(() => {

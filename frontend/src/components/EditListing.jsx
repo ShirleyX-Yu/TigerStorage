@@ -41,11 +41,11 @@ const EditListing = () => {
         }
         
         const data = await response.json();
-        console.log('Fetched listing data:', data);
+        // console.log('Fetched listing data:', data);
         
         // Debug the address field
-        console.log('Address field from API:', data.address);
-        console.log('Location field from API:', data.location);
+        // console.log('Address field from API:', data.address);
+        // console.log('Location field from API:', data.location);
         
         // Set the form data from the fetched listing
         const formDataToSet = {
@@ -78,7 +78,7 @@ const EditListing = () => {
           setLocationType('off-campus');
         }
       } catch (err) {
-        console.error('Error fetching listing:', err);
+        // console.error('Error fetching listing:', err);
         setError(`Error loading listing: ${err.message}`);
       } finally {
         setLoading(false);
@@ -139,7 +139,7 @@ const EditListing = () => {
   };
 
   const geocodeAddress = async () => {
-    console.log('Geocoding address:', tempAddress);
+    //console.log('Geocoding address:', tempAddress);
     if (!tempAddress.trim()) {
       setGeocodingStatus('Please enter an address');
       return;
@@ -248,7 +248,7 @@ const EditListing = () => {
         return;
       }
       
-      console.log('Submitting updated listing data:', formData);
+      // console.log('Submitting updated listing data:', formData);
       
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${id}`, {
         method: 'PUT',
@@ -267,11 +267,11 @@ const EditListing = () => {
         }, 1500);
       } else {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Failed to update listing:', response.status, errorData);
+        // console.error('Failed to update listing:', response.status, errorData);
         setError(`Failed to update listing: ${errorData.error || response.statusText}`);
       }
     } catch (err) {
-      console.error('Error updating listing:', err);
+      //console.error('Error updating listing:', err);
       setError(`Error updating listing: ${err.message}`);
     }
   };

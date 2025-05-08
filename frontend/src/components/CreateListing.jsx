@@ -225,7 +225,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
           setGeocodingStatus('Address not found. Try being more specific.');
         }
       } catch (error) {
-        console.error('Geocoding error:', error);
+        // console.error('Geocoding error:', error);
         setGeocodingStatus('Error looking up address. Please try again.');
       }
     } else {
@@ -340,7 +340,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       setFormData(prev => ({ ...prev, image_url: result.url }));
     } catch (err) {
       setError('Failed to upload image: ' + (err.response?.data?.error || err.message));
-      console.error('Image upload error:', err);
+      // console.error('Image upload error:', err);
     } finally {
       setUploading(false);
     }
@@ -438,7 +438,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       const data = await res.json();
       onSuccess ? onSuccess() : navigate(`/listing/${data.listing_id}`);
     } catch (err) {
-      console.error('Error creating listing:', err);
+      // console.error('Error creating listing:', err);
       let errorMessage = "We couldn't create your listing. Please check your information and try again.";
       if (err.response?.data?.error) {
         errorMessage = err.response.data.error.replace(/Error:\s*/, '');

@@ -54,7 +54,7 @@ function formatDate(dateStr) {
   
   try {
     // Log date for debugging
-    console.log('Formatting date:', dateStr, 'Type:', typeof dateStr);
+    // console.log('Formatting date:', dateStr, 'Type:', typeof dateStr);
     
     // Handle date objects directly
     if (dateStr instanceof Date) {
@@ -64,13 +64,13 @@ function formatDate(dateStr) {
     // If it's an object with a string representation
     if (typeof dateStr === 'object' && dateStr !== null) {
       if (dateStr.toString) {
-        console.log('Converting object to string:', dateStr.toString());
+        // console.log('Converting object to string:', dateStr.toString());
         dateStr = dateStr.toString();
       } else {
         // Try to extract properties that might contain the date
         for (const key of ['date', 'value', 'timestamp']) {
           if (dateStr[key]) {
-            console.log(`Found date in object property '${key}':`, dateStr[key]);
+            // console.log(`Found date in object property '${key}':`, dateStr[key]);
             return formatDate(dateStr[key]);
           }
         }
@@ -111,10 +111,10 @@ function formatDate(dateStr) {
     }
     
     // Fallback - return as is
-    console.log('Using fallback date format');
+    // console.log('Using fallback date format');
     return String(dateStr);
   } catch (e) {
-    console.error('Error formatting date:', e, dateStr);
+    // console.error('Error formatting date:', e, dateStr);
     return 'Invalid date';
   }
 }
@@ -131,11 +131,11 @@ const RenterDashboard = ({ username }) => {
     const fetchRequests = async () => {
       try {
         setLoading(true);
-        console.log('Fetching reservation requests...');
+        // console.log('Fetching reservation requests...');
         
         // Make sure we have the API URL
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        console.log('Using API URL:', apiUrl);
+        // console.log('Using API URL:', apiUrl);
         
         const response = await axiosInstance.get(`${apiUrl}/api/my-reservation-requests`, {
           headers: {
@@ -145,21 +145,21 @@ const RenterDashboard = ({ username }) => {
         });
         
         if (response.data && Array.isArray(response.data)) {
-          console.log('Received reservation requests:', response.data);
+          // console.log('Received reservation requests:', response.data);
           
           // Check for dates structure before processing
           if (response.data.length > 0) {
             const firstItem = response.data[0];
-            console.log('First item in API response:', firstItem);
-            console.log('Date properties in first item:', {
-              directStartDate: firstItem.start_date,
-              directEndDate: firstItem.end_date,
-              nestedStartDate: firstItem.listing?.start_date,
-              nestedEndDate: firstItem.listing?.end_date,
-              hasListingProperty: 'listing' in firstItem,
-              hasDirectStartDate: 'start_date' in firstItem,
-              hasDirectEndDate: 'end_date' in firstItem
-            });
+            // console.log('First item in API response:', firstItem);
+            // console.log('Date properties in first item:', {
+            //   directStartDate: firstItem.start_date,
+            //   directEndDate: firstItem.end_date,
+            //   nestedStartDate: firstItem.listing?.start_date,
+            //   nestedEndDate: firstItem.listing?.end_date,
+            //   hasListingProperty: 'listing' in firstItem,
+            //   hasDirectStartDate: 'start_date' in firstItem,
+            //   hasDirectEndDate: 'end_date' in firstItem
+            // });
           }
           
           // Process the data to ensure all fields are properly converted

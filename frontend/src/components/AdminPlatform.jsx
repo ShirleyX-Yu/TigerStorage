@@ -81,7 +81,7 @@ const AdminPlatform = () => {
       // Refresh listings
       setRefreshKey(k => k + 1);
     } catch (err) {
-      console.error('Error accepting report:', err);
+      // console.error('Error accepting report:', err);
       setError(err.response?.data?.error || err.message || 'Failed to accept report');
     } finally {
       setLoadingReportId(null);
@@ -104,7 +104,7 @@ const AdminPlatform = () => {
       // Refresh listings
       setRefreshKey(k => k + 1);
     } catch (err) {
-      console.error('Error rejecting report:', err);
+      // console.error('Error rejecting report:', err);
       setError(err.response?.data?.error || err.message || 'Failed to reject report');
     } finally {
       setLoadingReportId(null);
@@ -116,20 +116,20 @@ const AdminPlatform = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching reported listings...');
+      // console.log('Fetching reported listings...');
       const response = await axiosInstance.get('/api/reported-listings');
-      console.log('API Response:', response);
+      // console.log('API Response:', response);
       const data = response.data;
-      console.log('Reported listings data:', data);
+      // console.log('Reported listings data:', data);
       if (!Array.isArray(data)) {
-        console.error('Expected an array of listings but got:', typeof data);
+        // console.error('Expected an array of listings but got:', typeof data);
         setError('Invalid data format received from server');
         setListings([]);
       } else {
         setListings(data);
       }
     } catch (err) {
-      console.error('Error fetching reported listings:', err);
+      // console.error('Error fetching reported listings:', err);
       setError(err.response?.data?.message || err.message || 'Failed to load reported listings');
       setListings([]);
     } finally {

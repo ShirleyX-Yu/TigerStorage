@@ -295,7 +295,7 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           setAddressNotFound(true);
         }
       } catch (error) {
-        console.error('Geocoding error:', error);
+        // console.error('Geocoding error:', error);
         setGeocodingStatus('Error looking up address. Please try again.');
         setAddressNotFound(true);
       }

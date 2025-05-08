@@ -8,7 +8,7 @@ import { getCSRFToken } from '../utils/csrf';
 import ReservationModal from './ReservationModal';
 import StarIcon from '@mui/icons-material/Star';
 
-console.log('ListingDetails component loaded');
+//console.log('ListingDetails component loaded');
 
 // Helper to format YYYY-MM-DD as MM/DD/YYYY
 function formatDate(dateStr) {
@@ -70,10 +70,10 @@ const RenterListingDetails = () => {
     const checkAuth = async () => {
       try {
         const status = await checkAuthStatus();
-        console.log('ListingDetails - auth status:', status);
+        //console.log('ListingDetails - auth status:', status);
         setIsAuthenticated(status.authenticated);
       } catch (error) {
-        console.error('Error checking auth in ListingDetails:', error);
+        //console.error('Error checking auth in ListingDetails:', error);
         setIsAuthenticated(false);
       }
     };
@@ -101,7 +101,7 @@ const RenterListingDetails = () => {
         });
         
         const requests = response.data;
-        console.log('Fetched reservation requests:', requests);
+        //console.log('Fetched reservation requests:', requests);
         
         // Store all requests
         setMyRequests(requests);
@@ -112,11 +112,11 @@ const RenterListingDetails = () => {
         
         // If there's a pending request, set listing as interested
         if (pendingRequest) {
-          console.log('Found pending request for this listing:', pendingRequest);
+          //console.log('Found pending request for this listing:', pendingRequest);
           setListing(prev => prev ? { ...prev, isInterested: true } : prev);
         }
       } catch (error) {
-        console.error('Error fetching reservation requests:', error);
+        //console.error('Error fetching reservation requests:', error);
       } finally {
         setRequestsLoading(false);
       }
@@ -131,7 +131,7 @@ const RenterListingDetails = () => {
   }, []);
 
   useEffect(() => {
-    console.log('ListingDetails component mounted with ID:', id);
+    //console.log('ListingDetails component mounted with ID:', id);
     
     const fetchListingDetails = async () => {
       try {
@@ -142,9 +142,9 @@ const RenterListingDetails = () => {
           throw new Error('Invalid listing ID');
         }
         
-        console.log(`Fetching details for listing ID: ${id}`);
+        //console.log(`Fetching details for listing ID: ${id}`);
         const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/listings/${id}`;
-        console.log('API URL:', apiUrl);
+        //console.log('API URL:', apiUrl);
         
         // Get user information for headers
         const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
@@ -160,8 +160,8 @@ const RenterListingDetails = () => {
         });
         
         const data = response.data;
-        console.log('Received listing data with image:', data);
-        console.log('Image URL from data:', data.image_url);
+        //console.log('Received listing data with image:', data);
+        //console.log('Image URL from data:', data.image_url);
         
         // Simple formatted listing with fallbacks for all properties
         const formattedListing = {
@@ -187,12 +187,12 @@ const RenterListingDetails = () => {
           lender_avg_rating: data.lender_avg_rating,
         };
         
-        console.log('Formatted listing:', formattedListing);
-        console.log('Image URL:', formattedListing.image_url);
-        console.log('Full image path:', `${import.meta.env.VITE_API_URL || ''}${formattedListing.image_url}`);
+        //console.log('Formatted listing:', formattedListing);
+        //console.log('Image URL:', formattedListing.image_url);
+        //console.log('Full image path:', `${import.meta.env.VITE_API_URL || ''}${formattedListing.image_url}`);
         setListing(formattedListing);
       } catch (err) {
-        console.error('Error fetching listing details:', err);
+        //console.error('Error fetching listing details:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -202,7 +202,7 @@ const RenterListingDetails = () => {
     fetchListingDetails();
     
     return () => {
-      console.log('ListingDetails component unmounted');
+      //console.log('ListingDetails component unmounted');
     };
   }, [id]);
 
@@ -273,7 +273,7 @@ const RenterListingDetails = () => {
         );
         
         if (pendingRequest) {
-          console.log(`Cancelling pending reservation request ID: ${pendingRequest.request_id}`);
+          //console.log(`Cancelling pending reservation request ID: ${pendingRequest.request_id}`);
           await axiosInstance.patch(`/api/reservation-requests/${pendingRequest.request_id}`, {
             status: 'cancelled_by_renter'
           }, {
@@ -304,7 +304,7 @@ const RenterListingDetails = () => {
         setShowReservationModal(true);
       }
     } catch (error) {
-      console.error('Error toggling interest:', error);
+      //console.error('Error toggling interest:', error);
       const errorMessage = error.response?.data?.error || "We couldn't process your request at this time.";
       setMessage({
         type: 'error',
@@ -360,7 +360,7 @@ const RenterListingDetails = () => {
         setMyRequests(response.data);
       }
     } catch (error) {
-      console.error('Error submitting reservation:', error);
+      //console.error('Error submitting reservation:', error);
       const errorMessage = error.response?.data?.error || "We couldn't process your reservation. Please try again.";
       setReservationError(errorMessage.replace(/Error:\s*/, ''));
     } finally {
@@ -394,10 +394,10 @@ const RenterListingDetails = () => {
       return;
     }
     // Find an approved reservation with end date in the past (date-only comparison)
-    console.log('myRequests:', myRequests);
+    //console.log('myRequests:', myRequests);
     const today = new Date();
     today.setHours(0,0,0,0); // midnight local time
-    console.log('Review eligibility check - today is:', today.toISOString(), today.toLocaleString());
+    //console.log('Review eligibility check - today is:', today.toISOString(), today.toLocaleString());
     const eligible = myRequests.find(r => {
       if (!(r.status === 'approved_full' || r.status === 'approved_partial') || !r.end_date) return false;
       const endDate = new Date(r.end_date);
@@ -454,7 +454,7 @@ const RenterListingDetails = () => {
       const reviewsResp = await axiosInstance.get('/api/lender-reviews/'+listing.owner_id);
       setReviews(reviewsResp.data);
     } catch (error) {
-      console.error('Error submitting review:', error);
+      //console.error('Error submitting review:', error);
       const errorMessage = error.response?.data?.error || "We couldn't submit your review. Please try again.";
       setReviewError(errorMessage.replace(/Error:\s*/, ''));
       setReviewSuccess('');
@@ -477,14 +477,14 @@ const RenterListingDetails = () => {
   useEffect(() => {
     const debugImageRendering = () => {
       if (listing && listing.image_url) {
-        console.log('Debugging image rendering:');
-        console.log('- Image URL:', listing.image_url);
-        console.log('- Image element in DOM:', document.querySelector('.image-debug') !== null);
+        //console.log('Debugging image rendering:');
+        //console.log('- Image URL:', listing.image_url);
+        //console.log('- Image element in DOM:', document.querySelector('.image-debug') !== null);
         
         // Get all images on the page for debugging
         const allImages = document.querySelectorAll('img');
-        console.log('- Total images on page:', allImages.length);
-        console.log('- All image sources:', Array.from(allImages).map(img => img.src));
+        //console.log('- Total images on page:', allImages.length);
+        //console.log('- All image sources:', Array.from(allImages).map(img => img.src));
       }
     };
     
@@ -522,7 +522,7 @@ const RenterListingDetails = () => {
     </div>
   );
 
-  console.log('ListingDetails render state:', { loading, error, listing, isAuthenticated });
+  //console.log('ListingDetails render state:', { loading, error, listing, isAuthenticated });
 
   return (
     <div style={styles.container}>
@@ -533,7 +533,7 @@ const RenterListingDetails = () => {
           onClick={() => {
             // Determine where to navigate back to based on the referrer
             const referrer = document.referrer;
-            console.log('Referrer URL:', referrer);
+            //console.log('Referrer URL:', referrer);
             
             if (referrer.includes('renter-dashboard')) {
               navigate('/renter-dashboard');
@@ -573,7 +573,7 @@ const RenterListingDetails = () => {
                   alt="Storage Space"
                   style={styles.mainImage}
                   onError={(e) => {
-                    console.error('Image failed to load:', listing.image_url);
+                    //console.error('Image failed to load:', listing.image_url);
                     e.target.onerror = null;
                     e.target.src = '/assets/placeholder.jpg';
                   }}
