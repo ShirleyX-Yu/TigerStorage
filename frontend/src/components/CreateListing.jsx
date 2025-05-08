@@ -8,8 +8,6 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import { axiosInstance } from '../utils/auth';
 
-console.log('HALL_COORDINATES:', HALL_COORDINATES);
-
 // Add Princeton Halls array
 const PRINCETON_HALLS = [
   '1901 Hall', '1903 Hall', 'Addy Hall',
@@ -223,19 +221,6 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
           });
           setShowAddressConfirm(true);
           setGeocodingStatus('');
-        } else if (HALL_COORDINATES[addressToGeocode]) {
-          // Fallback to manual mapping if not found by API
-          const { lat, lng } = HALL_COORDINATES[addressToGeocode];
-          setFormData(prev => ({
-            ...prev,
-            address: addressToGeocode,
-            street_address: addressToGeocode,
-            city: 'Princeton',
-            zip_code: '08544',
-            latitude: lat,
-            longitude: lng
-          }));
-          setGeocodingStatus('Coordinates found from hall mapping!');
         } else {
           setGeocodingStatus('Address not found. Try being more specific.');
         }
@@ -416,23 +401,9 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       
       // Check if we have coordinates
       if (!formData.latitude || !formData.longitude) {
-        // Try to use HALL_COORDINATES as fallback if available
-        if (HALL_COORDINATES[formData.hall_name]) {
-          const { lat, lng } = HALL_COORDINATES[formData.hall_name];
-          setFormData(prev => ({
-            ...prev,
-            latitude: lat,
-            longitude: lng,
-            address: formData.hall_name,
-            street_address: formData.hall_name,
-            city: 'Princeton',
-            zip_code: '08544'
-          }));
-        } else {
-          // If we don't have coordinates from geocoding or HALL_COORDINATES, show error
-          setError('Please geocode the hall address to get coordinates.');
-          return;
-        }
+        // If we don't have coordinates from geocoding or HALL_COORDINATES, show error
+        setError('Please geocode the hall address to get coordinates.');
+        return;
       }
     }
 
