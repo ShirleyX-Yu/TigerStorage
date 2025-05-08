@@ -1,16 +1,6 @@
-import { HALL_COORDINATES } from './hallCoordinates';
-
-// Function to geocode a hall name and compare with our hard-coded coordinates
+// Function to geocode a hall name and print the coordinates and address
 export const testHallCoordinate = async (hallName) => {
   console.log(`Testing coordinates for: ${hallName}`);
-  
-  const hardcodedCoords = HALL_COORDINATES[hallName];
-  if (!hardcodedCoords) {
-    console.error(`No hard-coded coordinates found for ${hallName}`);
-    return { success: false, message: `No hard-coded coordinates found` };
-  }
-  
-  console.log(`Hard-coded: Lat ${hardcodedCoords.lat}, Lng ${hardcodedCoords.lng}`);
   
   try {
     // Format the search address with Princeton University context
@@ -29,10 +19,9 @@ export const testHallCoordinate = async (hallName) => {
     
     if (data.length === 0) {
       console.error(`No geocoding results found for ${hallName}`);
-      return { 
-        success: false, 
+      return {
+        success: false,
         message: `No geocoding results found`,
-        hardcoded: hardcodedCoords
       };
     }
     
@@ -40,31 +29,17 @@ export const testHallCoordinate = async (hallName) => {
     console.log(`Geocoded: Lat ${lat}, Lng ${lon}`);
     console.log(`Address: ${display_name}`);
     
-    // Calculate distance between the two coordinates (in meters)
-    const distance = calculateDistance(
-      hardcodedCoords.lat, 
-      hardcodedCoords.lng, 
-      parseFloat(lat), 
-      parseFloat(lon)
-    );
-    
-    console.log(`Distance between coordinates: ${distance.toFixed(2)} meters`);
-    
     return {
       success: true,
       hallName,
-      hardcoded: hardcodedCoords,
       geocoded: { lat: parseFloat(lat), lng: parseFloat(lon) },
       display_name,
-      distance,
-      isClose: distance < 100 // Consider "close" if within 100 meters
     };
   } catch (error) {
     console.error(`Error testing coordinates for ${hallName}:`, error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       message: error.message,
-      hardcoded: hardcodedCoords
     };
   }
 };

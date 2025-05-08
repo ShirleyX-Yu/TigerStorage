@@ -12,7 +12,6 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import AuthDebug from './components/AuthDebug';
 import Map from './components/Map';
 import AdminPlatform from './components/AdminPlatform';
-import HallCoordinatesTester from './components/HallCoordinatesTester';
 import { checkAuthStatus, login } from './utils/auth';
 import { setCSRFToken } from './utils/csrf';
 import './App.css';
@@ -388,7 +387,6 @@ function App() {
           <Route path="/admin" element={<AdminProtectedRoute component={<AdminPlatform />} />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/debug" element={<AuthDebug />} />
-          <Route path="/hall-coordinates-tester" element={<HallCoordinatesTester />} />
         </Routes>
       </div>
     </Router>
