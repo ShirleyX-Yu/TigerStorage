@@ -46,9 +46,9 @@ const ProtectedRoute = ({ component: Component, allowedUserType }) => {
           if (!isAuthenticated) {
             console.log('ProtectedRoute - Not authenticated, redirecting to home');
             navigate('/');
-          } else if (allowedUserType && currentUserType !== allowedUserType) {
+          } else if (allowedUserType && currentUserType !== allowedUserType && currentUserType !== 'admin') {
             console.log(`ProtectedRoute - User type mismatch: current=${currentUserType}, allowed=${allowedUserType}, redirecting`);
-            // Only redirect if the user type doesn't match the allowed type
+            // Only redirect if the user type doesn't match the allowed type and is not admin
             if (currentUserType === 'renter') {
               navigate('/map');
             } else if (currentUserType === 'lender') {
@@ -72,13 +72,13 @@ const ProtectedRoute = ({ component: Component, allowedUserType }) => {
           console.log('ProtectedRoute - Using fallback userType from storage:', fallbackUserType);
           
           // If we have a valid user type in storage, consider it authenticated
-          if (fallbackUserType === 'renter' || fallbackUserType === 'lender') {
+          if (fallbackUserType === 'renter' || fallbackUserType === 'lender' || fallbackUserType === 'admin') {
             console.log('ProtectedRoute - Valid fallback userType found, considering authenticated');
             setAuthenticated(true);
             setUserType(fallbackUserType);
             
             // Check if user type matches the allowed type
-            if (allowedUserType && fallbackUserType !== allowedUserType) {
+            if (allowedUserType && fallbackUserType !== allowedUserType && fallbackUserType !== 'admin') {
               console.log(`ProtectedRoute - Fallback user type mismatch: current=${fallbackUserType}, allowed=${allowedUserType}, redirecting`);
               if (fallbackUserType === 'renter') {
                 navigate('/map');
@@ -176,6 +176,10 @@ const RedirectToUserDashboard = () => {
         // For lenders, always go to lender dashboard
         console.log('RedirectToUserDashboard - Navigating to /lender-dashboard for lender');
         navigate('/lender-dashboard');
+      } else if (userType === 'admin') {
+        // For admins, go to admin dashboard
+        console.log('RedirectToUserDashboard - Navigating to /admin for admin');
+        navigate('/admin');
       } else {
         // If invalid user type, redirect to home
         console.log('RedirectToUserDashboard - Invalid userType, redirecting to home. Value:', userType);
@@ -239,7 +243,7 @@ const RedirectToUserDashboard = () => {
         }
         
         // If we have a user type from storage, use it
-        if (userType === 'renter' || userType === 'lender') {
+        if (userType === 'renter' || userType === 'lender' || userType === 'admin') {
           console.log('RedirectToUserDashboard - Valid userType found in storage:', userType);
           redirectToAppropriateView(userType);
           return;
@@ -251,7 +255,7 @@ const RedirectToUserDashboard = () => {
           const { userType: authUserType } = await checkAuthStatus();
           console.log('RedirectToUserDashboard - Auth status returned userType:', authUserType);
           
-          if (authUserType === 'renter' || authUserType === 'lender') {
+          if (authUserType === 'renter' || authUserType === 'lender' || authUserType === 'admin') {
             // Update storage with the user type from auth
             sessionStorage.setItem('userType', authUserType);
             localStorage.setItem('userType', authUserType);

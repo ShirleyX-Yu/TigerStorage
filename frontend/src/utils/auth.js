@@ -249,7 +249,7 @@ export const checkAuthStatus = async () => {
     
     // If we have a user type stored, consider the user authenticated
     // This prevents being kicked back to the home page if API calls fail
-    if (userType === 'renter' || userType === 'lender') {
+    if (userType === 'renter' || userType === 'lender' || userType === 'admin') {
       console.log("Using stored userType for authentication:", userType);
       return { 
         status: true, 
