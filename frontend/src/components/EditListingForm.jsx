@@ -289,13 +289,13 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           setAddressNotFound(false);
         } else if (HALL_COORDINATES[tempAddress]) {
           const { lat, lng } = HALL_COORDINATES[tempAddress];
-          setFormData(prev => ({
-            ...prev,
+          setPendingAddress({
             address: tempAddress,
             latitude: lat,
             longitude: lng
-          }));
-          setGeocodingStatus('Coordinates found from hall mapping!');
+          });
+          setShowAddressConfirm(true);
+          setGeocodingStatus('');
           setAddressNotFound(false);
         } else {
           setGeocodingStatus('Address not found. Try being more specific.');
