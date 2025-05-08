@@ -453,6 +453,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
                         ...prev,
                         hall_name: e.target.value
                       }));
+                      setPendingAddress(null);
+                      setShowAddressConfirm(false);
                       if (e.target.value) {
                         geocodeAddress();
                       }

@@ -11,14 +11,14 @@ const PORT = process.env.PORT || 3000;
 
 // Define backend API URL
 const BACKEND_URL = process.env.VITE_API_URL || 'https://tigerstorage-backend.onrender.com';
-console.log(`Using backend URL: ${BACKEND_URL}`);
+// console.log(`Using backend URL: ${BACKEND_URL}`);
 
 // Proxy API requests
 app.use('/api', createProxyMiddleware({
   target: BACKEND_URL,
   changeOrigin: true,
   pathRewrite: {
-    '^/api': '/api' // Don't rewrite the path
+    '^/api': '/api'
   },
   secure: true,
   onProxyReq: (proxyReq, req, res) => {
