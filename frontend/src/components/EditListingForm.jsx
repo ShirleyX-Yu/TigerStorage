@@ -436,7 +436,9 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
             </div>
             <div>
               <label style={styles.label}>Location Type:</label>
-              <div style={styles.input}>{locationType === 'on-campus' ? 'On Campus' : 'Off Campus'}</div>
+              <div style={{ ...styles.input, backgroundColor: '#f0f0f0', color: '#666', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}>
+                {locationType === 'on-campus' ? 'On Campus' : 'Off Campus'}
+              </div>
             </div>
             {locationType === 'on-campus' ? (
               <div>
