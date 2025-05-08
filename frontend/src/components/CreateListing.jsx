@@ -285,17 +285,12 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   const handleConfirmAddress = () => {
     if (pendingAddress) {
       if (locationType === 'off-campus') {
-        const displayName = pendingAddress.address || '';
-        const parts = displayName.split(',').map(s => s.trim());
-        let street = parts[0] || formData.street_address;
-        let city = parts.find(p => p.toLowerCase() === formData.city.toLowerCase()) || formData.city;
-        let zip = parts.find(p => /^\d{5}$/.test(p)) || formData.zip_code;
         setFormData(prev => ({
           ...prev,
           address: pendingAddress.address,
-          street_address: street,
-          city: city,
-          zip_code: zip,
+          street_address: formData.street_address, // Preserve the original street address
+          city: formData.city,
+          zip_code: formData.zip_code,
           latitude: pendingAddress.latitude,
           longitude: pendingAddress.longitude
         }));
@@ -315,9 +310,15 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
 
   const handleEditAddress = () => {
     setIsAddressConfirmed(false);
+    // Preserve all form data when editing
     setFormData(prev => ({
       ...prev,
-      street_address: formData.street_address // Preserve the original street address
+      address: formData.address,
+      street_address: formData.street_address,
+      city: formData.city,
+      zip_code: formData.zip_code,
+      latitude: formData.latitude,
+      longitude: formData.longitude
     }));
   };
 
