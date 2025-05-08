@@ -315,6 +315,10 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
 
   const handleEditAddress = () => {
     setIsAddressConfirmed(false);
+    setFormData(prev => ({
+      ...prev,
+      street_address: formData.street_address // Preserve the original street address
+    }));
   };
 
   const handleImageUpload = async (e) => {
