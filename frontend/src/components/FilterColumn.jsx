@@ -25,6 +25,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
     onFilterChange('maxSize', 500);
     onFilterChange('minDistance', 0);
     onFilterChange('maxDistance', 50);
+    onFilterChange('minRating', 1);
   };
 
   return (
