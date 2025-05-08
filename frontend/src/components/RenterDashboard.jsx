@@ -219,30 +219,20 @@ const RenterDashboard = ({ username }) => {
             processed.status = req.status || 'unknown';
             
             // Debug the date values
-            console.log(`Request ${processed.request_id} dates:`, { 
-              start_date: processed.start_date, 
-              end_date: processed.end_date,
-              original_start: req.start_date,
-              original_end: req.end_date,
-              listing_start: req.listing?.start_date,
-              listing_end: req.listing?.end_date
-            });
+            // console.log(`Request ${processed.request_id} dates:`, { 
+            //   start_date: processed.start_date, 
+            //   end_date: processed.end_date,
+            //   original_start: req.start_date,
+            //   original_end: req.end_date,
+            //   listing_start: req.listing?.start_date,
+            //   listing_end: req.listing?.end_date
+            // });
             
             return processed;
           });
           
           // Log the first processed item
-          if (processedRequests.length > 0) {
-            console.log('First processed request:', processedRequests[0]);
-            console.log('Date fields in first processed request:', {
-              startDate: processedRequests[0].start_date,
-              endDate: processedRequests[0].end_date,
-              startDateType: typeof processedRequests[0].start_date,
-              endDateType: typeof processedRequests[0].end_date,
-              formattedStartDate: formatDate(processedRequests[0].start_date),
-              formattedEndDate: formatDate(processedRequests[0].end_date)
-            });
-          }
+          // console.log('First processed request:', processedRequests[0]);
           
           setMyRequests(processedRequests);
         } else {
@@ -320,19 +310,7 @@ const RenterDashboard = ({ username }) => {
 
   // Add debug logging for approved requests
   useEffect(() => {
-    if (approvedRequests.length > 0) {
-      console.log('Approved requests with date info:', approvedRequests.map(req => ({
-        id: req.request_id,
-        title: req.title,
-        status: req.status,
-        start_date: req.start_date,
-        end_date: req.end_date,
-        hasStartDate: !!req.start_date,
-        hasEndDate: !!req.end_date,
-        startDateType: typeof req.start_date,
-        endDateType: typeof req.end_date
-      })));
-    }
+    // (console.log commented out)
   }, [approvedRequests]);
 
   return (
