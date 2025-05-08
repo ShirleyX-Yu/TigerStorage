@@ -716,7 +716,7 @@ const Map = () => {
 
   const listingsColumn = {
     width: '300px',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#ededed',
     borderRight: '1px solid #e0e0e0',
     display: 'flex',
     flexDirection: 'column',
