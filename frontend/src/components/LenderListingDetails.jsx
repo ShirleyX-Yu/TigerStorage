@@ -283,6 +283,25 @@ const LenderListingDetails = () => {
               />
             </div>
             <div style={styles.infoSection}>
+              <button
+                style={{
+                  background: '#f57c00',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 28px',
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  marginBottom: '18px',
+                  boxShadow: '0 2px 8px rgba(245,124,0,0.08)',
+                  cursor: 'pointer',
+                  alignSelf: 'flex-start',
+                  transition: 'background 0.2s',
+                }}
+                onClick={handleOpenEditModal}
+              >
+                Edit Listing
+              </button>
               <h2 style={styles.location}>{listing.title}</h2>
               <div style={styles.specs}>
                 <div style={styles.specItem}><span style={styles.specLabel}>Cost:</span><span style={styles.specValue}>${listing.cost}/month</span></div>
@@ -315,9 +334,41 @@ const LenderListingDetails = () => {
                           <td style={{ padding: 8, border: '1px solid #eee' }}>
                             {req.status === 'pending' && (
                               <>
-                                <Button size="small" variant="contained" style={{ background: '#388e3c', color: 'white', marginRight: 6 }} disabled={actionLoading[req.request_id]} onClick={() => handleAction(req.request_id, 'approved_full')}>Approve Full</Button>
-                                <Button size="small" variant="contained" style={{ background: '#1976d2', color: 'white', marginRight: 6 }} disabled={actionLoading[req.request_id]} onClick={() => openPartialModal(req)}>Approve Partial</Button>
-                                <Button size="small" variant="contained" style={{ background: '#d32f2f', color: 'white' }} disabled={actionLoading[req.request_id]} onClick={() => handleAction(req.request_id, 'rejected')}>Reject</Button>
+                                <Button size="small" variant="contained" style={{
+                                  background: '#388e3c',
+                                  color: 'white',
+                                  borderRadius: '8px',
+                                  fontWeight: 700,
+                                  marginRight: 8,
+                                  minWidth: 110,
+                                  boxShadow: '0 2px 8px rgba(56,142,60,0.08)',
+                                  textTransform: 'none',
+                                  fontSize: '1rem',
+                                  padding: '8px 0'
+                                }} disabled={actionLoading[req.request_id]} onClick={() => handleAction(req.request_id, 'approved_full')}>Approve Full</Button>
+                                <Button size="small" variant="contained" style={{
+                                  background: '#1976d2',
+                                  color: 'white',
+                                  borderRadius: '8px',
+                                  fontWeight: 700,
+                                  marginRight: 8,
+                                  minWidth: 110,
+                                  boxShadow: '0 2px 8px rgba(25,118,210,0.08)',
+                                  textTransform: 'none',
+                                  fontSize: '1rem',
+                                  padding: '8px 0'
+                                }} disabled={actionLoading[req.request_id]} onClick={() => openPartialModal(req)}>Approve Partial</Button>
+                                <Button size="small" variant="contained" style={{
+                                  background: '#d32f2f',
+                                  color: 'white',
+                                  borderRadius: '8px',
+                                  fontWeight: 700,
+                                  minWidth: 110,
+                                  boxShadow: '0 2px 8px rgba(211,47,47,0.08)',
+                                  textTransform: 'none',
+                                  fontSize: '1rem',
+                                  padding: '8px 0'
+                                }} disabled={actionLoading[req.request_id]} onClick={() => handleAction(req.request_id, 'rejected')}>Reject</Button>
                                 {actionError[req.request_id] && <div style={{ color: 'red', marginTop: 4 }}>{actionError[req.request_id].replace(/Error:\s*/, '')}</div>}
                               </>
                             )}
