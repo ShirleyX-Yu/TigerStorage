@@ -180,85 +180,77 @@ const ViewListings = () => {
     navigate('/map');
   };
 
-  useEffect(() => {
-    const fetchListings = async () => {
+  const fetchListings = async () => {
+    try {
+      setLoading(true);
+      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+      const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+      // Use the same API endpoint as the map view
+      const response = await axiosInstance.get(`${import.meta.env.VITE_API_URL}/api/listings`, {
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-User-Type': userType,
+          'X-Username': username,
+          'X-CSRFToken': getCSRFToken()
+        }
+      });
+      const data = response.data;
+      if (!Array.isArray(data)) {
+        throw new Error('Unexpected data format from API');
+      }
+      // Calculate distance for each listing
+      const listingsWithDistance = data.map(listing => {
+        const distance = listing.latitude && listing.longitude
+          ? calculateDistance(
+              40.3437, -74.6517,
+              listing.latitude, listing.longitude
+            )
+          : Number.MAX_VALUE;
+        return {
+          ...listing,
+          distance,
+          isInterested: false // Default to false, will update below
+        };
+      });
+      // Fetch user's reservation requests to mark interest
       try {
-        setLoading(true);
-        const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
-        const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-        
-        // Use the same API endpoint as the map view
-        const response = await axiosInstance.get(`${import.meta.env.VITE_API_URL}/api/listings`, {
+        const requestsResponse = await axiosInstance.get(`${import.meta.env.VITE_API_URL}/api/my-reservation-requests`, {
           headers: {
             'Accept': 'application/json',
             'Cache-Control': 'no-cache',
             'X-User-Type': userType,
-            'X-Username': username,
-            'X-CSRFToken': getCSRFToken()
+            'X-Username': username
           }
         });
-        
-        const data = response.data;
-        
-        if (!Array.isArray(data)) {
-          throw new Error('Unexpected data format from API');
-        }
-        
-        // Calculate distance for each listing
-        const listingsWithDistance = data.map(listing => {
-          const distance = listing.latitude && listing.longitude
-            ? calculateDistance(
-                40.3437, -74.6517,
-                listing.latitude, listing.longitude
-              )
-            : Number.MAX_VALUE;
-          return {
+        if (requestsResponse.data && Array.isArray(requestsResponse.data)) {
+          const requests = requestsResponse.data;
+          const pendingRequestIds = requests
+            .filter(r => r.status === 'pending')
+            .map(r => String(r.listing_id));
+          // Mark listings as interested based on pending reservation requests
+          const listingsWithInterest = listingsWithDistance.map(listing => ({
             ...listing,
-            distance,
-            isInterested: false // Default to false, will update below
-          };
-        });
-        
-        // Fetch user's reservation requests to mark interest
-        try {
-          const requestsResponse = await axiosInstance.get(`${import.meta.env.VITE_API_URL}/api/my-reservation-requests`, {
-            headers: {
-              'Accept': 'application/json',
-              'Cache-Control': 'no-cache',
-              'X-User-Type': userType,
-              'X-Username': username
-            }
-          });
-          
-          if (requestsResponse.data && Array.isArray(requestsResponse.data)) {
-            const requests = requestsResponse.data;
-            const pendingRequestIds = requests
-              .filter(r => r.status === 'pending')
-              .map(r => String(r.listing_id));
-            
-            // Mark listings as interested based on pending reservation requests
-            const listingsWithInterest = listingsWithDistance.map(listing => ({
-              ...listing,
-              isInterested: pendingRequestIds.includes(String(listing.id) || String(listing.listing_id))
-            }));
-            
-            setListings(listingsWithInterest);
-          } else {
-            setListings(listingsWithDistance);
-          }
-        } catch (error) {
-          //console.error('Error fetching reservation requests:', error);
-          // Continue with listings even if we can't fetch reservation status
+            isInterested: pendingRequestIds.includes(String(listing.id) || String(listing.listing_id))
+          }));
+          setListings(listingsWithInterest);
+        } else {
           setListings(listingsWithDistance);
         }
-      } catch (err) {
-        //console.error('Error fetching listings:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        //console.error('Error fetching reservation requests:', error);
+        // Continue with listings even if we can't fetch reservation status
+        setListings(listingsWithDistance);
       }
-    };
+    } catch (err) {
+      //console.error('Error fetching listings:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchListings();
   }, []);
 
