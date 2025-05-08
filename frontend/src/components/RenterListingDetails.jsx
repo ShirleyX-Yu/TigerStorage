@@ -498,8 +498,8 @@ const RenterListingDetails = () => {
     <div style={styles.errorContainer}>
       <h2>Something went wrong</h2>
       <p>{typeof error === 'string' ? error.replace(/Error:\s*/, '') : "We couldn't load this listing. Please try again later."}</p>
-      <button style={styles.backButton} onClick={() => navigate('/view-listings')}>
-        &larr; Back to Listings
+      <button style={styles.backButton} onClick={() => navigate('/renter-dashboard')}>
+        &larr; Back to Dashboard
       </button>
     </div>
   );
@@ -516,8 +516,8 @@ const RenterListingDetails = () => {
     <div style={styles.errorContainer}>
       <h2>Listing Not Found</h2>
       <p>Sorry, we couldn't find this listing. It may have been removed or is temporarily unavailable.</p>
-      <button style={styles.backButton} onClick={() => navigate('/view-listings')}>
-        &larr; Back to Listings
+      <button style={styles.backButton} onClick={() => navigate('/renter-dashboard')}>
+        &larr; Back to Dashboard
       </button>
     </div>
   );
@@ -530,21 +530,9 @@ const RenterListingDetails = () => {
       <div style={styles.content}>
         <button 
           style={styles.backButton} 
-          onClick={() => {
-            // Determine where to navigate back to based on the referrer
-            const referrer = document.referrer;
-            //console.log('Referrer URL:', referrer);
-            
-            if (referrer.includes('renter-dashboard')) {
-              navigate('/renter-dashboard');
-            } else if (referrer.includes('map')) {
-              navigate('/map');
-            } else {
-              navigate('/view-listings');
-            }
-          }}
+          onClick={() => navigate('/renter-dashboard')}
         >
-          ← Back
+          ← Back to Dashboard
         </button>
 
         {/* Message notification */}
