@@ -643,7 +643,9 @@ const ViewListings = () => {
                             }}>
                               {getStatusLabel(listing.status)}
                             </span>
-                            <span style={styles.lenderInfo}>Lender: Owner #{listing.owner_id}</span>
+                            <span style={styles.lenderInfo}>
+                              Lender: {listing.owner_id ? listing.owner_id : 'Princeton User'}
+                            </span>
                           </div>
                           <div style={styles.actionButtons}>
                             <button

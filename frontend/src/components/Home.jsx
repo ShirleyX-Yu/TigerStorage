@@ -143,13 +143,6 @@ const Home = () => {
           >
             Privacy Policy
           </button>
-          <button 
-            className="home-privacy-button"
-            onClick={() => navigate('/hall-coordinates-tester')}
-            disabled={loading}
-          >
-            Hall Tester
-          </button>
         </div>
       <div className="home-content">
         {!logoError ? (
