@@ -231,13 +231,6 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
     setTempAddress(e.target.value);
   };
 
-  const handleLocationTypeChange = (e) => {
-    setError('');
-    setLocationType(e.target.value);
-    setTempAddress('');
-    setGeocodingStatus('');
-  };
-
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -442,16 +435,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
               />
             </div>
             <div>
-              <label style={styles.label}>Location Type <span style={{color: '#b00020'}}>*</span></label>
-              <select
-                style={styles.input}
-                value={locationType}
-                onChange={handleLocationTypeChange}
-                required
-              >
-                <option value="on-campus">On Campus</option>
-                <option value="off-campus">Off Campus</option>
-              </select>
+              <label style={styles.label}>Location Type:</label>
+              <div style={styles.input}>{locationType === 'on-campus' ? 'On Campus' : 'Off Campus'}</div>
             </div>
             {locationType === 'on-campus' ? (
               <div>
