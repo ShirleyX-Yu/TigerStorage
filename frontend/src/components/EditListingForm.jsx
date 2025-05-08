@@ -679,8 +679,15 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
           <div style={{ marginBottom: 16, fontSize: 16, color: '#333' }}>
             Please confirm the address for your listing:
           </div>
-          <div style={{ fontWeight: 600, fontSize: 17, color: '#222', marginBottom: 8, background: '#fff', borderRadius: 8, padding: '12px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            {pendingAddress?.address}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontWeight: 500, color: '#888', fontSize: 15, marginBottom: 4 }}>Old Address:</div>
+            <div style={{ fontWeight: 600, fontSize: 16, color: '#555', marginBottom: 10, background: '#f5f5f5', borderRadius: 8, padding: '10px 14px', boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+              {formData.address || <span style={{ color: '#bbb' }}>[No previous address]</span>}
+            </div>
+            <div style={{ fontWeight: 500, color: '#888', fontSize: 15, marginBottom: 4 }}>New Address:</div>
+            <div style={{ fontWeight: 600, fontSize: 17, color: '#222', background: '#fff', borderRadius: 8, padding: '12px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              {pendingAddress?.address}
+            </div>
           </div>
         </DialogContent>
         <DialogActions style={{ background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, padding: '16px 24px' }}>
