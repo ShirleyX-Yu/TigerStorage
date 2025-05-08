@@ -44,23 +44,6 @@ export const testHallCoordinate = async (hallName) => {
   }
 };
 
-// Test all halls in the HALL_COORDINATES object
-export const testAllHallCoordinates = async () => {
-  const results = {};
-  const hallNames = Object.keys(HALL_COORDINATES);
-  
-  console.log(`Testing coordinates for ${hallNames.length} halls...`);
-  
-  // To avoid rate limiting, we'll test halls one at a time with a delay
-  for (const hallName of hallNames) {
-    results[hallName] = await testHallCoordinate(hallName);
-    // Add a delay to avoid rate limiting (1 second)
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-  
-  return results;
-};
-
 // Calculate distance between two coordinates using Haversine formula
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371000; // Earth's radius in meters
@@ -83,5 +66,4 @@ function deg2rad(deg) {
 }
 
 // If you want to run this directly in the browser console
-window.testHallCoordinate = testHallCoordinate;
-window.testAllHallCoordinates = testAllHallCoordinates; 
+window.testHallCoordinate = testHallCoordinate; 

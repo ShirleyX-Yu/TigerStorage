@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { HALL_COORDINATES } from '../utils/hallCoordinates';
 import { testHallCoordinate, testAllHallCoordinates } from '../utils/testHallCoordinates';
 
 const styles = {

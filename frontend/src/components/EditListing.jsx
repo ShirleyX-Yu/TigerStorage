@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
-import { HALL_COORDINATES } from '../utils/hallCoordinates';
 import { getCSRFToken } from '../utils/csrf';
 
 const EditListing = () => {

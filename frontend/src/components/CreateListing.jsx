@@ -7,7 +7,6 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import { axiosInstance } from '../utils/auth';
-import { HALL_COORDINATES } from '../utils/hallCoordinates';
 
 console.log('HALL_COORDINATES:', HALL_COORDINATES);
 
