@@ -583,12 +583,10 @@ const LenderDashboard = ({ username }) => {
           <button onClick={() => setCreateModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#888' }}>&times;</button>
         </div>
         <div style={{ padding: 24 }}>
-          {createModalOpen && (
-            <CreateListingModal 
-              onClose={() => setCreateModalOpen(false)}
-              onSuccess={() => { setCreateModalOpen(false); fetchListings(); }}
-            />
-          )}
+          <CreateListingModal 
+            onClose={() => setCreateModalOpen(false)}
+            onSuccess={() => { setCreateModalOpen(false); fetchListings(); }}
+          />
         </div>
       </Dialog>
       <Dialog 
