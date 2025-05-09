@@ -328,10 +328,18 @@ const RenterDashboard = ({ username }) => {
             Browse available storage spaces near you!
           </div>
           <div style={styles.buttonContainer}>
-            <button style={styles.actionButton} onClick={openMap}>
+            <button style={styles.actionButton} onClick={() => {
+              sessionStorage.setItem('userType', 'renter');
+              localStorage.setItem('userType', 'renter');
+              navigate('/map');
+            }}>
               Go to Map View <span style={{fontSize: '1.2em', marginLeft: 6}}>&rarr;</span>
             </button>
-            <button style={styles.actionButton} onClick={() => navigate('/view-listings')}>
+            <button style={styles.actionButton} onClick={() => {
+              sessionStorage.setItem('userType', 'renter');
+              localStorage.setItem('userType', 'renter');
+              navigate('/view-listings');
+            }}>
               Go to Grid View <span style={{fontSize: '1.2em', marginLeft: 6}}>&rarr;</span>
             </button>
           </div>

@@ -8,7 +8,11 @@ const logoFallbackText = 'TS';
 
 const Header = ({ title }) => {
   const navigate = useNavigate();
-  const [userType, setUserType] = useState(sessionStorage.getItem('userType'));
+  const [userType, setUserType] = useState(
+    sessionStorage.getItem('userType') ||
+    localStorage.getItem('userType') ||
+    'renter'
+  );
   const [isLogoHovered, setIsLogoHovered] = useState(false);
   const [logoError, setLogoError] = useState(false);
 
