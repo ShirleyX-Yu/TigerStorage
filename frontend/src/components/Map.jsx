@@ -290,7 +290,7 @@ const Map = () => {
     minSize: 0,
     maxSize: 1000,
     maxDistance: 50,
-    minRating: 1
+    minRating: 0
   });
   const mapRef = useRef(null);
   const navigate = useNavigate();
@@ -464,7 +464,7 @@ const Map = () => {
       minSize: 0,
       maxSize: 1000,
       maxDistance: 10,
-      minRating: 1
+      minRating: 0
     });
   };
 
