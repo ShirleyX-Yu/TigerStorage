@@ -509,7 +509,8 @@ const Map = () => {
       listing.latitude,
       listing.longitude
     );
-    const distanceMatches = distance <= filters.maxDistance;
+    // Ignore distance filter if maxDistance is 50 (i.e., 50+)
+    const distanceMatches = (filters.maxDistance === 50) ? true : distance <= filters.maxDistance;
     // --- Rating filter ---
     const rating = listing.lender_avg_rating;
     const ratingMatches = (filters.minRating <= 1) ? true : (rating === undefined || rating === null ? false : rating >= filters.minRating);
