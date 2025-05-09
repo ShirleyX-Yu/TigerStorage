@@ -202,7 +202,9 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
               >★</span>
             ))}
           </Box>
-          <label style={{ fontSize: 15, marginTop: 8 }}>
+        </Box>
+        <Box sx={{ mt: 1 }}>
+          <label style={{ fontSize: 15 }}>
             <input
               type="checkbox"
               checked={filters.includeUnrated}
