@@ -292,19 +292,14 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     setPendingAddress(null);
   };
 
-  const handleEditAddress = () => {
+  // Unified handler for editing address, used in both modal and main form
+  const handleEditAddressFields = () => {
     setIsAddressConfirmed(false);
-    // Preserve all form data when editing
-    setFormData(prev => ({
-      ...prev,
-      address: formData.address,
-      street_address: formData.street_address,
-      city: formData.city,
-      zip_code: formData.zip_code,
-      latitude: formData.latitude,
-      longitude: formData.longitude
-    }));
+    setShowAddressConfirm(false);
+    setPendingAddress(null);
   };
+
+  const handleEditAddress = handleEditAddressFields;
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -614,7 +609,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                       />
                       <button 
                         type="button" 
-                        onClick={handleEditAddress}
+                        onClick={handleEditAddressFields}
                         style={{...styles.geocodeButton, marginTop: '20px', width: '100%', backgroundColor: '#666'}}
                       >
                         Edit Address
@@ -865,7 +860,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                       />
                       <button 
                         type="button" 
-                        onClick={handleEditAddress}
+                        onClick={handleEditAddressFields}
                         style={{...styles.geocodeButton, marginTop: '20px', width: '100%', backgroundColor: '#666'}}
                       >
                         Edit Address
@@ -974,7 +969,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         {/* Address Confirmation Modal */}
         <Dialog 
           open={showAddressConfirm} 
-          onClose={handleEditAddress} 
+          onClose={handleEditAddressFields} 
           maxWidth="xs" 
           fullWidth
           PaperProps={{
@@ -1006,7 +1001,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             </div>
           </DialogContent>
           <DialogActions style={{ background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, padding: '16px 24px' }}>
-            <Button onClick={handleEditAddress} style={{ color: '#888', fontWeight: 600 }}>Edit</Button>
+            <Button onClick={handleEditAddressFields} style={{ color: '#888', fontWeight: 600 }}>Edit</Button>
             <Button onClick={handleConfirmAddress} variant="contained" style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }}>
               Confirm
             </Button>
