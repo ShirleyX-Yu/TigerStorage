@@ -35,7 +35,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
     minSize: 0,
     maxSize: 1000,
     maxDistance: 50,
-    minRating: 1,
+    minRating: 0,
     includeUnrated: false,
   };
   const mergedFilters = { ...defaultFilters, ...filters };
