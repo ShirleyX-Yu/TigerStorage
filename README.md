@@ -92,7 +92,7 @@ A Princeton University storage rental platform with CAS authentication.
    - Publish Directory: `dist`
    - Root Directory: `frontend`
 4. Add the following environment variables:
-   - `VITE_API_URL`: The URL of your backend service (e.g., `https://tigerstorage-backend.onrender.com`)
+   - `VITE_API_URL`: The URL of the backend service (`https://tigerstorage-backend.onrender.com`)
 
 ## Features
 
