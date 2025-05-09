@@ -179,7 +179,9 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
         <Typography gutterBottom>Distance from Campus (miles)</Typography>
         <Slider
           value={
-            filters.maxDistance === '' ? 0 : (Number(filters.maxDistance) >= 50 ? 50 : Number(filters.maxDistance) || 0)
+            filters.maxDistance === ''
+              ? 0
+              : (filters.maxDistance === '50+' ? 50 : (Number(filters.maxDistance) >= 50 ? 50 : Number(filters.maxDistance) || 0))
           }
           onChange={(_, newValue) => {
             let val = Array.isArray(newValue) ? newValue[0] : newValue;
