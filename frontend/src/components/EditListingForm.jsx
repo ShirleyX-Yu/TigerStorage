@@ -352,6 +352,8 @@ const EditListingForm = ({ listingId, onClose, onSuccess }) => {
   const handleEditAddress = () => {
     setShowAddressConfirm(false);
     setPendingAddress(null);
+    setTempAddress('');
+    setFormData(prev => ({ ...prev, hall_name: '' }));
   };
 
   const handleSubmit = async (e) => {

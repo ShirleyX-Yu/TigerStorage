@@ -297,6 +297,8 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     setIsAddressConfirmed(false);
     setShowAddressConfirm(false);
     setPendingAddress(null);
+    setTempAddress('');
+    setFormData(prev => ({ ...prev, hall_name: '' }));
   };
 
   const handleEditAddress = handleEditAddressFields;
