@@ -47,7 +47,7 @@ for i in range(total_iterations):
     listings = [generate_listing_data(j) for j in range(num_listings)]
     
     # Send the request to create listings
-    response = requests.post(url, json={"listings": listings})
+    response = requests.post(url, json={"listings": listings}, headers=headers)
     
     # Print the response from the server
     print(f"Response: {response.status_code} - {response.json()}")
