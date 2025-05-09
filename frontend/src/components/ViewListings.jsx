@@ -603,7 +603,7 @@ const ViewListings = () => {
             <div style={{ flex: 1, minWidth: 180 }}>
                 <label style={{ fontWeight: 500, color: '#555', marginBottom: 4, display: 'block' }}>Distance from Campus (miles)</label>
                 <Slider
-                  value={filters.maxDistance}
+                  value={filters.maxDistance === '50+' ? 50 : Number(filters.maxDistance) || 0}
                   onChange={(_, newValue) => handleFilterChange('maxDistance', newValue)}
                   valueLabelDisplay="auto"
                   min={0}
@@ -613,11 +613,14 @@ const ViewListings = () => {
                 />
                 <div style={{ marginTop: 8 }}>
                   <input
-                    type="number"
-                    value={filters.maxDistance}
+                    type="text"
+                    value={filters.maxDistance === '50+' || Number(filters.maxDistance) >= 50 ? '50+' : filters.maxDistance}
                     min={0}
                     max={50}
-                    onChange={e => handleFilterChange('maxDistance', Number(e.target.value))}
+                    onChange={e => {
+                      const val = e.target.value === '50+' ? 50 : Number(e.target.value);
+                      handleFilterChange('maxDistance', val);
+                    }}
                     style={{ width: '100%', padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
                     placeholder="Max Distance"
                   />
