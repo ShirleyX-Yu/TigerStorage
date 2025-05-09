@@ -1217,6 +1217,9 @@ def reserve_space(listing_id):
         if requested_space <= 0:
             print(f"[RESERVE] Invalid requested_space: {requested_space}")
             return jsonify({'error': 'Requested space must be positive'}), 400
+        if not requested_space.is_integer():
+            print(f"[RESERVE] Non-integer requested_space: {requested_space}")
+            return jsonify({'error': 'Requested space must be a whole number (integer) of square feet.'}), 400
         conn = get_db_connection()
         try:
             with conn.cursor() as cur:
@@ -1522,6 +1525,12 @@ def report_listing():
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
+            # Check for existing report by this user for this listing
+            cur.execute("""
+                SELECT 1 FROM reported_listings WHERE listing_id = %s AND renter_id = %s
+            """, (listing_id, renter_id))
+            if cur.fetchone():
+                return jsonify({'error': 'You have already reported this listing.'}), 400
             cur.execute("""
                 INSERT INTO reported_listings (listing_id, lender_id, renter_id, reason, status)
                 VALUES (%s, %s, %s, %s, %s)

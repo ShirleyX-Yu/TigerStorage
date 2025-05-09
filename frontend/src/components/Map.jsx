@@ -1176,6 +1176,11 @@ const Map = () => {
                     });
                     // Success - axios will throw on error
                     setReportSuccess(true);
+                    setTimeout(() => {
+                      setReportModalOpen(false);
+                      setReportReason("");
+                      setReportSuccess(false);
+                    }, 1000);
                   } catch (err) {
                     // console.error('Report error:', err);
                     setReportSuccess(false);
