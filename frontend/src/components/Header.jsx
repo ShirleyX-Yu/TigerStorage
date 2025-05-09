@@ -97,6 +97,12 @@ const Header = ({ title }) => {
               >
                 Map View
               </button>
+              <button
+                style={window.location.pathname === '/view-listings' ? styles.activeNavLink : styles.navLink}
+                onClick={() => navigate('/view-listings')}
+              >
+                View Grid
+              </button>
               <button 
                 style={window.location.pathname === '/renter-dashboard' ? styles.activeNavLink : styles.navLink} 
                 onClick={handleGoToDashboard}
