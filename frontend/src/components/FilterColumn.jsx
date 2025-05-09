@@ -188,6 +188,15 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onFilterChange('minRating', star); }}
             >★</span>
           ))}
+          <label style={{ marginLeft: 16, display: 'flex', alignItems: 'center', fontSize: 13 }}>
+            <input
+              type="checkbox"
+              checked={filters.includeUnrated}
+              onChange={e => onFilterChange('includeUnrated', e.target.checked)}
+              style={{ marginRight: 4 }}
+            />
+            Include unrated
+          </label>
         </Box>
       </Box>
 
