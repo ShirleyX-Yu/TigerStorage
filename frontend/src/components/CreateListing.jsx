@@ -517,11 +517,6 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             {!isAddressConfirmed ? (
               <>
                 <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
-                {addressNotFound && customAddressError && (
-                  <div style={{ color: '#b00020', marginBottom: '8px', fontSize: '14px' }}>
-                    {customAddressError}
-                  </div>
-                )}
                 <input
                   style={styles.input}
                   type="text"
@@ -590,21 +585,19 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                     disabled
                   />
                 </div>
+                <div style={{ marginTop: '10px', color: '#888', fontSize: '0.95em' }}>
+                  <b>Geocoding string:</b> {`${formData.street_address || ''}, ${formData.city || ''}, NJ ${formData.zip_code || ''}, USA`}
+                </div>
                 <button 
                   type="button" 
-                  onClick={() => geocodeAddress()}
+                  onClick={() => geocodeAddress({})}
                   style={{...styles.geocodeButton, marginTop: '20px', width: '100%'}}
                 >
                   Locate Address
                 </button>
-                {geocodingStatus && (
-                  <div style={{
-                    ...styles.geocodingStatus,
-                    color: geocodingStatus.includes('✅') ? '#4caf50' : 
-                           geocodingStatus.includes('❌') ? '#d32f2f' : 
-                           '#666'
-                  }}>
-                    {geocodingStatus}
+                {addressNotFound && customAddressError && (
+                  <div style={{ color: '#b00020', marginTop: '10px', fontSize: '14px' }}>
+                    {customAddressError}
                   </div>
                 )}
               </>
