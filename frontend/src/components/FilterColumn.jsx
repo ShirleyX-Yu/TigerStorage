@@ -184,26 +184,10 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
         <Typography gutterBottom>Minimum Lender Rating</Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1, mt: 1 }}>
           <Box>
-            <span
-              key={0}
-              onClick={() => onFilterChange('minRating', 0)}
-              style={{
-                color: (filters.minRating || 0) === 0 ? '#fbc02d' : '#ccc',
-                fontSize: 28,
-                cursor: 'pointer',
-                transition: 'color 0.15s',
-                userSelect: 'none',
-                marginRight: 4
-              }}
-              role="button"
-              aria-label="Set minimum rating to 0 stars"
-              tabIndex={0}
-              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onFilterChange('minRating', 0); }}
-            >☆</span>
             {[1,2,3,4,5].map(star => (
               <span
                 key={star}
-                onClick={() => onFilterChange('minRating', star)}
+                onClick={() => onFilterChange('minRating', (filters.minRating || 0) === star ? 0 : star)}
                 style={{
                   color: (filters.minRating || 0) >= star ? '#fbc02d' : '#ccc',
                   fontSize: 28,
@@ -214,7 +198,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
                 role="button"
                 aria-label={`Set minimum rating to ${star} star${star > 1 ? 's' : ''}`}
                 tabIndex={0}
-                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onFilterChange('minRating', star); }}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onFilterChange('minRating', (filters.minRating || 0) === star ? 0 : star); }}
               >★</span>
             ))}
           </Box>
