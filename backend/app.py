@@ -1789,6 +1789,20 @@ def debug_schema(table_name):
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/stress-test/create-listings', methods=['POST'])
+def create_listings():
+    data = request.get_json()
+    listings = data.get('listings', [])
+
+    created_listings = []
+    for listing_data in listings:
+        # Call the existing create_listing function
+        response = create_listing(listing_data)
+        if response[1] == 201:  # If the listing was created successfully
+            created_listings.append(response[0])  # Append the created listing info
+
+    return jsonify({"success": True, "created_listings": created_listings}), 201
+
 if __name__ == "__main__":
     args = parser.parse_args()
     app.debug = not args.production
