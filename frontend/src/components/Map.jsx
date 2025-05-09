@@ -820,114 +820,114 @@ const Map = () => {
           </MapContainer>
           {/* Popup Modal for Selected Listing */}
           <Dialog open={!!selectedListing} onClose={() => { setSelectedListingId(null); setGroupedListings(null); setInterestSuccess(false); setLastInterestAction(null); }} PaperProps={{ style: { borderRadius: 16, minWidth: 340, background: '#fff8f1' } }}>
-            <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, padding: '16px 24px', position: 'relative' }}>
-              Listing Details
-              <button
-                onClick={() => { setSelectedListingId(null); setGroupedListings(null); setInterestSuccess(false); setLastInterestAction(null); }}
-                style={{
-                  position: 'absolute',
-                  top: 12,
-                  right: 16,
-                  background: 'none',
-                  border: 'none',
-                  color: 'white',
-                  fontSize: 22,
-                  cursor: 'pointer',
-                  fontWeight: 700,
-                  lineHeight: 1
-                }}
-                aria-label="Close"
-              >
-                &times;
-              </button>
-            </DialogTitle>
-            <DialogContent dividers style={{ background: '#fff8f1', padding: 24, position: 'relative' }}>
-                {/* Report Button - top right */}
+            {selectedListing && <>
+              <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, padding: '16px 24px', position: 'relative' }}>
+                Listing Details
                 <button
+                  onClick={() => { setSelectedListingId(null); setGroupedListings(null); setInterestSuccess(false); setLastInterestAction(null); }}
                   style={{
                     position: 'absolute',
                     top: 12,
-                    right: 12,
-                    background: '#ffeaea',
-                    border: '1.5px solid #f44336',
-                    color: '#f44336',
-                    fontWeight: 700,
-                    fontSize: 15,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
+                    right: 16,
+                    background: 'none',
+                    border: 'none',
+                    color: 'white',
+                    fontSize: 22,
                     cursor: 'pointer',
-                    padding: '4px 12px',
-                    borderRadius: 7,
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+                    fontWeight: 700,
+                    lineHeight: 1
                   }}
-                  title="Report this listing"
-                  onClick={() => {
-                    setReportModalOpen(true);
-                    setReportReason("");
-                    setReportSuccess(false);
-                  }}
+                  aria-label="Close"
                 >
-                  <span style={{fontSize: 20, color: '#f44336'}}>🚩</span>
+                  &times;
                 </button>
-              {/* Grouped modal navigation */}
-              {groupedListings && groupedListings.length > 1 && (
-                <Box mb={2} display="flex" alignItems="center" justifyContent="center" gap={2}>
-                  <Button
-                    onClick={() => setGroupedIndex(i => (i - 1 + groupedListings.length) % groupedListings.length)}
-                    disabled={groupedListings.length <= 1}
-                    style={{ minWidth: 40, fontWeight: 700 }}
+              </DialogTitle>
+              <DialogContent dividers style={{ background: '#fff8f1', padding: 24, position: 'relative' }}>
+                  {/* Report Button - top right */}
+                  <button
+                    style={{
+                      position: 'absolute',
+                      top: 12,
+                      right: 12,
+                      background: '#ffeaea',
+                      border: '1.5px solid #f44336',
+                      color: '#f44336',
+                      fontWeight: 700,
+                      fontSize: 15,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      cursor: 'pointer',
+                      padding: '4px 12px',
+                      borderRadius: 7,
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+                    }}
+                    title="Report this listing"
+                    onClick={() => {
+                      setReportModalOpen(true);
+                      setReportReason("");
+                      setReportSuccess(false);
+                    }}
                   >
-                    &#8592; Prev
-                  </Button>
-                  <span style={{ fontWeight: 600, color: '#FF6B00' }}>{groupedIndex + 1} / {groupedListings.length}</span>
-                  <Button
-                    onClick={() => setGroupedIndex(i => (i + 1) % groupedListings.length)}
-                    disabled={groupedListings.length <= 1}
-                    style={{ minWidth: 40, fontWeight: 700 }}
-                  >
-                    Next &#8594;
-                  </Button>
-                </Box>
-              )}
-              {interestError && (<Box mb={2}><Alert severity="error" variant="filled">{
-                  (() => {
-                    if (typeof interestError === 'string') {
-                      try {
-                        const parsed = JSON.parse(interestError);
-                        if (parsed && parsed.error) return parsed.error;
-                      } catch (e) {
-                        // Not JSON, fall through
+                    <span style={{fontSize: 20, color: '#f44336'}}>🚩</span>
+                  </button>
+                {/* Grouped modal navigation */}
+                {groupedListings && groupedListings.length > 1 && (
+                  <Box mb={2} display="flex" alignItems="center" justifyContent="center" gap={2}>
+                    <Button
+                      onClick={() => setGroupedIndex(i => (i - 1 + groupedListings.length) % groupedListings.length)}
+                      disabled={groupedListings.length <= 1}
+                      style={{ minWidth: 40, fontWeight: 700 }}
+                    >
+                      &#8592; Prev
+                    </Button>
+                    <span style={{ fontWeight: 600, color: '#FF6B00' }}>{groupedIndex + 1} / {groupedListings.length}</span>
+                    <Button
+                      onClick={() => setGroupedIndex(i => (i + 1) % groupedListings.length)}
+                      disabled={groupedListings.length <= 1}
+                      style={{ minWidth: 40, fontWeight: 700 }}
+                    >
+                      Next &#8594;
+                    </Button>
+                  </Box>
+                )}
+                {interestError && (<Box mb={2}><Alert severity="error" variant="filled">{
+                    (() => {
+                      if (typeof interestError === 'string') {
+                        try {
+                          const parsed = JSON.parse(interestError);
+                          if (parsed && parsed.error) return parsed.error;
+                        } catch (e) {
+                          // Not JSON, fall through
+                        }
+                        // Try to match {"error":"..."} pattern
+                        const match = interestError.match(/\{"error"\s*:\s*"([^"]+)"\}/);
+                        if (match && match[1]) return match[1];
+                        
+                        // Remove any numeric codes from error
+                        let cleanError = interestError;
+                        cleanError = cleanError.replace(/Error:\s*/, '');
+                        cleanError = cleanError.replace(/\b[0-9]{3,}\b/, '');
+                        cleanError = cleanError.replace(/^\s+|\s+$/g, '');
+                        
+                        // Add default prefix if error looks too technical
+                        if (cleanError.includes('exception') || 
+                            cleanError.includes('failed') || 
+                            cleanError.toLowerCase().includes('error')) {
+                          return "We couldn't process your request. Please try again later.";
+                        }
+                        
+                        return cleanError;
                       }
-                      // Try to match {"error":"..."} pattern
-                      const match = interestError.match(/\{"error"\s*:\s*"([^"]+)"\}/);
-                      if (match && match[1]) return match[1];
-                      
-                      // Remove any numeric codes from error
-                      let cleanError = interestError;
-                      cleanError = cleanError.replace(/Error:\s*/, '');
-                      cleanError = cleanError.replace(/\b[0-9]{3,}\b/, '');
-                      cleanError = cleanError.replace(/^\s+|\s+$/g, '');
-                      
-                      // Add default prefix if error looks too technical
-                      if (cleanError.includes('exception') || 
-                          cleanError.includes('failed') || 
-                          cleanError.toLowerCase().includes('error')) {
-                        return "We couldn't process your request. Please try again later.";
-                      }
-                      
-                      return cleanError;
-                    }
-                    return 'We couldn\'t process your request. Please try again later.';
-                  })()
-                }</Alert></Box>
-              )}
-              {interestSuccess && (
-                <Box mb={2}><Alert severity="success" variant="filled">
-                  {lastInterestAction === 'remove' ? 'Space request cancelled!' : 'Space requested!'}
-                </Alert></Box>
-              )}
-              {selectedListing && (
+                      return 'We couldn\'t process your request. Please try again later.';
+                    })()
+                  }</Alert></Box>
+                )}
+                {interestSuccess && (
+                  <Box mb={2}><Alert severity="success" variant="filled">
+                    {lastInterestAction === 'remove' ? 'Space request cancelled!' : 'Space requested!'}
+                  </Alert></Box>
+                )}
                 <Box>
                   <Typography variant="h5" style={{ color: '#FF6B00', fontWeight: 700, marginBottom: 8 }}>
                     {selectedListing.title}
@@ -963,145 +963,145 @@ const Map = () => {
                     </Typography>
                   )}
                 </Box>
-              )}
-              {showReservationForm && selectedListing && (
-                <form id="reservation-form" onSubmit={async (e) => {
-                  e.preventDefault();
-                  let space = reservationMode === 'full' ? (selectedListing.sq_ft ?? 0) : Number(reservationSpace);
-                  if (reservationMode === 'partial') {
-                    if (!reservationSpace || isNaN(reservationSpace) || space <= 0 || space > (selectedListing.sq_ft ?? 0)) {
-                      setReservationLocalError(`Enter a valid space (0 < space ≤ ${(selectedListing.sq_ft ?? 0)})`);
-                      return;
+                {showReservationForm && (
+                  <form id="reservation-form" onSubmit={async (e) => {
+                    e.preventDefault();
+                    let space = reservationMode === 'full' ? (selectedListing.sq_ft ?? 0) : Number(reservationSpace);
+                    if (reservationMode === 'partial') {
+                      if (!reservationSpace || isNaN(reservationSpace) || space <= 0 || space > (selectedListing.sq_ft ?? 0)) {
+                        setReservationLocalError(`Enter a valid space (0 < space ≤ ${(selectedListing.sq_ft ?? 0)})`);
+                        return;
+                      }
                     }
-                  }
-                  setReservationLocalError('');
-                  setReservationLoading(true);
-                  setReservationError('');
-                  try {
-                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-                    const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
-                    const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
-                    
-                    // Submit reservation request
-                    await axiosInstance.post(`/api/listings/${selectedListing.listing_id || selectedListing.id}/reserve`, {
-                      requested_space: space
-                    }, {
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'X-User-Type': userType,
-                        'X-Username': username,
-                        'X-CSRFToken': getCSRFToken()
-                      }
-                    });
-                    
-                    // Close the form
-                    setShowReservationForm(false);
-                    
-                    // Update UI
-                    setInterestSuccess(true);
-                    setLastInterestAction('add');
-                    setTimeout(() => setInterestSuccess(false), 3000);
-                    
-                    // Update the listings immediately
-                    setListings(currentListings => 
-                      currentListings.map(l => 
-                        l.id === (selectedListing.listing_id || selectedListing.id) ? {...l, isInterested: true} : l
-                      )
-                    );
-                    
-                    // Refresh listings to update UI
-                    // await fetchListings();
-                  } catch (error) {
-                    const errorData = error.response?.data || {};
-                    let errorMessage = errorData.error || 'We couldn\'t submit your reservation request. Please try again later.';
-                    
-                    // Clean up error message
-                    errorMessage = errorMessage.replace(/Error:\s*/, '');
-                    
-                    setReservationError(errorMessage);
-                  } finally {
-                    setReservationLoading(false);
-                  }
-                }} style={{ marginTop: 24 }}>
-                  <ToggleButtonGroup
-                    value={reservationMode}
-                    exclusive
-                    onChange={(e, newMode) => {
-                      if (newMode) {
-                        setReservationMode(newMode);
-                        if (newMode === 'full') setReservationSpace(selectedListing.sq_ft ?? 0);
-                        else setReservationSpace('');
-                        setReservationLocalError('');
-                      }
-                    }}
-                    style={{ marginBottom: 16 }}
-                    fullWidth
-                  >
-                    <ToggleButton value="full" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Full ({selectedListing.sq_ft ?? 0} sq ft)</ToggleButton>
-                    <ToggleButton value="partial" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Partial</ToggleButton>
-                  </ToggleButtonGroup>
-                  <TextField
-                    label="Space (sq ft)"
-                    type="number"
-                    fullWidth
-                    variant="outlined"
-                    value={reservationMode === 'full' ? (selectedListing.sq_ft ?? 0) : reservationSpace}
-                    onChange={e => setReservationSpace(e.target.value)}
-                    disabled={reservationMode === 'full' || reservationLoading}
-                    inputProps={{ min: 0.1, max: (selectedListing.sq_ft ?? 0), step: 0.1 }}
-                    style={{ marginBottom: 12, background: 'white', borderRadius: 6 }}
-                  />
-                  <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>
-                    Max available: {selectedListing.sq_ft ?? 0} sq ft
-                  </div>
-                  {(reservationLocalError || reservationError) && <Alert severity="error" style={{ marginBottom: 8 }}>{reservationLocalError || reservationError}</Alert>}
-                  <DialogActions style={{ padding: '16px 0 0 0', background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
-                    <Button onClick={() => setShowReservationForm(false)} disabled={reservationLoading} style={{ color: '#888', fontWeight: 600 }}>Cancel</Button>
-                  </DialogActions>
-                </form>
-              )}
-            </DialogContent>
-            <DialogActions style={{ padding: '16px' }}>
-              <Button
-                onClick={() => {
-                  if (selectedListing) navigate(`/listing/${selectedListing.listing_id || selectedListing.id}`);
-                }}
-                style={{ background: '#FF6B00', color: 'white', fontWeight: 600 }}
-                variant="contained"
-              >
-                View Details
-              </Button>
-              {!showReservationForm && (
+                    setReservationLocalError('');
+                    setReservationLoading(true);
+                    setReservationError('');
+                    try {
+                      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                      const userType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'renter';
+                      const username = sessionStorage.getItem('username') || localStorage.getItem('username') || '';
+                      
+                      // Submit reservation request
+                      await axiosInstance.post(`/api/listings/${selectedListing.listing_id || selectedListing.id}/reserve`, {
+                        requested_space: space
+                      }, {
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'X-User-Type': userType,
+                          'X-Username': username,
+                          'X-CSRFToken': getCSRFToken()
+                        }
+                      });
+                      
+                      // Close the form
+                      setShowReservationForm(false);
+                      
+                      // Update UI
+                      setInterestSuccess(true);
+                      setLastInterestAction('add');
+                      setTimeout(() => setInterestSuccess(false), 3000);
+                      
+                      // Update the listings immediately
+                      setListings(currentListings => 
+                        currentListings.map(l => 
+                          l.id === (selectedListing.listing_id || selectedListing.id) ? {...l, isInterested: true} : l
+                        )
+                      );
+                      
+                      // Refresh listings to update UI
+                      // await fetchListings();
+                    } catch (error) {
+                      const errorData = error.response?.data || {};
+                      let errorMessage = errorData.error || 'We couldn\'t submit your reservation request. Please try again later.';
+                      
+                      // Clean up error message
+                      errorMessage = errorMessage.replace(/Error:\s*/, '');
+                      
+                      setReservationError(errorMessage);
+                    } finally {
+                      setReservationLoading(false);
+                    }
+                  }} style={{ marginTop: 24 }}>
+                    <ToggleButtonGroup
+                      value={reservationMode}
+                      exclusive
+                      onChange={(e, newMode) => {
+                        if (newMode) {
+                          setReservationMode(newMode);
+                          if (newMode === 'full') setReservationSpace(selectedListing.sq_ft ?? 0);
+                          else setReservationSpace('');
+                          setReservationLocalError('');
+                        }
+                      }}
+                      style={{ marginBottom: 16 }}
+                      fullWidth
+                    >
+                      <ToggleButton value="full" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Full ({selectedListing.sq_ft ?? 0} sq ft)</ToggleButton>
+                      <ToggleButton value="partial" style={{ flex: 1, fontWeight: 600, color: '#FF6B00', borderColor: '#FF6B00' }}>Partial</ToggleButton>
+                    </ToggleButtonGroup>
+                    <TextField
+                      label="Space (sq ft)"
+                      type="number"
+                      fullWidth
+                      variant="outlined"
+                      value={reservationMode === 'full' ? (selectedListing.sq_ft ?? 0) : reservationSpace}
+                      onChange={e => setReservationSpace(e.target.value)}
+                      disabled={reservationMode === 'full' || reservationLoading}
+                      inputProps={{ min: 0.1, max: (selectedListing.sq_ft ?? 0), step: 0.1 }}
+                      style={{ marginBottom: 12, background: 'white', borderRadius: 6 }}
+                    />
+                    <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>
+                      Max available: {selectedListing.sq_ft ?? 0} sq ft
+                    </div>
+                    {(reservationLocalError || reservationError) && <Alert severity="error" style={{ marginBottom: 8 }}>{reservationLocalError || reservationError}</Alert>}
+                    <DialogActions style={{ padding: '16px 0 0 0', background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
+                      <Button onClick={() => setShowReservationForm(false)} disabled={reservationLoading} style={{ color: '#888', fontWeight: 600 }}>Cancel</Button>
+                    </DialogActions>
+                  </form>
+                )}
+              </DialogContent>
+              <DialogActions style={{ padding: '16px' }}>
                 <Button
-                  onClick={() => handleToggleInterest(selectedListing)}
-                  style={{
-                    background: selectedListing && selectedListing.isInterested ? '#f44336' : '#FF6B00',
-                    color: 'white',
-                    border: 'none',
-                    fontWeight: 600
+                  onClick={() => {
+                    if (selectedListing) navigate(`/listing/${selectedListing.listing_id || selectedListing.id}`);
                   }}
+                  style={{ background: '#FF6B00', color: 'white', fontWeight: 600 }}
                   variant="contained"
-                  disabled={interestLoading}
                 >
-                  {interestLoading
-                    ? "Processing..."
-                    : selectedListing && selectedListing.isInterested
-                      ? "Cancel Request"
-                      : "Request Space"}
+                  View Details
                 </Button>
-              )}
-              {showReservationForm && (
-                <Button
-                  type="submit"
-                  form="reservation-form"
-                  style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }}
-                  variant="contained"
-                  disabled={reservationLoading}
-                >
-                  {reservationLoading ? 'Submitting...' : 'Submit'}
-                </Button>
-              )}
-            </DialogActions>
+                {!showReservationForm && (
+                  <Button
+                    onClick={() => handleToggleInterest(selectedListing)}
+                    style={{
+                      background: selectedListing && selectedListing.isInterested ? '#f44336' : '#FF6B00',
+                      color: 'white',
+                      border: 'none',
+                      fontWeight: 600
+                    }}
+                    variant="contained"
+                    disabled={interestLoading}
+                  >
+                    {interestLoading
+                      ? "Processing..."
+                      : selectedListing && selectedListing.isInterested
+                        ? "Cancel Request"
+                        : "Request Space"}
+                  </Button>
+                )}
+                {showReservationForm && (
+                  <Button
+                    type="submit"
+                    form="reservation-form"
+                    style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }}
+                    variant="contained"
+                    disabled={reservationLoading}
+                  >
+                    {reservationLoading ? 'Submitting...' : 'Submit'}
+                  </Button>
+                )}
+              </DialogActions>
+            </>}
           </Dialog>
 
           {/* Report Modal */}
