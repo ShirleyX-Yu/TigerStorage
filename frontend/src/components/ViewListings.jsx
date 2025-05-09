@@ -329,7 +329,7 @@ const ViewListings = () => {
     minSize: 0,
     maxSize: 500,
     maxDistance: 50,
-    minRating: 1,
+    minRating: 0,
     includeUnrated: false,
   });
 
@@ -344,7 +344,7 @@ const ViewListings = () => {
       minSize: 0,
       maxSize: 500,
       maxDistance: 50,
-      minRating: 1,
+      minRating: 0,
       includeUnrated: false,
     });
   };
