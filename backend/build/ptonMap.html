@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Princeton Map</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <style>
+    #map {
+      height: 100vh;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    #filterColumn.active + #map {
+      left: 0;
+    }
+    #backButton, #searchButton, #dashboardButton {
+      position: fixed;
+      top: 20px;
+      z-index: 1001;
+      padding: 10px 20px;
+      background-color: #FF8F00;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #backButton {
+      left: 20px;
+      background-color: #f44336;
+    }
+    #searchButton {
+      left: 160px;
+    }
+    #dashboardButton {
+      left: 300px;
+    }
+    #backButton:hover {
+      background-color: #d32f2f;
+    }
+    #searchButton:hover, #dashboardButton:hover {
+      background-color: #F57C00;
+    }
+    #filterColumn {
+      position: fixed;
+      top: 0;
+      left: -300px;
+      width: 300px;
+      height: 100vh;
+      background-color: white;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+      z-index: 1000;
+      transition: left 0.3s ease;
+      padding: 70px 15px 15px 15px;
+      overflow-y: auto;
+      transform: translateX(-300px);
+      box-sizing: border-box;
+    }
+    #filterColumn.active {
+      left: 0;
+      transform: translateX(0);
+    }
+    .filter-section {
+      margin-bottom: 12px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .filter-section h3 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      color: #333;
+      font-size: 16px;
+    }
+    .filter-option {
+      margin: 5px 0;
+    }
+    .filter-option label {
+      display: block;
+      margin-bottom: 5px;
+      color: #666;
+    }
+    .filter-option input[type="range"] {
+      width: 100%;
+    }
+    .filter-option select {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .star-rating {
+      display: flex;
+      align-items: center;
+      margin-top: 5px;
+    }
+    .star-rating .stars {
+      color: #ffd700;
+      font-size: 20px;
+      margin-right: 10px;
+    }
+    .star-rating .value {
+      font-size: 16px;
+      color: #666;
+    }
+    .popup-image {
+      width: 100%;
+      height: 150px;
+      background-color: #f5f5f5;
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .popup-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .interested-button {
+      width: 100%;
+      padding: 10px 15px;
+      background-color: #f57c00;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      margin-top: 15px;
+      text-align: center;
+      transition: background-color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      height: 40px;
+    }
+    .interested-button:hover {
+      background-color: #e65100;
+    }
+    .interested-button.interested {
+      background-color: #4caf50;
+    }
+    .interested-button.interested:hover {
+      background-color: #388e3c;
+    }
+    .contact-info {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      display: none;
+    }
+    .contact-info h4 {
+      margin: 0 0 8px 0;
+      color: #333;
+      font-size: 14px;
+    }
+    .contact-info p {
+      margin: 5px 0;
+      font-size: 13px;
+      color: #666;
+    }
+    .interested-renters {
+      margin-top: 6px;
+      max-height: 50px;
+      overflow-y: auto;
+    }
+    .interested-renters h4 {
+      margin: 0 0 2px 0;
+      color: #333;
+      font-size: 12px;
+      position: sticky;
+      top: 0;
+      background-color: #f5f5f5;
+      padding: 2px 0;
+      z-index: 1;
+    }
+    .renter-item {
+      padding: 2px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 10px;
+    }
+    .renter-item:last-child {
+      border-bottom: none;
+    }
+    .renter-item p {
+      margin: 0;
+      line-height: 1.2;
+    }
+    .renter-item b {
+      font-size: 11px;
+    }
+    .storage-units-list {
+      margin-bottom: 20px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .storage-unit-item {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .storage-unit-item:hover {
+      background-color: #e0e0e0;
+    }
+    .storage-unit-image {
+      width: 60px;
+      height: 60px;
+      border-radius: 4px;
+      margin-right: 10px;
+      overflow: hidden;
+    }
+    .storage-unit-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .storage-unit-info {
+      flex: 1;
+    }
+    .storage-unit-name {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .storage-unit-details {
+      font-size: 12px;
+      color: #666;
+    }
+    .storage-unit-price {
+      color: #f57c00;
+      font-weight: 500;
+    }
+    #searchFilterButton {
+      width: 100%;
+      padding: 10px;
+      background-color: #FF8F00;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      margin: 15px 0;
+      text-align: center;
+      transition: background-color 0.2s;
+    }
+    #searchFilterButton:hover {
+      background-color: #F57C00;
+    }
+    .popup-image-container {
+      width: 100%;
+      height: 180px;
+      margin: 10px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: #f5f5f5;
+      position: relative;
+    }
+    .popup-image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .popup-image-container img[src="/assets/placeholder.jpg"] {
+      opacity: 0.5;
+    }
+    .popup-details {
+      margin-top: 10px;
+    }
+    .popup-description {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .popup-specs {
+      font-size: 14px;
+      margin: 10px 0;
+    }
+    .popup-specs div {
+      margin: 5px 0;
+    }
+    .leaflet-popup-content {
+      margin: 0;
+      width: 300px !important;
+    }
+    .leaflet-popup-content-wrapper {
+      padding: 0;
+      border-radius: 8px;
+    }
+    .custom-popup .leaflet-popup-content-wrapper {
+      background: white;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.2);
+    }
+    .custom-popup .leaflet-popup-tip {
+      background: white;
+    }
+    .custom-popup-content {
+      padding: 15px;
+    }
+    .custom-popup-content h2 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <button id="backButton" onclick="logout()">
+    <i class="fas fa-sign-out-alt"></i> Logout
+  </button>
+  <button id="searchButton" onclick="toggleFilterColumn()">
+    <i class="fas fa-search"></i> Search
+  </button>
+  <button id="dashboardButton" onclick="goToDashboard()">
+    <i class="fas fa-tachometer-alt"></i> Dashboard
+  </button>
+  <div id="filterColumn">
+    <div class="filter-section">
+      <h3>Storage Space</h3>
+      <div class="filter-option">
+        <select id="sizeSelect" onchange="filterBySize()">
+          <option value="all">All Sizes</option>
+          <option value="small">&lt;50 sq ft</option>
+          <option value="medium">50-150 sq ft</option>
+          <option value="large">150-250 sq ft</option>
+          <option value="xlarge">&gt;250 sq ft</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-section">
+      <h3>Cost</h3>
+      <div class="filter-option">
+        <select id="costSelect" onchange="filterByCost()">
+          <option value="all">All Prices</option>
+          <option value="low">&lt;$15 per month</option>
+          <option value="medium-low">$15-30 per month</option>
+          <option value="medium">$30-45 per month</option>
+          <option value="medium-high">$45-60 per month</option>
+          <option value="high">&gt;$60 per month</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-section">
+      <h3>Contract Length</h3>
+      <div class="filter-option">
+        <select id="contractSelect" onchange="filterByContract()">
+          <option value="all">All Lengths</option>
+          <option value="1">1 month</option>
+          <option value="2">1-2 months</option>
+          <option value="3">2-3 months</option>
+          <option value="4">3-4 months</option>
+          <option value="5">4+ months</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-section">
+      <h3>Distance from Campus</h3>
+      <div class="filter-option">
+        <select id="distanceSelect" onchange="filterByDistance()">
+          <option value="all">All Distances</option>
+          <option value="close">0-5 miles</option>
+          <option value="medium">5-10 miles</option>
+          <option value="far">10-20 miles</option>
+          <option value="very-far">20+ miles</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-section">
+      <h3>Minimum Rating</h3>
+      <div class="filter-option">
+        <div class="star-rating">
+          <div class="stars">
+            <i class="fas fa-star"></i>
+            <i class="far fa-star"></i>
+            <i class="far fa-star"></i>
+            <i class="far fa-star"></i>
+            <i class="far fa-star"></i>
+          </div>
+          <div class="value">1 star</div>
+        </div>
+        <input type="range" id="ratingRange" min="1" max="5" step="1" value="1" onchange="filterByRating()">
+      </div>
+    </div>
+    <div class="storage-units-list">
+      <h3>Storage Units</h3>
+      <div id="storageUnitsList">
+        <!-- Storage units will be added here dynamically -->
+      </div>
+    </div>
+  </div>
+  <div id="map"></div>
+
+  <script src="ptonMap.js"></script>
+</body>
+</html>

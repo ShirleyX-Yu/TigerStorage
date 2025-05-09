@@ -1,244 +1,493 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
+import Dialog from '@mui/material/Dialog';
+import EditListingForm from './EditListingForm';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import StarIcon from '@mui/icons-material/Star';
+import { getCSRFToken } from '../utils/csrf';
+
+const getStatusLabel = (status) => {
+  switch (status) {
+    case 'approved_full':
+      return 'Approved (Full)';
+    case 'approved_partial':
+      return 'Approved (Partial)';
+    case 'pending':
+      return 'Pending';
+    case 'rejected':
+      return 'Rejected';
+    case 'cancelled_by_renter':
+      return 'Cancelled by Renter';
+    case 'expired':
+      return 'Expired';
+    default:
+      return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+};
 
 const LenderListingDetails = () => {
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const fetchListingDetailsRef = useRef(null);
+  const [actionLoading, setActionLoading] = useState({});
+  const [actionError, setActionError] = useState({});
+  const [partialModal, setPartialModal] = useState({ open: false, request: null });
+  const [partialVolume, setPartialVolume] = useState('');
+  const [partialError, setPartialError] = useState('');
+  const [lenderReviews, setLenderReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+
+  const handleOpenEditModal = () => setEditModalOpen(true);
+  const handleCloseEditModal = (shouldRefresh = false) => {
+    setEditModalOpen(false);
+    if (shouldRefresh && fetchListingDetailsRef.current) {
+      fetchListingDetailsRef.current();
+    }
+  };
+
   const navigate = useNavigate();
   const { id } = useParams();
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [interestedRenters, setInterestedRenters] = useState([]);
+  const [reservationRequests, setReservationRequests] = useState([]);
 
   useEffect(() => {
-    console.log('LenderListingDetails component mounted with ID:', id);
-    
     const fetchListingDetails = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        if (!id) {
-          throw new Error('Invalid listing ID');
-        }
-        
-        console.log(`Fetching details for listing ID: ${id}`);
+
+        if (!id) throw new Error('Invalid listing ID');
+
         const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/listings/${id}`;
-        console.log('API URL:', apiUrl);
-        
-        const response = await fetch(apiUrl, {
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Failed to fetch listing details: ${response.status} ${errorText}`);
-        }
-        
+        const response = await fetch(apiUrl, { credentials: 'include' });
+        if (response.status < 200 || response.status >= 300) throw new Error(response.data && response.data.error ? response.data.error : 'Unknown error');
         const data = await response.json();
-        console.log('Received listing data:', data);
-        
-        // Fetch interested renters
-        const rentersResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/listings/${id}/interested-renters`, {
-          credentials: 'include'
+
+        // Fetch reservation requests for this listing
+        const requestsResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/listings/${id}/reservation-requests`, {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+          }
         });
-        
-        if (!rentersResponse.ok) {
-          throw new Error('Failed to fetch interested renters');
-        }
-        
-        const rentersData = await rentersResponse.json();
-        
+        if (!requestsResponse.ok) throw new Error('Failed to fetch reservation requests');
+        const requestsData = await requestsResponse.json();
+        setReservationRequests(requestsData);
+
         setListing({
           id: data.id,
-          location: data.location,
+          title: data.title,
           cost: data.cost,
-          cubicFeet: data.cubic_feet,
+          sq_ft: data.sq_ft,
           description: data.description,
           contractLength: data.contract_length_months,
-          images: [data.image_url || '/assets/placeholder.jpg'],
-          interestedRenters: rentersData.map(renter => ({
-            id: renter.id,
-            name: renter.username,
-            email: `${renter.username}@princeton.edu`,
-            dateInterested: renter.dateInterested,
-            status: renter.status
-          }))
+          images: Array.isArray(data.images) && data.images.length > 0
+            ? data.images
+            : [data.image_url || '/assets/placeholder.jpg'],
+          owner_id: data.owner_id
         });
       } catch (err) {
-        console.error('Error fetching listing details:', err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
+    fetchListingDetailsRef.current = fetchListingDetails;
     fetchListingDetails();
-    
-    return () => {
-      console.log('LenderListingDetails component unmounted');
-    };
+    // return () => console.log('Component unmounted');
   }, [id]);
 
-  // Mock function to fetch interested renters
-  // In a real app, this would be a separate API call
-  const fetchInterestedRenters = async (listingId) => {
-    try {
-      // This would be a real API call in production
-      // const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${listingId}/interested-renters`, {
-      //   credentials: 'include'
-      // });
-      // const data = await response.json();
-      // setInterestedRenters(data);
-      
-      // For now, we'll use mock data
-      // In a real app, this would come from the backend
-      const mockInterestedRenters = [
-        {
-          id: 1,
-          name: 'John Doe',
-          email: 'jdoe@princeton.edu',
-          dateInterested: '2025-04-05',
-          status: 'New'
-        },
-        {
-          id: 2,
-          name: 'Jane Smith',
-          email: 'jsmith@princeton.edu',
-          dateInterested: '2025-04-06',
-          status: 'New'
+  useEffect(() => {
+    if (!listing || !listing.owner_id) return;
+    const fetchReviews = async () => {
+      setReviewsLoading(true);
+      try {
+        const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lender-reviews/${listing.owner_id}`);
+        if (resp.ok) {
+          setLenderReviews(await resp.json());
         }
-      ];
-      
-      // Simulate API delay
-      setTimeout(() => {
-        setInterestedRenters(mockInterestedRenters);
-      }, 500);
-    } catch (error) {
-      console.error('Error fetching interested renters:', error);
+      } catch (err) {
+        setLenderReviews([]);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+    fetchReviews();
+  }, [listing]);
+
+  const refreshRequests = async () => {
+    try {
+      const requestsResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/listings/${id}/reservation-requests`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+        }
+      });
+      if (!requestsResponse.ok) throw new Error('Failed to fetch reservation requests');
+      const requestsData = await requestsResponse.json();
+      setReservationRequests(requestsData);
+    } catch (err) {
+      // ignore
     }
   };
 
-  // Simple render function for error state
+  const handleAction = async (requestId, action, approvedVolume) => {
+    setActionLoading(l => ({ ...l, [requestId]: true }));
+    setActionError(e => ({ ...e, [requestId]: null }));
+    try {
+      const reqObj = reservationRequests.find(r => r.request_id === requestId);
+      const approvedVolume = (action === 'approved_full' && reqObj) ? reqObj.requested_space : approvedVolume;
+      const body = action === 'approved_partial' || action === 'approved_full'
+        ? { status: action, approved_space: approvedVolume }
+        : { status: action };
+      const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/reservation-requests/${requestId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify(body)
+      });
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to update request');
+      }
+      await refreshRequests();
+      if (fetchListingDetailsRef.current) fetchListingDetailsRef.current();
+
+      // Show notification based on action type
+      let notificationConfig = {
+        show: true,
+        message: '',
+        type: ''
+      };
+      switch (action) {
+        case 'approved_full':
+          notificationConfig.message = 'Request fully approved successfully!';
+          notificationConfig.type = 'success';
+          break;
+        case 'approved_partial':
+          notificationConfig.message = 'Request partially approved successfully!';
+          notificationConfig.type = 'partial';
+          break;
+        case 'rejected':
+          notificationConfig.message = 'Request rejected successfully!';
+          notificationConfig.type = 'error';
+          break;
+      }
+      setNotification(notificationConfig);
+
+      // Hide notification after 3 seconds
+      setTimeout(() => {
+        setNotification({ show: false, message: '', type: '' });
+      }, 3000);
+
+    } catch (err) {
+      let errorMessage = "We couldn't process this action. Please try again.";
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error.replace(/Error:\s*/, '');
+      }
+      setActionError(e => ({ ...e, [requestId]: errorMessage }));
+    } finally {
+      setActionLoading(l => ({ ...l, [requestId]: false }));
+    }
+  };
+
+  const openPartialModal = (request) => {
+    setPartialModal({ open: true, request });
+    setPartialVolume('');
+    setPartialError('');
+  };
+  const closePartialModal = () => {
+    setPartialModal({ open: false, request: null });
+    setPartialVolume('');
+    setPartialError('');
+  };
+  const handlePartialApprove = async () => {
+    const req = partialModal.request;
+    const max = Math.min(req.requested_space, listing.sq_ft);
+    const vol = Number(partialVolume);
+    if (!vol || isNaN(vol) || vol <= 0 || vol > max) {
+      setPartialError(`Enter a valid volume (0 < volume ≤ ${max})`);
+      return;
+    }
+    setPartialError('');
+    await handleAction(req.request_id, 'approved_partial', vol);
+    closePartialModal();
+  };
+
   const renderError = () => (
     <div style={styles.errorContainer}>
-      <h2>Error</h2>
-      <p>{error}</p>
-      <button style={styles.backButton} onClick={() => navigate('/lender')}>
+      <h2>Something went wrong</h2>
+      <p>{typeof error === 'string' ? error.replace(/Error:\s*/, '') : "We couldn't load this listing. Please try again later."}</p>
+      <button style={styles.backButton} onClick={() => navigate('/lender-dashboard')}>
         &larr; Back to Dashboard
       </button>
     </div>
   );
 
-  // Simple render function for loading state
   const renderLoading = () => (
     <div style={styles.loadingContainer}>
       <p>Loading listing details...</p>
     </div>
   );
 
-  // Simple render function for when listing is not found
   const renderNotFound = () => (
     <div style={styles.errorContainer}>
       <h2>Listing Not Found</h2>
-      <p>Sorry, we couldn't find this listing. It may have been removed or is temporarily unavailable.</p>
-      <button style={styles.backButton} onClick={() => navigate('/lender')}>
+      <p>Sorry, we couldn't find this listing.</p>
+      <button style={styles.backButton} onClick={() => navigate('/lender-dashboard')}>
         &larr; Back to Dashboard
       </button>
     </div>
   );
 
-  console.log('LenderListingDetails render state:', { loading, error, listing });
-
   return (
     <div style={styles.container}>
       <Header title="Storage Space Details" />
+      {notification.show && (
+        <div style={{
+          ...styles.notification,
+          backgroundColor: notification.type === 'success' ? '#4caf50' : 
+                          notification.type === 'partial' ? '#ff9800' : 
+                          '#f44336',
+        }}>
+          {notification.message}
+        </div>
+      )}
       <div style={styles.content}>
-        <button 
-          style={styles.backButton} 
-          onClick={() => navigate('/lender')}
-        >
-          ← Back to Dashboard
+        <button style={styles.backButton} onClick={() => navigate('/lender-dashboard')}>
+          &larr; Back to Dashboard
         </button>
-
         {loading ? renderLoading() : error ? renderError() : !listing ? renderNotFound() : (
           <div style={styles.detailsContainer}>
             <div style={styles.imageSection}>
-              <img 
-                src={listing.images?.[0] || '/assets/placeholder.jpg'} 
-                alt="Storage Space" 
-                style={styles.mainImage} 
-                onError={(e) => {
-                  console.log('Image failed to load, using placeholder');
-                  e.target.src = '/assets/placeholder.jpg';
-                }}
+              <img
+                src={listing.images[0]}
+                alt={listing.title}
+                style={styles.mainImage}
+                onError={(e) => { e.target.src = '/assets/placeholder.jpg'; }}
               />
             </div>
-
             <div style={styles.infoSection}>
-              <h2 style={styles.location}>{listing.location}</h2>
-              
+              <button
+                style={{
+                  background: '#f57c00',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 28px',
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  marginBottom: '18px',
+                  boxShadow: '0 2px 8px rgba(245,124,0,0.08)',
+                  cursor: 'pointer',
+                  alignSelf: 'flex-start',
+                  transition: 'background 0.2s',
+                }}
+                onClick={handleOpenEditModal}
+              >
+                Edit Listing
+              </button>
+              <h2 style={styles.location}>{listing.title}</h2>
               <div style={styles.specs}>
-                <div style={styles.specItem}>
-                  <span style={styles.specLabel}>Cost:</span>
-                  <span style={styles.specValue}>${listing.cost}/month</span>
-                </div>
-                <div style={styles.specItem}>
-                  <span style={styles.specLabel}>Size:</span>
-                  <span style={styles.specValue}>{listing.cubicFeet} cubic feet</span>
-                </div>
-                <div style={styles.specItem}>
-                  <span style={styles.specLabel}>Contract Length:</span>
-                  <span style={styles.specValue}>{listing.contractLength} months</span>
-                </div>
-                <div style={styles.specItem}>
-                  <span style={styles.specLabel}>Interested Renters:</span>
-                  <span style={styles.specValue}>{listing.interestedRenters?.length || 0}</span>
-                </div>
+                <div style={styles.specItem}><span style={styles.specLabel}>Cost:</span><span style={styles.specValue}>${listing.cost}/month</span></div>
+                <div style={styles.specItem}><span style={styles.specLabel}>Size:</span><span style={styles.specValue}>{listing.sq_ft} sq ft</span></div>
               </div>
-
               <div style={styles.descriptionSection}>
                 <h3>Description</h3>
                 <p style={styles.description}>{listing.description}</p>
               </div>
-
               <div style={styles.interestedRenters}>
-                <h3>Interested Renters ({listing.interestedRenters?.length || 0})</h3>
-                {listing.interestedRenters?.length === 0 ? (
-                  <p>No renters have shown interest in this listing yet.</p>
-                ) : (
-                  <div style={styles.rentersList}>
-                    {listing.interestedRenters.map(renter => (
-                      <div key={renter.id} style={styles.renterItem}>
-                        <div style={styles.renterHeader}>
-                          <h4 style={styles.renterName}>{renter.name}</h4>
-                          <span style={styles.renterStatus}>{renter.status}</span>
-                        </div>
-                        <p style={styles.renterContact}>
-                          <a href={`mailto:${renter.email}`} style={styles.renterEmail}>
-                            {renter.email}
-                          </a>
-                        </p>
-                        <p style={styles.renterDate}>
-                          Interested since: {new Date(renter.dateInterested).toLocaleDateString()}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+                <h3>Reservation Requests</h3>
+                {reservationRequests.length === 0 ? <p>No reservation requests yet.</p> : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 12 }}>
+                    <thead>
+                      <tr style={{ background: '#f8f8f8' }}>
+                        <th style={{ padding: 8, border: '1px solid #eee' }}>Renter</th>
+                        <th style={{ padding: 8, border: '1px solid #eee' }}>Status</th>
+                        <th style={{ padding: 8, border: '1px solid #eee' }}>Requested Volume</th>
+                        <th style={{ padding: 8, border: '1px solid #eee' }}>Approved Volume</th>
+                        <th style={{ padding: 8, border: '1px solid #eee' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reservationRequests.map(req => (
+                        <tr key={req.request_id}>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.renter_username}</td>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>{getStatusLabel(req.status)}</td>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.requested_space} sq ft</td>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>{req.approved_space ? `${req.approved_space} sq ft` : '-'}</td>
+                          <td style={{ padding: 8, border: '1px solid #eee' }}>
+                            {req.status === 'pending' && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', minWidth: 140 }}>
+                                <Button size="large" variant="contained" style={{
+                                  background: '#388e3c',
+                                  color: 'white',
+                                  borderRadius: '8px',
+                                  fontWeight: 700,
+                                  width: '100%',
+                                  fontSize: '1rem',
+                                  padding: '14px 0',
+                                  boxShadow: '0 2px 8px rgba(56,142,60,0.08)',
+                                  textTransform: 'none',
+                                }} disabled={actionLoading[req.request_id]} onClick={() => handleAction(req.request_id, 'approved_full')}>Approve Full</Button>
+                                <Button size="large" variant="contained" style={{
+                                  background: '#1976d2',
+                                  color: 'white',
+                                  borderRadius: '8px',
+                                  fontWeight: 700,
+                                  width: '100%',
+                                  fontSize: '1rem',
+                                  padding: '14px 0',
+                                  boxShadow: '0 2px 8px rgba(25,118,210,0.08)',
+                                  textTransform: 'none',
+                                }} disabled={actionLoading[req.request_id]} onClick={() => openPartialModal(req)}>Approve Partial</Button>
+                                <Button size="large" variant="contained" style={{
+                                  background: '#d32f2f',
+                                  color: 'white',
+                                  borderRadius: '8px',
+                                  fontWeight: 700,
+                                  width: '100%',
+                                  fontSize: '1rem',
+                                  padding: '14px 0',
+                                  boxShadow: '0 2px 8px rgba(211,47,47,0.08)',
+                                  textTransform: 'none',
+                                }} disabled={actionLoading[req.request_id]} onClick={() => handleAction(req.request_id, 'rejected')}>Reject</Button>
+                                {actionError[req.request_id] && <div style={{ color: 'red', marginTop: 4 }}>{actionError[req.request_id].replace(/Error:\s*/, '')}</div>}
+                              </div>
+                            )}
+                            {req.status !== 'pending' && (
+                              <span style={{ color: '#888', fontStyle: 'italic' }}>No action to be taken</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 )}
               </div>
-              
-              <div style={styles.actionSection}>
-                <button 
-                  style={styles.editButton}
-                  onClick={() => navigate(`/edit-listing/${listing.id}`)}
-                >
-                  Edit Listing
-                </button>
+              {/* --- Lender Reviews Section --- */}
+              <div style={{ marginTop: 32 }}>
+                <h3>Lender Reviews</h3>
+                {reviewsLoading ? <div>Loading reviews...</div> : (
+                  lenderReviews.length === 0 ? <div>No reviews yet.</div> : (
+                    <>
+                      <div style={{ marginBottom: 16 }}>
+                        <b>Average Rating: </b>
+                        {(
+                          lenderReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / lenderReviews.length
+                        ).toFixed(1)}
+                        <span style={{ color: '#fbc02d', marginLeft: 8 }}>
+                          {[...Array(Math.round(lenderReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / lenderReviews.length))].map((_, i) => <StarIcon key={i} fontSize="small" />)}
+                        </span>
+                      </div>
+                      <div>
+                        {lenderReviews.map((r, i) => (
+                          <div key={i} style={{ background: '#f8f8f8', borderRadius: 6, padding: 12, marginBottom: 10 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ color: '#fbc02d' }}>{[...Array(r.rating)].map((_, j) => <StarIcon key={j} fontSize="small" />)}</span>
+                              <span style={{ fontWeight: 600 }}>{r.renter_username}</span>
+                              <span style={{ color: '#888', fontSize: 12 }}>{new Date(r.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <div style={{ marginTop: 4 }}>{r.review_text}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )
+                )}
               </div>
             </div>
           </div>
         )}
+        <Dialog open={editModalOpen} onClose={() => handleCloseEditModal(false)} maxWidth="md" fullWidth>
+          {listing && (
+            <EditListingForm
+              listingId={listing.id}
+              onClose={() => handleCloseEditModal(false)}
+              onSuccess={() => handleCloseEditModal(true)}
+            />
+          )}
+        </Dialog>
+        {/* Partial Approval Modal */}
+        <Dialog 
+          open={partialModal.open} 
+          onClose={closePartialModal} 
+          maxWidth="xs" 
+          fullWidth
+          PaperProps={{
+            style: { borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '18px 24px 10px 24px', background: '#fafbfc', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
+            <span style={{ fontWeight: 600, fontSize: 20 }}>Approve Partial Reservation</span>
+            <button onClick={closePartialModal} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#888' }}>&times;</button>
+          </div>
+          <div style={{ padding: 24 }}>
+            <div style={{ marginBottom: 16 }}>
+              <b>Renter:</b> {partialModal.request?.renter_username}<br />
+              <b>Requested Volume:</b> {partialModal.request?.requested_space} sq ft<br />
+              <b>Max Allowed:</b> {partialModal.request ? Math.min(partialModal.request.requested_space, listing.sq_ft) : 0} sq ft
+            </div>
+            <TextField
+              label="Approved Volume (sq ft)"
+              type="number"
+              fullWidth
+              variant="outlined"
+              value={partialVolume}
+              onChange={e => setPartialVolume(e.target.value)}
+              inputProps={{ min: 0.1, max: partialModal.request ? Math.min(partialModal.request.requested_space, listing.sq_ft) : 0, step: 0.1 }}
+              style={{ marginBottom: 16 }}
+            />
+            {partialError && <div style={{ color: '#d32f2f', marginBottom: 16, fontSize: '14px' }}>{partialError}</div>}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
+              <button 
+                onClick={closePartialModal} 
+                style={{ 
+                  padding: '10px 16px', 
+                  border: '1px solid #ddd', 
+                  borderRadius: '8px', 
+                  background: 'white', 
+                  color: '#333',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 500
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePartialApprove}
+                style={{ 
+                  padding: '10px 16px', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  background: '#388e3c', 
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 600
+                }}
+              >
+                Approve
+              </button>
+            </div>
+          </div>
+        </Dialog>
       </div>
     </div>
   );
@@ -408,9 +657,9 @@ const styles = {
     margin: 0,
   },
   renterDate: {
-    fontSize: '0.9rem',
-    color: '#666',
-    margin: 0,
+    fontSize: '0.9em',
+    color: '#888',
+    marginBottom: '6px'
   },
   actionSection: {
     display: 'flex',
@@ -436,6 +685,18 @@ const styles = {
   renterEmail: {
     color: '#333',
     textDecoration: 'none',
+  },
+  notification: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    padding: '16px',
+    textAlign: 'center',
+    color: 'white',
+    fontWeight: 'bold',
+    zIndex: 1000,
+    transition: 'all 0.3s ease',
   },
 };
 

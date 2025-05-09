@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
+import { getCSRFToken } from '../utils/csrf';
 
 const EditListing = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [formData, setFormData] = useState({
-    location: '', // This will be used as the title field
+    title: '', // This will be used as the title field
     address: '', // Separate address field
     cost: '',
-    cubicFeet: '',
+    squareFeet: '',
     description: '',
     latitude: '',
     longitude: '',
@@ -40,18 +41,18 @@ const EditListing = () => {
         }
         
         const data = await response.json();
-        console.log('Fetched listing data:', data);
+        // console.log('Fetched listing data:', data);
         
         // Debug the address field
-        console.log('Address field from API:', data.address);
-        console.log('Location field from API:', data.location);
+        // console.log('Address field from API:', data.address);
+        // console.log('Location field from API:', data.location);
         
         // Set the form data from the fetched listing
         const formDataToSet = {
-          location: data.location || '',
+          title: data.title || '',
           address: data.address || '', // Only use the address field, don't fall back to location
           cost: data.cost || '',
-          cubicFeet: data.cubic_feet || data.cubicFeet || '',
+          squareFeet: data.square_feet || data.squareFeet || '',
           description: data.description || '',
           latitude: data.latitude || '',
           longitude: data.longitude || '',
@@ -60,13 +61,13 @@ const EditListing = () => {
           image_url: data.image_url || ''
         };
         
-        console.log('Setting form data:', formDataToSet);
+        // console.log('Setting form data:', formDataToSet);
         setFormData(formDataToSet);
         
         // For the temporary address field (used for geocoding), use the address field if available
         // For older listings without an address field, use the location as a fallback
         const addressValue = data.address || '';
-        console.log('Setting tempAddress to:', addressValue);
+        // console.log('Setting tempAddress to:', addressValue);
         setTempAddress(addressValue);
         
         // Determine location type based on the address or location
@@ -77,7 +78,7 @@ const EditListing = () => {
           setLocationType('off-campus');
         }
       } catch (err) {
-        console.error('Error fetching listing:', err);
+        // console.error('Error fetching listing:', err);
         setError(`Error loading listing: ${err.message}`);
       } finally {
         setLoading(false);
@@ -138,22 +139,18 @@ const EditListing = () => {
   };
 
   const geocodeAddress = async () => {
-    console.log('Geocoding address:', tempAddress);
+    //console.log('Geocoding address:', tempAddress);
     if (!tempAddress.trim()) {
       setGeocodingStatus('Please enter an address');
       return;
     }
-    
     // Provide guidance based on location type
     if (locationType === 'on-campus' && !tempAddress.includes('Hall')) {
       setGeocodingStatus('Tip: For on-campus locations, use format "[Hall Name] Hall"');
     }
-    
     try {
       setGeocodingStatus('Geocoding address...');
-      
       let searchAddress;
-      
       if (locationType === 'on-campus') {
         // For on-campus locations, use the residential college format
         searchAddress = tempAddress.includes('Princeton, NJ 08544') ? tempAddress : `${tempAddress}, Princeton, NJ 08544`;
@@ -161,24 +158,28 @@ const EditListing = () => {
         // For off-campus, use the full address as provided
         searchAddress = tempAddress;
       }
-      
-      console.log('Search address for geocoding:', searchAddress);
-      
-      // Using the Nominatim OpenStreetMap API (free and doesn't require API key)
+      // Check manual mapping first for on-campus
+      if (locationType === 'on-campus' && HALL_COORDINATES[tempAddress]) {
+        const { lat, lng } = HALL_COORDINATES[tempAddress];
+        const updatedFormData = {
+          ...formData,
+          address: tempAddress,
+          latitude: lat,
+          longitude: lng
+        };
+        setFormData(updatedFormData);
+        setGeocodingStatus('Coordinates found from hall mapping!');
+        return;
+      }
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
       );
-      
       if (!response.ok) {
         throw new Error('Failed to fetch coordinates');
       }
-      
       const data = await response.json();
-      console.log('Geocoding response:', data);
-      
       if (data.length > 0) {
         const { lat, lon } = data[0];
-        
         // Update form data with the coordinates and address
         const updatedFormData = {
           ...formData,
@@ -186,15 +187,23 @@ const EditListing = () => {
           latitude: lat,
           longitude: lon
         };
-        console.log('Updating form data after geocoding:', updatedFormData);
         setFormData(updatedFormData);
-        
         setGeocodingStatus('Address found!');
+      } else if (locationType === 'on-campus' && HALL_COORDINATES[tempAddress]) {
+        // Fallback to manual mapping if not found by API
+        const { lat, lng } = HALL_COORDINATES[tempAddress];
+        const updatedFormData = {
+          ...formData,
+          address: tempAddress,
+          latitude: lat,
+          longitude: lng
+        };
+        setFormData(updatedFormData);
+        setGeocodingStatus('Coordinates found from hall mapping!');
       } else {
         setGeocodingStatus('Address not found. Try being more specific.');
       }
     } catch (err) {
-      console.error('Geocoding error:', err);
       setGeocodingStatus('Error looking up address. Please try again.');
     }
   };
@@ -218,7 +227,7 @@ const EditListing = () => {
       }
 
       // Show more detailed validation errors
-      if (!formData.location) {
+      if (!formData.title) {
         setError('Please enter a title for your listing');
         return;
       }
@@ -226,8 +235,8 @@ const EditListing = () => {
         setError('Please enter a cost');
         return;
       }
-      if (!formData.cubicFeet) {
-        setError('Please enter the cubic feet');
+      if (!formData.squareFeet) {
+        setError('Please enter the square feet');
         return;
       }
       if (!formData.address) {
@@ -239,12 +248,13 @@ const EditListing = () => {
         return;
       }
       
-      console.log('Submitting updated listing data:', formData);
+      // console.log('Submitting updated listing data:', formData);
       
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/listings/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
         },
         credentials: 'include',
         body: JSON.stringify(formData),
@@ -253,15 +263,15 @@ const EditListing = () => {
       if (response.ok) {
         setSuccess(true);
         setTimeout(() => {
-          navigate('/lender', { state: { refresh: true } });
+          navigate('/lender-dashboard', { state: { refresh: true } });
         }, 1500);
       } else {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Failed to update listing:', response.status, errorData);
+        // console.error('Failed to update listing:', response.status, errorData);
         setError(`Failed to update listing: ${errorData.error || response.statusText}`);
       }
     } catch (err) {
-      console.error('Error updating listing:', err);
+      //console.error('Error updating listing:', err);
       setError(`Error updating listing: ${err.message}`);
     }
   };
@@ -282,13 +292,19 @@ const EditListing = () => {
       {success && <div style={styles.success}>Listing updated successfully! Redirecting...</div>}
       <div style={styles.content}>
         <form onSubmit={handleSubmit} style={styles.form}>
+        <button 
+          type="button"
+          onClick={() => navigate('/lender-dashboard')}
+          style={{...styles.cancelButton, marginBottom: 24, alignSelf: 'flex-start'}}>
+          ← Back to Dashboard
+        </button>
           <div style={styles.formGroup}>
-            <label htmlFor="location" style={styles.label}>Title</label>
+            <label htmlFor="title" style={styles.label}>Title</label>
             <input
               type="text"
-              id="location"
-              name="location"
-              value={formData.location}
+              id="title"
+              name="title"
+              value={formData.title}
               onChange={handleInputChange}
               placeholder="Enter a descriptive title (e.g., 'Butler College Storage')"
               style={styles.input}
@@ -306,27 +322,15 @@ const EditListing = () => {
                   value="on-campus"
                   checked={locationType === 'on-campus'}
                   onChange={handleLocationTypeChange}
+                  disabled
                 />
                 On Campus
               </label>
-              <label style={styles.radioLabel}>
-                <input
-                  type="radio"
-                  name="locationType"
-                  value="off-campus"
-                  checked={locationType === 'off-campus'}
-                  onChange={handleLocationTypeChange}
-                />
-                Off Campus
-              </label>
             </div>
-
             <div style={styles.addressInputContainer}>
               <input
                 type="text"
-                placeholder={locationType === 'on-campus' 
-                  ? "[Hall Name] Hall" 
-                  : "Enter full street address (e.g., 123 Main St, Princeton, NJ)"}
+                placeholder="[Hall Name] Hall"
                 value={tempAddress}
                 onChange={handleAddressChange}
                 style={styles.addressInput}
@@ -392,14 +396,14 @@ const EditListing = () => {
           </div>
 
           <div style={styles.formGroup}>
-            <label htmlFor="cubicFeet" style={styles.label}>Size (cubic feet)</label>
+            <label htmlFor="squareFeet" style={styles.label}>Size (sq ft)</label>
             <input
               type="number"
-              id="cubicFeet"
-              name="cubicFeet"
-              value={formData.cubicFeet}
+              id="squareFeet"
+              name="squareFeet"
+              value={formData.squareFeet}
               onChange={handleInputChange}
-              placeholder="Enter size in cubic feet"
+              placeholder="Enter size in square feet"
               min="0"
               style={styles.input}
               required
@@ -442,7 +446,15 @@ const EditListing = () => {
               value={formData.description}
               onChange={handleInputChange}
               placeholder="Describe the storage space"
-              style={{...styles.input, minHeight: '100px'}}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '1rem',
+                minHeight: '100px',
+                fontFamily: 'inherit'
+              }}
             />
           </div>
 
@@ -474,13 +486,7 @@ const EditListing = () => {
           </div>
 
           <div style={styles.buttonContainer}>
-            <button 
-              type="button" 
-              onClick={() => navigate('/lender')}
-              style={styles.cancelButton}
-            >
-              Cancel
-            </button>
+
             <button type="submit" style={styles.submitButton}>
               Update Listing
             </button>
@@ -555,6 +561,7 @@ const styles = {
     border: '1px solid #ddd',
     borderRadius: '4px',
     boxSizing: 'border-box',
+    fontFamily: 'inherit'
   },
   buttonContainer: {
     display: 'flex',

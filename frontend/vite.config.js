@@ -27,15 +27,24 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: 'dist',
+    outDir: '../backend/build',
     emptyOutDir: true,
     manifest: true,
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
+          vendor: ['react', 'react-dom', 'react-router-dom', 'react-leaflet', 'leaflet', '@mui/material', '@emotion/react', '@emotion/styled'],
+          axios: ['axios']
         }
-      }
+      },
+      external: []
+    },
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
     }
+  },
+  optimizeDeps: {
+    include: ['axios']
   }
 })
