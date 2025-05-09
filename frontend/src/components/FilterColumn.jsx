@@ -28,6 +28,18 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
     onFilterChange('minRating', 1);
   };
 
+  // If filters are undefined, set default values to max
+  const defaultFilters = {
+    minCost: 200,
+    maxCost: 200,
+    minSize: 1000,
+    maxSize: 1000,
+    maxDistance: 50,
+    minRating: 1,
+    includeUnrated: false,
+  };
+  const mergedFilters = { ...defaultFilters, ...filters };
+
   return (
     <Box sx={{ 
       width: '100%',
@@ -44,7 +56,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
       <Box sx={{ mb: 3, width: '100%' }}>
         <Typography gutterBottom>Price Range ($/month)</Typography>
         <Slider
-          value={[filters.minCost || 0, filters.maxCost || 0]}
+          value={[mergedFilters.minCost, mergedFilters.maxCost]}
           onChange={handleSliderChange('price')}
           valueLabelDisplay="auto"
           min={0}
@@ -68,7 +80,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           <TextField
             label="Min"
             type="number"
-            value={filters.minCost ?? ''}
+            value={mergedFilters.minCost}
             onChange={handleInputChange('minCost')}
             size="small"
             fullWidth
@@ -76,7 +88,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           <TextField
             label="Max"
             type="number"
-            value={filters.maxCost ?? ''}
+            value={mergedFilters.maxCost}
             onChange={handleInputChange('maxCost')}
             size="small"
             fullWidth
@@ -87,7 +99,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
       <Box sx={{ mb: 3, width: '100%' }}>
         <Typography gutterBottom>Size Range (sq ft)</Typography>
         <Slider
-          value={[filters.minSize || 0, filters.maxSize || 0]}
+          value={[mergedFilters.minSize, mergedFilters.maxSize]}
           onChange={handleSliderChange('size')}
           valueLabelDisplay="auto"
           min={0}
@@ -111,7 +123,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           <TextField
             label="Min"
             type="number"
-            value={filters.minSize ?? ''}
+            value={mergedFilters.minSize}
             onChange={handleInputChange('minSize')}
             size="small"
             fullWidth
@@ -119,7 +131,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           <TextField
             label="Max"
             type="number"
-            value={filters.maxSize ?? ''}
+            value={mergedFilters.maxSize}
             onChange={handleInputChange('maxSize')}
             size="small"
             fullWidth
