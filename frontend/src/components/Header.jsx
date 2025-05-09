@@ -91,14 +91,12 @@ const Header = ({ title }) => {
         <div style={styles.navigationLinks}>
           {userType === 'renter' && (
             <>
-              {window.location.pathname !== '/view-listings' && (
-                <button 
-                  style={window.location.pathname === '/map' ? styles.activeNavLink : styles.navLink} 
-                  onClick={handleGoToMap}
-                >
-                  Map View
-                </button>
-              )}
+              <button 
+                style={window.location.pathname === '/map' ? styles.activeNavLink : styles.navLink} 
+                onClick={handleGoToMap}
+              >
+                Map View
+              </button>
               <button
                 style={window.location.pathname === '/view-listings' ? styles.activeNavLink : styles.navLink}
                 onClick={() => navigate('/view-listings')}
