@@ -103,7 +103,7 @@ const Header = ({ title }) => {
                 style={window.location.pathname === '/view-listings' ? styles.activeNavLink : styles.navLink}
                 onClick={() => navigate('/view-listings')}
               >
-                View Grid
+                Grid View
               </button>
               <button 
                 style={window.location.pathname === '/renter-dashboard' ? styles.activeNavLink : styles.navLink} 

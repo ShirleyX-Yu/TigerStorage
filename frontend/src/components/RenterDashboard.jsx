@@ -328,11 +328,11 @@ const RenterDashboard = ({ username }) => {
             Browse available storage spaces near you!
           </div>
           <div style={styles.buttonContainer}>
-            <button style={styles.actionButton} onClick={() => navigate('/view-listings')}>
-              Grid View
-            </button>
             <button style={styles.actionButton} onClick={openMap}>
-              Map View
+              Go to Map View 
+            </button>
+            <button style={styles.actionButton} onClick={() => navigate('/view-listings')}>
+              Go to Grid View 
             </button>
           </div>
         </div>
