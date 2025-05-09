@@ -184,12 +184,28 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
         <Typography gutterBottom>Minimum Lender Rating</Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1, mt: 1 }}>
           <Box>
+            <span
+              key={0}
+              onClick={() => onFilterChange('minRating', 0)}
+              style={{
+                color: (filters.minRating || 0) === 0 ? '#fbc02d' : '#ccc',
+                fontSize: 28,
+                cursor: 'pointer',
+                transition: 'color 0.15s',
+                userSelect: 'none',
+                marginRight: 4
+              }}
+              role="button"
+              aria-label="Set minimum rating to 0 stars"
+              tabIndex={0}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onFilterChange('minRating', 0); }}
+            >☆</span>
             {[1,2,3,4,5].map(star => (
               <span
                 key={star}
                 onClick={() => onFilterChange('minRating', star)}
                 style={{
-                  color: (filters.minRating || 1) >= star ? '#fbc02d' : '#ccc',
+                  color: (filters.minRating || 0) >= star ? '#fbc02d' : '#ccc',
                   fontSize: 28,
                   cursor: 'pointer',
                   transition: 'color 0.15s',
@@ -202,17 +218,6 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
               >★</span>
             ))}
           </Box>
-        </Box>
-        <Box sx={{ mt: 1 }}>
-          <label style={{ fontSize: 15 }}>
-            <input
-              type="checkbox"
-              checked={filters.includeUnrated}
-              onChange={e => onFilterChange('includeUnrated', e.target.checked)}
-              style={{ marginRight: 6 }}
-            />
-            Include unrated
-          </label>
         </Box>
       </Box>
 
