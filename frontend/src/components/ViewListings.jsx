@@ -326,6 +326,8 @@ const ViewListings = () => {
   const [filters, setFilters] = useState({
     minCost: 0,
     maxCost: 200,
+    minSize: 0,
+    maxSize: 1000,
     maxDistance: 50,
     minRating: 0,
     includeUnrated: false,
@@ -339,6 +341,8 @@ const ViewListings = () => {
     setFilters({
       minCost: 0,
       maxCost: 200,
+      minSize: 0,
+      maxSize: 1000,
       maxDistance: 50,
       minRating: 0,
       includeUnrated: false,
@@ -352,6 +356,7 @@ const ViewListings = () => {
   const filterListings = (listings) => {
     return listings.filter(listing => {
       const cost = listing.cost ?? 0;
+      const size = Number(listing.sq_ft) ?? 0;
       const distance = listing.latitude && listing.longitude
         ? calculateDistance(40.3437, -74.6517, listing.latitude, listing.longitude)
         : 0;
@@ -367,6 +372,7 @@ const ViewListings = () => {
       }
       return (
         cost >= filters.minCost && cost <= filters.maxCost &&
+        size >= filters.minSize && size <= filters.maxSize &&
         distance <= filters.maxDistance &&
         ratingMatches
       );
@@ -488,6 +494,22 @@ const ViewListings = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 2 }}>
                       <span>Min: ${filters.minCost}</span>
                       <span>Max: ${filters.maxCost}</span>
+                    </div>
+                  </div>
+                  <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>Size Range (sq ft)</label>
+                    <Slider
+                      value={[filters.minSize, filters.maxSize]}
+                      onChange={(_, newValue) => setFilters(f => ({ ...f, minSize: newValue[0], maxSize: newValue[1] }))}
+                      min={0}
+                      max={1000}
+                      step={1}
+                      valueLabelDisplay="auto"
+                      sx={{ color: '#FF8F00' }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 2 }}>
+                      <span>Min: {filters.minSize} sq ft</span>
+                      <span>Max: {filters.maxSize} sq ft</span>
                     </div>
                   </div>
                   <div style={styles.filterGroup}>
