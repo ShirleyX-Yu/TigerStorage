@@ -392,10 +392,16 @@ const LenderDashboard = ({ username }) => {
                     <div style={styles.spaceHeader}>
                       <div>
                         <h3 style={styles.spaceTitle}>{space.title || 'No Title Provided'}</h3>
-                        {space.hall_name && (
+                        {space.hall_name ? (
                           <div style={{ fontSize: '0.98rem', color: '#FF8F00', fontWeight: 500, marginBottom: 4 }}>
                             Residential Hall: {space.hall_name}
                           </div>
+                        ) : (
+                          space.address && (
+                            <div style={{ fontSize: '0.98rem', color: '#FF8F00', fontWeight: 500, marginBottom: 4 }}>
+                              {space.address}
+                            </div>
+                          )
                         )}
                         <p style={styles.spaceDetails}>
                           ${space.cost}/month · {space.sq_ft} sq ft
