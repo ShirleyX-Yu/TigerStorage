@@ -732,7 +732,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
         }}>
           Confirm Address
         </DialogTitle>
-        <DialogContent style={{ background: '#fff8f1', padding: 28 }}>
+        <DialogContent style={{ background: '#fff8f1', padding: 28, maxHeight: '70vh', overflowY: 'auto' }}>
           <div style={{ marginBottom: 16, fontSize: 16, color: '#333' }}>
             Please confirm the address for your listing:
           </div>
