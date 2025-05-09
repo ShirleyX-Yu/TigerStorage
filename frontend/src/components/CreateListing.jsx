@@ -370,6 +370,14 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       setError('Start and end dates are required.');
       return;
     }
+    // Start date must be after today
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const startDate = new Date(formData.start_date);
+    if (startDate <= today) {
+      setError('Start date must be after today.');
+      return;
+    }
     if (formData.end_date <= formData.start_date) {
       setError('End date must be after start date.');
       return;
