@@ -460,7 +460,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
     <div style={styles.container}>
       {error && <div ref={errorRef} style={{...styles.error, backgroundColor: '#f8d7da', color: '#721c24', padding: '10px 15px', borderRadius: '4px', marginBottom: '15px'}}>{error}</div>}
       <div>
-        <form onSubmit={handleSubmit} style={modalMode ? { maxHeight: '70vh', overflowY: 'auto', padding: 24, background: 'white', borderRadius: 8, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', width: '100%' } : styles.form}>
+        <form onSubmit={handleSubmit} style={modalMode ? { width: '100%' } : styles.form}>
           {/* Wrap the form in a scrollable DialogContent for modal mode */}
           {modalMode ? (
             <div>
