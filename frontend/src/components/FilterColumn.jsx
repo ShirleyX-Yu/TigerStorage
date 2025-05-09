@@ -21,7 +21,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
   const handleReset = () => {
     onFilterChange('minCost', 0);
     onFilterChange('maxCost', 200);
-    onFilterChange('minSize', 1000);
+    onFilterChange('minSize', 0);
     onFilterChange('maxSize', 1000);
     onFilterChange('minDistance', 0);
     onFilterChange('maxDistance', 50);
@@ -32,7 +32,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
   const defaultFilters = {
     minCost: 200,
     maxCost: 200,
-    minSize: 1000,
+    minSize: 0,
     maxSize: 1000,
     maxDistance: 50,
     minRating: 1,
