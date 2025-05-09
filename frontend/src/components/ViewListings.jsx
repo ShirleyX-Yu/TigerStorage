@@ -547,26 +547,6 @@ const ViewListings = () => {
                   step={1}
                   sx={{ color: '#FF6B00', width: '100%', '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' }, '& .MuiSlider-track': { backgroundColor: '#FF6B00' }, '& .MuiSlider-rail': { backgroundColor: '#FFF3E6' } }}
                 />
-                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                  <input
-                    type="number"
-                    value={filters.minCost}
-                    min={0}
-                    max={filters.maxCost}
-                    onChange={e => handleFilterChange('minCost', Number(e.target.value))}
-                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
-                    placeholder="Min"
-                  />
-                  <input
-                    type="number"
-                    value={filters.maxCost}
-                    min={filters.minCost}
-                    max={200}
-                    onChange={e => handleFilterChange('maxCost', Number(e.target.value))}
-                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
-                    placeholder="Max"
-                  />
-                </div>
               </div>
               {/* Size Range */}
             <div style={{ flex: 1, minWidth: 220 }}>
@@ -580,26 +560,6 @@ const ViewListings = () => {
                   step={1}
                   sx={{ color: '#FF6B00', width: '100%', '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' }, '& .MuiSlider-track': { backgroundColor: '#FF6B00' }, '& .MuiSlider-rail': { backgroundColor: '#FFF3E6' } }}
                 />
-                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                  <input
-                    type="number"
-                    value={filters.minSize}
-                    min={0}
-                    max={filters.maxSize}
-                    onChange={e => handleFilterChange('minSize', Number(e.target.value))}
-                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
-                    placeholder="Min"
-                  />
-                  <input
-                    type="number"
-                    value={filters.maxSize}
-                    min={filters.minSize}
-                    max={1000}
-                    onChange={e => handleFilterChange('maxSize', Number(e.target.value))}
-                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
-                    placeholder="Max"
-                  />
-                </div>
               </div>
               {/* Distance */}
             <div style={{ flex: 1, minWidth: 180 }}>
@@ -613,20 +573,6 @@ const ViewListings = () => {
                   step={0.1}
                   sx={{ color: '#FF6B00', width: '100%', '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' }, '& .MuiSlider-track': { backgroundColor: '#FF6B00' }, '& .MuiSlider-rail': { backgroundColor: '#FFF3E6' } }}
                 />
-                <div style={{ marginTop: 8 }}>
-                  <input
-                    type="text"
-                    value={filters.maxDistance === '50+' || Number(filters.maxDistance) >= 50 ? '50+' : filters.maxDistance}
-                    min={0}
-                    max={50}
-                    onChange={e => {
-                      const val = e.target.value === '50+' ? 50 : Number(e.target.value);
-                      handleFilterChange('maxDistance', val);
-                    }}
-                    style={{ width: '100%', padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
-                    placeholder="Max Distance"
-                  />
-                </div>
               </div>
               {/* Minimum Lender Rating */}
             <div style={{ flex: 1, minWidth: 180 }}>
