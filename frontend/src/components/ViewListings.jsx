@@ -732,6 +732,12 @@ const ViewListings = () => {
                             </span>
                           </div>
                           <div style={styles.actionButtons}>
+                            <button 
+                              style={styles.viewButton}
+                              onClick={() => navigate(`/listing/${listing.id}`)}
+                            >
+                              View Details
+                            </button>
                             <button
                               style={{
                                 ...styles.interestButton,
@@ -741,6 +747,16 @@ const ViewListings = () => {
                             >
                               {listing.isInterested ? 'Cancel Request' : '+ Request Space'}
                             </button>
+                            <button
+                              style={{
+                                ...styles.viewButton,
+                                backgroundColor: '#e53935',
+                                minWidth: '120px'
+                              }}
+                              onClick={() => alert('Report clicked for listing ' + listing.id)}
+                            >
+                              Report
+                            </button>
                             <ReservationModal
                               open={reservationModalOpen}
                               onClose={() => setReservationModalOpen(false)}
@@ -748,13 +764,8 @@ const ViewListings = () => {
                               maxSpace={reservationListing ? reservationListing.sq_ft : 0}
                               loading={reservationLoading}
                               error={reservationError}
+                              listingId={reservationListing ? reservationListing.id : undefined}
                             />
-                            <button 
-                              style={styles.viewButton}
-                              onClick={() => navigate(`/listing/${listing.id}`)}
-                            >
-                              View Details
-                            </button>
                           </div>
                         </div>
                       </div>
@@ -773,7 +784,9 @@ const ViewListings = () => {
 const styles = {
   actionButtons: {
     display: 'flex',
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: '15px',
     gap: '10px',
   },
@@ -921,12 +934,6 @@ const styles = {
     color: 'white',
     fontSize: '0.9rem',
     fontWeight: '500',
-  },
-  actionButton: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginTop: '15px',
-    gap: '10px',
   },
   viewButton: {
     flex: 1,
