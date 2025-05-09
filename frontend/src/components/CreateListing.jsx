@@ -590,9 +590,6 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                           disabled
                         />
                       </div>
-                      <div style={{ marginTop: '10px', color: '#888', fontSize: '0.95em' }}>
-                        <b>Geocoding string:</b> {`${formData.street_address || ''}, ${formData.city || ''}, NJ ${formData.zip_code || ''}, USA`}
-                      </div>
                       <button 
                         type="button" 
                         onClick={() => geocodeAddress({})}
@@ -843,9 +840,6 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
                           value="USA"
                           disabled
                         />
-                      </div>
-                      <div style={{ marginTop: '10px', color: '#888', fontSize: '0.95em' }}>
-                        <b>Geocoding string:</b> {`${formData.street_address || ''}, ${formData.city || ''}, NJ ${formData.zip_code || ''}, USA`}
                       </div>
                       <button 
                         type="button" 
