@@ -20,9 +20,9 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
 
   const handleReset = () => {
     onFilterChange('minCost', 0);
-    onFilterChange('maxCost', 100);
-    onFilterChange('minSize', 0);
-    onFilterChange('maxSize', 500);
+    onFilterChange('maxCost', 200);
+    onFilterChange('minSize', 1000);
+    onFilterChange('maxSize', 1000);
     onFilterChange('minDistance', 0);
     onFilterChange('maxDistance', 50);
     onFilterChange('minRating', 1);
