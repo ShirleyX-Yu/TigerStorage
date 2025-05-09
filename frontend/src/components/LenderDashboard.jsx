@@ -575,7 +575,7 @@ const LenderDashboard = ({ username }) => {
         maxWidth="sm" 
         fullWidth
         PaperProps={{
-          style: { borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', overflow: 'hidden' }
+          style: { borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', overflowY: 'auto', maxHeight: '90vh' }
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '18px 24px 10px 24px', background: '#fafbfc', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
