@@ -467,18 +467,6 @@ const ViewListings = () => {
         <div style={styles.section}>
           <div style={styles.sectionHeader}>
             <h2>Storage Listings</h2>
-            <button onClick={openMap} style={{
-              background: '#FF6B00',
-              color: 'white',
-              border: 'none',
-              borderRadius: 4,
-              padding: '0.75rem 1.5rem',
-              fontWeight: 600,
-              fontSize: '1rem',
-              cursor: 'pointer',
-              boxShadow: '0 2px 4px rgba(255,111,0,0.08)',
-              transition: 'background 0.2s',
-            }}>View Map</button>
           </div>
           
           {loading ? (
