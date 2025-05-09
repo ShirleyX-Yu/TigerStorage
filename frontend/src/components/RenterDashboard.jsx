@@ -126,6 +126,12 @@ const RenterDashboard = ({ username }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  // Ensure userType is set for header navigation buttons
+  useEffect(() => {
+    sessionStorage.setItem('userType', 'renter');
+    localStorage.setItem('userType', 'renter');
+  }, []);
+  
   // Fetch all reservation requests
   useEffect(() => {
     const fetchRequests = async () => {

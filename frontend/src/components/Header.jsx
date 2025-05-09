@@ -40,10 +40,13 @@ const Header = ({ title }) => {
 
   const handleGoToDashboard = () => {
     if (userType === 'renter') {
-      // Set the skipMapRedirect flag to go straight to the dashboard
+      sessionStorage.setItem('userType', 'renter');
+      localStorage.setItem('userType', 'renter');
       sessionStorage.setItem('skipMapRedirect', 'true');
       navigate('/renter-dashboard');
     } else {
+      sessionStorage.setItem('userType', 'lender');
+      localStorage.setItem('userType', 'lender');
       navigate('/lender-dashboard');
     }
   };
