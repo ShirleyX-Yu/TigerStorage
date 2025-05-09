@@ -362,14 +362,19 @@ const ViewListings = () => {
         : 0;
       const rating = listing.lender_avg_rating;
       const hasRating = typeof rating === 'number' && !isNaN(rating);
+      let ratingMatches;
+      if (filters.minRating === 0) {
+        // Include all listings, even unrated
+        ratingMatches = true;
+      } else {
+        // Only include listings with a rating >= minRating
+        ratingMatches = hasRating && rating >= filters.minRating;
+      }
       return (
         cost >= filters.minCost && cost <= filters.maxCost &&
         size >= filters.minSize && size <= filters.maxSize &&
         distance <= filters.maxDistance &&
-        (
-          (hasRating && rating >= filters.minRating) ||
-          (filters.includeUnrated && !hasRating)
-        )
+        ratingMatches
       );
     });
   };
