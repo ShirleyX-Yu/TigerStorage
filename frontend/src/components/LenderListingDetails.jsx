@@ -424,10 +424,21 @@ const LenderListingDetails = () => {
           )}
         </Dialog>
         {/* Partial Approval Modal */}
-        <Dialog open={partialModal.open} onClose={closePartialModal} maxWidth="xs" fullWidth>
-          <DialogTitle>Approve Partial Reservation</DialogTitle>
-          <DialogContent>
-            <div style={{ marginBottom: 12 }}>
+        <Dialog 
+          open={partialModal.open} 
+          onClose={closePartialModal} 
+          maxWidth="xs" 
+          fullWidth
+          PaperProps={{
+            style: { borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '18px 24px 10px 24px', background: '#fafbfc', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
+            <span style={{ fontWeight: 600, fontSize: 20 }}>Approve Partial Reservation</span>
+            <button onClick={closePartialModal} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#888' }}>&times;</button>
+          </div>
+          <div style={{ padding: 24 }}>
+            <div style={{ marginBottom: 16 }}>
               <b>Renter:</b> {partialModal.request?.renter_username}<br />
               <b>Requested Volume:</b> {partialModal.request?.requested_space} sq ft<br />
               <b>Max Allowed:</b> {partialModal.request ? Math.min(partialModal.request.requested_space, listing.sq_ft) : 0} sq ft
@@ -440,14 +451,42 @@ const LenderListingDetails = () => {
               value={partialVolume}
               onChange={e => setPartialVolume(e.target.value)}
               inputProps={{ min: 0.1, max: partialModal.request ? Math.min(partialModal.request.requested_space, listing.sq_ft) : 0, step: 0.1 }}
-              style={{ marginBottom: 12 }}
+              style={{ marginBottom: 16 }}
             />
-            {partialError && <div style={{ color: 'red', marginBottom: 8 }}>{partialError}</div>}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={closePartialModal} color="secondary">Cancel</Button>
-            <Button onClick={handlePartialApprove} variant="contained" color="primary">Approve</Button>
-          </DialogActions>
+            {partialError && <div style={{ color: '#d32f2f', marginBottom: 16, fontSize: '14px' }}>{partialError}</div>}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
+              <button 
+                onClick={closePartialModal} 
+                style={{ 
+                  padding: '10px 16px', 
+                  border: '1px solid #ddd', 
+                  borderRadius: '8px', 
+                  background: 'white', 
+                  color: '#333',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 500
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePartialApprove}
+                style={{ 
+                  padding: '10px 16px', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  background: '#388e3c', 
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 600
+                }}
+              >
+                Approve
+              </button>
+            </div>
+          </div>
         </Dialog>
       </div>
     </div>

@@ -12,6 +12,7 @@ import EditListingForm from './EditListingForm';
 import StarIcon from '@mui/icons-material/Star';
 import dorm_image from '../assets/dorm_image.jpg';
 import { axiosInstance } from '../utils/auth';
+import Alert from '@mui/material/Alert';
 
 // Modal wrapper for CreateListing to allow passing onClose/onSuccess
 const CreateListingModal = ({ onClose, onSuccess }) => {
@@ -612,10 +613,39 @@ const LenderDashboard = ({ username }) => {
           )}
         </div>
       </Dialog>
-      <Dialog open={partialModal.open} onClose={() => setPartialModal({ open: false, request: null, listingId: null })} maxWidth="xs" fullWidth>
-        <DialogTitle>Approve Partial Reservation</DialogTitle>
-        <DialogContent>
-          <div style={{ marginBottom: 12 }}>
+      <Dialog 
+        open={partialModal.open} 
+        onClose={() => setPartialModal({ open: false, request: null, listingId: null })} 
+        maxWidth="xs" 
+        fullWidth
+        PaperProps={{
+          style: { boxShadow: '0 8px 32px rgba(0,0,0,0.18)', borderRadius: 16, background: '#fff8f1' }
+        }}
+        BackdropProps={{ style: { backgroundColor: 'transparent' } }}
+      >
+        <DialogTitle style={{ background: '#FF6B00', color: 'white', fontWeight: 700, letterSpacing: 1, borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: '16px 24px', position: 'relative' }}>
+          Approve Partial Reservation
+          <button
+            onClick={() => setPartialModal({ open: false, request: null, listingId: null })}
+            style={{
+              position: 'absolute',
+              top: 12,
+              right: 16,
+              background: 'none',
+              border: 'none',
+              color: 'white',
+              fontSize: 22,
+              cursor: 'pointer',
+              fontWeight: 700,
+              lineHeight: 1
+            }}
+            aria-label="Close"
+          >
+            &times;
+          </button>
+        </DialogTitle>
+        <DialogContent style={{ padding: 24, background: '#fff8f1' }}>
+          <div style={{ marginBottom: 16 }}>
             <b>Renter:</b> {partialModal.request?.renter_username}<br />
             <b>Requested Volume:</b> {partialModal.request?.requested_space} sq ft<br />
             <b>Remaining Volume:</b> {listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_space ?? 0} sq ft
@@ -628,12 +658,18 @@ const LenderDashboard = ({ username }) => {
             value={partialVolume}
             onChange={e => setPartialVolume(e.target.value)}
             inputProps={{ min: 0.1, max: Math.min(partialModal.request?.requested_space || 1000, listedSpaces.find(s => s.id === partialModal.listingId)?.remaining_space ?? 0), step: 0.1 }}
-            style={{ marginBottom: 12 }}
+            style={{ marginBottom: 12, background: 'white', borderRadius: 6 }}
           />
-          {partialError && <div style={{ color: 'red', marginBottom: 8 }}>{partialError}</div>}
+          {partialError && <Alert severity="error" style={{ marginBottom: 8 }}>{partialError}</Alert>}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPartialModal({ open: false, request: null, listingId: null })} color="secondary">Cancel</Button>
+        <DialogActions style={{ padding: '16px 24px', background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}>
+          <Button 
+            onClick={() => setPartialModal({ open: false, request: null, listingId: null })} 
+            style={{ color: '#888', fontWeight: 600 }}
+            variant="text"
+          >
+            Cancel
+          </Button>
           <Button
             onClick={async () => {
               const vol = Number(partialVolume);
@@ -646,9 +682,11 @@ const LenderDashboard = ({ username }) => {
               await handleLenderAction(partialModal.request.request_id, 'approved_partial', vol, partialModal.listingId);
               setPartialModal({ open: false, request: null, listingId: null });
             }}
+            style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }}
             variant="contained"
-            style={{ background: '#388e3c', color: 'white', fontWeight: 700 }}
-          >Approve</Button>
+          >
+            Approve
+          </Button>
         </DialogActions>
       </Dialog>
     </div>
