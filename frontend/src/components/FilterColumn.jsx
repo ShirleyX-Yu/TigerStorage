@@ -16,23 +16,38 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
 
   const handleInputChange = (key) => (event) => {
     let value = event.target.value;
-    if (key === 'minCost' && Number(value) > Number(filters.maxCost)) {
-      onFilterChange('minCost', Number(value));
-      onFilterChange('maxCost', Number(value));
-      return;
+    // Remove leading zeros (except for '0')
+    if (typeof value === 'string' && value.length > 1 && value[0] === '0' && value[1] !== '.') {
+      value = value.replace(/^0+/, '');
     }
-    if (key === 'maxCost' && Number(value) < Number(filters.minCost)) {
-      value = filters.minCost;
+    // Convert to number (if empty, treat as 0)
+    value = value === '' ? 0 : Number(value);
+    // Clamp to allowed ranges
+    if (key === 'minCost') {
+      value = Math.max(0, Math.min(200, value));
+      if (value > filters.maxCost) {
+        onFilterChange('minCost', value);
+        onFilterChange('maxCost', value);
+        return;
+      }
     }
-    if (key === 'minSize' && Number(value) > Number(filters.maxSize)) {
-      onFilterChange('minSize', Number(value));
-      onFilterChange('maxSize', Number(value));
-      return;
+    if (key === 'maxCost') {
+      value = Math.max(0, Math.min(200, value));
+      if (value < filters.minCost) value = filters.minCost;
     }
-    if (key === 'maxSize' && Number(value) < Number(filters.minSize)) {
-      value = filters.minSize;
+    if (key === 'minSize') {
+      value = Math.max(0, Math.min(1000, value));
+      if (value > filters.maxSize) {
+        onFilterChange('minSize', value);
+        onFilterChange('maxSize', value);
+        return;
+      }
     }
-    onFilterChange(key, Number(value));
+    if (key === 'maxSize') {
+      value = Math.max(0, Math.min(1000, value));
+      if (value < filters.minSize) value = filters.minSize;
+    }
+    onFilterChange(key, value);
   };
 
   const handleReset = () => {
@@ -163,8 +178,15 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
       <Box sx={{ mb: 3, width: '100%' }}>
         <Typography gutterBottom>Distance from Campus (miles)</Typography>
         <Slider
-          value={filters.maxDistance || 0}
-          onChange={handleSliderChange('distance')}
+          value={
+            filters.maxDistance === '' ? 0 : (Number(filters.maxDistance) >= 50 ? 50 : Number(filters.maxDistance) || 0)
+          }
+          onChange={(_, newValue) => {
+            let val = Array.isArray(newValue) ? newValue[0] : newValue;
+            if (val >= 50) val = 50;
+            if (val < 0) val = 0;
+            onFilterChange('maxDistance', val);
+          }}
           valueLabelDisplay="auto"
           min={0}
           max={50}
@@ -187,12 +209,16 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           <TextField
             label="Max Distance"
             type="number"
-            value={filters.maxDistance >= 50 ? '50+' : (filters.maxDistance ?? '')}
+            value={filters.maxDistance === '' ? '' : (Number(filters.maxDistance) >= 50 ? '50+' : filters.maxDistance)}
             onChange={e => {
               let val = e.target.value;
-              if (val === '50+' || Number(val) >= 50) val = 50;
-              else if (val === '') val = '';
-              else val = Math.max(0, Number(val));
+              if (val === '' || val === undefined) {
+                onFilterChange('maxDistance', '');
+                return;
+              }
+              val = Number(val);
+              if (isNaN(val) || val < 0) val = 0;
+              if (val >= 50) val = 50;
               onFilterChange('maxDistance', val);
             }}
             size="small"
