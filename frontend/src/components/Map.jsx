@@ -485,6 +485,8 @@ const Map = () => {
     setSelectedListingId(listing.listing_id || listing.id);
     setInterestSuccess(false);
     setLastInterestAction(null);
+    setInterestError(null);
+    setReservationError('');
     if (mapRef.current) {
       mapRef.current.setView([listing.latitude, listing.longitude], 16);
     }
