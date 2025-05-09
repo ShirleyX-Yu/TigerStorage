@@ -328,13 +328,68 @@ const ViewListings = () => {
     maxCost: 200,
     minSize: 0,
     maxSize: 1000,
-    maxDistance: 50,
+    maxDistance: '50+',
     minRating: 0,
     includeUnrated: false,
   });
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    // Allow blank for min fields
+    if ((key === 'minCost' || key === 'minSize') && value === '') {
+      setFilters(prev => ({ ...prev, [key]: '' }));
+      return;
+    }
+    // For maxDistance, treat 50, '50', '50+', or blank as '50+' (unlimited)
+    if (key === 'maxDistance') {
+      if (value === '50+' || value === 50 || value === '50' || Number(value) >= 50 || value === '' || value === undefined) {
+        setFilters(prev => ({ ...prev, maxDistance: '50+' }));
+        return;
+      } else {
+        setFilters(prev => ({ ...prev, maxDistance: Math.max(0, Number(value)) }));
+        return;
+      }
+    }
+    setFilters(prev => {
+      let newFilters = { ...prev };
+      if (key === 'minCost') {
+        if (Number(value) > Number(prev.maxCost)) {
+          newFilters.minCost = Number(value);
+          newFilters.maxCost = Number(value);
+        } else {
+          newFilters.minCost = Number(value);
+        }
+        return newFilters;
+      }
+      if (key === 'maxCost') {
+        if (Number(value) < Number(prev.minCost)) {
+          newFilters.maxCost = Number(value);
+          newFilters.minCost = Number(value);
+        } else {
+          newFilters.maxCost = Number(value);
+        }
+        return newFilters;
+      }
+      if (key === 'minSize') {
+        if (Number(value) > Number(prev.maxSize)) {
+          newFilters.minSize = Number(value);
+          newFilters.maxSize = Number(value);
+        } else {
+          newFilters.minSize = Number(value);
+        }
+        return newFilters;
+      }
+      if (key === 'maxSize') {
+        if (Number(value) < Number(prev.minSize)) {
+          newFilters.maxSize = Number(value);
+          newFilters.minSize = Number(value);
+        } else {
+          newFilters.maxSize = Number(value);
+        }
+        return newFilters;
+      }
+      newFilters[key] = value;
+      return newFilters;
+    });
   };
 
   const handleReset = () => {
@@ -343,7 +398,7 @@ const ViewListings = () => {
       maxCost: 200,
       minSize: 0,
       maxSize: 1000,
-      maxDistance: 50,
+      maxDistance: '50+',
       minRating: 0,
       includeUnrated: false,
     });
@@ -478,117 +533,117 @@ const ViewListings = () => {
             alignItems: 'flex-end',
             flexWrap: 'wrap',
           }}>
-            {/* Price Range */}
+              {/* Price Range */}
             <div style={{ flex: 1, minWidth: 220 }}>
-              <label style={{ fontWeight: 500, color: '#555', marginBottom: 4, display: 'block' }}>Price Range ($/month)</label>
-              <Slider
-                value={[filters.minCost, filters.maxCost]}
-                onChange={(_, newValue) => handleFilterChange('minCost', newValue[0]) || handleFilterChange('maxCost', newValue[1])}
-                valueLabelDisplay="auto"
-                min={0}
-                max={200}
-                step={1}
-                sx={{ color: '#FF6B00', width: '100%', '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' }, '& .MuiSlider-track': { backgroundColor: '#FF6B00' }, '& .MuiSlider-rail': { backgroundColor: '#FFF3E6' } }}
-              />
-              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <input
-                  type="number"
-                  value={filters.minCost}
+                <label style={{ fontWeight: 500, color: '#555', marginBottom: 4, display: 'block' }}>Price Range ($/month)</label>
+                <Slider
+                  value={[filters.minCost, filters.maxCost]}
+                  onChange={(_, newValue) => handleFilterChange('minCost', newValue[0]) || handleFilterChange('maxCost', newValue[1])}
+                  valueLabelDisplay="auto"
                   min={0}
-                  max={filters.maxCost}
-                  onChange={e => handleFilterChange('minCost', Number(e.target.value))}
-                  style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
-                  placeholder="Min"
-                />
-                <input
-                  type="number"
-                  value={filters.maxCost}
-                  min={filters.minCost}
                   max={200}
-                  onChange={e => handleFilterChange('maxCost', Number(e.target.value))}
-                  style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
-                  placeholder="Max"
+                  step={1}
+                  sx={{ color: '#FF6B00', width: '100%', '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' }, '& .MuiSlider-track': { backgroundColor: '#FF6B00' }, '& .MuiSlider-rail': { backgroundColor: '#FFF3E6' } }}
                 />
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <input
+                    type="number"
+                    value={filters.minCost}
+                    min={0}
+                    max={filters.maxCost}
+                    onChange={e => handleFilterChange('minCost', Number(e.target.value))}
+                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
+                    placeholder="Min"
+                  />
+                  <input
+                    type="number"
+                    value={filters.maxCost}
+                    min={filters.minCost}
+                    max={200}
+                    onChange={e => handleFilterChange('maxCost', Number(e.target.value))}
+                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
+                    placeholder="Max"
+                  />
+                </div>
               </div>
-            </div>
-            {/* Size Range */}
+              {/* Size Range */}
             <div style={{ flex: 1, minWidth: 220 }}>
-              <label style={{ fontWeight: 500, color: '#555', marginBottom: 4, display: 'block' }}>Size Range (sq ft)</label>
-              <Slider
-                value={[filters.minSize, filters.maxSize]}
-                onChange={(_, newValue) => handleFilterChange('minSize', newValue[0]) || handleFilterChange('maxSize', newValue[1])}
-                valueLabelDisplay="auto"
-                min={0}
-                max={1000}
-                step={1}
-                sx={{ color: '#FF6B00', width: '100%', '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' }, '& .MuiSlider-track': { backgroundColor: '#FF6B00' }, '& .MuiSlider-rail': { backgroundColor: '#FFF3E6' } }}
-              />
-              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <input
-                  type="number"
-                  value={filters.minSize}
+                <label style={{ fontWeight: 500, color: '#555', marginBottom: 4, display: 'block' }}>Size Range (sq ft)</label>
+                <Slider
+                  value={[filters.minSize, filters.maxSize]}
+                  onChange={(_, newValue) => handleFilterChange('minSize', newValue[0]) || handleFilterChange('maxSize', newValue[1])}
+                  valueLabelDisplay="auto"
                   min={0}
-                  max={filters.maxSize}
-                  onChange={e => handleFilterChange('minSize', Number(e.target.value))}
-                  style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
-                  placeholder="Min"
-                />
-                <input
-                  type="number"
-                  value={filters.maxSize}
-                  min={filters.minSize}
                   max={1000}
-                  onChange={e => handleFilterChange('maxSize', Number(e.target.value))}
-                  style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
-                  placeholder="Max"
+                  step={1}
+                  sx={{ color: '#FF6B00', width: '100%', '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' }, '& .MuiSlider-track': { backgroundColor: '#FF6B00' }, '& .MuiSlider-rail': { backgroundColor: '#FFF3E6' } }}
                 />
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <input
+                    type="number"
+                    value={filters.minSize}
+                    min={0}
+                    max={filters.maxSize}
+                    onChange={e => handleFilterChange('minSize', Number(e.target.value))}
+                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
+                    placeholder="Min"
+                  />
+                  <input
+                    type="number"
+                    value={filters.maxSize}
+                    min={filters.minSize}
+                    max={1000}
+                    onChange={e => handleFilterChange('maxSize', Number(e.target.value))}
+                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
+                    placeholder="Max"
+                  />
+                </div>
               </div>
-            </div>
-            {/* Distance */}
+              {/* Distance */}
             <div style={{ flex: 1, minWidth: 180 }}>
-              <label style={{ fontWeight: 500, color: '#555', marginBottom: 4, display: 'block' }}>Distance from Campus (miles)</label>
-              <Slider
-                value={filters.maxDistance}
-                onChange={(_, newValue) => handleFilterChange('maxDistance', newValue)}
-                valueLabelDisplay="auto"
-                min={0}
-                max={50}
-                step={0.1}
-                sx={{ color: '#FF6B00', width: '100%', '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' }, '& .MuiSlider-track': { backgroundColor: '#FF6B00' }, '& .MuiSlider-rail': { backgroundColor: '#FFF3E6' } }}
-              />
-              <div style={{ marginTop: 8 }}>
-                <input
-                  type="number"
+                <label style={{ fontWeight: 500, color: '#555', marginBottom: 4, display: 'block' }}>Distance from Campus (miles)</label>
+                <Slider
                   value={filters.maxDistance}
+                  onChange={(_, newValue) => handleFilterChange('maxDistance', newValue)}
+                  valueLabelDisplay="auto"
                   min={0}
                   max={50}
-                  onChange={e => handleFilterChange('maxDistance', Number(e.target.value))}
-                  style={{ width: '100%', padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
-                  placeholder="Max Distance"
+                  step={0.1}
+                  sx={{ color: '#FF6B00', width: '100%', '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' }, '& .MuiSlider-track': { backgroundColor: '#FF6B00' }, '& .MuiSlider-rail': { backgroundColor: '#FFF3E6' } }}
                 />
+                <div style={{ marginTop: 8 }}>
+                  <input
+                    type="number"
+                    value={filters.maxDistance}
+                    min={0}
+                    max={50}
+                    onChange={e => handleFilterChange('maxDistance', Number(e.target.value))}
+                    style={{ width: '100%', padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
+                    placeholder="Max Distance"
+                  />
+                </div>
               </div>
-            </div>
-            {/* Minimum Lender Rating */}
+              {/* Minimum Lender Rating */}
             <div style={{ flex: 1, minWidth: 180 }}>
-              <label style={{ fontWeight: 500, color: '#555', marginBottom: 4, display: 'block' }}>Minimum Lender Rating</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 24, marginTop: 4 }}>
-                {[1,2,3,4,5].map(star => (
-                  <span
-                    key={star}
-                    onClick={() => handleFilterChange('minRating', filters.minRating === star ? 0 : star)}
-                    style={{
-                      color: filters.minRating >= star ? '#fbc02d' : '#ccc',
-                      fontSize: 28,
-                      cursor: 'pointer',
-                      transition: 'color 0.15s',
-                      userSelect: 'none'
-                    }}
-                    role="button"
-                    aria-label={`Set minimum rating to ${star} star${star > 1 ? 's' : ''}`}
-                    tabIndex={0}
-                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleFilterChange('minRating', filters.minRating === star ? 0 : star); }}
-                  >★</span>
-                ))}
+                <label style={{ fontWeight: 500, color: '#555', marginBottom: 4, display: 'block' }}>Minimum Lender Rating</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 24, marginTop: 4 }}>
+                  {[1,2,3,4,5].map(star => (
+                    <span
+                      key={star}
+                      onClick={() => handleFilterChange('minRating', filters.minRating === star ? 0 : star)}
+                      style={{
+                        color: filters.minRating >= star ? '#fbc02d' : '#ccc',
+                        fontSize: 28,
+                        cursor: 'pointer',
+                        transition: 'color 0.15s',
+                        userSelect: 'none'
+                      }}
+                      role="button"
+                      aria-label={`Set minimum rating to ${star} star${star > 1 ? 's' : ''}`}
+                      tabIndex={0}
+                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleFilterChange('minRating', filters.minRating === star ? 0 : star); }}
+                    >★</span>
+                  ))}
               </div>
             </div>
           </div>

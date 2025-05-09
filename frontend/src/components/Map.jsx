@@ -289,7 +289,7 @@ const Map = () => {
     maxCost: 200,
     minSize: 0,
     maxSize: 1000,
-    maxDistance: 50,
+    maxDistance: '50+',
     minRating: 0
   });
   const mapRef = useRef(null);
@@ -455,9 +455,51 @@ const Map = () => {
 
   const handleFilterChange = (key, value) => {
     if (key === 'maxDistance') {
-      value = Math.min(50, Math.max(0, Number(value)));
+      if (value === '50+' || value === 50 || value === '50' || Number(value) >= 50) value = '50+';
+      else if (value === '' || value === undefined) value = '50+';
+      else value = Math.max(0, Number(value));
     }
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters(prev => {
+      let newFilters = { ...prev };
+      if (key === 'minCost') {
+        if (Number(value) > Number(prev.maxCost)) {
+          newFilters.minCost = Number(value);
+          newFilters.maxCost = Number(value);
+        } else {
+          newFilters.minCost = Number(value);
+        }
+        return newFilters;
+      }
+      if (key === 'maxCost') {
+        if (Number(value) < Number(prev.minCost)) {
+          newFilters.maxCost = Number(value);
+          newFilters.minCost = Number(value);
+        } else {
+          newFilters.maxCost = Number(value);
+        }
+        return newFilters;
+      }
+      if (key === 'minSize') {
+        if (Number(value) > Number(prev.maxSize)) {
+          newFilters.minSize = Number(value);
+          newFilters.maxSize = Number(value);
+        } else {
+          newFilters.minSize = Number(value);
+        }
+        return newFilters;
+      }
+      if (key === 'maxSize') {
+        if (Number(value) < Number(prev.minSize)) {
+          newFilters.maxSize = Number(value);
+          newFilters.minSize = Number(value);
+        } else {
+          newFilters.maxSize = Number(value);
+        }
+        return newFilters;
+      }
+      newFilters[key] = value;
+      return newFilters;
+    });
   };
 
   const handleReset = () => {
@@ -466,7 +508,7 @@ const Map = () => {
       maxCost: 200,
       minSize: 0,
       maxSize: 1000,
-      maxDistance: 10,
+      maxDistance: '50+',
       minRating: 0
     });
   };
@@ -511,7 +553,7 @@ const Map = () => {
       listing.longitude
     );
     // Ignore distance filter if maxDistance is 50 (i.e., 50+)
-    const distanceMatches = (filters.maxDistance === 50) ? true : distance <= filters.maxDistance;
+    const distanceMatches = (filters.maxDistance === '50+' || filters.maxDistance === 50) ? true : distance <= filters.maxDistance;
     // --- Rating filter ---
     const rating = listing.lender_avg_rating;
     let ratingMatches;
@@ -855,34 +897,34 @@ const Map = () => {
                 </button>
               </DialogTitle>
               <DialogContent dividers style={{ background: '#fff8f1', padding: 24, position: 'relative' }}>
-                  {/* Report Button - top right */}
-                  <button
-                    style={{
-                      position: 'absolute',
-                      top: 12,
-                      right: 12,
-                      background: '#ffeaea',
-                      border: '1.5px solid #f44336',
-                      color: '#f44336',
-                      fontWeight: 700,
-                      fontSize: 15,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      cursor: 'pointer',
-                      padding: '4px 12px',
-                      borderRadius: 7,
-                      boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
-                    }}
-                    title="Report this listing"
-                    onClick={() => {
-                      setReportModalOpen(true);
-                      setReportReason("");
-                      setReportSuccess(false);
-                    }}
-                  >
-                    <span style={{fontSize: 20, color: '#f44336'}}>🚩</span>
-                  </button>
+                {/* Report Button - bottom left */}
+                <button
+                  style={{
+                    position: 'absolute',
+                    bottom: 16,
+                    left: 16,
+                    background: '#ffeaea',
+                    border: '1.5px solid #f44336',
+                    color: '#f44336',
+                    fontWeight: 700,
+                    fontSize: 15,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    cursor: 'pointer',
+                    padding: '4px 12px',
+                    borderRadius: 7,
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+                  }}
+                  title="Report this listing"
+                  onClick={() => {
+                    setReportModalOpen(true);
+                    setReportReason("");
+                    setReportSuccess(false);
+                  }}
+                >
+                  <span style={{fontSize: 20, color: '#f44336'}}>🚩</span>
+                </button>
                 {/* Grouped modal navigation */}
                 {groupedListings && groupedListings.length > 1 && (
                   <Box mb={2} display="flex" alignItems="center" justifyContent="center" gap={2}>
