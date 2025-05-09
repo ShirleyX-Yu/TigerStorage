@@ -208,12 +208,18 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
         <Box sx={{ mt: 1, width: '100%' }}>
           <TextField
             label="Max Distance"
-            type="number"
-            value={filters.maxDistance === '' ? '' : (Number(filters.maxDistance) >= 50 ? '50+' : filters.maxDistance)}
+            type="text"
+            value={
+              filters.maxDistance === '' ? '' : (Number(filters.maxDistance) >= 50 ? '50+' : filters.maxDistance)
+            }
             onChange={e => {
               let val = e.target.value;
               if (val === '' || val === undefined) {
                 onFilterChange('maxDistance', '');
+                return;
+              }
+              if (val === '50+') {
+                onFilterChange('maxDistance', 50);
                 return;
               }
               val = Number(val);

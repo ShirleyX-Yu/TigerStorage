@@ -425,10 +425,12 @@ const ViewListings = () => {
         // Only include listings with a rating >= minRating
         ratingMatches = hasRating && rating >= filters.minRating;
       }
+      // Updated distance filter logic for '50+' unlimited
+      const distanceMatches = (filters.maxDistance === '50+' || filters.maxDistance === 50) ? true : distance <= filters.maxDistance;
       return (
         cost >= filters.minCost && cost <= filters.maxCost &&
         size >= filters.minSize && size <= filters.maxSize &&
-        distance <= filters.maxDistance &&
+        distanceMatches &&
         ratingMatches
       );
     });
