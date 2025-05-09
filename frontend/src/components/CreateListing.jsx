@@ -631,7 +631,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             onChange={handleInputChange}
             required
             min={0}
-            max={10000}
+            max={200}
           />
         </div>
         <div>
@@ -644,7 +644,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             onChange={handleInputChange}
             required
             min={1}
-            max={10000}
+            max={1000}
           />
         </div>
         <div>
