@@ -632,6 +632,11 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             required
             min={0}
             max={200}
+            onKeyDown={e => {
+              if (["e", "E", "+", "-", "."].includes(e.key)) {
+                e.preventDefault();
+              }
+            }}
           />
         </div>
         <div>
@@ -645,6 +650,11 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
             required
             min={1}
             max={1000}
+            onKeyDown={e => {
+              if (["e", "E", "+", "-", "."].includes(e.key)) {
+                e.preventDefault();
+              }
+            }}
           />
         </div>
         <div>
