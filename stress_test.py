@@ -8,6 +8,16 @@ num_listings = 10  # Number of listings to create in each request
 total_iterations = 5  # Total number of requests to send
 delay = 1  # Delay between requests in seconds (1 second for OpenStreetMap rate limit)
 
+# Fetch the CSRF token
+csrf_response = requests.get("https://tigerstorage-backend.onrender.com/api/csrf-token")
+csrf_token = csrf_response.json().get('csrf_token')
+
+# Prepare headers with CSRF token
+headers = {
+    "Content-Type": "application/json",
+    "X-CSRF-Token": csrf_token  # Include the CSRF token here
+}
+
 def generate_listing_data(index):
     """Generate dynamic listing data."""
     return {
