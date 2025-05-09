@@ -459,564 +459,566 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
   return (
     <div style={styles.container}>
       {error && <div ref={errorRef} style={{...styles.error, backgroundColor: '#f8d7da', color: '#721c24', padding: '10px 15px', borderRadius: '4px', marginBottom: '15px'}}>{error}</div>}
-      <form onSubmit={handleSubmit} style={{ ...styles.form, gap: 18, padding: 24, width: '100%' }}>
-        {/* Wrap the form in a scrollable DialogContent for modal mode */}
-        {modalMode ? (
-          <div>
-            {/* All form fields go here */}
+      <div>
+        <form onSubmit={handleSubmit} style={modalMode ? { maxHeight: '70vh', overflowY: 'auto', padding: 24, background: 'white', borderRadius: 8, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', width: '100%' } : styles.form}>
+          {/* Wrap the form in a scrollable DialogContent for modal mode */}
+          {modalMode ? (
             <div>
-              <label style={styles.label}>Location (Title) <span style={{color: '#b00020'}}>*</span></label>
-              <input
-                style={styles.input}
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                required
-                maxLength={100}
-              />
-            </div>
-            <div>
-              <label style={styles.label}>Location Type <span style={{color: '#b00020'}}>*</span></label>
-              <select
-                style={styles.input}
-                value={locationType}
-                onChange={handleLocationTypeChange}
-                required
-              >
-                <option value="on-campus">On Campus</option>
-                <option value="off-campus">Off Campus</option>
-              </select>
-            </div>
-            {locationType === 'on-campus' && (
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
+              {/* All form fields go here */}
+              <div>
+                <label style={styles.label}>Location (Title) <span style={{color: '#b00020'}}>*</span></label>
+                <input
+                  style={styles.input}
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  required
+                  maxLength={100}
+                />
+              </div>
+              <div>
+                <label style={styles.label}>Location Type <span style={{color: '#b00020'}}>*</span></label>
                 <select
                   style={styles.input}
-                  value={tempAddress}
-                  onChange={e => {
-                    const hallName = e.target.value;
-                    setTempAddress(hallName);
-                    setFormData(prev => ({
-                      ...prev,
-                      hall_name: hallName
-                    }));
-                    if (hallName) {
-                      // Trigger geocoding when a hall is selected
-                      geocodeAddress(hallName);
-                    }
-                  }}
+                  value={locationType}
+                  onChange={handleLocationTypeChange}
                   required
                 >
-                  <option value="">Select a hall...</option>
-                  {PRINCETON_HALLS.map(hall => (
-                    <option key={hall} value={hall}>{hall}</option>
-                  ))}
+                  <option value="on-campus">On Campus</option>
+                  <option value="off-campus">Off Campus</option>
                 </select>
-                {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
               </div>
-            )}
-            {locationType === 'on-campus' ? null : (
-              <div style={styles.formGroup}>
-                {!isAddressConfirmed ? (
-                  <>
-                    <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
-                    <input
-                      style={styles.input}
-                      type="text"
-                      value={formData.street_address || ''}
-                      onChange={(e) => {
-                        setFormData(prev => ({
-                          ...prev,
-                          street_address: e.target.value
-                        }));
-                        if (addressNotFound) setAddressNotFound(false);
-                      }}
-                      placeholder="Enter street address"
-                      required
-                    />
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={styles.label}>City <span style={{color: '#b00020'}}>*</span></label>
-                        <input
-                          style={styles.input}
-                          type="text"
-                          value={formData.city || ''}
-                          onChange={(e) => {
-                            setFormData(prev => ({
-                              ...prev,
-                              city: e.target.value
-                            }));
-                            if (addressNotFound) setAddressNotFound(false);
-                          }}
-                          placeholder="Enter city"
-                          required
-                        />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <label style={styles.label}>State</label>
-                        <input
-                          style={styles.input}
-                          type="text"
-                          value="NJ"
-                          disabled
-                        />
-                      </div>
-                    </div>
-                    <div style={{ marginTop: '10px' }}>
-                      <label style={styles.label}>ZIP Code <span style={{color: '#b00020'}}>*</span></label>
+              {locationType === 'on-campus' && (
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
+                  <select
+                    style={styles.input}
+                    value={tempAddress}
+                    onChange={e => {
+                      const hallName = e.target.value;
+                      setTempAddress(hallName);
+                      setFormData(prev => ({
+                        ...prev,
+                        hall_name: hallName
+                      }));
+                      if (hallName) {
+                        // Trigger geocoding when a hall is selected
+                        geocodeAddress(hallName);
+                      }
+                    }}
+                    required
+                  >
+                    <option value="">Select a hall...</option>
+                    {PRINCETON_HALLS.map(hall => (
+                      <option key={hall} value={hall}>{hall}</option>
+                    ))}
+                  </select>
+                  {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
+                </div>
+              )}
+              {locationType === 'on-campus' ? null : (
+                <div style={styles.formGroup}>
+                  {!isAddressConfirmed ? (
+                    <>
+                      <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
                       <input
                         style={styles.input}
                         type="text"
-                        value={formData.zip_code || ''}
+                        value={formData.street_address || ''}
                         onChange={(e) => {
                           setFormData(prev => ({
                             ...prev,
-                            zip_code: e.target.value
+                            street_address: e.target.value
                           }));
                           if (addressNotFound) setAddressNotFound(false);
                         }}
-                        placeholder="Enter ZIP code"
+                        placeholder="Enter street address"
                         required
                       />
-                    </div>
-                    <div style={{ marginTop: '10px' }}>
-                      <label style={styles.label}>Country</label>
-                      <input
-                        style={styles.input}
-                        type="text"
-                        value="USA"
-                        disabled
-                      />
-                    </div>
-                    <div style={{ marginTop: '10px', color: '#888', fontSize: '0.95em' }}>
-                      <b>Geocoding string:</b> {`${formData.street_address || ''}, ${formData.city || ''}, NJ ${formData.zip_code || ''}, USA`}
-                    </div>
-                    <button 
-                      type="button" 
-                      onClick={() => geocodeAddress({})}
-                      style={{...styles.geocodeButton, marginTop: '20px', width: '100%'}}
-                    >
-                      Locate Address
-                    </button>
-                    {addressNotFound && customAddressError && (
-                      <div style={{ color: '#b00020', marginTop: '10px', fontSize: '14px' }}>
-                        {customAddressError}
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={styles.label}>City <span style={{color: '#b00020'}}>*</span></label>
+                          <input
+                            style={styles.input}
+                            type="text"
+                            value={formData.city || ''}
+                            onChange={(e) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                city: e.target.value
+                              }));
+                              if (addressNotFound) setAddressNotFound(false);
+                            }}
+                            placeholder="Enter city"
+                            required
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={styles.label}>State</label>
+                          <input
+                            style={styles.input}
+                            type="text"
+                            value="NJ"
+                            disabled
+                          />
+                        </div>
                       </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <label style={styles.label}>Confirmed Address</label>
-                    <input
-                      style={{...styles.input, backgroundColor: '#f5f5f5'}}
-                      type="text"
-                      value={formData.address}
-                      readOnly
-                    />
-                    <button 
-                      type="button" 
-                      onClick={handleEditAddress}
-                      style={{...styles.geocodeButton, marginTop: '20px', width: '100%', backgroundColor: '#666'}}
-                    >
-                      Edit Address
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-            <div>
-              <label style={styles.label}>Cost per Month ($) <span style={{color: '#b00020'}}>*</span></label>
-              <input
-                style={styles.input}
-                type="number"
-                name="cost"
-                value={formData.cost}
-                onChange={handleInputChange}
-                required
-                min={0}
-                max={200}
-                onKeyDown={e => {
-                  if (["e", "E", "+", "-", "."].includes(e.key)) {
-                    e.preventDefault();
-                  }
-                }}
-              />
-            </div>
-            <div>
-              <label style={styles.label}>Square Feet <span style={{color: '#b00020'}}>*</span></label>
-              <input
-                style={styles.input}
-                type="number"
-                name="sq_ft"
-                value={formData.sq_ft}
-                onChange={handleInputChange}
-                required
-                min={1}
-                max={1000}
-                onKeyDown={e => {
-                  if (["e", "E", "+", "-", "."].includes(e.key)) {
-                    e.preventDefault();
-                  }
-                }}
-              />
-            </div>
-            <div>
-              <label style={styles.label}>Description <span style={{color: '#b00020'}}>*</span></label>
-              <textarea
-                style={styles.textarea}
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Describe your storage space..."
-                required
-                maxLength={1000}
-              />
-            </div>
-            <div>
-              <label style={styles.label}>Start Date <span style={{color: '#b00020'}}>*</span></label>
-              <input
-                style={styles.input}
-                type="date"
-                name="start_date"
-                value={formData.start_date}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div>
-              <label style={styles.label}>End Date <span style={{color: '#b00020'}}>*</span></label>
-              <input
-                style={styles.input}
-                type="date"
-                name="end_date"
-                value={formData.end_date}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div>
-              <label style={styles.label}>Image <span style={{color: '#b00020'}}>*</span></label>
-              <input
-                style={styles.input}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                disabled={uploading}
-                required
-              />
-              {formData.image_url && (
-                <img
-                  src={formData.image_url.startsWith('/uploads/')
-                    ? `${import.meta.env.VITE_API_URL}${formData.image_url}`
-                    : formData.image_url}
-                  alt="Preview"
-                  style={styles.imagePreview}
-                />
-              )}
-            </div>
-          </div>
-        ) : (
-          <>
-            <div>
-              <label style={styles.label}>Location (Title) <span style={{color: '#b00020'}}>*</span></label>
-              <input
-                style={styles.input}
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                required
-                maxLength={100}
-              />
-            </div>
-            <div>
-              <label style={styles.label}>Location Type <span style={{color: '#b00020'}}>*</span></label>
-              <select
-                style={styles.input}
-                value={locationType}
-                onChange={handleLocationTypeChange}
-                required
-              >
-                <option value="on-campus">On Campus</option>
-                <option value="off-campus">Off Campus</option>
-              </select>
-            </div>
-            {locationType === 'on-campus' && (
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
-                <select
-                  style={styles.input}
-                  value={tempAddress}
-                  onChange={e => {
-                    const hallName = e.target.value;
-                    setTempAddress(hallName);
-                    setFormData(prev => ({
-                      ...prev,
-                      hall_name: hallName
-                    }));
-                    if (hallName) {
-                      // Trigger geocoding when a hall is selected
-                      geocodeAddress(hallName);
-                    }
-                  }}
-                  required
-                >
-                  <option value="">Select a hall...</option>
-                  {PRINCETON_HALLS.map(hall => (
-                    <option key={hall} value={hall}>{hall}</option>
-                  ))}
-                </select>
-                {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
-              </div>
-            )}
-            {locationType === 'on-campus' ? null : (
-              <div style={styles.formGroup}>
-                {!isAddressConfirmed ? (
-                  <>
-                    <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
-                    <input
-                      style={styles.input}
-                      type="text"
-                      value={formData.street_address || ''}
-                      onChange={(e) => {
-                        setFormData(prev => ({
-                          ...prev,
-                          street_address: e.target.value
-                        }));
-                        if (addressNotFound) setAddressNotFound(false);
-                      }}
-                      placeholder="Enter street address"
-                      required
-                    />
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={styles.label}>City <span style={{color: '#b00020'}}>*</span></label>
+                      <div style={{ marginTop: '10px' }}>
+                        <label style={styles.label}>ZIP Code <span style={{color: '#b00020'}}>*</span></label>
                         <input
                           style={styles.input}
                           type="text"
-                          value={formData.city || ''}
+                          value={formData.zip_code || ''}
                           onChange={(e) => {
                             setFormData(prev => ({
                               ...prev,
-                              city: e.target.value
+                              zip_code: e.target.value
                             }));
                             if (addressNotFound) setAddressNotFound(false);
                           }}
-                          placeholder="Enter city"
+                          placeholder="Enter ZIP code"
                           required
                         />
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <label style={styles.label}>State</label>
+                      <div style={{ marginTop: '10px' }}>
+                        <label style={styles.label}>Country</label>
                         <input
                           style={styles.input}
                           type="text"
-                          value="NJ"
+                          value="USA"
                           disabled
                         />
                       </div>
-                    </div>
-                    <div style={{ marginTop: '10px' }}>
-                      <label style={styles.label}>ZIP Code <span style={{color: '#b00020'}}>*</span></label>
+                      <div style={{ marginTop: '10px', color: '#888', fontSize: '0.95em' }}>
+                        <b>Geocoding string:</b> {`${formData.street_address || ''}, ${formData.city || ''}, NJ ${formData.zip_code || ''}, USA`}
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => geocodeAddress({})}
+                        style={{...styles.geocodeButton, marginTop: '20px', width: '100%'}}
+                      >
+                        Locate Address
+                      </button>
+                      {addressNotFound && customAddressError && (
+                        <div style={{ color: '#b00020', marginTop: '10px', fontSize: '14px' }}>
+                          {customAddressError}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <label style={styles.label}>Confirmed Address</label>
+                      <input
+                        style={{...styles.input, backgroundColor: '#f5f5f5'}}
+                        type="text"
+                        value={formData.address}
+                        readOnly
+                      />
+                      <button 
+                        type="button" 
+                        onClick={handleEditAddress}
+                        style={{...styles.geocodeButton, marginTop: '20px', width: '100%', backgroundColor: '#666'}}
+                      >
+                        Edit Address
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+              <div>
+                <label style={styles.label}>Cost per Month ($) <span style={{color: '#b00020'}}>*</span></label>
+                <input
+                  style={styles.input}
+                  type="number"
+                  name="cost"
+                  value={formData.cost}
+                  onChange={handleInputChange}
+                  required
+                  min={0}
+                  max={200}
+                  onKeyDown={e => {
+                    if (["e", "E", "+", "-", "."].includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <label style={styles.label}>Square Feet <span style={{color: '#b00020'}}>*</span></label>
+                <input
+                  style={styles.input}
+                  type="number"
+                  name="sq_ft"
+                  value={formData.sq_ft}
+                  onChange={handleInputChange}
+                  required
+                  min={1}
+                  max={1000}
+                  onKeyDown={e => {
+                    if (["e", "E", "+", "-", "."].includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <label style={styles.label}>Description <span style={{color: '#b00020'}}>*</span></label>
+                <textarea
+                  style={styles.textarea}
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Describe your storage space..."
+                  required
+                  maxLength={1000}
+                />
+              </div>
+              <div>
+                <label style={styles.label}>Start Date <span style={{color: '#b00020'}}>*</span></label>
+                <input
+                  style={styles.input}
+                  type="date"
+                  name="start_date"
+                  value={formData.start_date}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div>
+                <label style={styles.label}>End Date <span style={{color: '#b00020'}}>*</span></label>
+                <input
+                  style={styles.input}
+                  type="date"
+                  name="end_date"
+                  value={formData.end_date}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div>
+                <label style={styles.label}>Image <span style={{color: '#b00020'}}>*</span></label>
+                <input
+                  style={styles.input}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                  required
+                />
+                {formData.image_url && (
+                  <img
+                    src={formData.image_url.startsWith('/uploads/')
+                      ? `${import.meta.env.VITE_API_URL}${formData.image_url}`
+                      : formData.image_url}
+                    alt="Preview"
+                    style={styles.imagePreview}
+                  />
+                )}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label style={styles.label}>Location (Title) <span style={{color: '#b00020'}}>*</span></label>
+                <input
+                  style={styles.input}
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  required
+                  maxLength={100}
+                />
+              </div>
+              <div>
+                <label style={styles.label}>Location Type <span style={{color: '#b00020'}}>*</span></label>
+                <select
+                  style={styles.input}
+                  value={locationType}
+                  onChange={handleLocationTypeChange}
+                  required
+                >
+                  <option value="on-campus">On Campus</option>
+                  <option value="off-campus">Off Campus</option>
+                </select>
+              </div>
+              {locationType === 'on-campus' && (
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Residential Hall <span style={{color: '#b00020'}}>*</span></label>
+                  <select
+                    style={styles.input}
+                    value={tempAddress}
+                    onChange={e => {
+                      const hallName = e.target.value;
+                      setTempAddress(hallName);
+                      setFormData(prev => ({
+                        ...prev,
+                        hall_name: hallName
+                      }));
+                      if (hallName) {
+                        // Trigger geocoding when a hall is selected
+                        geocodeAddress(hallName);
+                      }
+                    }}
+                    required
+                  >
+                    <option value="">Select a hall...</option>
+                    {PRINCETON_HALLS.map(hall => (
+                      <option key={hall} value={hall}>{hall}</option>
+                    ))}
+                  </select>
+                  {geocodingStatus && <div style={styles.geocodingStatus}>{geocodingStatus}</div>}
+                </div>
+              )}
+              {locationType === 'on-campus' ? null : (
+                <div style={styles.formGroup}>
+                  {!isAddressConfirmed ? (
+                    <>
+                      <label style={styles.label}>Street Address <span style={{color: '#b00020'}}>*</span></label>
                       <input
                         style={styles.input}
                         type="text"
-                        value={formData.zip_code || ''}
+                        value={formData.street_address || ''}
                         onChange={(e) => {
                           setFormData(prev => ({
                             ...prev,
-                            zip_code: e.target.value
+                            street_address: e.target.value
                           }));
                           if (addressNotFound) setAddressNotFound(false);
                         }}
-                        placeholder="Enter ZIP code"
+                        placeholder="Enter street address"
                         required
                       />
-                    </div>
-                    <div style={{ marginTop: '10px' }}>
-                      <label style={styles.label}>Country</label>
-                      <input
-                        style={styles.input}
-                        type="text"
-                        value="USA"
-                        disabled
-                      />
-                    </div>
-                    <div style={{ marginTop: '10px', color: '#888', fontSize: '0.95em' }}>
-                      <b>Geocoding string:</b> {`${formData.street_address || ''}, ${formData.city || ''}, NJ ${formData.zip_code || ''}, USA`}
-                    </div>
-                    <button 
-                      type="button" 
-                      onClick={() => geocodeAddress({})}
-                      style={{...styles.geocodeButton, marginTop: '20px', width: '100%'}}
-                    >
-                      Locate Address
-                    </button>
-                    {addressNotFound && customAddressError && (
-                      <div style={{ color: '#b00020', marginTop: '10px', fontSize: '14px' }}>
-                        {customAddressError}
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={styles.label}>City <span style={{color: '#b00020'}}>*</span></label>
+                          <input
+                            style={styles.input}
+                            type="text"
+                            value={formData.city || ''}
+                            onChange={(e) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                city: e.target.value
+                              }));
+                              if (addressNotFound) setAddressNotFound(false);
+                            }}
+                            placeholder="Enter city"
+                            required
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={styles.label}>State</label>
+                          <input
+                            style={styles.input}
+                            type="text"
+                            value="NJ"
+                            disabled
+                          />
+                        </div>
                       </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <label style={styles.label}>Confirmed Address</label>
-                    <input
-                      style={{...styles.input, backgroundColor: '#f5f5f5'}}
-                      type="text"
-                      value={formData.address}
-                      readOnly
-                    />
-                    <button 
-                      type="button" 
-                      onClick={handleEditAddress}
-                      style={{...styles.geocodeButton, marginTop: '20px', width: '100%', backgroundColor: '#666'}}
-                    >
-                      Edit Address
-                    </button>
-                  </>
+                      <div style={{ marginTop: '10px' }}>
+                        <label style={styles.label}>ZIP Code <span style={{color: '#b00020'}}>*</span></label>
+                        <input
+                          style={styles.input}
+                          type="text"
+                          value={formData.zip_code || ''}
+                          onChange={(e) => {
+                            setFormData(prev => ({
+                              ...prev,
+                              zip_code: e.target.value
+                            }));
+                            if (addressNotFound) setAddressNotFound(false);
+                          }}
+                          placeholder="Enter ZIP code"
+                          required
+                        />
+                      </div>
+                      <div style={{ marginTop: '10px' }}>
+                        <label style={styles.label}>Country</label>
+                        <input
+                          style={styles.input}
+                          type="text"
+                          value="USA"
+                          disabled
+                        />
+                      </div>
+                      <div style={{ marginTop: '10px', color: '#888', fontSize: '0.95em' }}>
+                        <b>Geocoding string:</b> {`${formData.street_address || ''}, ${formData.city || ''}, NJ ${formData.zip_code || ''}, USA`}
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => geocodeAddress({})}
+                        style={{...styles.geocodeButton, marginTop: '20px', width: '100%'}}
+                      >
+                        Locate Address
+                      </button>
+                      {addressNotFound && customAddressError && (
+                        <div style={{ color: '#b00020', marginTop: '10px', fontSize: '14px' }}>
+                          {customAddressError}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <label style={styles.label}>Confirmed Address</label>
+                      <input
+                        style={{...styles.input, backgroundColor: '#f5f5f5'}}
+                        type="text"
+                        value={formData.address}
+                        readOnly
+                      />
+                      <button 
+                        type="button" 
+                        onClick={handleEditAddress}
+                        style={{...styles.geocodeButton, marginTop: '20px', width: '100%', backgroundColor: '#666'}}
+                      >
+                        Edit Address
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+              <div>
+                <label style={styles.label}>Cost per Month ($) <span style={{color: '#b00020'}}>*</span></label>
+                <input
+                  style={styles.input}
+                  type="number"
+                  name="cost"
+                  value={formData.cost}
+                  onChange={handleInputChange}
+                  required
+                  min={0}
+                  max={200}
+                  onKeyDown={e => {
+                    if (["e", "E", "+", "-", "."].includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <label style={styles.label}>Square Feet <span style={{color: '#b00020'}}>*</span></label>
+                <input
+                  style={styles.input}
+                  type="number"
+                  name="sq_ft"
+                  value={formData.sq_ft}
+                  onChange={handleInputChange}
+                  required
+                  min={1}
+                  max={1000}
+                  onKeyDown={e => {
+                    if (["e", "E", "+", "-", "."].includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <label style={styles.label}>Description <span style={{color: '#b00020'}}>*</span></label>
+                <textarea
+                  style={styles.textarea}
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Describe your storage space..."
+                  required
+                  maxLength={1000}
+                />
+              </div>
+              <div>
+                <label style={styles.label}>Start Date <span style={{color: '#b00020'}}>*</span></label>
+                <input
+                  style={styles.input}
+                  type="date"
+                  name="start_date"
+                  value={formData.start_date}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div>
+                <label style={styles.label}>End Date <span style={{color: '#b00020'}}>*</span></label>
+                <input
+                  style={styles.input}
+                  type="date"
+                  name="end_date"
+                  value={formData.end_date}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div>
+                <label style={styles.label}>Image <span style={{color: '#b00020'}}>*</span></label>
+                <input
+                  style={styles.input}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                  required
+                />
+                {formData.image_url && (
+                  <img
+                    src={formData.image_url.startsWith('/uploads/')
+                      ? `${import.meta.env.VITE_API_URL}${formData.image_url}`
+                      : formData.image_url}
+                    alt="Preview"
+                    style={styles.imagePreview}
+                  />
                 )}
               </div>
-            )}
-            <div>
-              <label style={styles.label}>Cost per Month ($) <span style={{color: '#b00020'}}>*</span></label>
-              <input
-                style={styles.input}
-                type="number"
-                name="cost"
-                value={formData.cost}
-                onChange={handleInputChange}
-                required
-                min={0}
-                max={200}
-                onKeyDown={e => {
-                  if (["e", "E", "+", "-", "."].includes(e.key)) {
-                    e.preventDefault();
-                  }
-                }}
-              />
-            </div>
-            <div>
-              <label style={styles.label}>Square Feet <span style={{color: '#b00020'}}>*</span></label>
-              <input
-                style={styles.input}
-                type="number"
-                name="sq_ft"
-                value={formData.sq_ft}
-                onChange={handleInputChange}
-                required
-                min={1}
-                max={1000}
-                onKeyDown={e => {
-                  if (["e", "E", "+", "-", "."].includes(e.key)) {
-                    e.preventDefault();
-                  }
-                }}
-              />
-            </div>
-            <div>
-              <label style={styles.label}>Description <span style={{color: '#b00020'}}>*</span></label>
-              <textarea
-                style={styles.textarea}
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Describe your storage space..."
-                required
-                maxLength={1000}
-              />
-            </div>
-            <div>
-              <label style={styles.label}>Start Date <span style={{color: '#b00020'}}>*</span></label>
-              <input
-                style={styles.input}
-                type="date"
-                name="start_date"
-                value={formData.start_date}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div>
-              <label style={styles.label}>End Date <span style={{color: '#b00020'}}>*</span></label>
-              <input
-                style={styles.input}
-                type="date"
-                name="end_date"
-                value={formData.end_date}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div>
-              <label style={styles.label}>Image <span style={{color: '#b00020'}}>*</span></label>
-              <input
-                style={styles.input}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                disabled={uploading}
-                required
-              />
-              {formData.image_url && (
-                <img
-                  src={formData.image_url.startsWith('/uploads/')
-                    ? `${import.meta.env.VITE_API_URL}${formData.image_url}`
-                    : formData.image_url}
-                  alt="Preview"
-                  style={styles.imagePreview}
-                />
-              )}
-            </div>
-          </>
-        )}
-        <button type="submit" style={styles.submitButton} disabled={uploading}>
-          {uploading ? 'Uploading...' : 'Create Listing'}
-        </button>
-      </form>
+            </>
+          )}
+          <button type="submit" style={styles.submitButton} disabled={uploading}>
+            {uploading ? 'Uploading...' : 'Create Listing'}
+          </button>
+        </form>
 
-      {/* Address Confirmation Modal */}
-      <Dialog 
-        open={showAddressConfirm} 
-        onClose={handleEditAddress} 
-        maxWidth="xs" 
-        fullWidth
-        PaperProps={{
-          style: {
-            borderRadius: 16,
-            minWidth: 340,
-            background: '#fff8f1',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.14)'
-          }
-        }}
-      >
-        <DialogTitle style={{
-          background: '#FF6B00',
-          color: 'white',
-          fontWeight: 700,
-          letterSpacing: 1,
-          padding: '16px 24px',
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16
-        }}>
-          Confirm Address
-        </DialogTitle>
-        <DialogContent style={{ background: '#fff8f1', padding: 28, maxHeight: '70vh', overflowY: 'auto' }}>
-          <div style={{ marginBottom: 16, fontSize: 16, color: '#333' }}>
-            Please confirm the address for your listing:
-          </div>
-          <div style={{ fontWeight: 600, fontSize: 17, color: '#222', marginBottom: 8, background: '#fff', borderRadius: 8, padding: '12px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            {pendingAddress?.address}
-          </div>
-        </DialogContent>
-        <DialogActions style={{ background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, padding: '16px 24px' }}>
-          <Button onClick={handleEditAddress} style={{ color: '#888', fontWeight: 600 }}>Edit</Button>
-          <Button onClick={handleConfirmAddress} variant="contained" style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }}>
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
+        {/* Address Confirmation Modal */}
+        <Dialog 
+          open={showAddressConfirm} 
+          onClose={handleEditAddress} 
+          maxWidth="xs" 
+          fullWidth
+          PaperProps={{
+            style: {
+              borderRadius: 16,
+              minWidth: 340,
+              background: '#fff8f1',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.14)'
+            }
+          }}
+        >
+          <DialogTitle style={{
+            background: '#FF6B00',
+            color: 'white',
+            fontWeight: 700,
+            letterSpacing: 1,
+            padding: '16px 24px',
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16
+          }}>
+            Confirm Address
+          </DialogTitle>
+          <DialogContent style={{ background: '#fff8f1', padding: 28 }}>
+            <div style={{ marginBottom: 16, fontSize: 16, color: '#333' }}>
+              Please confirm the address for your listing:
+            </div>
+            <div style={{ fontWeight: 600, fontSize: 17, color: '#222', marginBottom: 8, background: '#fff', borderRadius: 8, padding: '12px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              {pendingAddress?.address}
+            </div>
+          </DialogContent>
+          <DialogActions style={{ background: '#fff8f1', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, padding: '16px 24px' }}>
+            <Button onClick={handleEditAddress} style={{ color: '#888', fontWeight: 600 }}>Edit</Button>
+            <Button onClick={handleConfirmAddress} variant="contained" style={{ background: '#FF6B00', color: 'white', fontWeight: 700 }}>
+              Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </div>
     </div>
   );
 };
