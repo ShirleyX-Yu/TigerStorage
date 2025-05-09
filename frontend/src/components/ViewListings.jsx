@@ -481,7 +481,6 @@ const ViewListings = () => {
                 <h3 style={styles.filtersTitle}>Filters</h3>
                 <div className="responsive-filter-grid" style={styles.filterGrid}>
                   <div style={styles.filterGroup}>
-                    <label style={styles.filterLabel}>Price Range ($/month)</label>
                     <RangeSlider
                       min={0}
                       max={200}
@@ -492,13 +491,8 @@ const ViewListings = () => {
                       unit="$"
                       color="#FF8F00"
                     />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 2 }}>
-                      <span>Min: ${filters.minCost}</span>
-                      <span>Max: ${filters.maxCost}</span>
-                    </div>
                   </div>
                   <div style={styles.filterGroup}>
-                    <label style={styles.filterLabel}>Size Range (sq ft)</label>
                     <RangeSlider
                       min={0}
                       max={1000}
@@ -509,10 +503,6 @@ const ViewListings = () => {
                       unit=" sq ft"
                       color="#FF8F00"
                     />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 2 }}>
-                      <span>Min: {filters.minSize} sq ft</span>
-                      <span>Max: {filters.maxSize} sq ft</span>
-                    </div>
                   </div>
                   <div style={styles.filterGroup}>
                     <label style={styles.filterLabel}>Distance from Campus (miles)</label>
