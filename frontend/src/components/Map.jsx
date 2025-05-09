@@ -511,7 +511,14 @@ const Map = () => {
     const distanceMatches = (filters.maxDistance === 50) ? true : distance <= filters.maxDistance;
     // --- Rating filter ---
     const rating = listing.lender_avg_rating;
-    const ratingMatches = (filters.minRating <= 1) ? true : (rating === undefined || rating === null ? false : rating >= filters.minRating);
+    let ratingMatches;
+    if (filters.minRating === 0) {
+      // Include all listings, even unrated
+      ratingMatches = true;
+    } else {
+      // Only include listings with a rating >= minRating
+      ratingMatches = (typeof rating === 'number' && rating >= filters.minRating);
+    }
     return {
       ...listing,
       matchesFilters: costMatches && sizeMatches && distanceMatches && ratingMatches
