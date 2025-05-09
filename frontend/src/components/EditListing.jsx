@@ -61,13 +61,13 @@ const EditListing = () => {
           image_url: data.image_url || ''
         };
         
-        console.log('Setting form data:', formDataToSet);
+        // console.log('Setting form data:', formDataToSet);
         setFormData(formDataToSet);
         
         // For the temporary address field (used for geocoding), use the address field if available
         // For older listings without an address field, use the location as a fallback
         const addressValue = data.address || '';
-        console.log('Setting tempAddress to:', addressValue);
+        // console.log('Setting tempAddress to:', addressValue);
         setTempAddress(addressValue);
         
         // Determine location type based on the address or location

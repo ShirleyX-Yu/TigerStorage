@@ -1664,7 +1664,7 @@ def set_csp_headers(response):
         "default-src 'self'; "
         "script-src 'self'; "
         "style-src 'self' 'unsafe-inline'; "
-        "img-src 'self' data: https://res.cloudinary.com https://*.cloudinary.com https://images.unsplash.com https://cdn.jsdelivr.net https://*.cartocdn.com https://raw.githubusercontent.com https://cdnjs.cloudflare.com; "
+        "img-src 'self' data: https://res.cloudinary.com https://*.cloudinary.com https://images.unsplash.com https://cdn.jsdelivr.net https://*.cartocdn.com https://raw.githubusercontent.com https://cdnjs.cloudflare.com https://duo.com; "
         "font-src 'self' data:; "
         "connect-src 'self' https://res.cloudinary.com https://*.cloudinary.com https://images.unsplash.com https://cdn.jsdelivr.net https://nominatim.openstreetmap.org; "
         "object-src 'none'; "

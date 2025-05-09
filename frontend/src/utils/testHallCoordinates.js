@@ -1,11 +1,11 @@
 // Function to geocode a hall name and print the coordinates and address
 export const testHallCoordinate = async (hallName) => {
-  console.log(`Testing coordinates for: ${hallName}`);
+  // console.log(`Testing coordinates for: ${hallName}`);
   
   try {
     // Format the search address with Princeton University context
     const searchAddress = `${hallName}, Princeton University, Princeton, NJ 08544, USA`;
-    console.log(`Geocoding address: ${searchAddress}`);
+    // console.log(`Geocoding address: ${searchAddress}`);
     
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`
@@ -26,8 +26,7 @@ export const testHallCoordinate = async (hallName) => {
     }
     
     const { lat, lon, display_name } = data[0];
-    console.log(`Geocoded: Lat ${lat}, Lng ${lon}`);
-    console.log(`Address: ${display_name}`);
+    // console.log(`Geocoded: Lat ${lat}, Lng ${lon}`);
     
     return {
       success: true,

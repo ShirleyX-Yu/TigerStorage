@@ -66,7 +66,7 @@ const Home = () => {
     if (location.state && location.state.adminError) {
       setErrorMessage('You need admin permissions to access the admin dashboard. If you believe you should have access, please contact the TigerStorage team.');
       // Clear the state so it doesn't persist
-      navigate('/', { replace: true, state: {} });
+      navigate('/', { state: {} });
     }
   }, [location.state, navigate]);
   

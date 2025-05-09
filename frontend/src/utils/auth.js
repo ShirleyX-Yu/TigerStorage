@@ -68,7 +68,7 @@ axiosInstance.interceptors.request.use((config) => {
 export { axiosInstance };
 
 export const login = (userType) => {
-  console.log(`auth.js - login called with userType: ${userType}`);
+  // console.log(`auth.js - login called with userType: ${userType}`);
   
   // Store the user type in both session and local storage
   sessionStorage.setItem('userType', userType);
