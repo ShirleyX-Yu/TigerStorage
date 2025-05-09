@@ -557,7 +557,7 @@ const ViewListings = () => {
                           onChange={e => setFilters(f => ({ ...f, includeUnrated: e.target.checked }))}
                           style={{ marginRight: 4 }}
                         />
-                        N/A (Include unrated)
+                        Include unrated
                       </label>
                     </div>
                   </div>
