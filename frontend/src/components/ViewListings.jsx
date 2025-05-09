@@ -470,13 +470,152 @@ const ViewListings = () => {
             <h2>Storage Listings</h2>
           </div>
           
-          <div style={{ marginBottom: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', maxWidth: 700 }}>
-            <FilterColumn
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              onReset={handleReset}
-              layout="2x2"
-            />
+          <div style={{
+            marginBottom: '1.5rem',
+            display: 'flex',
+            gap: '2rem',
+            maxWidth: 700,
+            width: '100%',
+            alignItems: 'flex-start',
+          }}>
+            {/* Left column: Price, Size */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Price Range */}
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ fontWeight: 500, color: '#555', marginBottom: 4, display: 'block' }}>Price Range ($/month)</label>
+                <Slider
+                  value={[filters.minCost, filters.maxCost]}
+                  onChange={(_, newValue) => handleFilterChange('minCost', newValue[0]) || handleFilterChange('maxCost', newValue[1])}
+                  valueLabelDisplay="auto"
+                  min={0}
+                  max={200}
+                  step={1}
+                  sx={{ color: '#FF6B00', width: '100%', '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' }, '& .MuiSlider-track': { backgroundColor: '#FF6B00' }, '& .MuiSlider-rail': { backgroundColor: '#FFF3E6' } }}
+                />
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <input
+                    type="number"
+                    value={filters.minCost}
+                    min={0}
+                    max={filters.maxCost}
+                    onChange={e => handleFilterChange('minCost', Number(e.target.value))}
+                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
+                    placeholder="Min"
+                  />
+                  <input
+                    type="number"
+                    value={filters.maxCost}
+                    min={filters.minCost}
+                    max={200}
+                    onChange={e => handleFilterChange('maxCost', Number(e.target.value))}
+                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
+                    placeholder="Max"
+                  />
+                </div>
+              </div>
+              {/* Size Range */}
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ fontWeight: 500, color: '#555', marginBottom: 4, display: 'block' }}>Size Range (sq ft)</label>
+                <Slider
+                  value={[filters.minSize, filters.maxSize]}
+                  onChange={(_, newValue) => handleFilterChange('minSize', newValue[0]) || handleFilterChange('maxSize', newValue[1])}
+                  valueLabelDisplay="auto"
+                  min={0}
+                  max={1000}
+                  step={1}
+                  sx={{ color: '#FF6B00', width: '100%', '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' }, '& .MuiSlider-track': { backgroundColor: '#FF6B00' }, '& .MuiSlider-rail': { backgroundColor: '#FFF3E6' } }}
+                />
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <input
+                    type="number"
+                    value={filters.minSize}
+                    min={0}
+                    max={filters.maxSize}
+                    onChange={e => handleFilterChange('minSize', Number(e.target.value))}
+                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
+                    placeholder="Min"
+                  />
+                  <input
+                    type="number"
+                    value={filters.maxSize}
+                    min={filters.minSize}
+                    max={1000}
+                    onChange={e => handleFilterChange('maxSize', Number(e.target.value))}
+                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
+                    placeholder="Max"
+                  />
+                </div>
+              </div>
+            </div>
+            {/* Right column: Distance, Rating */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Distance */}
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ fontWeight: 500, color: '#555', marginBottom: 4, display: 'block' }}>Distance from Campus (miles)</label>
+                <Slider
+                  value={filters.maxDistance}
+                  onChange={(_, newValue) => handleFilterChange('maxDistance', newValue)}
+                  valueLabelDisplay="auto"
+                  min={0}
+                  max={50}
+                  step={0.1}
+                  sx={{ color: '#FF6B00', width: '100%', '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' }, '& .MuiSlider-track': { backgroundColor: '#FF6B00' }, '& .MuiSlider-rail': { backgroundColor: '#FFF3E6' } }}
+                />
+                <div style={{ marginTop: 8 }}>
+                  <input
+                    type="number"
+                    value={filters.maxDistance}
+                    min={0}
+                    max={50}
+                    onChange={e => handleFilterChange('maxDistance', Number(e.target.value))}
+                    style={{ width: '100%', padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
+                    placeholder="Max Distance"
+                  />
+                </div>
+              </div>
+              {/* Minimum Lender Rating */}
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ fontWeight: 500, color: '#555', marginBottom: 4, display: 'block' }}>Minimum Lender Rating</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 24, marginTop: 4 }}>
+                  {[1,2,3,4,5].map(star => (
+                    <span
+                      key={star}
+                      onClick={() => handleFilterChange('minRating', filters.minRating === star ? 0 : star)}
+                      style={{
+                        color: filters.minRating >= star ? '#fbc02d' : '#ccc',
+                        fontSize: 28,
+                        cursor: 'pointer',
+                        transition: 'color 0.15s',
+                        userSelect: 'none'
+                      }}
+                      role="button"
+                      aria-label={`Set minimum rating to ${star} star${star > 1 ? 's' : ''}`}
+                      tabIndex={0}
+                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleFilterChange('minRating', filters.minRating === star ? 0 : star); }}
+                    >★</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Reset Button centered below filters */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+            <button
+              onClick={handleReset}
+              style={{
+                padding: '0.75rem 2rem',
+                borderRadius: 4,
+                border: '1px solid #FF6B00',
+                color: '#FF6B00',
+                background: '#fff',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: '1rem',
+                marginTop: 8
+              }}
+            >
+              Reset Filters
+            </button>
           </div>
 
           {loading ? (
