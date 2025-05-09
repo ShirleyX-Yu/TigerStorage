@@ -5,6 +5,7 @@ import ReservationModal from './ReservationModal';
 import { getCSRFToken } from '../utils/csrf';
 import { axiosInstance } from '../utils/auth';
 import Slider from '@mui/material/Slider';
+import FilterColumn from './FilterColumn';
 
 // Function to calculate distance between two points in miles
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -469,6 +470,14 @@ const ViewListings = () => {
             <h2>Storage Listings</h2>
           </div>
           
+          <div style={{ marginBottom: '1.5rem' }}>
+            <FilterColumn
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              onReset={handleReset}
+            />
+          </div>
+
           {loading ? (
             <div style={styles.message}>Loading storage listings...</div>
           ) : error ? (
@@ -477,99 +486,6 @@ const ViewListings = () => {
             <div style={styles.message}>No storage listings available.</div>
           ) : (
             <div>
-              <div style={styles.filtersSection}>
-                <h3 style={styles.filtersTitle}>Filters</h3>
-                <div className="responsive-filter-grid" style={styles.filterGrid}>
-                  <div style={styles.filterGroup}>
-                    <label style={styles.filterLabel}>Price Range ($/month)</label>
-                    <Slider
-                      value={[filters.minCost, filters.maxCost]}
-                      onChange={(_, newValue) => setFilters(f => ({ ...f, minCost: newValue[0], maxCost: newValue[1] }))}
-                      min={0}
-                      max={200}
-                      step={1}
-                      valueLabelDisplay="auto"
-                      sx={{ color: '#FF8F00' }}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 2 }}>
-                      <span>Min: ${filters.minCost}</span>
-                      <span>Max: ${filters.maxCost}</span>
-                    </div>
-                  </div>
-                  <div style={styles.filterGroup}>
-                    <label style={styles.filterLabel}>Size Range (sq ft)</label>
-                    <Slider
-                      value={[filters.minSize, filters.maxSize]}
-                      onChange={(_, newValue) => setFilters(f => ({ ...f, minSize: newValue[0], maxSize: newValue[1] }))}
-                      min={0}
-                      max={1000}
-                      step={1}
-                      valueLabelDisplay="auto"
-                      sx={{ color: '#FF8F00' }}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 2 }}>
-                      <span>Min: {filters.minSize} sq ft</span>
-                      <span>Max: {filters.maxSize} sq ft</span>
-                    </div>
-                  </div>
-                  <div style={styles.filterGroup}>
-                    <label style={styles.filterLabel}>Distance from Campus (miles)</label>
-                    <Slider
-                      value={filters.maxDistance}
-                      onChange={(_, newValue) => setFilters(f => ({ ...f, maxDistance: newValue }))}
-                      min={0}
-                      max={50}
-                      step={0.1}
-                      valueLabelDisplay="auto"
-                      sx={{ color: '#FF6B00' }}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', fontSize: 12 }}>
-                      <span>Max: {filters.maxDistance} mi</span>
-                    </div>
-                  </div>
-                  <div style={styles.filterGroup}>
-                    <label style={styles.filterLabel}>Minimum Lender Rating</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 24, marginTop: 4 }}>
-                      {[1,2,3,4,5].map(star => (
-                        <span
-                          key={star}
-                          onClick={() => setFilters(f => ({ ...f, minRating: (f.minRating === star ? 0 : star) }))}
-                          style={{
-                            color: filters.minRating >= star ? '#fbc02d' : '#ccc',
-                            fontSize: 28,
-                            cursor: 'pointer',
-                            transition: 'color 0.15s',
-                            userSelect: 'none'
-                          }}
-                          role="button"
-                          aria-label={`Set minimum rating to ${star} star${star > 1 ? 's' : ''}`}
-                          tabIndex={0}
-                          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setFilters(f => ({ ...f, minRating: (f.minRating === star ? 0 : star) })); }}
-                        >★</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <button onClick={handleReset} style={{ marginTop: 16, width: '100%', padding: '0.75rem', borderRadius: 4, border: '1px solid #FF6B00', color: '#FF6B00', background: '#fff', fontWeight: 600, cursor: 'pointer' }}>Reset Filters</button>
-                {/* Responsive styles for filter grid */}
-                <style>{`
-                  @media (max-width: 700px) {
-                    .responsive-filter-grid {
-                      display: flex !important;
-                      flex-direction: column !important;
-                      gap: 1rem !important;
-                    }
-                  }
-                  @media (min-width: 701px) {
-                    .responsive-filter-grid {
-                      display: grid !important;
-                      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
-                      gap: 1.5rem !important;
-                    }
-                  }
-                `}</style>
-              </div>
-
               {filteredListings.length === 0 ? (
                 <div style={styles.message}>
                   No storage spaces match your criteria
