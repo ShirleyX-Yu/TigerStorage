@@ -5,7 +5,6 @@ import ReservationModal from './ReservationModal';
 import { getCSRFToken } from '../utils/csrf';
 import { axiosInstance } from '../utils/auth';
 import Slider from '@mui/material/Slider';
-import FilterColumn from './FilterColumn';
 
 // Function to calculate distance between two points in miles
 function calculateDistance(lat1, lon1, lat2, lon2) {
