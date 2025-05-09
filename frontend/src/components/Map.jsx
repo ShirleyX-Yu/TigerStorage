@@ -485,6 +485,8 @@ const Map = () => {
     setSelectedListingId(listing.listing_id || listing.id);
     setInterestSuccess(false);
     setLastInterestAction(null);
+    setInterestError(null);
+    setReservationError('');
     if (mapRef.current) {
       mapRef.current.setView([listing.latitude, listing.longitude], 16);
     }
@@ -1176,6 +1178,11 @@ const Map = () => {
                     });
                     // Success - axios will throw on error
                     setReportSuccess(true);
+                    setTimeout(() => {
+                      setReportModalOpen(false);
+                      setReportReason("");
+                      setReportSuccess(false);
+                    }, 1000);
                   } catch (err) {
                     // console.error('Report error:', err);
                     setReportSuccess(false);

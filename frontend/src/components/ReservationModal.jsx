@@ -47,6 +47,10 @@ const ReservationModal = ({
         setLocalError(`Please enter a valid storage space between 1 and ${maxSpace} sq ft.`);
         return;
       }
+      if (!Number.isInteger(Number(space))) {
+        setLocalError('Please enter a whole number of square feet.');
+        return;
+      }
     }
     setLocalError('');
     onSubmit({ space: sp, mode });
@@ -102,7 +106,7 @@ const ReservationModal = ({
             value={mode === 'full' ? maxSpace : space}
             onChange={e => setSpace(e.target.value)}
             disabled={mode === 'full' || loading}
-            inputProps={{ min: 0.1, max: maxSpace, step: 0.1 }}
+            inputProps={{ min: 1, max: maxSpace, step: 1 }}
             style={{ marginBottom: 12, background: 'white', borderRadius: 6 }}
           />
           <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>
