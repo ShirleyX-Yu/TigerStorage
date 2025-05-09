@@ -326,8 +326,6 @@ const ViewListings = () => {
   const [filters, setFilters] = useState({
     minCost: 0,
     maxCost: 200,
-    minSize: 0,
-    maxSize: 1000,
     maxDistance: 50,
     minRating: 0,
     includeUnrated: false,
@@ -341,8 +339,6 @@ const ViewListings = () => {
     setFilters({
       minCost: 0,
       maxCost: 200,
-      minSize: 0,
-      maxSize: 1000,
       maxDistance: 50,
       minRating: 0,
       includeUnrated: false,
@@ -356,7 +352,6 @@ const ViewListings = () => {
   const filterListings = (listings) => {
     return listings.filter(listing => {
       const cost = listing.cost ?? 0;
-      const size = Number(listing.sq_ft) ?? 0;
       const distance = listing.latitude && listing.longitude
         ? calculateDistance(40.3437, -74.6517, listing.latitude, listing.longitude)
         : 0;
@@ -372,7 +367,6 @@ const ViewListings = () => {
       }
       return (
         cost >= filters.minCost && cost <= filters.maxCost &&
-        size >= filters.minSize && size <= filters.maxSize &&
         distance <= filters.maxDistance &&
         ratingMatches
       );
@@ -481,28 +475,20 @@ const ViewListings = () => {
                 <h3 style={styles.filtersTitle}>Filters</h3>
                 <div className="responsive-filter-grid" style={styles.filterGrid}>
                   <div style={styles.filterGroup}>
-                    <RangeSlider
+                    <label style={styles.filterLabel}>Price Range ($/month)</label>
+                    <Slider
+                      value={[filters.minCost, filters.maxCost]}
+                      onChange={(_, newValue) => setFilters(f => ({ ...f, minCost: newValue[0], maxCost: newValue[1] }))}
                       min={0}
                       max={200}
-                      value={[filters.minCost, filters.maxCost]}
-                      onChange={vals => handleFilterChange('minCost', vals[0]) || handleFilterChange('maxCost', vals[1])}
                       step={1}
-                      label="Price Range ($/month)"
-                      unit="$"
-                      color="#FF8F00"
+                      valueLabelDisplay="auto"
+                      sx={{ color: '#FF8F00' }}
                     />
-                  </div>
-                  <div style={styles.filterGroup}>
-                    <RangeSlider
-                      min={0}
-                      max={1000}
-                      value={[filters.minSize, filters.maxSize]}
-                      onChange={vals => handleFilterChange('minSize', vals[0]) || handleFilterChange('maxSize', vals[1])}
-                      step={1}
-                      label="Size Range (sq ft)"
-                      unit=" sq ft"
-                      color="#FF8F00"
-                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 2 }}>
+                      <span>Min: ${filters.minCost}</span>
+                      <span>Max: ${filters.maxCost}</span>
+                    </div>
                   </div>
                   <div style={styles.filterGroup}>
                     <label style={styles.filterLabel}>Distance from Campus (miles)</label>
