@@ -325,9 +325,9 @@ const ViewListings = () => {
   // Use the same filter structure as the map view
   const [filters, setFilters] = useState({
     minCost: 0,
-    maxCost: 100,
+    maxCost: 200,
     minSize: 0,
-    maxSize: 500,
+    maxSize: 1000,
     maxDistance: 50,
     minRating: 0,
     includeUnrated: false,
@@ -340,9 +340,9 @@ const ViewListings = () => {
   const handleReset = () => {
     setFilters({
       minCost: 0,
-      maxCost: 100,
+      maxCost: 200,
       minSize: 0,
-      maxSize: 500,
+      maxSize: 1000,
       maxDistance: 50,
       minRating: 0,
       includeUnrated: false,
@@ -494,14 +494,15 @@ const ViewListings = () => {
                 <div className="responsive-filter-grid" style={styles.filterGrid}>
                   <div style={styles.filterGroup}>
                     <label style={styles.filterLabel}>Price Range ($/month)</label>
-                    <Slider
-                      value={[filters.minCost, filters.maxCost]}
-                      onChange={(_, newValue) => setFilters(f => ({ ...f, minCost: newValue[0], maxCost: newValue[1] }))}
+                    <RangeSlider
                       min={0}
-                      max={100}
+                      max={200}
+                      value={[filters.minCost, filters.maxCost]}
+                      onChange={vals => handleFilterChange('minCost', vals[0]) || handleFilterChange('maxCost', vals[1])}
                       step={1}
-                      valueLabelDisplay="auto"
-                      sx={{ color: '#FF6B00' }}
+                      label="Price Range ($/month)"
+                      unit="$"
+                      color="#FF8F00"
                     />
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 2 }}>
                       <span>Min: ${filters.minCost}</span>
@@ -510,14 +511,15 @@ const ViewListings = () => {
                   </div>
                   <div style={styles.filterGroup}>
                     <label style={styles.filterLabel}>Size Range (sq ft)</label>
-                    <Slider
-                      value={[filters.minSize, filters.maxSize]}
-                      onChange={(_, newValue) => setFilters(f => ({ ...f, minSize: newValue[0], maxSize: newValue[1] }))}
+                    <RangeSlider
                       min={0}
-                      max={500}
+                      max={1000}
+                      value={[filters.minSize, filters.maxSize]}
+                      onChange={vals => handleFilterChange('minSize', vals[0]) || handleFilterChange('maxSize', vals[1])}
                       step={1}
-                      valueLabelDisplay="auto"
-                      sx={{ color: '#FF6B00' }}
+                      label="Size Range (sq ft)"
+                      unit=" sq ft"
+                      color="#FF8F00"
                     />
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 2 }}>
                       <span>Min: {filters.minSize} sq ft</span>
