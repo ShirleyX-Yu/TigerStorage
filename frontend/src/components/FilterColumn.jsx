@@ -48,7 +48,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           onChange={handleSliderChange('price')}
           valueLabelDisplay="auto"
           min={0}
-          max={100}
+          max={200}
           step={1}
           sx={{
             color: '#FF6B00',
@@ -91,7 +91,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           onChange={handleSliderChange('size')}
           valueLabelDisplay="auto"
           min={0}
-          max={500}
+          max={1000}
           step={1}
           sx={{
             color: '#FF6B00',
@@ -153,9 +153,15 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
         <Box sx={{ mt: 1, width: '100%' }}>
           <TextField
             label="Max Distance"
-            type="number"
-            value={filters.maxDistance ?? ''}
-            onChange={handleInputChange('maxDistance')}
+            type="text"
+            value={filters.maxDistance === 50 ? '50+' : (filters.maxDistance ?? '')}
+            onChange={e => {
+              let val = e.target.value;
+              if (val === '50+') val = 50;
+              else if (val === '') val = '';
+              else val = Number(val);
+              onFilterChange('maxDistance', val);
+            }}
             size="small"
             fullWidth
           />
