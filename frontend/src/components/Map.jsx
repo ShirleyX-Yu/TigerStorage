@@ -495,14 +495,10 @@ const Map = () => {
     if (!listing.latitude || !listing.longitude) return { ...listing, matchesFilters: false };
     // Prioritize the database column names
     const listingCost = listing.cost !== undefined ? listing.cost : 0;
-    const costMatches = (filters.minCost === 0 && filters.maxCost === 0) 
-      ? listingCost === 0 
-      : listingCost >= filters.minCost && listingCost <= filters.maxCost;
+    const costMatches = listingCost >= (filters.minCost ?? 0) && listingCost <= (filters.maxCost ?? 200);
     // Prioritize sq_ft which is the actual database column
     const listingSize = listing.sq_ft !== undefined ? Number(listing.sq_ft) : 0;
-    const sizeMatches = (filters.minSize === 0 && filters.maxSize === 0)
-      ? listingSize === 0
-      : listingSize >= filters.minSize && listingSize <= filters.maxSize;
+    const sizeMatches = listingSize >= (filters.minSize ?? 0) && listingSize <= (filters.maxSize ?? 1000);
     const distance = calculateDistance(
       PRINCETON_COORDS.lat,
       PRINCETON_COORDS.lng,

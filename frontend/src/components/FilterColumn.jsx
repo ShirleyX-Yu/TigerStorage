@@ -48,7 +48,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           onChange={handleSliderChange('price')}
           valueLabelDisplay="auto"
           min={0}
-          max={100}
+          max={200}
           step={1}
           sx={{
             color: '#FF6B00',
@@ -188,39 +188,6 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onFilterChange('minRating', star); }}
             >★</span>
           ))}
-        </Box>
-      </Box>
-
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Square Feet</Typography>
-        <Box sx={{ px: 1 }}>
-          <Slider
-            value={filters.sq_ft || [0, 1000]}
-            onChange={(e, newValue) => onFilterChange('sq_ft', newValue)}
-            valueLabelDisplay="auto"
-            min={0}
-            max={1000}
-            marks={[
-              { value: 0, label: '0' },
-              { value: 1000, label: '1000' }
-            ]}
-          />
-        </Box>
-      </Box>
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Cost per Month ($)</Typography>
-        <Box sx={{ px: 1 }}>
-          <Slider
-            value={filters.cost || [0, 200]}
-            onChange={(e, newValue) => onFilterChange('cost', newValue)}
-            valueLabelDisplay="auto"
-            min={0}
-            max={200}
-            marks={[
-              { value: 0, label: '$0' },
-              { value: 200, label: '$200' }
-            ]}
-          />
         </Box>
       </Box>
 
