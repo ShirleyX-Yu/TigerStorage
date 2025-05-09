@@ -454,6 +454,9 @@ const Map = () => {
   }, []);
 
   const handleFilterChange = (key, value) => {
+    if (key === 'maxDistance') {
+      value = Math.min(50, Math.max(0, Number(value)));
+    }
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 

@@ -15,7 +15,24 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
   };
 
   const handleInputChange = (key) => (event) => {
-    onFilterChange(key, event.target.value);
+    let value = event.target.value;
+    if (key === 'minCost' && Number(value) > Number(filters.maxCost)) {
+      onFilterChange('minCost', Number(value));
+      onFilterChange('maxCost', Number(value));
+      return;
+    }
+    if (key === 'maxCost' && Number(value) < Number(filters.minCost)) {
+      value = filters.minCost;
+    }
+    if (key === 'minSize' && Number(value) > Number(filters.maxSize)) {
+      onFilterChange('minSize', Number(value));
+      onFilterChange('maxSize', Number(value));
+      return;
+    }
+    if (key === 'maxSize' && Number(value) < Number(filters.minSize)) {
+      value = filters.minSize;
+    }
+    onFilterChange(key, Number(value));
   };
 
   const handleReset = () => {
@@ -25,7 +42,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
     onFilterChange('maxSize', 1000);
     onFilterChange('minDistance', 0);
     onFilterChange('maxDistance', 50);
-    onFilterChange('minRating', 1);
+    onFilterChange('minRating', 0);
   };
 
   // If filters are undefined, set default values to max
@@ -84,6 +101,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
             onChange={handleInputChange('minCost')}
             size="small"
             fullWidth
+            inputProps={{ min: 0, max: 200 }}
           />
           <TextField
             label="Max"
@@ -92,6 +110,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
             onChange={handleInputChange('maxCost')}
             size="small"
             fullWidth
+            inputProps={{ min: 0, max: 200 }}
           />
         </Box>
       </Box>
@@ -127,6 +146,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
             onChange={handleInputChange('minSize')}
             size="small"
             fullWidth
+            inputProps={{ min: 0, max: 1000 }}
           />
           <TextField
             label="Max"
@@ -135,6 +155,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
             onChange={handleInputChange('maxSize')}
             size="small"
             fullWidth
+            inputProps={{ min: 0, max: 1000 }}
           />
         </Box>
       </Box>
@@ -165,17 +186,18 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
         <Box sx={{ mt: 1, width: '100%' }}>
           <TextField
             label="Max Distance"
-            type="text"
-            value={filters.maxDistance === 50 ? '50+' : (filters.maxDistance ?? '')}
+            type="number"
+            value={filters.maxDistance >= 50 ? '50+' : (filters.maxDistance ?? '')}
             onChange={e => {
               let val = e.target.value;
-              if (val === '50+') val = 50;
+              if (val === '50+' || Number(val) >= 50) val = 50;
               else if (val === '') val = '';
-              else val = Number(val);
+              else val = Math.max(0, Number(val));
               onFilterChange('maxDistance', val);
             }}
             size="small"
             fullWidth
+            inputProps={{ min: 0, max: 50 }}
           />
         </Box>
       </Box>
