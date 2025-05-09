@@ -897,34 +897,6 @@ const Map = () => {
                 </button>
               </DialogTitle>
               <DialogContent dividers style={{ background: '#fff8f1', padding: 24, position: 'relative' }}>
-                {/* Report Button - bottom left */}
-                <button
-                  style={{
-                    position: 'absolute',
-                    bottom: 16,
-                    left: 16,
-                    background: '#ffeaea',
-                    border: '1.5px solid #f44336',
-                    color: '#f44336',
-                    fontWeight: 700,
-                    fontSize: 15,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    cursor: 'pointer',
-                    padding: '4px 12px',
-                    borderRadius: 7,
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
-                  }}
-                  title="Report this listing"
-                  onClick={() => {
-                    setReportModalOpen(true);
-                    setReportReason("");
-                    setReportSuccess(false);
-                  }}
-                >
-                  <span style={{fontSize: 20, color: '#f44336'}}>🚩</span>
-                </button>
                 {/* Grouped modal navigation */}
                 {groupedListings && groupedListings.length > 1 && (
                   <Box mb={2} display="flex" alignItems="center" justifyContent="center" gap={2}>
@@ -1154,6 +1126,33 @@ const Map = () => {
                     {reservationLoading ? 'Submitting...' : 'Submit'}
                   </Button>
                 )}
+                {/* Report Button - now in DialogActions */}
+                <Button
+                  onClick={() => {
+                    setReportModalOpen(true);
+                    setReportReason("");
+                    setReportSuccess(false);
+                  }}
+                  style={{
+                    background: '#ffeaea',
+                    border: '1.5px solid #f44336',
+                    color: '#f44336',
+                    fontWeight: 700,
+                    fontSize: 15,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    cursor: 'pointer',
+                    padding: '4px 12px',
+                    borderRadius: 7,
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+                  }}
+                  title="Report this listing"
+                  variant="outlined"
+                >
+                  <span style={{fontSize: 20, color: '#f44336'}}>🚩</span>
+                  <span>Report</span>
+                </Button>
               </DialogActions>
             </>}
           </Dialog>
