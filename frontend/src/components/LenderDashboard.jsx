@@ -582,7 +582,7 @@ const LenderDashboard = ({ username }) => {
           <span style={{ fontWeight: 600, fontSize: 20 }}>Add Storage Space</span>
           <button onClick={() => setCreateModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#888' }}>&times;</button>
         </div>
-        <div style={{ padding: 24, overflow: 'hidden' }}>
+        <div style={{ padding: 24 }}>
           <CreateListingModal 
             onClose={() => setCreateModalOpen(false)}
             onSuccess={() => { setCreateModalOpen(false); fetchListings(); }}
