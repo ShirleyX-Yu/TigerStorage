@@ -329,10 +329,10 @@ const RenterDashboard = ({ username }) => {
           </div>
           <div style={styles.buttonContainer}>
             <button style={styles.actionButton} onClick={() => navigate('/view-listings')}>
-              View Storage Listings
+              Grid View
             </button>
             <button style={styles.actionButton} onClick={openMap}>
-              View Map
+              Map View
             </button>
           </div>
         </div>
