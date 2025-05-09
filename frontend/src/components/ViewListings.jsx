@@ -536,29 +536,24 @@ const ViewListings = () => {
                   </div>
                   <div style={styles.filterGroup}>
                     <label style={styles.filterLabel}>Minimum Lender Rating</label>
-                    <Slider
-                      value={filters.minRating}
-                      onChange={(_, newValue) => setFilters(f => ({ ...f, minRating: newValue }))}
-                      min={1}
-                      max={5}
-                      step={1}
-                      marks={[{value:1,label:'1'},{value:2,label:'2'},{value:3,label:'3'},{value:4,label:'4'},{value:5,label:'5'}]}
-                      valueLabelDisplay="auto"
-                      sx={{ color: '#FF6B00' }}
-                    />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 24, marginTop: 4 }}>
                       {[1,2,3,4,5].map(star => (
-                        <span key={star} style={{ color: filters.minRating >= star ? '#fbc02d' : '#ccc', fontSize: 18 }}>★</span>
+                        <span
+                          key={star}
+                          onClick={() => setFilters(f => ({ ...f, minRating: (f.minRating === star ? 0 : star) }))}
+                          style={{
+                            color: filters.minRating >= star ? '#fbc02d' : '#ccc',
+                            fontSize: 28,
+                            cursor: 'pointer',
+                            transition: 'color 0.15s',
+                            userSelect: 'none'
+                          }}
+                          role="button"
+                          aria-label={`Set minimum rating to ${star} star${star > 1 ? 's' : ''}`}
+                          tabIndex={0}
+                          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setFilters(f => ({ ...f, minRating: (f.minRating === star ? 0 : star) })); }}
+                        >★</span>
                       ))}
-                      <label style={{ marginLeft: 16, display: 'flex', alignItems: 'center', fontSize: 13 }}>
-                        <input
-                          type="checkbox"
-                          checked={filters.includeUnrated}
-                          onChange={e => setFilters(f => ({ ...f, includeUnrated: e.target.checked }))}
-                          style={{ marginRight: 4 }}
-                        />
-                        Include unrated
-                      </label>
                     </div>
                   </div>
                 </div>
