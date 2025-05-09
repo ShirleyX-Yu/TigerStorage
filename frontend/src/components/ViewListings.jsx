@@ -470,11 +470,12 @@ const ViewListings = () => {
             <h2>Storage Listings</h2>
           </div>
           
-          <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ marginBottom: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', maxWidth: 700 }}>
             <FilterColumn
               filters={filters}
               onFilterChange={handleFilterChange}
               onReset={handleReset}
+              layout="2x2"
             />
           </div>
 
