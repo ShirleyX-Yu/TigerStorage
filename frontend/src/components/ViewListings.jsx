@@ -550,7 +550,6 @@ const ViewListings = () => {
                       {[1,2,3,4,5].map(star => (
                         <span key={star} style={{ color: filters.minRating >= star ? '#fbc02d' : '#ccc', fontSize: 18 }}>★</span>
                       ))}
-                      <span style={{ marginLeft: 8 }}>{filters.minRating} star{filters.minRating > 1 ? 's' : ''} & up</span>
                       <label style={{ marginLeft: 16, display: 'flex', alignItems: 'center', fontSize: 13 }}>
                         <input
                           type="checkbox"
