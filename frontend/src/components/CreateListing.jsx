@@ -462,7 +462,7 @@ const CreateListing = ({ onClose, onSuccess, modalMode = false }) => {
       <form onSubmit={handleSubmit} style={{ ...styles.form, gap: 18, padding: 24, width: '100%' }}>
         {/* Wrap the form in a scrollable DialogContent for modal mode */}
         {modalMode ? (
-          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+          <div>
             {/* All form fields go here */}
             <div>
               <label style={styles.label}>Location (Title) <span style={{color: '#b00020'}}>*</span></label>
