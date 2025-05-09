@@ -1257,29 +1257,6 @@ const Map = () => {
             filters={filters} 
             onFilterChange={handleFilterChange}
           />
-          <Slider
-            value={filters.maxDistance === '50+' ? 50 : Number(filters.maxDistance) || 0}
-            onChange={(_, newValue) => handleFilterChange('maxDistance', newValue)}
-            valueLabelDisplay="auto"
-            min={0}
-            max={50}
-            step={0.1}
-            sx={{ color: '#FF6B00', width: '100%', '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' }, '& .MuiSlider-track': { backgroundColor: '#FF6B00' }, '& .MuiSlider-rail': { backgroundColor: '#FFF3E6' } }}
-          />
-          <div style={{ marginTop: 8 }}>
-            <input
-              type="text"
-              value={filters.maxDistance === '50+' || Number(filters.maxDistance) >= 50 ? '50+' : filters.maxDistance}
-              min={0}
-              max={50}
-              onChange={e => {
-                const val = e.target.value === '50+' ? 50 : Number(e.target.value);
-                handleFilterChange('maxDistance', val);
-              }}
-              style={{ width: '100%', padding: 6, borderRadius: 4, border: '1px solid #ddd' }}
-              placeholder="Max Distance"
-            />
-          </div>
         </div>
       </div>
 

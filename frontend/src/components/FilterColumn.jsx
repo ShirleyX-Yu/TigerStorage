@@ -191,6 +191,7 @@ const FilterColumn = ({ filters, onFilterChange, onReset }) => {
           min={0}
           max={50}
           step={0.1}
+          marks={[{ value: 0, label: '0' }, { value: 50, label: '50+' }]}
           sx={{
             color: '#FF6B00',
             width: '100%',
