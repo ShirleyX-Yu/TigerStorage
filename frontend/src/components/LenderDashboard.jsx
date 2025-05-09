@@ -579,8 +579,10 @@ const LenderDashboard = ({ username }) => {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '18px 24px 10px 24px', background: '#fafbfc', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
-          <span style={{ fontWeight: 600, fontSize: 20 }}>Add Storage Space</span>
-          <button onClick={() => setCreateModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#888' }}>&times;</button>
+          <div style={{ position: 'sticky', top: 0, zIndex: 2, background: '#fafbfc', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '18px 24px 10px 24px', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
+            <span style={{ fontWeight: 600, fontSize: 20 }}>Add Storage Space</span>
+            <button onClick={() => setCreateModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#888' }}>&times;</button>
+          </div>
         </div>
         <div style={{ padding: 24 }}>
           <CreateListingModal 
