@@ -24,15 +24,16 @@ TigerStorage is a full-stack storage rental platform for Princeton University st
 
 ## 📁 Project Structure
 
+```bash
 tigerstorage/
 ├── backend/
-│ ├── app.py
-│ ├── requirements.txt
-│ └── database.sql
+│   ├── app.py
+│   ├── requirements.txt
+│   └── database.sql
 ├── frontend/
-│ ├── src/
-│ ├── index.html
-│ └── vite.config.js
+│   ├── src/
+│   ├── index.html
+│   └── vite.config.js
 ├── README.md
 └── .env.example
 
