@@ -137,24 +137,37 @@ TigerStorage uses Princeton CAS (Central Authentication Service) to verify users
 
 💡 Features
 🔐 Princeton CAS authentication
+
 👥 Role-based dashboards for renters and lenders
+
 📦 Listing creation, editing, and deletion
+
 💾 Session-based user persistence
+
 🔒 Protected routes based on authentication
+
 🧭 Dynamic UI rendering based on user role
 
 🧪 Testing
 There is no formal test suite at this time. To manually test:
+
 Use Postman or curl to check API routes
+
 Use React Developer Tools to verify frontend state
+
 Simulate login or mock session data locally for dev
 
 📌 Roadmap / Future Enhancements
 ✅ Testing with Pytest + React Testing Library
+
 ✅ Image uploads for storage listings
+
 ✅ Payment integration (Stripe, PayPal)
+
 ✅ User profiles and preferences
+
 ✅ Admin dashboard
+
 ✅ Responsive mobile design
 
 ❓ FAQ
