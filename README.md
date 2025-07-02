@@ -86,7 +86,7 @@ tigerstorage/
    ```bash
    psql "your-connection-string" -f backend/database.sql
 
-#### 🐍 Backend Deployment
+#### 🐍 Deployment
 1. Create a new Web Service on Render.
 2. Connect your GitHub repository.
 3. Configure the service:
@@ -99,14 +99,14 @@ Root Directory: backend
 
 Build Command:
    ```bash
-   pip install -r requirements.txt
+pip install -r requirements.txt
 Start Command:
    ```bash
-   gunicorn app:app --log-file -
+gunicorn app:app --log-file -
 Add environment variables:
    ```ini
-   APP_SECRET_KEY=your-secret-key
-   DATABASE_URL=your-render-database-url
+APP_SECRET_KEY=your-secret-key
+DATABASE_URL=your-render-database-url
 
 #### ⚛️ Frontend Deployment
 1. Create a new Static Site on Render.
