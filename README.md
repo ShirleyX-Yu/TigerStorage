@@ -132,10 +132,7 @@ Add environment variable:
    ```ini
 VITE_API_URL=https://tigerstorage-backend.onrender.com
 ```
-### 🔐 Authentication
-TigerStorage uses Princeton CAS (Central Authentication Service) to verify users. After logging in, the session is managed via Flask and persisted on the frontend using sessionStorage to maintain user roles and access control.
-
-💡 Features
+### 💡 Features
 🔐 Princeton CAS authentication
 
 👥 Role-based dashboards for renters and lenders
@@ -148,16 +145,16 @@ TigerStorage uses Princeton CAS (Central Authentication Service) to verify users
 
 🧭 Dynamic UI rendering based on user role
 
-🧪 Testing
+### 🧪 Testing
 There is no formal test suite at this time. To manually test:
 
 Use Postman or curl to check API routes
 
 Use React Developer Tools to verify frontend state
 
-Simulate login or mock session data locally for dev
+Simulate login or mock session data locally
 
-📌 Roadmap / Future Enhancements
+### 🛣️ Roadmap / Future Enhancements
 ✅ Testing with Pytest + React Testing Library
 
 ✅ Image uploads for storage listings
@@ -170,7 +167,7 @@ Simulate login or mock session data locally for dev
 
 ✅ Responsive mobile design
 
-❓ FAQ
+### ❓ FAQ
 Q: Can anyone use this platform?
 A: No — authentication is restricted to Princeton University users via CAS.
 
@@ -178,12 +175,14 @@ Q: Why can’t the frontend access the backend?
 A: Make sure your .env file includes a valid VITE_API_URL, and CORS is configured in Flask.
 
 Q: How do I reset the database?
-A:
-   ```bash
-   psql "your-connection-string" -f backend/database.sql
-   ```
+
+```bash
+psql "your-connection-string" -f backend/database.sql
+```
 
 ### 👩‍💻 Contributors
 Diya Hundiwala
+
 Shirley Yu
+
 Cindy Tong
