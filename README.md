@@ -108,33 +108,10 @@ Add environment variables:
    ```ini
 APP_SECRET_KEY=your-secret-key
 DATABASE_URL=your-render-database-url
-
-#### ⚛️ Frontend Deployment
-1. Create a new Static Site on Render.
-2. Connect your GitHub repository.
-3. Configure the service:
-
-Name: tigerstorage-frontend
-
-Root Directory: frontend
-
-Build Command:
-   ```bash
-   npm install && npm run build
-Publish Directory: dist
-
-Add environment variable:
-   ```ini
-VITE_API_URL=https://tigerstorage-backend.onrender.com
+```
 
 ### 🔐 Authentication
 TigerStorage uses Princeton CAS (Central Authentication Service) to verify users. After logging in, the session is managed via Flask and persisted on the frontend using sessionStorage to maintain user roles and access control.
-   ```bash
-gunicorn app:app --log-file -
-Add environment variables:
-   ```ini
-APP_SECRET_KEY=your-secret-key
-DATABASE_URL=your-render-database-url
 
 #### ⚛️ Frontend Deployment
 1. Create a new Static Site on Render.
@@ -159,37 +136,24 @@ TigerStorage uses Princeton CAS (Central Authentication Service) to verify users
 
 💡 Features
 🔐 Princeton CAS authentication
-
 👥 Role-based dashboards for renters and lenders
-
 📦 Listing creation, editing, and deletion
-
 💾 Session-based user persistence
-
 🔒 Protected routes based on authentication
-
 🧭 Dynamic UI rendering based on user role
 
 🧪 Testing
 There is no formal test suite at this time. To manually test:
-
 Use Postman or curl to check API routes
-
 Use React Developer Tools to verify frontend state
-
 Simulate login or mock session data locally for dev
 
 📌 Roadmap / Future Enhancements
 ✅ Testing with Pytest + React Testing Library
-
 ✅ Image uploads for storage listings
-
 ✅ Payment integration (Stripe, PayPal)
-
 ✅ User profiles and preferences
-
 ✅ Admin dashboard
-
 ✅ Responsive mobile design
 
 ❓ FAQ
@@ -203,6 +167,7 @@ Q: How do I reset the database?
 A:
    ```bash
    psql "your-connection-string" -f backend/database.sql
+   ```
 
 ### 👩‍💻 Contributors
 Diya Hundiwala
