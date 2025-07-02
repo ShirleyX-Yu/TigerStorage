@@ -65,10 +65,10 @@ tigerstorage/
 ### ⚛️ Frontend Setup (React + Vite)
 1. Navigate to the frontend directory:
    ```bash
-cd frontend
+   cd frontend
 2. Install dependencies:
    ```bash
-npm install
+   npm install
 3. Create a .env file:
    ```ini
    VITE_API_URL=http://localhost:5000
