@@ -125,12 +125,13 @@ Root Directory: frontend
 Build Command:
    ```bash
    npm install && npm run build
+```
 Publish Directory: dist
 
 Add environment variable:
    ```ini
 VITE_API_URL=https://tigerstorage-backend.onrender.com
-
+```
 ### 🔐 Authentication
 TigerStorage uses Princeton CAS (Central Authentication Service) to verify users. After logging in, the session is managed via Flask and persisted on the frontend using sessionStorage to maintain user roles and access control.
 
