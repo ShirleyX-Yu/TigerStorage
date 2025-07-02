@@ -63,12 +63,12 @@ tigerstorage/
    App runs at: http://localhost:5000
 
 ### ⚛️ Frontend Setup (React + Vite)
-Navigate to the frontend directory:
+1. Navigate to the frontend directory:
    ```bash
 cd frontend
-   2. Install dependencies:
+2. Install dependencies:
    ```bash
-   npm install
+npm install
 3. Create a .env file:
    ```ini
    VITE_API_URL=http://localhost:5000
@@ -80,20 +80,16 @@ cd frontend
 ### ☁️ Deployment (Render)
 
 #### 🛢️ PostgreSQL Setup
-Create a PostgreSQL instance on Render.
-
-Copy the connection string.
-
-Initialize the database:
+1. Create a PostgreSQL instance on Render.
+2. Copy the connection string.
+3. Initialize the database:
    ```bash
    psql "your-connection-string" -f backend/database.sql
 
 #### 🐍 Backend Deployment
-Create a new Web Service on Render.
-
-Connect your GitHub repository.
-
-Configure the service:
+1. Create a new Web Service on Render.
+2. Connect your GitHub repository.
+3. Configure the service:
 
 Name: tigerstorage-backend
 
@@ -113,11 +109,9 @@ Add environment variables:
    DATABASE_URL=your-render-database-url
 
 #### ⚛️ Frontend Deployment
-Create a new Static Site on Render.
-
-Connect your GitHub repository.
-
-Configure the service:
+1. Create a new Static Site on Render.
+2. Connect your GitHub repository.
+3. Configure the service:
 
 Name: tigerstorage-frontend
 
@@ -125,7 +119,7 @@ Root Directory: frontend
 
 Build Command:
    ```bash
-npm install && npm run build
+   npm install && npm run build
 Publish Directory: dist
 
 Add environment variable:
