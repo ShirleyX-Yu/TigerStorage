@@ -91,16 +91,44 @@ tigerstorage/
 2. Connect your GitHub repository.
 3. Configure the service:
 
-Name: tigerstorage-backend
+**Environment**: Python 3  
+**Root Directory**: `backend`
 
-Environment: Python 3
+**Build Command:**
+```bash
+pip install -r requirements.txt
+```
 
-Root Directory: backend
+**Start Command:**
+```bash
+gunicorn app:app --log-file -
+```
+
+Add environment variables:
+   ```ini
+APP_SECRET_KEY=your-secret-key
+DATABASE_URL=your-render-database-url
+
+#### ⚛️ Frontend Deployment
+1. Create a new Static Site on Render.
+2. Connect your GitHub repository.
+3. Configure the service:
+
+Name: tigerstorage-frontend
+
+Root Directory: frontend
 
 Build Command:
    ```bash
-pip install -r requirements.txt
-Start Command:
+   npm install && npm run build
+Publish Directory: dist
+
+Add environment variable:
+   ```ini
+VITE_API_URL=https://tigerstorage-backend.onrender.com
+
+### 🔐 Authentication
+TigerStorage uses Princeton CAS (Central Authentication Service) to verify users. After logging in, the session is managed via Flask and persisted on the frontend using sessionStorage to maintain user roles and access control.
    ```bash
 gunicorn app:app --log-file -
 Add environment variables:
