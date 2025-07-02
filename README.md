@@ -24,18 +24,19 @@ TigerStorage is a full-stack storage rental platform for Princeton University st
 
 ## 📁 Project Structure
 
+```bash
 tigerstorage/
 ├── backend/
-│ ├── app.py
-│ ├── requirements.txt
-│ └── database.sql
+│   ├── app.py
+│   ├── requirements.txt
+│   └── database.sql
 ├── frontend/
-│ ├── src/
-│ ├── index.html
-│ └── vite.config.js
+│   ├── src/
+│   ├── index.html
+│   └── vite.config.js
 ├── README.md
 └── .env.example
-
+```
 ---
 
 ## 🚀 Local Development
@@ -45,74 +46,49 @@ tigerstorage/
 1. Navigate to the backend directory:
    ```bash
    cd backend
-Create and activate a virtual environment:
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Windows: venv\Scripts\activate
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+4. Create a .env file:
+   ```ini
+   APP_SECRET_KEY=your-secret-key
+   DATABASE_URL=postgresql://username:password@host:port/database_name
+5. Run the Flask app:
+   ```bash
+   python app.py
+   App runs at: http://localhost:5000
 
-bash
-Copy
-Edit
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-Install dependencies:
-
-bash
-Copy
-Edit
-pip install -r requirements.txt
-Create a .env file:
-
-ini
-Copy
-Edit
-APP_SECRET_KEY=your-secret-key
-DATABASE_URL=postgresql://username:password@host:port/database_name
-Run the Flask app:
-
-bash
-Copy
-Edit
-python app.py
-App runs at: http://localhost:5000
-
-⚛️ Frontend Setup (React + Vite)
+### ⚛️ Frontend Setup (React + Vite)
 Navigate to the frontend directory:
-
-bash
-Copy
-Edit
+   ```bash
 cd frontend
-Install dependencies:
+   2. Install dependencies:
+   ```bash
+   npm install
+3. Create a .env file:
+   ```ini
+   VITE_API_URL=http://localhost:5000
+4. Start the development server:
+   ```bash
+   npm run dev
+   App runs at: http://localhost:5173
 
-bash
-Copy
-Edit
-npm install
-Create a .env file:
+### ☁️ Deployment (Render)
 
-ini
-Copy
-Edit
-VITE_API_URL=http://localhost:5000
-Start the development server:
-
-bash
-Copy
-Edit
-npm run dev
-App runs at: http://localhost:5173
-
-☁️ Deployment (Render)
-🛢️ PostgreSQL Setup
+#### 🛢️ PostgreSQL Setup
 Create a PostgreSQL instance on Render.
 
 Copy the connection string.
 
 Initialize the database:
+   ```bash
+   psql "your-connection-string" -f backend/database.sql
 
-bash
-Copy
-Edit
-psql "your-connection-string" -f backend/database.sql
-🐍 Backend Deployment
+#### 🐍 Backend Deployment
 Create a new Web Service on Render.
 
 Connect your GitHub repository.
@@ -126,25 +102,17 @@ Environment: Python 3
 Root Directory: backend
 
 Build Command:
-
-bash
-Copy
-Edit
-pip install -r requirements.txt
+   ```bash
+   pip install -r requirements.txt
 Start Command:
-
-bash
-Copy
-Edit
-gunicorn app:app --log-file -
+   ```bash
+   gunicorn app:app --log-file -
 Add environment variables:
+   ```ini
+   APP_SECRET_KEY=your-secret-key
+   DATABASE_URL=your-render-database-url
 
-ini
-Copy
-Edit
-APP_SECRET_KEY=your-secret-key
-DATABASE_URL=your-render-database-url
-⚛️ Frontend Deployment
+#### ⚛️ Frontend Deployment
 Create a new Static Site on Render.
 
 Connect your GitHub repository.
@@ -156,20 +124,15 @@ Name: tigerstorage-frontend
 Root Directory: frontend
 
 Build Command:
-
-bash
-Copy
-Edit
+   ```bash
 npm install && npm run build
 Publish Directory: dist
 
 Add environment variable:
-
-ini
-Copy
-Edit
+   ```ini
 VITE_API_URL=https://tigerstorage-backend.onrender.com
-🔐 Authentication
+
+### 🔐 Authentication
 TigerStorage uses Princeton CAS (Central Authentication Service) to verify users. After logging in, the session is managed via Flask and persisted on the frontend using sessionStorage to maintain user roles and access control.
 
 💡 Features
@@ -216,12 +179,10 @@ A: Make sure your .env file includes a valid VITE_API_URL, and CORS is configure
 
 Q: How do I reset the database?
 A:
+   ```bash
+   psql "your-connection-string" -f backend/database.sql
 
-bash
-Copy
-Edit
-psql "your-connection-string" -f backend/database.sql
-👩‍💻 Contributors
+### 👩‍💻 Contributors
 Diya Hundiwala
 Shirley Yu
 Cindy Tong
