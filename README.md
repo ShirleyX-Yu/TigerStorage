@@ -14,7 +14,7 @@ TigerStorage is a full-stack storage rental platform for Princeton University st
 | Auth        | Princeton CAS    |
 | Deployment  | Render           |
 
-<img src="docs/images/tech-stack.png" alt="Tech Stack Diagram" width="700"/>
+<img src="docs/images/tech_stack.png" alt="Tech Stack Diagram" width="700"/>
 
 ---
 
