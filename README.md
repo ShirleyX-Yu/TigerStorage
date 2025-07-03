@@ -32,34 +32,34 @@ TigerStorage is a full-stack storage rental platform for Princeton University st
 ---
 
 ## User Interface Previews
-- Landing page
+Landing page
 <img src="docs/images/frontpage.png" alt="Frontpage" width="800"/> 
-- Renter dashboard 
-   - Map view
+Renter dashboard 
+- Map view
 <img src="docs/images/map.png" alt="Map view" width="800"/> 
 <img src="docs/images/listing.png" alt="Map view listing" width="800"/> 
-      - Requesting a listing
+   - Requesting a listing
 <img src="docs/images/listing-request.png" alt="Map view listing request" width="800"/> 
-   - Grid view
+- Grid view
 <img src="docs/images/grid-view.png" alt="Grid view" width="800"/> 
-      - After requested space has been approved by lender
+   - After requested space has been approved by lender
 <img src="docs/images/renter-dashboard.png" alt="Approved request" width="800"/> 
 
-- Lender dashboard
+Lender dashboard
 <img src="docs/images/lender-dashboard.png" alt="Lender dashboard" width="800"/> 
-   - Create a listing 
+- Create a listing 
 <img src="docs/images/add-listing.png" alt="Create listing" width="800"/> 
 <img src="docs/images/lender-dashboard-2.png" alt="Reflected dashboard" width="800"/> 
-   - View details of a listing
+- View details of a listing
 <img src="docs/images/view-details.png" alt="View details listing" width="800"/> 
-   - Approving a renter request
+- Approving a renter request
 <img src="docs/images/partial-reservation.png" alt="Approving request" width="800"/> 
-- Admin platform
+Admin platform
 <img src="docs/images/admin-dashboard.png" alt="Admin dashboard" width="800"/> 
-- Additional features
-   - Ratings for renters
+Additional features
+- Ratings for renters
 <img src="docs/images/rating.png" alt="Rating" width="800"/> 
-   - Report renters or listings to admin 
+- Report renters or listings to admin 
 <img src="docs/images/report-listing.png" alt="Report listing" width="800"/> 
 ---
 
