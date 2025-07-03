@@ -38,11 +38,9 @@ Renter dashboard
 - Map view
 <img src="docs/images/map.png" alt="Map view" width="800"/> 
 <img src="docs/images/listing.png" alt="Map view listing" width="800"/> 
-   - Requesting a listing
 <img src="docs/images/listing-request.png" alt="Map view listing request" width="800"/> 
 - Grid view
 <img src="docs/images/grid-view.png" alt="Grid view" width="800"/> 
-   - After requested space has been approved by lender
 <img src="docs/images/renter-dashboard.png" alt="Approved request" width="800"/> 
 
 Lender dashboard
@@ -58,9 +56,10 @@ Admin platform
 <img src="docs/images/admin-dashboard.png" alt="Admin dashboard" width="800"/> 
 Additional features
 
-- Ratings for renters
 - Ratings for lenders
-- In-app notifications
+<img src="docs/images/ratings.png" alt="Admin dashboard" width="800"/> 
+- Flagging listings
+<img src="docs/images/report-listing.png" alt="Admin dashboard" width="800"/> 
 
 ### Testing
 There is no formal test suite at this time. To manually test:
