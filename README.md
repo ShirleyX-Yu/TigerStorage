@@ -20,7 +20,7 @@ TigerStorage is a full-stack storage rental platform for Princeton University st
 
 ## Database Schema
 
-<img src="docs/images/db-schema.png" alt="Database Schema Diagram" width="500"/> 
+<img src="docs/images/db-schema.png" alt="Database Schema Diagram" width="800"/> 
 
 ---
 
