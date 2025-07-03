@@ -6,6 +6,8 @@ TigerStorage is a full-stack storage rental platform for Princeton University st
 
 ## Tech Stack
 
+![Tech Stack Diagram](docs/images/tech-stack.png)
+
 | Layer       | Technology      |
 |-------------|-----------------|
 | Frontend    | React + Vite     |
@@ -161,7 +163,7 @@ Simulate login or mock session data locally
 Q: Can anyone use this platform?
 A: No — authentication is restricted to Princeton University users via CAS.
 
-Q: Why can’t the frontend access the backend?
+Q: Why can't the frontend access the backend?
 A: Make sure your .env file includes a valid VITE_API_URL, and CORS is configured in Flask.
 
 Q: How do I reset the database?
