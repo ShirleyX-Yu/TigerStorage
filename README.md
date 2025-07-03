@@ -62,10 +62,10 @@ Admin platform
 Additional features
 
 - Ratings for lenders
-<img src="docs/images/ratings.png" alt="Admin dashboard" width="800"/> 
+<img src="docs/images/rating.png" alt="Ratings" width="800"/> 
 
 - Flagging listings
-<img src="docs/images/report-listing.png" alt="Admin dashboard" width="800"/> 
+<img src="docs/images/report-listing.png" alt="Report listing" width="800"/> 
 
 ### Testing
 There is no formal test suite at this time. To manually test:
