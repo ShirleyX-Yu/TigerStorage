@@ -195,7 +195,7 @@ There is no formal test suite at this time. To manually test:
 - Admin dashboard
 - Responsive mobile design
 - Chatbot integration for support
-<img src="docs/images/chatbot.png" alt="Chatbot" width="800"/> 
+<img src="docs/images/chatbot.png" alt="Chatbot" width="100"/> 
 
 ### FAQ
 Q: Can anyone use this platform?
