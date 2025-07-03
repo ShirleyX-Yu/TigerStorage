@@ -18,6 +18,12 @@ TigerStorage is a full-stack storage rental platform for Princeton University st
 
 ---
 
+## Database Schema
+
+<img src="docs/images/database-schema.png" alt="Database Schema Diagram" width="500"/> 
+
+---
+
 ## Live Demo
 
 - **Link**: [https://tigerstorage-frontend.onrender.com](https://tigerstorage-frontend.onrender.com)
