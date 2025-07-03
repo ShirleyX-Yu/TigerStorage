@@ -1,5 +1,4 @@
-# TigerStorage
-<img src="docs/images/logo.png" alt="Log" width="200"/>
+# TigerStorage <img src="docs/images/logo.png" alt="TigerStorage Logo" height="40" style="vertical-align: middle;"/>
 
 TigerStorage is a full-stack storage rental platform for Princeton University students. With secure CAS authentication, students can easily rent or offer storage space during transitional periods such as summer break or study abroad. It provides tailored dashboards for both **renters** and **lenders**, with intuitive listing management and seamless user experience.
 
