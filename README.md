@@ -14,13 +14,24 @@ TigerStorage is a full-stack storage rental platform for Princeton University st
 | Auth        | Princeton CAS    |
 | Deployment  | Render           |
 
-<img src="docs/images/tech-stack.png" alt="Tech Stack Diagram" width="700"/>
+<img src="docs/images/tech-stack.png" alt="Tech Stack Diagram" width="500"/>
 
 ---
 
 ## Live Demo
 
-- **Link**: [https://tigerstorage-backend.onrender.com](https://tigerstorage-backend.onrender.com)
+- **Link**: [https://tigerstorage-frontend.onrender.com](https://tigerstorage-frontend.onrender.com)
+- ***Note: The live demo link is currently down.***
+
+---
+
+## User Interface Previews
+- Landing page
+- Renter dashboard 
+   - Map view
+   - Listings view
+- Lender dashboard
+- Admin platform
 
 ---
 
@@ -144,12 +155,9 @@ VITE_API_URL=https://tigerstorage-backend.onrender.com
 
 ### Testing
 There is no formal test suite at this time. To manually test:
-
-Use Postman or curl to check API routes
-
-Use React Developer Tools to verify frontend state
-
-Simulate login or mock session data locally
+- Use Postman or curl to check API routes
+- Use React Developer Tools to verify frontend state
+- Simulate login or mock session data locally
 
 ### Roadmap / Future Enhancements
 - Testing with Pytest + React Testing Library
