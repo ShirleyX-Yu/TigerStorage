@@ -39,6 +39,7 @@ Renter dashboard
 <img src="docs/images/map.png" alt="Map view" width="800"/> 
 <img src="docs/images/listing.png" alt="Map view listing" width="800"/> 
 <img src="docs/images/listing-request.png" alt="Map view listing request" width="800"/> 
+
 - Grid view
 <img src="docs/images/grid-view.png" alt="Grid view" width="800"/> 
 <img src="docs/images/renter-dashboard.png" alt="Approved request" width="800"/> 
@@ -48,16 +49,21 @@ Lender dashboard
 - Create a listing 
 <img src="docs/images/add-listing.png" alt="Create listing" width="800"/> 
 <img src="docs/images/lender-dashboard-2.png" alt="Reflected dashboard" width="800"/> 
+
 - View details of a listing
 <img src="docs/images/view-details.png" alt="View details listing" width="800"/> 
+
 - Approving a renter request
 <img src="docs/images/partial-reservation.png" alt="Approving request" width="800"/> 
+
 Admin platform
 <img src="docs/images/admin-dashboard.png" alt="Admin dashboard" width="800"/> 
+
 Additional features
 
 - Ratings for lenders
 <img src="docs/images/ratings.png" alt="Admin dashboard" width="800"/> 
+
 - Flagging listings
 <img src="docs/images/report-listing.png" alt="Admin dashboard" width="800"/> 
 
